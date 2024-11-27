@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Takvim - Kaplan Hukuk Otomasyon</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>KAPLAN HUKUK OTOMASYON</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('anasayfa') }}"><i class="material-icons">home</i>Ana Sayfa</a></li>
+                <li><a href="{{ url_for('takvim') }}"><i class="material-icons">calendar_today</i>Takvim</a></li>
+                <li><a href="#"><i class="material-icons">folder</i>Dosyalarım</a></li>
+                <li><a href="#"><i class="material-icons">gavel</i>Dava İşlemleri</a></li>
+                <li><a href="#"><i class="material-icons">description</i>Evrak İşlemleri</a></li>
+                <li><a href="#"><i class="material-icons">notifications</i>Duyurular</a></li>
+                <li><a href="#"><i class="material-icons">payment</i>Ödemeler</a></li>
+            </ul>
+        </nav>
+        
+        <main class="content">
+            <div class="calendar-wrapper">
+                <div class="calendar-nav">
+                    <button id="prevMonth">&lt;</button>
+                    <h2 id="currentMonth">Kasım 2024</h2>
+                    <button id="nextMonth">&gt;</button>
+                </div>
+                <div class="calendar-grid">
+                    <div class="weekdays">
+                        <div>Pazartesi</div>
+                        <div>Salı</div>
+                        <div>Çarşamba</div>
+                        <div>Perşembe</div>
+                        <div>Cuma</div>
+                        <div>Cumartesi</div>
+                        <div>Pazar</div>
+                    </div>
+                    <div id="days" class="days">
+                        <!-- Günler JavaScript ile eklenecek -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='calendar.js') }}"></script>
+</body>
+</html> 

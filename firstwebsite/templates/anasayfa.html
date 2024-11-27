@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avukat Otomasyon Sistemi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">    
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>KAPLAN HUKUK OTOMASYON</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#"><i class="material-icons">home</i>Ana Sayfa</a></li>
+                <li><a href="{{ url_for('takvim') }}"><i class="material-icons">calendar_today</i>Takvim</a></li>
+                <li><a href="#"><i class="material-icons">folder</i>Dosyalarım</a></li>
+                <li><a href="#"><i class="material-icons">gavel</i>Dava İşlemleri</a></li>
+                <li><a href="#"><i class="material-icons">description</i>Evrak İşlemleri</a></li>
+                <li><a href="#"><i class="material-icons">notifications</i>Duyurular</a></li>
+                <li><a href="#"><i class="material-icons">payment</i>Ödemeler</a></li>
+            </ul>
+        </nav>
+        
+        <main class="content">
+            <header>
+                <div class="search-bar">
+                    <i class="material-icons">search</i>
+                    <input type="text" placeholder="Dosya No, Dava No...">
+                </div>
+                <div class="user-info">
+                    <span class="date">27 November 2024</span>
+                    <i class="material-icons">account_circle</i>
+                    <span>Kullanıcı Adı</span>
+                </div>
+            </header>
+
+            <div class="dashboard">
+                <div class="card hukuk">
+                    <i class="material-icons">balance</i>
+                    <h3>Hukuk Dosyalarım</h3>
+                </div>
+                <div class="card ceza">
+                    <i class="material-icons">gavel</i>
+                    <h3>Ceza Dosyalarım</h3>
+                </div>
+                <div class="card icra">
+                    <i class="material-icons">account_balance</i>
+                    <h3>İcra Dosyalarım</h3>
+                </div>
+                <div class="card tum">
+                    <i class="material-icons">folder_shared</i>
+                    <h3>Tüm Dosyalarım</h3>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html> 
