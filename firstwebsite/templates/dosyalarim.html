@@ -6,12 +6,17 @@
     <title>Dosyalarım - Kaplan Hukuk Otomasyon</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .sidebar {
+            background-color: rgba(45,49,60,255);
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <nav class="sidebar">
             <div class="logo">
-                <h2>KAPLAN HUKUK OTOMASYON</h2>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kaplan Hukuk">
             </div>
             <ul class="nav-links">
                 <li><a href="{{ url_for('anasayfa') }}"><i class="material-icons">home</i>Ana Sayfa</a></li>
@@ -31,7 +36,9 @@
         
         <main class="content">
             <header>
-                <h1>Dosya Sorgula</h1>
+                <div class="header-left">
+                    <h1>Dosya Sorgula</h1>
+                </div>
             </header>
             <form method="POST" class="search-form">
                 <div class="form-row">

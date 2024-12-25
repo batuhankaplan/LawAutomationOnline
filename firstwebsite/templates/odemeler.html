@@ -6,12 +6,114 @@
     <title>Ödemeler - Kaplan Hukuk Otomasyon</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .sidebar {
+            background-color: rgba(45,49,60,255);
+        }
+        .form-container {
+            background: var(--text-light);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .input-group label {
+            font-weight: bold;
+        }
+        .input-group input, .input-group select {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .form-container button {
+            align-self: flex-end;
+            padding: 10px 20px;
+            margin-top: 10px; /* Move the button slightly lower */
+            background: var(--primary-color);
+            color: var(--text-light);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .form-container button:hover {
+            background: var(--hover-color);
+        }
+        .client-list-container {
+            background: var(--text-light);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-top: 25px;
+        }
+        .client-list-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .client-list-table th, .client-list-table td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: left;
+            position: relative;
+        }
+        .client-list-table th {
+            background-color: var(--primary-color);
+            color: var(--text-light);
+        }
+        .status-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-container label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .status-container input[type="radio"] {
+            margin: 0;
+        }
+        .status-container .status-paid {
+            color: var(--success-color);
+        }
+        .status-container .status-unpaid {
+            color: var(--danger-color);
+        }
+        .edit-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .edit-buttons button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .edit-buttons .edit-btn {
+            background: var(--primary-color);
+            color: var(--text-light);
+        }
+        .edit-buttons .save-btn {
+            background: var(--success-color);
+            color: var(--text-light);
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <nav class="sidebar">
             <div class="logo">
-                <h2>KAPLAN HUKUK OTOMASYON</h2>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kaplan Hukuk">
             </div>
             <ul class="nav-links">
                 <li><a href="{{ url_for('anasayfa') }}"><i class="material-icons">home</i>Ana Sayfa</a></li>
@@ -25,38 +127,148 @@
         
         <main class="content">
             <header>
-                <h1>Ödemeler</h1>
+                <div class="header-left">
+                    <h1>Ödemeler</h1>
+                </div>
             </header>
-            <form method="POST">
-                <div class="input-group">
-                    <label for="name">Ad</label>
-                    <input type="text" id="name" name="name" required>
-                </div>
-                <div class="input-group">
-                    <label for="surname">Soyad</label>
-                    <input type="text" id="surname" name="surname" required>
-                </div>
-                <div class="input-group">
-                    <label for="tc">TC Kimlik No</label>
-                    <input type="text" id="tc" name="tc" required>
-                </div>
-                <div class="input-group">
-                    <label for="amount">Tutar</label>
-                    <input type="number" id="amount" name="amount" required>
-                </div>
-                <div class="input-group">
-                    <label for="date">Tarih</label>
-                    <input type="date" id="date" name="date" required>
-                </div>
-                <button type="submit">Kaydet</button>
-            </form>
-            <h2>Müvekkil Listesi</h2>
-            <ul>
-                {% for client in clients %}
-                    <li>{{ client.name }} {{ client.surname }} - {{ client.tc }}</li>
-                {% endfor %}
-            </ul>
+            <div class="form-container">
+                <form method="POST">
+                    <div class="input-group">
+                        <label for="name">Ad</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="surname">Soyad</label>
+                        <input type="text" id="surname" name="surname" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="tc">TC Kimlik No</label>
+                        <input type="text" id="tc" name="tc" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="amount">Tutar</label>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="number" id="amount" name="amount" required style="flex: 1;">
+                            <select id="currency" name="currency" required>
+                                <option value="TRY">TRY</option>
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="installments">Taksit Sayısı</label>
+                        <select id="installments" name="installments" required>
+                            {% for i in range(1, 13) %}
+                                <option value="{{ i }}">{{ i }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="date">Ödeme Tarihi</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+                    <button type="submit">Kaydet</button>
+                </form>
+            </div>
+            <div class="client-list-container">
+                <h2>Müvekkil Ödeme Listesi</h2>
+                <table class="client-list-table">
+                    <thead>
+                        <tr>
+                            <th>Ad</th>
+                            <th>Soyad</th>
+                            <th>TC Kimlik No</th>
+                            <th>Tutar</th>
+                            <th>Taksit Sayısı</th>
+                            <th>Ödeme Tarihi</th>
+                            <th>Durum</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in clients %}
+                        <tr>
+                            <td contenteditable="false">{{ client.name }}</td>
+                            <td contenteditable="false">{{ client.surname }}</td>
+                            <td contenteditable="false">{{ client.tc }}</td>
+                            <td contenteditable="false">{{ client.amount }} {{ client.currency }}</td>
+                            <td contenteditable="false">{{ client.installments }}</td>
+                            <td contenteditable="false">{{ client.date }}</td>
+                            <td style="width: 150px;">
+                                <div class="status-container">
+                                    <label class="status-paid">
+                                        <input type="radio" name="status-{{ client.id }}" value="Ödendi" {% if client.status == 'Ödendi' %}checked{% endif %} disabled>
+                                        Ödendi
+                                    </label>
+                                    <label class="status-unpaid">
+                                        <input type="radio" name="status-{{ client.id }}" value="Ödenmedi" {% if client.status == 'Ödenmedi' %}checked{% endif %} disabled>
+                                        Ödenmedi
+                                    </label>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="edit-buttons">
+                                    <button class="edit-btn" onclick="editRow(this)">Düzenle</button>
+                                    <button class="save-btn" onclick="saveRow(this)" style="display: none;">Kaydet</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </main>
     </div>
+    <script>
+    function editRow(button) {
+        const row = button.closest('tr');
+        row.querySelectorAll('td[contenteditable]').forEach(td => td.contentEditable = true);
+        row.querySelectorAll('input[type="radio"]').forEach(radio => radio.disabled = false);
+        row.querySelector('.edit-btn').style.display = 'none';
+        row.querySelector('.save-btn').style.display = 'inline-block';
+    }
+
+    function saveRow(button) {
+        const row = button.closest('tr');
+        const clientId = row.querySelector('input[type="radio"]').name.split('-')[1];
+        const name = row.querySelector('td:nth-child(1)').innerText;
+        const surname = row.querySelector('td:nth-child(2)').innerText;
+        const tc = row.querySelector('td:nth-child(3)').innerText;
+        const amount = row.querySelector('td:nth-child(4)').innerText.split(' ')[0];
+        const currency = row.querySelector('td:nth-child(4)').innerText.split(' ')[1];
+        const installments = row.querySelector('td:nth-child(5)').innerText;
+        const date = row.querySelector('td:nth-child(6)').innerText;
+        const status = row.querySelector('input[name="status-' + clientId + '"]:checked').value;
+
+        fetch(`/update_client/${clientId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                surname: surname,
+                tc: tc,
+                amount: amount,
+                currency: currency,
+                installments: installments,
+                date: date,
+                status: status
+            })
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  alert('Kayıt güncellendi!');
+                  row.querySelectorAll('td[contenteditable]').forEach(td => td.contentEditable = false);
+                  row.querySelectorAll('input[type="radio"]').forEach(radio => radio.disabled = true);
+                  row.querySelector('.edit-btn').style.display = 'inline-block';
+                  row.querySelector('.save-btn').style.display = 'none';
+              } else {
+                  alert('Güncelleme başarısız!');
+              }
+          });
+    }
+    </script>
 </body>
 </html>

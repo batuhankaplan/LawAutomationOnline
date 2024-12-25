@@ -1,27 +1,27 @@
 :root {
-    --primary-color: #2b3990;      /* Koyu lacivert */
-    --secondary-color: #3f51b5;    /* Orta lacivert */
-    --accent-color: #536dfe;       /* Mavi vurgu */
-    --background-color: #f5f6fa;   /* Açık gri arka plan */
-    --text-color: #2c3e50;         /* Koyu metin */
-    --text-light: #ffffff;         /* Beyaz metin */
-    --border-color: #e1e5ef;       /* Açık gri border */
-    --hover-color: #1a237e;        /* Hover efekti */
-    --success-color: #4caf50;      /* Yeşil */
-    --warning-color: #ff9800;      /* Turuncu */
-    --danger-color: #f44336;       /* Kırmızı */
-    --shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    --primary-color: #1a1a2e;      /* Darker blue, closer to black */
+    --secondary-color: #6c757d;    /* Grey */
+    --accent-color: #6610f2;       /* Purple */
+    --background-color: #f8f9fa;   /* Light grey background */
+    --text-color: #212529;         /* Dark text */
+    --text-light: #ffffff;         /* White text */
+    --border-color: #dee2e6;       /* Light grey border */
+    --hover-color: #0b5ed7;        /* Hover effect */
+    --success-color: #198754;      /* Green */
+    --warning-color: #ffc107;      /* Yellow */
+    --danger-color: #dc3545;       /* Red */
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Genel Stiller */
+/* General Styles */
 body {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', sans-serif;
     background-color: var(--background-color);
     color: var(--text-color);
-    font-size: 13px;
-    line-height: 1.5;
+    font-size: 14px;
+    line-height: 1.6;
 }
 
 .container {
@@ -29,10 +29,10 @@ body {
     min-height: 100vh;
 }
 
-/* Sidebar Stili */
+/* Sidebar Style */
 .sidebar {
     width: 250px;
-    background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: var(--primary-color);
     color: var(--text-light);
     box-shadow: var(--shadow);
     display: flex;
@@ -45,11 +45,12 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(255, 255, 255, 0.1);
+    /* Remove background from logo */
+    background: none;
 }
 
 .logo img {
-    width: 180px;  /* Logo boyutunu artırdık */
+    width: 180px;
     height: auto;
     opacity: 0.95;
     transition: opacity 0.3s ease;
@@ -57,14 +58,6 @@ body {
 
 .logo img:hover {
     opacity: 1;
-}
-
-.logo h2 {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 600;
-    text-align: center;
-    letter-spacing: 0.5px;
 }
 
 .nav-links {
@@ -76,11 +69,11 @@ body {
 .nav-links li a {
     display: flex;
     align-items: center;
-    padding: 8px 20px;
+    padding: 10px 20px;
     color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
     transition: all 0.2s ease;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
 }
 
 .nav-links li a:hover {
@@ -89,104 +82,169 @@ body {
 }
 
 .nav-links li a i {
-    font-size: 18px;
-    margin-right: 8px;
+    font-size: 20px;
+    margin-right: 10px;
     opacity: 0.9;
 }
 
-/* Ana İçerik Alanı */
+/* Main Content Area */
 .content {
     flex: 1;
-    padding: 15px 25px;
+    padding: 20px 30px;
     background: var(--background-color);
 }
 
-/* Header Stili */
+/* Header Style */
 header {
-    background: white;
-    padding: 12px 20px;
-    border-radius: 6px;
+    background: var(--text-light);
+    padding: 15px 25px;
+    border-radius: 8px;
     box-shadow: var(--shadow);
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+.header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0px;
+    background-color: #ffffff;
+    border-radius: 0px;
+    box-shadow: 0 0px 0px rgba(255, 255, 255, 0.1);
+}
+
+.datetime-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0px;
+}
+
+
+
+
 .search-bar {
     display: flex;
     align-items: center;
     background: var(--background-color);
-    border-radius: 4px;
-    padding: 6px 12px;
-    width: 300px;
+    border-radius: 5px;
+    padding: 8px 15px;
+    width: 350px;
     border: 1px solid var(--border-color);
+    flex-grow: 1;
 }
 
 .search-bar input {
     border: none;
     background: none;
-    padding: 4px 8px;
+    padding: 5px 10px;
     width: 100%;
     outline: none;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
 }
 
 .search-bar i {
     color: #666;
-    font-size: 18px;
+    font-size: 20px;
 }
 
-/* Kartlar */
+/* Cards */
 .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
+    gap: 20px;
 }
 
 .dashboard-card {
-    background: white;
-    border-radius: 6px;
-    padding: 15px;
+    background: var(--text-light);
+    border-radius: 8px;
+    padding: 20px;
     box-shadow: var(--shadow);
     transition: transform 0.2s ease;
     border: 1px solid var(--border-color);
 }
 
 .dashboard-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
 }
 
-/* Bildirimler */
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.card-header i {
+    font-size: 24px;
+    margin-right: 10px;
+    color: var(--primary-color);
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--text-color);
+}
+
+.card-content .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.card-content .stat .number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.card-content .stat .label {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+}
+
+/* Notifications */
 .notification-list {
-    background: white;
-    border-radius: 6px;
-    padding: 15px;
+    background: var(--text-light);
+    border-radius: 8px;
+    padding: 20px;
     box-shadow: var(--shadow);
-    margin-top: 20px;
+    margin-top: 25px;
 }
 
 .notification-item {
-    padding: 10px;
+    padding: 12px;
     border-bottom: 1px solid var(--border-color);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
 }
 
-/* Kullanıcı Profili */
+.notification-item i {
+    font-size: 20px;
+    margin-right: 10px;
+    color: var(--primary-color);
+}
+
+/* User Profile */
 .user-profile {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
+    gap: 10px;
+    font-size: 0.9rem;
     color: var(--text-color);
 }
 
 .user-profile i {
-    font-size: 20px;
+    font-size: 22px;
     color: var(--primary-color);
 }
 
-/* Responsive Tasarım */
+/* Responsive Design */
 @media (max-width: 768px) {
     .container {
         flex-direction: column;
@@ -198,7 +256,7 @@ header {
     }
     
     .content {
-        padding: 10px;
+        padding: 15px;
     }
     
     .dashboard-grid {
@@ -206,106 +264,158 @@ header {
     }
 }
 
-/* Section başlıkları için stil */
+/* Section Titles */
 .section-title {
-    margin-bottom: 20px;
-    padding-bottom: 10px;
+    margin-bottom: 25px;
+    padding-bottom: 12px;
     border-bottom: 2px solid var(--border-color);
 }
 
 .section-title h2 {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     color: var(--text-color);
     margin: 0;
 }
 
-/* Form container için ek stiller */
+/* Form Container */
 .form-container, .table-container {
-    background: white;
-    border-radius: 6px;
-    padding: 20px;
+    background: var(--text-light);
+    border-radius: 8px;
+    padding: 25px;
     box-shadow: var(--shadow);
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 
-/* Form aksiyonları için stil */
+/* Form Actions */
 .form-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-    padding-top: 20px;
+    gap: 12px;
+    margin-top: 25px;
+    padding-top: 25px;
     border-top: 1px solid var(--border-color);
 }
 
-/* İkon butonları için stil */
+/* Icon Buttons */
 .btn-icon {
-    padding: 6px;
-    min-width: 32px;
-    height: 32px;
+    padding: 8px;
+    min-width: 36px;
+    height: 36px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
 
 .btn-icon i {
-    font-size: 18px;
+    font-size: 20px;
 }
 
-/* Aksiyon sütunu için stil */
+/* Action Column */
 .actions {
     display: flex;
-    gap: 5px;
+    gap: 6px;
 }
 
-/* Durum badge'i için stil */
+/* Status Badge */
 .status-badge {
     display: inline-block;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
+    padding: 5px 10px;
+    border-radius: 14px;
+    font-size: 0.8rem;
     font-weight: 500;
     background: var(--success-color);
     color: white;
 }
 
-/* Tehlikeli aksiyonlar için stil */
+/* Danger Button */
 .btn-danger {
     background: var(--danger-color);
 }
 
 .btn-danger:hover {
-    background: #d32f2f;
+    background: #c82333;
 }
 
-/* Dosya yükleme input'u için özel stil */
+/* File Upload Input */
 input[type="file"] {
-    padding: 6px;
+    padding: 8px;
     border: 1px dashed var(--border-color);
     background: #f8f9fa;
 }
 
-/* Dropdown menü için stil */
+/* Dropdown Menu */
 .dropdown {
     display: none;
-    background: white;
-    border-radius: 4px;
+    background: var(--text-light);
+    border-radius: 5px;
     box-shadow: var(--shadow);
     position: absolute;
     left: 100%;
     top: 0;
-    min-width: 200px;
+    min-width: 220px;
     z-index: 100;
 }
 
 .dropdown li a {
-    padding: 8px 15px;
+    padding: 10px 18px;
     display: block;
     color: var(--text-color);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     text-decoration: none;
 }
 
 .dropdown li a:hover {
     background: #f8f9fa;
+}
+
+/* Date and Time Boxes */
+.datetime-container {
+    display: flex;
+    gap: 10px;
+    margin-left: 20px;
+}
+
+.datetime-box {
+    background: var(--primary-color);
+    color: var(--text-light);
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Announcement Board */
+.announcement-board {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.post-it {
+    width: 200px;
+    min-height: 150px;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: var(--shadow);
+    color: var(--text-light);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: var(--post-it-color, #ffeb3b); /* Default color if not provided */
+}
+
+.post-it h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.1rem;
+}
+
+.post-it p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
 }

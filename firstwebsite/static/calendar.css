@@ -438,3 +438,7 @@
     gap: 10px;
     background: #f8f9fa;
 }
+
+.left-menu {
+    background-color: rgba(45,49,60,255);
+}

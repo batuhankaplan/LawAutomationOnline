@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, send_from_directory
+from flask import Flask, render_template, redirect, url_for, request, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///clients.db'
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 db = SQLAlchemy(app)
 
@@ -18,14 +18,20 @@ class User(db.Model):
 
 @app.route('/')
 def anasayfa():
-    return render_template('anasayfa.html')
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return render_template('anasayfa.html', current_time=current_time)
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), nullable=False)
-    surname = db.Column(db.String(150), nullable=False)
-    tc = db.Column(db.String(11), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    surname = db.Column(db.String(100), nullable=False)
+    tc = db.Column(db.String(11), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(3), nullable=False)
+    installments = db.Column(db.Integer, nullable=False)
+    date = db.Column(db.String(10), nullable=False)
     payments = db.relationship('Payment', backref='client', lazy=True)
+    status = db.Column(db.String(10), nullable=False, default='Ödenmedi')
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -119,18 +125,36 @@ def odemeler():
         name = request.form['name']
         surname = request.form['surname']
         tc = request.form['tc']
-        client = Client.query.filter_by(tc=tc).first()
-        if not client:
-            client = Client(name=name, surname=surname, tc=tc)
-            db.session.add(client)
-            db.session.commit()
         amount = request.form['amount']
+        currency = request.form['currency']
+        installments = request.form['installments']
         date = request.form['date']
-        new_payment = Payment(amount=amount, date=datetime.strptime(date, '%Y-%m-%d'), client_id=client.id, user_id=1)  # user_id=1 olarak sabitlenmiştir
-        db.session.add(new_payment)
+        
+        new_client = Client(name=name, surname=surname, tc=tc, amount=amount, currency=currency, installments=installments, date=date)
+        db.session.add(new_client)
         db.session.commit()
+        
+        return redirect(url_for('odemeler'))
+    
     clients = Client.query.all()
     return render_template('odemeler.html', clients=clients)
+
+@app.route('/update_client/<int:client_id>', methods=['POST'])
+def update_client(client_id):
+    data = request.get_json()
+    client = Client.query.get(client_id)
+    if client:
+        client.name = data['name']
+        client.surname = data['surname']
+        client.tc = data['tc']
+        client.amount = data['amount']
+        client.currency = data['currency']
+        client.installments = data['installments']
+        client.date = data['date']
+        client.status = data['status']
+        db.session.commit()
+        return jsonify(success=True)
+    return jsonify(success=False)
 
 @app.route('/musteri_sorgula', methods=['GET', 'POST'])
 def musteri_sorgula():

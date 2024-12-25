@@ -1,124 +1,94 @@
-<!DOCTYPE html>
-<html lang="tr" class="anasayfa">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Avukat Otomasyon Sistemi</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-</head>
-<body class="anasayfa">
-    <div class="container">
-        <nav class="sidebar">
-            <div class="logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kaplan Hukuk">
-            </div>
-            <ul class="nav-links">
-                <li><a href="{{ url_for('anasayfa') }}"><i class="material-icons">home</i>Ana Sayfa</a></li>
-                <li><a href="{{ url_for('takvim') }}"><i class="material-icons">calendar_today</i>Takvim</a></li>
-                <li>
-                    <a href="javascript:void(0);" onclick="toggleDropdown('dosyalarim-dropdown')"><i class="material-icons">folder</i>Dosyalarım</a>
-                    <ul id="dosyalarim-dropdown" class="dropdown">
-                        <li><a href="{{ url_for('dosya_sorgula') }}">Dosya Sorgula</a></li>
-                        <li><a href="{{ url_for('dosya_ekle') }}">Dosya Ekle</a></li>
-                    </ul>
-                </li>
-                <li><a href="{{ url_for('dava_islemleri') }}"><i class="material-icons">gavel</i>Dava İşlemleri</a></li>
-                <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
-                <li><a href="{{ url_for('odemeler') }}"><i class="material-icons">payment</i>Ödemeler</a></li>
-            </ul>
-        </nav>
+{% extends "layout.html" %}
+
+{% block title %}Ana Sayfa{% endblock %}
+
+{% block content %}
+<header>
+    <div class="header-left">
+        <div class="search-bar">
+            <i class="material-icons">search</i>
+            <input type="text" placeholder="Örnek: Dosya Numarası, İsim...">
+        </div>
         
-        <main class="content">
-            <header>
-                <div class="header-left">
-                    <div class="search-bar">
-                        <i class="material-icons">search</i>
-                        <input type="text" placeholder="Örnek: Dosya Numarası, Birim Adı...">
-                    </div>
-                </div>
-                <div class="header-right">
-                    <span class="date">{{ current_date }}</span>
-                    <div class="user-profile">
-                        <i class="material-icons">account_circle</i>
-                        <span>MUSTAFA KAPLAN</span>
-                    </div>
-                </div>
-            </header>
-
-            <div class="dashboard-grid">
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <i class="material-icons">gavel</i>
-                        <h3>Hukuk Dosyaları</h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="stat">
-                            <span class="number">156</span>
-                            <span class="label">Aktif Dosya</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <i class="material-icons">security</i>
-                        <h3>Ceza Dosyaları</h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="stat">
-                            <span class="number">89</span>
-                            <span class="label">Aktif Dosya</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <i class="material-icons">event</i>
-                        <h3>Bugünkü Duruşmalar</h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="stat">
-                            <span class="number">12</span>
-                            <span class="label">Duruşma</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dashboard-card">
-                    <div class="card-header">
-                        <i class="material-icons">notifications</i>
-                        <h3>Bildirimler</h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="stat">
-                            <span class="number">5</span>
-                            <span class="label">Yeni Bildirim</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="notification-list">
-                <h3>Son Bildirimler</h3>
-                <div class="notification-item">
-                    <i class="material-icons">circle_notifications</i>
-                    <span>2024/414 - Çatalca 2. Asliye Hukuk Mahkemesi duruşması bugün saat 10:30'da</span>
-                </div>
-                <!-- Diğer bildirimler -->
-            </div>
-        </main>
     </div>
-    <script>
-    function toggleDropdown(id) {
-        var element = document.getElementById(id);
-        if (element.style.display === "none" || element.style.display === "") {
-            element.style.display = "block";
-        } else {
-            element.style.display = "none";
-        }
+    <div class="header-right">
+        <div class="datetime-container">
+            <div class="datetime-box" id="current-date"></div>
+            <div class="datetime-box" id="current-time"></div>
+        </div>
+    </div>
+</header>
+
+<div class="dashboard-grid">
+    <div class="dashboard-card">
+        <div class="card-header">
+            <i class="material-icons">gavel</i>
+            <h3>Hukuk Dosyaları</h3>
+        </div>
+        <div class="card-content">
+            <div class="stat">
+                <span class="number">156</span>
+                <span class="label">Aktif Dosya</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="card-header">
+            <i class="material-icons">security</i>
+            <h3>Ceza Dosyaları</h3>
+        </div>
+        <div class="card-content">
+            <div class="stat">
+                <span class="number">89</span>
+                <span class="label">Aktif Dosya</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="card-header">
+            <i class="material-icons">event</i>
+            <h3>Bugünkü Duruşmalar</h3>
+        </div>
+        <div class="card-content">
+            <div class="stat">
+                <span class="number">12</span>
+                <span class="label">Duruşma</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="card-header">
+            <i class="material-icons">notifications</i>
+            <h3>Bildirimler</h3>
+        </div>
+        <div class="card-content">
+            <div class="stat">
+                <span class="number">5</span>
+                <span class="label">Yeni Bildirim</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="notification-list">
+    <h3>Son Bildirimler</h3>
+    <div class="notification-item">
+        <i class="material-icons">circle_notifications</i>
+        <span>2024/414 - Çatalca 2. Asliye Hukuk Mahkemesi duruşması bugün saat 10:30'da</span>
+    </div>
+    <!-- Diğer bildirimler -->
+</div>
+
+<script>
+    function updateDateTime() {
+        const now = new Date();
+        document.getElementById('current-date').innerText = now.toLocaleDateString();
+        document.getElementById('current-time').innerText = now.toLocaleTimeString();
     }
-    </script>
-</body>
-</html>
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+</script>
+{% endblock %}

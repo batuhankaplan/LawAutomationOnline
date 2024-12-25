@@ -5,11 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giriş Yap - Kaplan Hukuk Otomasyon</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .sidebar {
+            background-color: rgba(45,49,60,255);
+        }
+    </style>
 </head>
 <body>
     <div class="login-container">
+        <div class="header">
+            <div class="header-left">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kaplan Hukuk">
+            </div>
+        </div>
         <h2>Giriş Yap</h2>
         <p>Giriş işlemi devre dışı bırakılmıştır.</p>
     </div>
+    <script>
+    </script>
 </body>
 </html>

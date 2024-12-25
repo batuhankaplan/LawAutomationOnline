@@ -6,12 +6,75 @@
     <title>Duyurular - Kaplan Hukuk Otomasyon</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .sidebar {
+            background-color: rgba(45,49,60,255);
+        }
+        .announcement-board {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .post-it {
+            width: 200px;
+            height: 200px;
+            margin: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            background-color: #fff; /* Set background color to white */
+            color: #000; /* Set text color to black */
+            border: 2px solid #000; /* Set border color to black */
+            border-radius: 5px;
+            transform: rotate(-2deg);
+            transition: transform 0.2s ease;
+        }
+        .post-it:hover {
+            transform: rotate(0deg);
+        }
+        .form-container {
+            background: var(--text-light);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .input-group label {
+            font-weight: bold;
+        }
+        .input-group input, .input-group textarea {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .form-container button {
+            align-self: flex-end;
+            padding: 10px 20px;
+            margin-top: 10px; /* Move the button slightly lower */
+            background: var(--primary-color);
+            color: var(--text-light);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .form-container button:hover {
+            background: var(--hover-color);
+        }
+    </style>
 </head>
 <body class="duyurular">
     <div class="container">
         <nav class="sidebar">
             <div class="logo">
-                <h2>KAPLAN HUKUK OTOMASYON</h2>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kaplan Hukuk">
             </div>
             <ul class="nav-links">
                 <li><a href="{{ url_for('anasayfa') }}"><i class="material-icons">home</i>Ana Sayfa</a></li>
@@ -25,22 +88,27 @@
         
         <main class="content">
             <header>
-                <h1>Duyurular</h1>
+                <div class="header-left">
+                    <h1>Duyurular</h1>
+                </div>
             </header>
-            <form method="POST">
-                <div class="input-group">
-                    <label for="title">Başlık</label>
-                    <input type="text" id="title" name="title" required>
-                </div>
-                <div class="input-group">
-                    <label for="content">İçerik</label>
-                    <textarea id="content" name="content" required></textarea>
-                </div>
-                <button type="submit">Ekle</button>
-            </form>
+            <div class="form-container">
+                <form method="POST">
+                    <div class="input-group">
+                        <label for="title">Başlık</label>
+                        <input type="text" id="title" name="title" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="content">İçerik</label>
+                        <textarea id="content" name="content" required></textarea>
+                    </div>
+                    <button type="submit">Ekle</button>
+                </form>
+            </div>
             <div class="announcement-board">
+                {% set colors = ['#ffeb3b', '#ff5722', '#4caf50', '#2196f3', '#9c27b0'] %}
                 {% for announcement in announcements %}
-                    <div class="post-it" style="background-color: {{ announcement.color }};">
+                    <div class="post-it">
                         <h3>{{ announcement.title }}</h3>
                         <p>{{ announcement.content }}</p>
                     </div>

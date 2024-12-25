@@ -6,12 +6,17 @@
     <title>Dava İşlemleri - Kaplan Hukuk Otomasyon</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .sidebar {
+            background-color: rgba(45,49,60,255);
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <nav class="sidebar">
             <div class="logo">
-                <h2>KAPLAN HUKUK OTOMASYON</h2>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kaplan Hukuk">
             </div>
             <ul class="nav-links">
                 <li><a href="{{ url_for('anasayfa') }}"><i class="material-icons">home</i>Ana Sayfa</a></li>
@@ -31,7 +36,15 @@
         
         <main class="content">
             <header>
-                <h1>Dava İşlemleri</h1>
+                <div class="header-left">
+                    <h1>Dava İşlemleri</h1>
+                </div>
+                <div class="header-right">
+                    <div class="datetime-box">
+                        <div id="current-date"></div>
+                        <div id="current-time"></div>
+                    </div>
+                </div>
             </header>
 
             <!-- Arama Formu -->
@@ -183,6 +196,14 @@
             element.style.display = "none";
         }
     }
+
+    function updateDateTime() {
+        const now = new Date();
+        document.getElementById('current-date').innerText = now.toLocaleDateString();
+        document.getElementById('current-time').innerText = now.toLocaleTimeString();
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
     </script>
 </body>
 </html>
