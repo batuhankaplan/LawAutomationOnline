@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Takvim - Kaplan Hukuk Otomasyon</title>
+    <title>Ödemeler - Kaplan Hukuk Otomasyon</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -26,31 +25,38 @@
         
         <main class="content">
             <header>
-                <h1>Takvim</h1>
+                <h1>Ödemeler</h1>
             </header>
-            <div class="calendar-wrapper">
-                <div class="calendar-nav">
-                    <button id="prevMonth">&lt;</button>
-                    <h2 id="currentMonth">Kasım 2024</h2>
-                    <button id="nextMonth">&gt;</button>
+            <form method="POST">
+                <div class="input-group">
+                    <label for="name">Ad</label>
+                    <input type="text" id="name" name="name" required>
                 </div>
-                <div class="calendar-grid">
-                    <div class="weekdays">
-                        <div>Pazartesi</div>
-                        <div>Salı</div>
-                        <div>Çarşamba</div>
-                        <div>Perşembe</div>
-                        <div>Cuma</div>
-                        <div>Cumartesi</div>
-                        <div>Pazar</div>
-                    </div>
-                    <div id="days" class="days">
-                        <!-- Günler JavaScript ile eklenecek -->
-                    </div>
+                <div class="input-group">
+                    <label for="surname">Soyad</label>
+                    <input type="text" id="surname" name="surname" required>
                 </div>
-            </div>
+                <div class="input-group">
+                    <label for="tc">TC Kimlik No</label>
+                    <input type="text" id="tc" name="tc" required>
+                </div>
+                <div class="input-group">
+                    <label for="amount">Tutar</label>
+                    <input type="number" id="amount" name="amount" required>
+                </div>
+                <div class="input-group">
+                    <label for="date">Tarih</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                <button type="submit">Kaydet</button>
+            </form>
+            <h2>Müvekkil Listesi</h2>
+            <ul>
+                {% for client in clients %}
+                    <li>{{ client.name }} {{ client.surname }} - {{ client.tc }}</li>
+                {% endfor %}
+            </ul>
         </main>
     </div>
-    <script src="{{ url_for('static', filename='calendar.js') }}"></script>
 </body>
 </html>

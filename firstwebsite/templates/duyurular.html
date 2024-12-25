@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" class="duyurular">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Takvim - Kaplan Hukuk Otomasyon</title>
+    <title>Duyurular - Kaplan Hukuk Otomasyon</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='calendar.css') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
-<body>
+<body class="duyurular">
     <div class="container">
         <nav class="sidebar">
             <div class="logo">
@@ -26,31 +25,28 @@
         
         <main class="content">
             <header>
-                <h1>Takvim</h1>
+                <h1>Duyurular</h1>
             </header>
-            <div class="calendar-wrapper">
-                <div class="calendar-nav">
-                    <button id="prevMonth">&lt;</button>
-                    <h2 id="currentMonth">Kasım 2024</h2>
-                    <button id="nextMonth">&gt;</button>
+            <form method="POST">
+                <div class="input-group">
+                    <label for="title">Başlık</label>
+                    <input type="text" id="title" name="title" required>
                 </div>
-                <div class="calendar-grid">
-                    <div class="weekdays">
-                        <div>Pazartesi</div>
-                        <div>Salı</div>
-                        <div>Çarşamba</div>
-                        <div>Perşembe</div>
-                        <div>Cuma</div>
-                        <div>Cumartesi</div>
-                        <div>Pazar</div>
-                    </div>
-                    <div id="days" class="days">
-                        <!-- Günler JavaScript ile eklenecek -->
-                    </div>
+                <div class="input-group">
+                    <label for="content">İçerik</label>
+                    <textarea id="content" name="content" required></textarea>
                 </div>
+                <button type="submit">Ekle</button>
+            </form>
+            <div class="announcement-board">
+                {% for announcement in announcements %}
+                    <div class="post-it" style="background-color: {{ announcement.color }};">
+                        <h3>{{ announcement.title }}</h3>
+                        <p>{{ announcement.content }}</p>
+                    </div>
+                {% endfor %}
             </div>
         </main>
     </div>
-    <script src="{{ url_for('static', filename='calendar.js') }}"></script>
 </body>
 </html>

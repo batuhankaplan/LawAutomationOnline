@@ -35,57 +35,166 @@ document.addEventListener('DOMContentLoaded', function() {
             const dayElement = document.createElement('div');
             dayElement.className = 'day';
             
+            const dateKey = `${year}-${month+1}-${day}`;
+            
             if (day === currentDate.getDate() && 
                 month === currentDate.getMonth() && 
                 year === currentDate.getFullYear()) {
                 dayElement.classList.add('today');
             }
 
-            const dateKey = `${year}-${month+1}-${day}`;
-            
-            dayElement.innerHTML = `
-                <div class="day-number">${day}</div>
-                <div class="add-event">+</div>
-                ${events[dateKey] ? `<div class="event-text">${events[dateKey]}</div>` : ''}
-            `;
-            
-            dayElement.querySelector('.add-event').addEventListener('click', function(e) {
-                e.stopPropagation();
-                showEventModal(dateKey);
-            });
+            const dayContent = document.createElement('div');
+            dayContent.className = 'day-content';
 
+            const dayNumber = document.createElement('div');
+            dayNumber.className = 'day-number';
+            dayNumber.textContent = day;
+
+            const eventContent = document.createElement('div');
+            eventContent.className = 'event-content';
+
+            if (events[dateKey]) {
+                const eventText = document.createElement('div');
+                eventText.className = 'event-text';
+                eventText.textContent = events[dateKey];
+                eventText.onclick = function(e) {
+                    e.stopPropagation();
+                    showEventPreview(dateKey, events[dateKey]);
+                };
+                
+                const editButton = document.createElement('button');
+                editButton.className = 'edit-event-btn';
+                editButton.innerHTML = '<i class="material-icons">edit</i>';
+                editButton.title = 'Düzenle';
+                editButton.onclick = function(e) {
+                    e.stopPropagation();
+                    showEventModal(dateKey, true);
+                };
+                
+                eventContent.appendChild(eventText);
+                eventContent.appendChild(editButton);
+            }
+
+            dayContent.appendChild(dayNumber);
+            dayContent.appendChild(eventContent);
+
+            const addButton = document.createElement('button');
+            addButton.className = 'add-event-btn';
+            addButton.innerHTML = '<i class="material-icons">add</i>';
+            addButton.title = 'Yeni Not Ekle';
+            addButton.onclick = function(e) {
+                e.stopPropagation();
+                showEventModal(dateKey, false);
+            };
+
+            dayElement.appendChild(dayContent);
+            dayElement.appendChild(addButton);
             daysContainer.appendChild(dayElement);
         }
     }
 
-    function showEventModal(dateKey) {
+    function showEventModal(dateKey, isEdit) {
+        const existingModal = document.querySelector('.event-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
         const modal = document.createElement('div');
         modal.className = 'event-modal';
-        modal.style.display = 'flex';
         
         modal.innerHTML = `
             <div class="modal-content">
-                <textarea placeholder="Notunuzu girin...">${events[dateKey] || ''}</textarea>
-                <button onclick="saveEvent('${dateKey}')">Kaydet</button>
+                <div class="modal-header">
+                    <h3>${isEdit ? 'Notu Düzenle' : 'Yeni Not Ekle'}</h3>
+                    <button class="close-modal">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <textarea placeholder="Notunuzu girin...">${isEdit ? events[dateKey] || '' : ''}</textarea>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary modal-cancel">İptal</button>
+                    <button class="btn modal-save">Kaydet</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        modal.style.display = 'flex';
+        
+        const closeBtn = modal.querySelector('.close-modal');
+        const cancelBtn = modal.querySelector('.modal-cancel');
+        const saveBtn = modal.querySelector('.modal-save');
+        const textarea = modal.querySelector('textarea');
+
+        closeBtn.onclick = cancelBtn.onclick = function() {
+            modal.remove();
+        };
+
+        saveBtn.onclick = function() {
+            events[dateKey] = textarea.value;
+            renderCalendar(currentDate);
+            modal.remove();
+        };
+
+        modal.onclick = function(e) {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        };
+
+        textarea.focus();
+    }
+
+    function showEventPreview(dateKey, eventText) {
+        const existingModal = document.querySelector('.preview-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'preview-modal';
+        
+        modal.innerHTML = `
+            <div class="preview-content">
+                <div class="preview-header">
+                    <h3>Not Detayı</h3>
+                    <button class="close-modal">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                <div class="preview-body">
+                    <p>${eventText}</p>
+                </div>
+                <div class="preview-footer">
+                    <button class="btn btn-secondary preview-close">Kapat</button>
+                    <button class="btn preview-edit">Düzenle</button>
+                </div>
             </div>
         `;
         
         document.body.appendChild(modal);
         
-        modal.addEventListener('click', function(e) {
+        const closeBtn = modal.querySelector('.close-modal');
+        const closeButton = modal.querySelector('.preview-close');
+        const editButton = modal.querySelector('.preview-edit');
+
+        closeBtn.onclick = closeButton.onclick = function() {
+            modal.remove();
+        };
+
+        editButton.onclick = function() {
+            modal.remove();
+            showEventModal(dateKey, true);
+        };
+
+        modal.onclick = function(e) {
             if (e.target === modal) {
                 modal.remove();
             }
-        });
+        };
     }
-
-    window.saveEvent = function(dateKey) {
-        const modal = document.querySelector('.event-modal');
-        const textarea = modal.querySelector('textarea');
-        events[dateKey] = textarea.value;
-        renderCalendar(currentDate);
-        modal.remove();
-    };
 
     prevButton.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() - 1);

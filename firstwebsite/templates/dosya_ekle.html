@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dosya Ekle - Kaplan Hukuk Otomasyon</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <div class="logo">
+                <h2>KAPLAN HUKUK OTOMASYON</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('anasayfa') }}"><i class="material-icons">home</i>Ana Sayfa</a></li>
+                <li><a href="{{ url_for('takvim') }}"><i class="material-icons">calendar_today</i>Takvim</a></li>
+                <li>
+                    <a href="javascript:void(0);" onclick="toggleDropdown('dosyalarim-dropdown')"><i class="material-icons">folder</i>Dosyalarım</a>
+                    <ul id="dosyalarim-dropdown" class="dropdown">
+                        <li><a href="{{ url_for('dosya_sorgula') }}">Dosya Sorgula</a></li>
+                        <li><a href="{{ url_for('dosya_ekle') }}">Dosya Ekle</a></li>
+                    </ul>
+                </li>
+                <li><a href="{{ url_for('dava_islemleri') }}"><i class="material-icons">gavel</i>Dava İşlemleri</a></li>
+                <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
+                <li><a href="{{ url_for('odemeler') }}"><i class="material-icons">payment</i>Ödemeler</a></li>
+            </ul>
+        </nav>
+        
+        <main class="content">
+            <header>
+                <h1>Dosya Ekle</h1>
+            </header>
+            <form method="POST" class="add-file-form">
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="file-type">Dosya Türü</label>
+                        <select id="file-type" name="file-type" required>
+                            <option value="ceza">Ceza</option>
+                            <option value="hukuk">Hukuk</option>
+                            <option value="icra">İcra</option>
+                            <option value="savcilik">Savcılık</option>
+                            <option value="aihm">AİHM</option>
+                            <option value="aym">AYM</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="year">Yıl</label>
+                        <input type="number" id="year" name="year" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="case-number">Esas No</label>
+                        <input type="text" id="case-number" name="case-number" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="client-name">Müvekkil Adı</label>
+                        <input type="text" id="client-name" name="client-name" required>
+                    </div>
+                </div>
+                <button type="submit" class="add-button">Ekle</button>
+            </form>
+        </main>
+    </div>
+    <script>
+    function toggleDropdown(id) {
+        var element = document.getElementById(id);
+        if (element.style.display === "none" || element.style.display === "") {
+            element.style.display = "block";
+        } else {
+            element.style.display = "none";
+        }
+    }
+    </script>
+</body>
+</html>
