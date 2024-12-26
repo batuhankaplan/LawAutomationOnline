@@ -3,8 +3,6 @@
 {% block title %}Ana Sayfa{% endblock %}
 
 {% block content %}
-
-
 <div class="dashboard-grid">
     <div class="dashboard-card">
         <div class="card-header">
@@ -13,7 +11,7 @@
         </div>
         <div class="card-content">
             <div class="stat">
-                <span class="number">156</span>
+                <span class="number">{{ hukuk_count }}</span>
                 <span class="label">Aktif Dosya</span>
             </div>
         </div>
@@ -26,7 +24,7 @@
         </div>
         <div class="card-content">
             <div class="stat">
-                <span class="number">89</span>
+                <span class="number">{{ ceza_count }}</span>
                 <span class="label">Aktif Dosya</span>
             </div>
         </div>
@@ -34,26 +32,13 @@
 
     <div class="dashboard-card">
         <div class="card-header">
-            <i class="material-icons">event</i>
-            <h3>Bugünkü Duruşmalar</h3>
+            <i class="material-icons">account_balance</i>
+            <h3>İcra Dosyaları</h3>
         </div>
         <div class="card-content">
             <div class="stat">
-                <span class="number">12</span>
-                <span class="label">Duruşma</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="dashboard-card">
-        <div class="card-header">
-            <i class="material-icons">notifications</i>
-            <h3>Bildirimler</h3>
-        </div>
-        <div class="card-content">
-            <div class="stat">
-                <span class="number">5</span>
-                <span class="label">Yeni Bildirim</span>
+                <span class="number">{{ icra_count }}</span>
+                <span class="label">Aktif Dosya</span>
             </div>
         </div>
     </div>
@@ -65,7 +50,6 @@
         <i class="material-icons">circle_notifications</i>
         <span>2024/414 - Çatalca 2. Asliye Hukuk Mahkemesi duruşması bugün saat 10:30'da</span>
     </div>
-    <!-- Diğer bildirimler -->
 </div>
 
 <div class="announcement-list inbox">
@@ -88,5 +72,133 @@
     </table>
 </div>
 
+<style>
+.hearings-count {
+    text-align: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 15px;
+}
 
+.hearings-count .number {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.hearings-count .label {
+    display: block;
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.hearings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.hearing-item {
+    display: flex;
+    gap: 15px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.hearing-time {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--primary-color);
+    font-weight: 500;
+    min-width: 85px;
+}
+
+.hearing-time i {
+    font-size: 18px;
+}
+
+.hearing-details {
+    flex: 1;
+}
+
+.hearing-title {
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.hearing-description {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.no-hearings {
+    text-align: center;
+    padding: 30px 20px;
+    color: #666;
+}
+
+.no-hearings i {
+    font-size: 48px;
+    color: #ddd;
+    margin-bottom: 10px;
+}
+
+.no-hearings p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.card-link {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.card-link:hover {
+    background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.card-link i {
+    font-size: 18px;
+}
+
+.dashboard-card .card-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat {
+    text-align: center;
+    flex-grow: 1;
+}
+
+/* Responsive düzenlemeler */
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 {% endblock %}

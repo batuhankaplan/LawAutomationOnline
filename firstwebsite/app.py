@@ -1,6 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, request, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from werkzeug.utils import secure_filename
 import locale
@@ -45,8 +45,19 @@ class User(db.Model):
 
 @app.route('/')
 def anasayfa():
+    # Duyuruları al
     announcements = Announcement.query.all()
-    return render_template('anasayfa.html', announcements=announcements)
+    
+    # Dosya türlerine göre sayıları hesapla
+    hukuk_count = CaseFile.query.filter_by(file_type='hukuk').count()
+    ceza_count = CaseFile.query.filter_by(file_type='ceza').count()
+    icra_count = CaseFile.query.filter_by(file_type='icra').count()
+    
+    return render_template('anasayfa.html', 
+                         announcements=announcements,
+                         hukuk_count=hukuk_count,
+                         ceza_count=ceza_count,
+                         icra_count=icra_count)
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -81,7 +92,6 @@ class Notification(db.Model):
 class CaseFile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     file_type = db.Column(db.String(50), nullable=False)
-    court = db.Column(db.String(50), nullable=False)
     year = db.Column(db.Integer, nullable=False)
     case_number = db.Column(db.String(50), nullable=False)
     client_name = db.Column(db.String(150), nullable=False)
@@ -93,9 +103,28 @@ class Announcement(db.Model):
     content = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
+class CalendarEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    time = db.Column(db.Time, nullable=False)
+    event_type = db.Column(db.String(50), nullable=False)  # 'durusma', 'tahliye', 'is', 'randevu', 'diger'
+    description = db.Column(db.Text)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
 @app.route('/takvim')
 def takvim():
-    return render_template('takvim.html')
+    events = CalendarEvent.query.all()
+    events_data = [{
+        'id': event.id,
+        'title': event.title,
+        'date': event.date.strftime('%Y-%m-%d'),
+        'time': event.time.strftime('%H:%M'),
+        'event_type': event.event_type,
+        'description': event.description
+    } for event in events]
+    
+    return render_template('takvim.html', events=events_data)
 
 @app.route('/dosyalarim', methods=['GET', 'POST'])
 def dosyalarim():
@@ -227,11 +256,10 @@ def dosya_sorgula():
 def dosya_ekle():
     if request.method == 'POST':
         file_type = request.form['file-type']
-        court = request.form['court']
         year = request.form['year']
         case_number = request.form['case-number']
         client_name = request.form['client-name']
-        new_case_file = CaseFile(file_type=file_type, court=court, year=year, case_number=case_number, client_name=client_name, user_id=1)  # user_id=1 olarak sabitlenmiştir
+        new_case_file = CaseFile(file_type=file_type, year=year, case_number=case_number, client_name=client_name, user_id=1)  # user_id=1 olarak sabitlenmiştir
         db.session.add(new_case_file)
         db.session.commit()
     return render_template('dosya_ekle.html')
@@ -242,7 +270,6 @@ def case_details(case_id):
     if case_file:
         return jsonify({
             'file_type': case_file.file_type,
-            'court': case_file.court,
             'year': case_file.year,
             'case_number': case_file.case_number,
             'client_name': case_file.client_name
@@ -255,7 +282,6 @@ def edit_case(case_id):
     case_file = CaseFile.query.get(case_id)
     if case_file:
         case_file.file_type = data['file_type']
-        case_file.court = data['court']
         case_file.year = data['year']
         case_file.case_number = data['case_number']
         case_file.client_name = data['client_name']
@@ -276,6 +302,113 @@ def delete_case(case_id):
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory('static', filename)
+
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('q', '')
+    if not query:
+        return jsonify([])
+    
+    # Tüm modellerde arama yapalım
+    results = []
+    
+    # Dosyalarda arama
+    case_files = CaseFile.query.filter(
+        db.or_(
+            CaseFile.client_name.ilike(f'%{query}%'),
+            CaseFile.case_number.ilike(f'%{query}%'),
+            CaseFile.file_type.ilike(f'%{query}%')
+        )
+    ).limit(5).all()
+    
+    for case in case_files:
+        results.append({
+            'type': 'Dosya',
+            'title': f'{case.client_name} - {case.case_number}',
+            'url': url_for('dosyalarim')
+        })
+    
+    # Müşterilerde arama
+    clients = Client.query.filter(
+        db.or_(
+            Client.name.ilike(f'%{query}%'),
+            Client.surname.ilike(f'%{query}%'),
+            Client.tc.ilike(f'%{query}%')
+        )
+    ).limit(5).all()
+    
+    for client in clients:
+        results.append({
+            'type': 'Müşteri',
+            'title': f'{client.name} {client.surname}',
+            'url': url_for('odemeler')
+        })
+    
+    # Duyurularda arama
+    announcements = Announcement.query.filter(
+        db.or_(
+            Announcement.title.ilike(f'%{query}%'),
+            Announcement.content.ilike(f'%{query}%')
+        )
+    ).limit(5).all()
+    
+    for announcement in announcements:
+        results.append({
+            'type': 'Duyuru',
+            'title': announcement.title,
+            'url': url_for('duyurular')
+        })
+    
+    return jsonify(results)
+
+@app.route('/add_event', methods=['POST'])
+def add_event():
+    data = request.get_json()
+    
+    # Tarih ve saat bilgisini birleştir
+    date_time_str = f"{data['date']} {data['time']}"
+    date_time_obj = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M')
+    
+    new_event = CalendarEvent(
+        title=data['title'],
+        date=date_time_obj.date(),
+        time=date_time_obj.time(),
+        event_type=data['event_type'],
+        description=data['description'],
+        user_id=1
+    )
+    
+    db.session.add(new_event)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'id': new_event.id
+    })
+
+@app.route('/update_event/<int:event_id>', methods=['PUT'])
+def update_event(event_id):
+    data = request.get_json()
+    event = CalendarEvent.query.get(event_id)
+    
+    if event:
+        event.title = data['title']
+        event.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        event.event_type = data['event_type']
+        event.description = data['description']
+        db.session.commit()
+        return jsonify({'success': True})
+    
+    return jsonify({'success': False})
+
+@app.route('/delete_event/<int:event_id>', methods=['DELETE'])
+def delete_event(event_id):
+    event = CalendarEvent.query.get(event_id)
+    if event:
+        db.session.delete(event)
+        db.session.commit()
+        return jsonify({'success': True})
+    return jsonify({'success': False})
 
 if __name__ == '__main__':
     with app.app_context():

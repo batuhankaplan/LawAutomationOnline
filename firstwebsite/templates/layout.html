@@ -7,6 +7,102 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+    .search-container {
+        position: relative;
+        max-width: 600px;
+        width: 100%;
+    }
+
+    .search-wrapper {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+    }
+
+    #search-input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    #search-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+        outline: none;
+    }
+
+    .search-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 20px;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .search-button:hover {
+        background: var(--hover-color);
+        transform: translateY(-1px);
+    }
+
+    .search-button i {
+        font-size: 20px;
+    }
+
+    /* Mobil uyumluluk için */
+    @media (max-width: 768px) {
+        .search-button span {
+            display: none;
+        }
+        
+        .search-button {
+            padding: 8px;
+        }
+        
+        .search-button i {
+            margin: 0;
+        }
+    }
+
+    /* Sidebar genişliğini güncelle */
+    .sidebar {
+        width: 240px; /* Önceki değer muhtemelen 280px veya 300px civarındaydı */
+        min-width: 240px; /* Sabit genişlik için */
+    }
+
+    /* Mobil görünüm için */
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 200px;
+            min-width: 200px;
+        }
+    }
+
+    /* Logo boyutunu da orantılı olarak küçültelim */
+    .logo img {
+        max-width: 180px;
+        padding: 15px;
+    }
+
+    /* Menü ikonları ve metinleri arasındaki boşluğu azaltalım */
+    .nav-links a {
+        padding: 12px 15px; /* Önceki değer muhtemelen daha büyüktü */
+    }
+
+    .nav-links i {
+        margin-right: 10px; /* İkon ile metin arasındaki boşluğu azalt */
+    }
+    </style>
 </head>
 
 <body>
@@ -33,9 +129,15 @@
         <div class="main-wrapper">
             <main class="content">
                 <header>
-                    <div class="search-bar">
-                        <i class="material-icons">search</i>
-                        <input type="text" placeholder="Ara...">
+                    <div class="search-container">
+                        <div class="search-wrapper">
+                            <input type="text" id="search-input" placeholder="Ara...">
+                            <button class="search-button">
+                                <i class="material-icons">search</i>
+                                <span>Ara</span>
+                            </button>
+                        </div>
+                        <div id="search-results" class="search-results-dropdown"></div>
                     </div>
                     <div class="header-right">
                         <div class="datetime-container">
@@ -70,6 +172,59 @@
             element.style.display = "none";
         }
     }
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            // Kullanıcı yazmayı bitirdikten 300ms sonra aramayı başlat
+            searchTimeout = setTimeout(() => {
+                fetch(`/search?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        searchResults.innerHTML = '';
+                        
+                        if (data.length === 0) {
+                            searchResults.style.display = 'none';
+                            return;
+                        }
+
+                        data.forEach(result => {
+                            const div = document.createElement('div');
+                            div.className = 'search-result-item';
+                            div.innerHTML = `
+                                <span class="result-type">${result.type}</span>
+                                <span class="result-title">${result.title}</span>
+                            `;
+                            div.addEventListener('click', () => {
+                                window.location.href = result.url;
+                            });
+                            searchResults.appendChild(div);
+                        });
+
+                        searchResults.style.display = 'block';
+                    });
+            }, 300);
+        });
+
+        // Sayfa herhangi bir yerine tıklandığında sonuçları gizle
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+    });
     </script>
     
 </body>
