@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Avukat Otomasyon Sistemi{% endblock %}</title>
+    <title>{% block title %}{% endblock %} - Kaplan Hukuk Otomasyon</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        .sidebar {
-            background-color: rgba(45,49,60,255);
-        }
-    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
+
 <body>
+    
     <div class="container">
         <nav class="sidebar">
             <div class="logo">
@@ -28,15 +26,40 @@
                         <li><a href="{{ url_for('dosya_ekle') }}">Dosya Ekle</a></li>
                     </ul>
                 </li>
-                <li><a href="{{ url_for('dava_islemleri') }}"><i class="material-icons">gavel</i>Dava İşlemleri</a></li>
                 <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
                 <li><a href="{{ url_for('odemeler') }}"><i class="material-icons">payment</i>Ödemeler</a></li>
             </ul>
         </nav>
-        
-        <main class="content">
-            {% block content %}{% endblock %}
-        </main>
+        <div class="main-wrapper">
+            <main class="content">
+                <header>
+                    <div class="search-bar">
+                        <i class="material-icons">search</i>
+                        <input type="text" placeholder="Ara...">
+                    </div>
+                    <div class="header-right">
+                        <div class="datetime-container">
+                            <span class="datetime-text">{{ current_time.weekday }}</span>
+                            <span class="separator">|</span>
+                            <span class="datetime-text">{{ current_time.time }}</span>
+                            <span class="separator">|</span>
+                            <span class="datetime-text">{{ current_time.date }}</span>
+                        </div>
+                    </div>
+                </header>
+                {% block content %}{% endblock %}
+            </main>
+            <footer class="site-footer">
+                <div class="footer-content">
+                    <span>© 2024 Kaplan Hukuk</span>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    </div>
+                </div>
+            </footer>
+        </div>
     </div>
     <script>
     function toggleDropdown(id) {
@@ -48,5 +71,7 @@
         }
     }
     </script>
+    
 </body>
+  
 </html>

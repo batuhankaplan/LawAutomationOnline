@@ -1,93 +1,66 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dosyalarım - Kaplan Hukuk Otomasyon</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        .sidebar {
-            background-color: rgba(45,49,60,255);
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <nav class="sidebar">
-            <div class="logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kaplan Hukuk">
-            </div>
-            <ul class="nav-links">
-                <li><a href="{{ url_for('anasayfa') }}"><i class="material-icons">home</i>Ana Sayfa</a></li>
-                <li><a href="{{ url_for('takvim') }}"><i class="material-icons">calendar_today</i>Takvim</a></li>
-                <li>
-                    <a href="javascript:void(0);" onclick="toggleDropdown('dosyalarim-dropdown')"><i class="material-icons">folder</i>Dosyalarım</a>
-                    <ul id="dosyalarim-dropdown" class="dropdown">
-                        <li><a href="{{ url_for('dosya_sorgula') }}">Dosya Sorgula</a></li>
-                        <li><a href="{{ url_for('dosya_ekle') }}">Dosya Ekle</a></li>
-                    </ul>
-                </li>
-                <li><a href="{{ url_for('dava_islemleri') }}"><i class="material-icons">gavel</i>Dava İşlemleri</a></li>
-                <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
-                <li><a href="{{ url_for('odemeler') }}"><i class="material-icons">payment</i>Ödemeler</a></li>
-            </ul>
-        </nav>
-        
-        <main class="content">
-            <header>
-                <div class="header-left">
-                    <h1>Dosya Sorgula</h1>
-                </div>
-            </header>
-            <form method="POST" class="search-form">
-                <div class="form-row">
-                    <div class="input-group">
-                        <label for="file-type">Dosya Türü</label>
-                        <select id="file-type" name="file-type">
-                            <option value="">Tümü</option>
-                            <option value="ceza">Ceza</option>
-                            <option value="hukuk">Hukuk</option>
-                            <option value="icra">İcra</option>
-                            <option value="savcilik">Savcılık</option>
-                            <option value="aihm">AİHM</option>
-                            <option value="aym">AYM</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label for="year">Yıl</label>
-                        <input type="number" id="year" name="year">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="input-group">
-                        <label for="case-number">Esas No</label>
-                        <input type="text" id="case-number" name="case-number">
-                    </div>
-                    <div class="input-group">
-                        <label for="client-name">Müvekkil Adı</label>
-                        <input type="text" id="client-name" name="client-name">
-                    </div>
-                </div>
-                <button type="submit" class="search-button">Ara</button>
-            </form>
-            <h2>Dosya Listesi</h2>
-            <ul>
-                {% for case_file in case_files %}
-                    <li>{{ case_file.file_type }} - {{ case_file.year }} - {{ case_file.case_number }} - {{ case_file.client_name }}</li>
-                {% endfor %}
-            </ul>
-        </main>
+{% extends "layout.html" %}
+
+{% block title %}Dosyalarım{% endblock %}
+
+{% block content %}
+<header>
+    <div class="header-left">
+        <h1>Dosyalarım</h1>
     </div>
-    <script>
-        function toggleDropdown(id) {
-            var element = document.getElementById(id);
-            if (element.style.display === "none" || element.style.display === "") {
-                element.style.display = "block";
-            } else {
-                element.style.display = "none";
-            }
-        }
-    </script>
-</body>
-</html>
+</header>
+<div class="form-container">
+    <form method="POST" class="search-form">
+        <div class="form-grid">
+            <div class="input-group">
+                <label for="file-type">Dosya Türü</label>
+                <select id="file-type" name="file-type">
+                    <option value="">Tümü</option>
+                    <option value="ceza">Ceza</option>
+                    <option value="hukuk">Hukuk</option>
+                    <option value="icra">İcra</option>
+                    <option value="savcilik">Savcılık</option>
+                    <option value="aihm">AİHM</option>
+                    <option value="aym">AYM</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="year">Yıl</label>
+                <input type="number" id="year" name="year">
+            </div>
+            <div class="input-group">
+                <label for="case-number">Esas No</label>
+                <input type="text" id="case-number" name="case-number">
+            </div>
+            <div class="input-group">
+                <label for="client-name">Müvekkil Adı</label>
+                <input type="text" id="client-name" name="client-name">
+            </div>
+        </div>
+        <div style="text-align: right; margin-top: 15px;">
+            <button type="submit" class="btn">Ara</button>
+        </div>
+    </form>
+</div>
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Dosya Türü</th>
+                <th>Yıl</th>
+                <th>Esas No</th>
+                <th>Müvekkil Adı</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for case_file in case_files %}
+            <tr>
+                <td>{{ case_file.file_type }}</td>
+                <td>{{ case_file.year }}</td>
+                <td>{{ case_file.case_number }}</td>
+                <td>{{ case_file.client_name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

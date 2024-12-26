@@ -3,12 +3,39 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
+import locale
 
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///clients.db'
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 db = SQLAlchemy(app)
+
+# Türkçe tarih için locale ayarı
+try:
+    locale.setlocale(locale.LC_ALL, 'tr_TR.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'tr_TR')
+    except locale.Error:
+        locale.setlocale(locale.LC_ALL, '')  # Sistem varsayılanını kullan
+
+@app.context_processor
+def inject_datetime():
+    try:
+        now = datetime.now()
+        current_time = {
+            'weekday': now.strftime('%A'),  # Gün adı
+            'time': now.strftime('%H:%M'),  # Saat
+            'date': now.strftime('%d.%m.%Y')  # Tarih
+        }
+    except Exception:
+        current_time = {
+            'weekday': '',
+            'time': '',
+            'date': ''
+        }
+    return dict(current_time=current_time)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -18,8 +45,8 @@ class User(db.Model):
 
 @app.route('/')
 def anasayfa():
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return render_template('anasayfa.html', current_time=current_time)
+    announcements = Announcement.query.all()
+    return render_template('anasayfa.html', announcements=announcements)
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -54,6 +81,7 @@ class Notification(db.Model):
 class CaseFile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     file_type = db.Column(db.String(50), nullable=False)
+    court = db.Column(db.String(50), nullable=False)
     year = db.Column(db.Integer, nullable=False)
     case_number = db.Column(db.String(50), nullable=False)
     client_name = db.Column(db.String(150), nullable=False)
@@ -89,24 +117,6 @@ def dosyalarim():
     else:
         case_files = []
     return render_template('dosyalarim.html', case_files=case_files)
-
-@app.route('/dava_islemleri', methods=['GET', 'POST'])
-def dava_islemleri():
-    if request.method == 'POST':
-        if 'file' in request.files:
-            file = request.files['file']
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            new_document = Document(filename=filename, user_id=1)  # user_id=1 olarak sabitlenmiştir
-            db.session.add(new_document)
-            db.session.commit()
-        else:
-            # Handle other form submissions for case search
-            # ...existing code...
-            pass
-    documents = Document.query.all()
-    cases = CaseFile.query.all()  # Adjust this query as needed
-    return render_template('dava_islemleri.html', cases=cases, documents=documents)
 
 @app.route('/duyurular', methods=['GET', 'POST'])
 def duyurular():
@@ -217,13 +227,50 @@ def dosya_sorgula():
 def dosya_ekle():
     if request.method == 'POST':
         file_type = request.form['file-type']
+        court = request.form['court']
         year = request.form['year']
         case_number = request.form['case-number']
         client_name = request.form['client-name']
-        new_case_file = CaseFile(file_type=file_type, year=year, case_number=case_number, client_name=client_name, user_id=1)  # user_id=1 olarak sabitlenmiştir
+        new_case_file = CaseFile(file_type=file_type, court=court, year=year, case_number=case_number, client_name=client_name, user_id=1)  # user_id=1 olarak sabitlenmiştir
         db.session.add(new_case_file)
         db.session.commit()
     return render_template('dosya_ekle.html')
+
+@app.route('/case_details/<int:case_id>', methods=['GET'])
+def case_details(case_id):
+    case_file = CaseFile.query.get(case_id)
+    if case_file:
+        return jsonify({
+            'file_type': case_file.file_type,
+            'court': case_file.court,
+            'year': case_file.year,
+            'case_number': case_file.case_number,
+            'client_name': case_file.client_name
+        })
+    return jsonify(success=False)
+
+@app.route('/edit_case/<int:case_id>', methods=['POST'])
+def edit_case(case_id):
+    data = request.get_json()
+    case_file = CaseFile.query.get(case_id)
+    if case_file:
+        case_file.file_type = data['file_type']
+        case_file.court = data['court']
+        case_file.year = data['year']
+        case_file.case_number = data['case_number']
+        case_file.client_name = data['client_name']
+        db.session.commit()
+        return jsonify(success=True)
+    return jsonify(success=False)
+
+@app.route('/delete_case/<int:case_id>', methods=['POST'])
+def delete_case(case_id):
+    case_file = CaseFile.query.get(case_id)
+    if case_file:
+        db.session.delete(case_file)
+        db.session.commit()
+        return jsonify(success=True)
+    return jsonify(success=False)
 
 # Static dosyalar için özel route
 @app.route('/static/<path:filename>')
