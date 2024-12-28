@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/universalviewer@4.0.0/dist/uv.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/universalviewer@4.0.0/dist/uv.css">
     <style>
     .search-container {
         position: relative;
@@ -102,6 +104,52 @@
     .nav-links i {
         margin-right: 10px; /* İkon ile metin arasındaki boşluğu azalt */
     }
+
+    /* Search sonuçları için stil */
+    .search-results-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        z-index: 1000;
+        max-height: 300px;
+        overflow-y: auto;
+        display: none;
+    }
+
+    .search-result-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+
+    .search-result-item:hover {
+        background: #f8f9fa;
+    }
+
+    .result-type {
+        font-size: 0.8rem;
+        color: #6c757d;
+        background: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 3px;
+    }
+
+    .result-title {
+        flex: 1;
+        color: #2c3e50;
+    }
     </style>
 </head>
 
@@ -116,7 +164,7 @@
                 <li><a href="{{ url_for('anasayfa') }}"><i class="material-icons">home</i>Ana Sayfa</a></li>
                 <li><a href="{{ url_for('takvim') }}"><i class="material-icons">calendar_today</i>Takvim</a></li>
                 <li>
-                    <a href="javascript:void(0);" onclick="toggleDropdown('dosyalarim-dropdown')"><i class="material-icons">folder</i>Dosyalarım</a>
+                    <a href="#" class="dosyalarim-link"><i class="material-icons">folder</i>Dosyalarım</a>
                     <ul id="dosyalarim-dropdown" class="dropdown">
                         <li><a href="{{ url_for('dosya_sorgula') }}">Dosya Sorgula</a></li>
                         <li><a href="{{ url_for('dosya_ekle') }}">Dosya Ekle</a></li>
@@ -164,16 +212,6 @@
         </div>
     </div>
     <script>
-    function toggleDropdown(id) {
-        var element = document.getElementById(id);
-        if (element.style.display === "none" || element.style.display === "") {
-            element.style.display = "block";
-        } else {
-            element.style.display = "none";
-        }
-    }
-    </script>
-    <script>
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('search-input');
         const searchResults = document.getElementById('search-results');
@@ -188,7 +226,6 @@
                 return;
             }
 
-            // Kullanıcı yazmayı bitirdikten 300ms sonra aramayı başlat
             searchTimeout = setTimeout(() => {
                 fetch(`/search?q=${encodeURIComponent(query)}`)
                     .then(response => response.json())
@@ -207,9 +244,26 @@
                                 <span class="result-type">${result.type}</span>
                                 <span class="result-title">${result.title}</span>
                             `;
+                            
                             div.addEventListener('click', () => {
-                                window.location.href = result.url;
+                                // Sonuç türüne göre yönlendirme yap
+                                if (result.source === 'case_file') {
+                                    // Dosya detaylarını göster
+                                    window.location.href = '/dosya_sorgula';
+                                    
+                                    // Local storage'a case_id'yi kaydet
+                                    localStorage.setItem('openCaseDetails', result.id);
+                                    
+                                } else if (result.source === 'client') {
+                                    // Ödeme detaylarına git
+                                    window.location.href = `/odemeler?client_id=${result.id}`;
+                                }
+                                
+                                // Search box'ı temizle ve kapat
+                                searchInput.value = '';
+                                searchResults.style.display = 'none';
                             });
+                            
                             searchResults.appendChild(div);
                         });
 
@@ -223,6 +277,32 @@
             if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
                 searchResults.style.display = 'none';
             }
+        });
+
+        // Dosyalarım menüsü için gerekli elementleri seçelim
+        const dosyalarimLink = document.querySelector('.dosyalarim-link');
+        const dosyalarimDropdown = document.getElementById('dosyalarim-dropdown');
+
+        // Dosyalarım linkine tıklandığında
+        dosyalarimLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (dosyalarimDropdown.style.display === "none" || dosyalarimDropdown.style.display === "") {
+                dosyalarimDropdown.style.display = "block";
+            } else {
+                dosyalarimDropdown.style.display = "none";
+            }
+        });
+
+        // Alt menü linklerine tıklandığında menünün kapanmasını engelleyelim
+        const dropdownLinks = dosyalarimDropdown.querySelectorAll('a');
+        dropdownLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.stopPropagation();
+                // Menüyü açık tutmak için display özelliğini koruyalım
+                dosyalarimDropdown.style.display = "block";
+            });
         });
     });
     </script>

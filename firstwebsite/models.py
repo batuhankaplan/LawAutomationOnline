@@ -24,4 +24,12 @@ class CalendarEvent(db.Model):
     def __repr__(self):
         return f'<Event {self.title} on {self.date}>'
 
+class Document(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    case_id = db.Column(db.Integer, db.ForeignKey('case_file.id'), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    filepath = db.Column(db.String(255), nullable=False)
+    upload_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    description = db.Column(db.Text)
+
 # ...existing code...

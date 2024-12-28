@@ -11,131 +11,1791 @@
 
 <div class="inbox">
     <form method="POST" class="search-form">
-        <div class="form-grid">
-            <div class="input-group">
-                <label for="file-type">Dosya Türü</label>
-                <select id="file-type" name="file-type">
-                    <option value="">Tümü</option>
-                    <option value="ceza">Ceza</option>
-                    <option value="hukuk">Hukuk</option>
-                    <option value="icra">İcra</option>
-                    <option value="savcilik">Savcılık</option>
-                    <option value="aihm">AİHM</option>
-                    <option value="aym">AYM</option>
-                </select>
+        <div class="form-columns">
+            <!-- Sol Sütun -->
+            <div class="form-column">
+                <div class="input-group">
+                    <label for="file-type">Dosya Türü</label>
+                    <select id="file-type" name="file-type" onchange="updateDepartments()">
+                        <option value="">Tümü</option>
+                        <option value="hukuk">Hukuk</option>
+                        <option value="ceza">Ceza</option>
+                        <option value="icra">İcra</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="courthouse">Adliye</label>
+                    <select id="courthouse" name="courthouse">
+                        <option value="">Tümü</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="department">Birim</label>
+                    <select id="department" name="department" onchange="updateCourtNumbers()">
+                        <option value="">Tümü</option>
+                    </select>
+                </div>
+
+                <div id="court-number-container" class="input-group" style="display: none;">
+                    <label for="court-number">Mahkeme</label>
+                    <select id="court-number" name="court-number">
+                        <option value="">Tümü</option>
+                    </select>
+                </div>
             </div>
-            <div class="input-group">
-                <label for="year">Yıl</label>
-                <input type="number" id="year" name="year">
-            </div>
-            <div class="input-group">
-                <label for="case-number">Esas No</label>
-                <input type="text" id="case-number" name="case-number">
-            </div>
-            <div class="input-group">
-                <label for="client-name">Müvekkil Adı</label>
-                <input type="text" id="client-name" name="client-name">
+            
+            <!-- Sağ Sütun -->
+            <div class="form-column">
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="year">Yıl</label>
+                        <input type="number" id="year" name="year">
+                    </div>
+                    <div class="input-group">
+                        <label for="case-number">Esas No</label>
+                        <input type="text" id="case-number" name="case-number">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="client-name">Müvekkil Adı</label>
+                    <input type="text" id="client-name" name="client-name">
+                </div>
+                <div class="input-group">
+                    <label for="status">Dosya Durumu</label>
+                    <select id="status" name="status">
+                        <option value="">Tümü</option>
+                        <option value="Aktif">Aktif</option>
+                        <option value="Kapalı">Kapalı</option>
+                    </select>
+                </div>
             </div>
         </div>
-        <div style="text-align: right; margin-top: 15px;">
+        <div class="search-button-container">
             <button type="submit" class="btn">Ara</button>
         </div>
     </form>
 </div>
 
-<div class="table-container">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Dosya Türü</th>
-                <th>Yıl</th>
-                <th>Esas No</th>
-                <th>Müvekkil Adı</th>
-                <th>İşlemler</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for case_file in case_files %}
-            <tr>
-                <td>{{ case_file.file_type }}</td>
-                <td>{{ case_file.year }}</td>
-                <td>{{ case_file.case_number }}</td>
-                <td>{{ case_file.client_name }}</td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="detail-btn" onclick="showDetails({{ case_file.id }})">Detay</button>
-                        <button class="edit-btn" onclick="editCase({{ case_file.id }})"><i class="material-icons">edit</i></button>
-                        <button class="delete-btn" onclick="deleteCase({{ case_file.id }})">Sil</button>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Dosya Türü</th>
+            <th>Yıl</th>
+            <th>Esas No</th>
+            <th>Müvekkil Adı</th>
+            <th>Durum</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for case_file in case_files %}
+        <tr data-case-id="{{ case_file.id }}">
+            <td class="case-type">
+                <div class="file-type-details">
+                    <div class="main-type">{{ case_file.file_type|title }}</div>
+                    <div class="sub-details">
+                        <small>{{ case_file.courthouse }}</small>
+                        <small>{{ case_file.department }}</small>
                     </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                </div>
+            </td>
+            <td>{{ case_file.year }}</td>
+            <td class="case-number">{{ case_file.case_number }}</td>
+            <td class="client-name">{{ case_file.client_name }}</td>
+            <td>
+                <span class="case-status status-text {% if case_file.status == 'Aktif' %}status-active{% else %}status-closed{% endif %}">
+                    {{ case_file.status }}
+                </span>
+            </td>
+            <td>
+                <button class="action-btn view-btn" onclick="showDetails({{ case_file.id }})" title="Dosya Detayları">
+                    <i class="material-icons">visibility</i>
+                </button>
+                <span style="color: #dee2e6; margin: 0 8px;">|</span>
+                <button class="action-btn delete-btn" onclick="deleteCase({{ case_file.id }})" title="Dosyayı Sil">
+                    <i class="material-icons">delete</i>
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Dosya Detay Modalı -->
+<div id="fileDetailModal" class="file-detail-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Dosya Detayları</h2>
+            <button class="close-btn" onclick="closeDetailModal()">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Temel Bilgiler -->
+            <div class="detail-section basic-info">
+                <div class="info-row">
+                    <div class="info-group">
+                        <label>DOSYA TÜRÜ</label>
+                        <span id="detailFileType"></span>
+                    </div>
+                    <div class="info-group">
+                        <label>ADLİYE</label>
+                        <span id="detailCourthouse"></span>
+                    </div>
+                    <div class="info-group">
+                        <label>BİRİM</label>
+                        <span id="detailDepartment"></span>
+                    </div>
+                    <div class="info-group">
+                        <label>DOSYA NUMARASI</label>
+                        <span id="detailCaseNumber"></span>
+                    </div>
+                </div>
+
+                <div class="info-row">
+                    <div class="info-group">
+                        <label>MÜVEKKİL ADI</label>
+                        <span id="detailClientName"></span>
+                    </div>
+                    <div class="info-group">
+                        <label>DOSYA DURUMU</label>
+                        <span id="detailStatus"></span>
+                    </div>
+                    <div class="info-group">
+                        <label>AÇILIŞ TARİHİ</label>
+                        <span id="detailOpenDate"></span>
+                    </div>
+                    <div class="info-group">
+                        <label>SONRAKİ DURUŞMA</label>
+                        <span id="detailNextHearing"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dosya Açıklaması -->
+            <div class="detail-section">
+                <div class="section-header">
+                    <h3>Dosya Açıklaması</h3>
+                    <button class="btn edit-btn" onclick="editDescription()" title="Açıklama Düzenle">
+                        <i class="material-icons">edit</i>
+                    </button>
+                </div>
+                <div class="description-container">
+                    <div id="descriptionDisplay">
+                        <p id="detailDescription">Açıklama bulunmuyor.</p>
+                    </div>
+                    <div id="descriptionEdit" style="display: none;">
+                        <textarea id="editDescriptionText" rows="4" class="description-textarea"></textarea>
+                        <div class="description-actions">
+                            <button class="btn secondary" onclick="cancelEditDescription()">İptal</button>
+                            <button class="btn primary" onclick="saveDescription()">Kaydet</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Masraflar -->
+            <div class="detail-section">
+                <div class="section-header">
+                    <h3>Masraflar</h3>
+                    <button class="btn primary" onclick="showExpenseModal()">
+                        <i class="material-icons">add</i> Masraf Ekle
+                    </button>
+                </div>
+                <div id="editExpensesList" class="expenses-list"></div>
+            </div>
+
+            <!-- Belgeler -->
+            <div class="detail-section">
+                <div class="section-header">
+                    <h3>Belgeler</h3>
+                    <button class="btn primary" onclick="showUploadModal()">
+                        <i class="material-icons">upload</i> Belge Yükle
+                    </button>
+                </div>
+                <div id="documentsList" class="documents-list"></div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn secondary" onclick="closeDetailModal()">Kapat</button>
+            <button class="btn primary" onclick="editCase(currentCaseId)">Düzenle</button>
+        </div>
+    </div>
 </div>
 
+<style>
+/* Modal ana stilleri */
+.file-detail-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: white;
+    width: 95%;
+    max-width: 1200px;
+    max-height: 90vh;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 25px;
+}
+
+/* Temel bilgiler bölümü */
+.basic-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid #e9ecef;
+}
+
+.info-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-group span {
+    font-size: 1rem;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+/* Bölüm başlıkları */
+.detail-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid #e9ecef;
+}
+
+.detail-section h3 {
+    font-size: 1.1rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 600;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Durum badge'i */
+#detailStatus {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+#detailStatus.active {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+#detailStatus.closed {
+    background: #ffebee;
+    color: #c62828;
+}
+
+/* Butonlar */
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn.primary {
+    background: #1a237e;
+    color: white;
+}
+
+.btn.primary:hover {
+    background: #0d1b6e;
+}
+
+.btn.secondary {
+    background: #e9ecef;
+    color: #2c3e50;
+}
+
+.btn.secondary:hover {
+    background: #dee2e6;
+}
+
+/* Modal footer */
+.modal-footer {
+    padding: 20px 25px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    background: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+}
+
+/* Butonlar için yeni renk */
+:root {
+    --primary-blue: #2196F3;  /* Daha soft bir mavi */
+    --primary-hover: #1976D2;
+    --light-blue-bg: #E3F2FD;
+}
+
+/* Düzenleme modalı için stiller */
+#editModal .modal-content {
+    background: white;
+    width: 95%;
+    max-width: 1200px;
+    max-height: 90vh;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+#editModal .modal-body {
+    padding: 25px;
+}
+
+#editModal .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid #e9ecef;
+}
+
+#editModal .detail-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#editModal .detail-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#editModal .detail-group input,
+#editModal .detail-group select,
+#editModal .detail-group textarea {
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: #2c3e50;
+    background: white;
+}
+
+#editModal .detail-group input:focus,
+#editModal .detail-group select:focus,
+#editModal .detail-group textarea:focus {
+    border-color: var(--primary-blue);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+#editModal .detail-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid #e9ecef;
+}
+
+#editModal .detail-section h3 {
+    font-size: 1.1rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 600;
+}
+
+#editModal textarea {
+    width: 100%;
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Butonları güncelle */
+.btn.primary {
+    background: var(--primary-blue) !important;
+    color: white !important;
+}
+
+.btn.primary:hover {
+    background: var(--primary-hover) !important;
+}
+
+/* Duruşma tarihi ve saati için özel stil */
+.hearing-datetime {
+    display: flex;
+    gap: 10px;
+}
+
+.hearing-datetime input[type="date"] {
+    flex: 2;
+}
+
+.hearing-datetime input[type="time"] {
+    flex: 1;
+}
+
+/* Aktif/Kapalı durumu için badge stilleri */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.status-badge.active {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.status-badge.closed {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+/* Modal header ve footer */
+.modal-header, .modal-footer {
+    background: #f8f9fa;
+    padding: 20px 25px;
+}
+
+.modal-header {
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-footer {
+    border-radius: 0 0 12px 12px;
+}
+
+/* Masraflar bölümü stilleri */
+.expenses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.expense-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+}
+
+.expense-info {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    gap: 20px;
+    align-items: center;
+}
+
+.expense-type {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.expense-amount {
+    color: #2196F3;
+    font-weight: 600;
+}
+
+.expense-date {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.expense-description {
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+/* Belge listesi stilleri */
+.documents-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.document-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.document-type-header {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 8px 15px;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.document-content {
+    padding: 15px;
+}
+
+.document-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.document-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.document-info i {
+    color: #2196F3;
+    font-size: 24px;
+}
+
+.document-name {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.document-date {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.document-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.document-actions .btn {
+    padding: 6px;
+}
+
+.document-actions .btn i {
+    font-size: 20px;
+}
+
+/* Açıklama bölümü stilleri */
+.description-container {
+    position: relative;
+}
+
+.edit-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    color: #757575;
+    transition: all 0.2s ease;
+}
+
+.edit-btn:hover {
+    color: var(--primary-blue);
+}
+
+.edit-btn i {
+    font-size: 20px;
+}
+
+.description-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: #2c3e50;
+    resize: vertical;
+    min-height: 100px;
+    margin-bottom: 10px;
+}
+
+.description-textarea:focus {
+    border-color: var(--primary-blue);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.description-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+#detailDescription {
+    margin: 0;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    min-height: 100px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.action-btn i {
+    font-size: 20px;
+}
+
+.view-btn {
+    color: #2196F3;
+}
+
+.view-btn:hover {
+    color: #1976D2;
+}
+
+.delete-btn {
+    color: #757575;
+}
+
+.delete-btn:hover {
+    color: #dc3545;
+}
+</style>
+
 <script>
-function toggleDropdown(id) {
-    var element = document.getElementById(id);
-    if (element.style.display === "none" || element.style.display === "") {
-        element.style.display = "block";
-    } else {
-        element.style.display = "none";
+let currentCaseId = null;
+
+// Adliye ve birim listelerini tanımla
+const courthouses = [
+    "İstanbul Adliyesi (Çağlayan)",
+    "İstanbul Anadolu Adliyesi (Kartal)",
+    "Bakırköy Adliyesi",
+    "Büyükçekmece Adliyesi",
+    "Gaziosmanpaşa Adliyesi",
+    "Küçükçekmece Adliyesi",
+    "Silivri Adliyesi",
+    "Çatalca Adliyesi",
+    "Üsküdar Adliyesi",
+    "Adalar Adliyesi",
+    "Sarıyer Adliyesi",
+    "Afşin Adliyesi",
+    "Ağrı Adliyesi",
+    "Aksaray Adliyesi",
+    "Alanya Adliyesi",
+    "Amasya Adliyesi",
+    "Ankara Adliyesi",
+    "Antalya Adliyesi",
+    "Ardahan Adliyesi",
+    "Artvin Adliyesi",
+    "Aydın Adliyesi",
+    "Ayvalık Adliyesi",
+    "Balıkesir Adliyesi",
+    "Bartın Adliyesi",
+    "Batman Adliyesi",
+    "Bayburt Adliyesi",
+    "Bilecik Adliyesi",
+    "Bingöl Adliyesi",
+    "Bitlis Adliyesi",
+    "Bodrum Adliyesi",
+    "Bolu Adliyesi",
+    "Burdur Adliyesi",
+    "Bursa Adliyesi",
+    "Çanakkale Adliyesi",
+    "Çankırı Adliyesi",
+    "Çorum Adliyesi",
+    "Denizli Adliyesi",
+    "Diyarbakır Adliyesi",
+    "Düzce Adliyesi",
+    "Edirne Adliyesi",
+    "Elazığ Adliyesi",
+    "Erzincan Adliyesi",
+    "Erzurum Adliyesi",
+    "Eskişehir Adliyesi",
+    "Fethiye Adliyesi",
+    "Gaziantep Adliyesi",
+    "Giresun Adliyesi",
+    "Gümüşhane Adliyesi",
+    "Hakkari Adliyesi",
+    "Hatay Adliyesi",
+    "Iğdır Adliyesi",
+    "Isparta Adliyesi",
+    "İzmir Adliyesi",
+    "Kahramanmaraş Adliyesi",
+    "Karabük Adliyesi",
+    "Karaman Adliyesi",
+    "Kars Adliyesi",
+    "Kastamonu Adliyesi",
+    "Kayseri Adliyesi",
+    "Kırklareli Adliyesi",
+    "Kırıkkale Adliyesi",
+    "Kırşehir Adliyesi",
+    "Kilis Adliyesi",
+    "Konya Adliyesi",
+    "Kütahya Adliyesi",
+    "Malatya Adliyesi",
+    "Manisa Adliyesi",
+    "Mardin Adliyesi",
+    "Mersin Adliyesi",
+    "Muğla Adliyesi",
+    "Muş Adliyesi",
+    "Nevşehir Adliyesi",
+    "Niğde Adliyesi",
+    "Ordu Adliyesi",
+    "Osmaniye Adliyesi",
+    "Rize Adliyesi",
+    "Sakarya Adliyesi",
+    "Samsun Adliyesi",
+    "Şırnak Adliyesi",
+    "Siirt Adliyesi",
+    "Sinop Adliyesi",
+    "Sivas Adliyesi",
+    "Şırnak Adliyesi",
+    "Tekirdağ Adliyesi",
+    "Tokat Adliyesi",
+    "Trabzon Adliyesi",
+    "Tunceli Adliyesi",
+    "Uşak Adliyesi",
+    "Van Adliyesi",
+    "Yalova Adliyesi",
+    "Yozgat Adliyesi",
+    "Zonguldak Adliyesi"
+];
+
+const departments = {
+    hukuk: [
+        "Asliye Hukuk Mahkemesi",
+        "Sulh Hukuk Mahkemesi",
+        "Aile Mahkemesi",
+        "İş Mahkemesi",
+        "Tüketici Mahkemesi",
+        "Kadastro Mahkemesi",
+        "Ticaret Mahkemesi",
+        "Fikri ve Sınai Haklar Hukuk Mahkemesi",
+        "İcra Hukuk Mahkemesi",
+        "Tapu ve Kadastro Mahkemesi"
+    ],
+    ceza: [
+        "Asliye Ceza Mahkemesi",
+        "Ağır Ceza Mahkemesi",
+        "Sulh Ceza Hakimliği",
+        "Çocuk Mahkemesi",
+        "Çocuk Ağır Ceza Mahkemesi",
+        "Fikri ve Sınai Haklar Ceza Mahkemesi",
+        "İcra Ceza Mahkemesi",
+        "Trafik Mahkemesi",
+        "Devlet Güvenlik Mahkemesi",
+        "Bölge Adliye Mahkemesi Ceza Daireleri",
+        "Yargıtay Ceza Daireleri"
+    ],
+    icra: Array.from({length: 30}, (_, i) => `${i + 1}. İcra Dairesi`)
+};
+
+// Masraf türlerini tanımla
+const expenseTypes = [
+    "Harç",
+    "Posta Masrafı",
+    "Tebligat Masrafı",
+    "Bilirkişi Ücreti",
+    "Keşif Masrafı",
+    "Tanık Masrafı",
+    "Tercüman Ücreti",
+    "Fotokopi Masrafı",
+    "Noter Masrafı",
+    "Vekalet Harcı",
+    "Temyiz Harcı",
+    "İstinaf Harcı",
+    "Başvuru Harcı",
+    "Karar Harcı",
+    "Dosya Masrafı",
+    "Ulaşım Masrafı",
+    "Diğer"
+];
+
+// Belge türlerini tanımla
+const documentTypes = [
+    "Dava Dilekçesi",
+    "Cevap Dilekçesi",
+    "Beyan Dilekçesi",
+    "Delil Listesi",
+    "Tensip Zaptı",
+    "Duruşma Zaptı",
+    "Bilirkişi Raporu",
+    "Keşif Zaptı",
+    "Tanık Beyanı",
+    "Temyiz Dilekçesi",
+    "İstinaf Dilekçesi",
+    "İhtarname",
+    "Vekaletname",
+    "Mahkeme Kararı",
+    "Gerekçeli Karar",
+    "İcra Emri",
+    "Haciz Tutanağı",
+    "Ödeme Emri",
+    "Tebligat",
+    "Diğer"
+];
+
+// Sayfa yüklendiğinde
+document.addEventListener('DOMContentLoaded', function() {
+    // Adliye listesini doldur
+    populateCourthouses();
+    
+    // Event listener'ları ekle
+    const fileTypeSelect = document.getElementById('file-type');
+            const departmentSelect = document.getElementById('department');
+    
+    if (fileTypeSelect) {
+        fileTypeSelect.addEventListener('change', updateDepartments);
+    }
+    
+    if (departmentSelect) {
+        departmentSelect.addEventListener('change', updateCourtNumbers);
+    }
+});
+
+// Adliye listesini doldur
+function populateCourthouses() {
+    const select = document.getElementById('courthouse');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">Tümü</option>';
+    courthouses.forEach(courthouse => {
+        select.innerHTML += `<option value="${courthouse}">${courthouse}</option>`;
+    });
+}
+
+// Dosya türüne göre birimleri güncelle
+function updateDepartments() {
+    const fileType = document.getElementById('file-type').value;
+    const departmentSelect = document.getElementById('department');
+    const courtNumberContainer = document.getElementById('court-number-container');
+    
+    // Birim seçeneklerini sıfırla
+    departmentSelect.innerHTML = '<option value="">Tümü</option>';
+    departmentSelect.disabled = !fileType;
+    
+    if (fileType && departments[fileType]) {
+        departments[fileType].forEach(dept => {
+            departmentSelect.innerHTML += `<option value="${dept}">${dept}</option>`;
+        });
+    }
+
+    // Mahkeme numarası seçeneğini gizle
+    if (courtNumberContainer) {
+        courtNumberContainer.style.display = 'none';
     }
 }
 
+// Birim seçimine göre mahkeme numaralarını güncelle
+function updateCourtNumbers() {
+    const department = document.getElementById('department').value;
+    const courtNumberContainer = document.getElementById('court-number-container');
+    
+    if (!department || department === '' || department.includes('İcra Dairesi')) {
+            courtNumberContainer.style.display = 'none';
+        return;
+    }
+
+        const courtNumberSelect = document.getElementById('court-number');
+        courtNumberSelect.innerHTML = `
+            <option value="">Tümü</option>
+            <option value="${department}">${department}</option>
+            ${Array.from({length: 50}, (_, i) => i + 1).map(num => 
+                `<option value="${num}.${department}">${num}.${department}</option>`
+            ).join('')}
+        `;
+    
+    courtNumberContainer.style.display = 'block';
+}
+
+// Diğer fonksiyonlar...
+
 function showDetails(caseId) {
-    // Detayları gösterme işlemi
+    currentCaseId = caseId;
+    const modal = document.getElementById('fileDetailModal');
+    
     fetch(`/case_details/${caseId}`)
         .then(response => response.json())
         .then(data => {
-            alert('Dosya Detayları:\n' + JSON.stringify(data, null, 2));
+            if (!data.success) {
+                console.error('Sunucu yanıtı:', data);
+                alert('Dosya detayları yüklenirken bir hata oluştu.');
+                return;
+            }
+
+            // Temel bilgileri doldur
+            document.getElementById('detailFileType').textContent = capitalizeFileType(data.file_type);
+            document.getElementById('detailCourthouse').textContent = data.courthouse || '-';
+            document.getElementById('detailDepartment').textContent = data.department || '-';
+            document.getElementById('detailCaseNumber').textContent = data.case_number || '-';
+            document.getElementById('detailClientName').textContent = data.client_name || '-';
+            
+            // Durum bilgisini doldur
+            const statusElement = document.getElementById('detailStatus');
+            statusElement.textContent = data.status || 'Aktif';
+            statusElement.className = 'file-status ' + (data.status === 'Aktif' ? 'active' : 'closed');
+            
+            // Tarih bilgilerini doldur
+            document.getElementById('detailOpenDate').textContent = data.open_date || '-';
+            document.getElementById('detailNextHearing').textContent = data.next_hearing || '-';
+            document.getElementById('detailDescription').textContent = data.description || 'Açıklama bulunmuyor.';
+
+            // Masrafları göster
+            if (data.expenses && Array.isArray(data.expenses)) {
+                const expensesList = document.getElementById('editExpensesList');
+                expensesList.innerHTML = data.expenses.map(expense => `
+                    <div class="expense-item">
+                        <div class="expense-info">
+                            <div class="expense-type">${expense.expense_type}</div>
+                            <div class="expense-amount">₺${expense.amount}</div>
+                            <div class="expense-date">${expense.date}</div>
+                            <div class="expense-description">${expense.description || ''}</div>
+                        </div>
+                        <div class="expense-actions">
+                            <div class="expense-status-group">
+                                <i class="material-icons ${expense.is_paid ? 'status-paid' : 'status-unpaid'}">
+                                    ${expense.is_paid ? 'check_circle' : 'cancel'}
+                                </i>
+                                <button type="button" class="delete-btn-common" onclick="deleteExpense(${expense.id})">
+                                    <i class="material-icons">delete</i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('') || '<p>Henüz masraf kaydı bulunmuyor.</p>';
+            }
+
+            // Belgeleri göster
+            const documentsList = document.getElementById('documentsList');
+            if (documentsList && data.documents) {
+                documentsList.innerHTML = data.documents.map(doc => `
+                    <div class="document-item">
+                        <div class="document-type-header">
+                            ${doc.document_type}
+                        </div>
+                        <div class="document-content">
+                            <div class="document-main">
+                                <div class="document-info">
+                                    <i class="material-icons">${getFileIcon(doc.filename)}</i>
+                                    <span class="document-name">${doc.filename}</span>
+                                    <span class="document-date">${doc.upload_date}</span>
+                                </div>
+                                <div class="document-actions">
+                                    <button class="btn small" onclick="previewDocument(${doc.id}, '${doc.filename.replace(/'/g, "\\'")}')" title="Önizle">
+                                        <i class="material-icons">visibility</i>
+                                    </button>
+                                    <button class="btn small" onclick="downloadDocument(${doc.id})" title="İndir">
+                                        <i class="material-icons">download</i>
+                                    </button>
+                                    <button class="btn danger small" onclick="deleteDocument(${doc.id})" title="Sil">
+                                        <i class="material-icons">delete</i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('') || '<p>Henüz belge yüklenmemiş.</p>';
+            }
+
+            // Modalı göster
+            modal.style.display = 'flex';
+        })
+        .catch(error => {
+            console.error('Hata:', error);
+            alert('Dosya detayları yüklenirken bir hata oluştu: ' + error.message);
         });
 }
 
+// Dosya türünü büyük harfe çevir
+function capitalizeFileType(fileType) {
+    return fileType.charAt(0).toUpperCase() + fileType.slice(1);
+}
+
+// Dosya uzantısına göre ikon seç
+function getFileIcon(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    switch (ext) {
+        case 'pdf': return 'picture_as_pdf';
+        case 'doc':
+        case 'docx': return 'description';
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'tiff':
+        case 'tif': return 'image';
+        case 'txt': return 'article';
+        case 'xls':
+        case 'xlsx': return 'table_chart';
+        case 'zip':
+        case 'rar': return 'folder_zip';
+        default: return 'insert_drive_file';
+    }
+}
+
+// Modal kapatma fonksiyonu
+function closeDetailModal() {
+    const modal = document.getElementById('fileDetailModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Düzenle butonu için fonksiyon
 function editCase(caseId) {
-    // Düzenleme işlemi
-    const newFileType = prompt('Yeni Dosya Türü:', '');
-    const newYear = prompt('Yeni Yıl:', '');
-    const newCaseNumber = prompt('Yeni Esas No:', '');
-    const newClientName = prompt('Yeni Müvekkil Adı:', '');
+    const modal = document.getElementById('fileDetailModal');
+    modal.style.display = 'none';
+    
+    fetch(`/case_details/${caseId}`)
+        .then(response => response.json())
+        .then(data => {
+            const editHtml = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Dosya Düzenle</h2>
+                        <button class="close-btn" onclick="closeEditModal()">
+                            <i class="material-icons">close</i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editForm">
+                            <div class="detail-grid">
+                                <div class="detail-group">
+                                    <label>Dosya Türü</label>
+                                    <select id="editFileType" disabled>
+                                        <option value="hukuk" ${data.file_type === 'hukuk' ? 'selected' : ''}>Hukuk</option>
+                                        <option value="ceza" ${data.file_type === 'ceza' ? 'selected' : ''}>Ceza</option>
+                                        <option value="icra" ${data.file_type === 'icra' ? 'selected' : ''}>İcra</option>
+                                    </select>
+                                </div>
+                                <div class="detail-group">
+                                    <label>Adliye</label>
+                                    <select id="editCourthouse" disabled>
+                                        <option value="">Seçiniz</option>
+                                        ${courthouses.map(courthouse => 
+                                            `<option value="${courthouse}" ${data.courthouse === courthouse ? 'selected' : ''}>${courthouse}</option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+                                <div class="detail-group">
+                                    <label>Birim</label>
+                                    <select id="editDepartment" disabled>
+                                        <option value="">Seçiniz</option>
+                                        ${departments[data.file_type] ? 
+                                            departments[data.file_type].map(dept => 
+                                                `<option value="${dept}" ${data.department === dept ? 'selected' : ''}>${dept}</option>`
+                                            ).join('') : ''
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="detail-grid">
+                                <div class="detail-group">
+                                    <label>Müvekkil Adı</label>
+                                    <input type="text" id="editClientName" value="${data.client_name || ''}">
+                                </div>
+                                <div class="detail-group">
+                                    <label>Dosya Durumu</label>
+                                    <select id="editStatus">
+                                        <option value="Aktif" ${data.status === 'Aktif' ? 'selected' : ''}>Aktif</option>
+                                        <option value="Kapalı" ${data.status === 'Kapalı' ? 'selected' : ''}>Kapalı</option>
+                                    </select>
+                                </div>
+                                <div class="detail-group">
+                                    <label>Açılış Tarihi</label>
+                                    <input type="date" id="editOpenDate" value="${data.open_date || ''}" disabled>
+                                </div>
+                                <div class="detail-group">
+                                    <label>Sonraki Duruşma</label>
+                                    <div class="hearing-datetime">
+                                        <input type="date" id="editNextHearing" value="${data.next_hearing || ''}">
+                                        <input type="time" id="editHearingTime" value="${data.hearing_time || '09:00'}">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn secondary" onclick="closeEditModal()">İptal</button>
+                        <button class="btn primary" onclick="saveChanges(${caseId})">Kaydet</button>
+                    </div>
+                </div>
+            `;
+            
+            const editModal = document.createElement('div');
+            editModal.id = 'editModal';
+            editModal.className = 'file-detail-modal';
+            editModal.innerHTML = editHtml;
+            document.body.appendChild(editModal);
+            editModal.style.display = 'flex';
+        });
+}
+
+// Düzenleme modalında birim seçeneklerini güncelle
+function updateEditDepartments() {
+    const fileType = document.getElementById('editFileType').value;
+    const departmentSelect = document.getElementById('editDepartment');
+    const courtNumberContainer = document.getElementById('editCourtNumberContainer');
+    
+    departmentSelect.innerHTML = '<option value="">Seçiniz</option>';
+    
+    if (fileType && departments[fileType]) {
+        departments[fileType].forEach(dept => {
+            departmentSelect.innerHTML += `<option value="${dept}">${dept}</option>`;
+        });
+        departmentSelect.disabled = false;
+    } else {
+        departmentSelect.disabled = true;
+    }
+
+    if (courtNumberContainer) {
+        courtNumberContainer.style.display = 'none';
+    }
+}
+
+// Düzenleme modalında mahkeme numaralarını güncelle
+function updateEditCourtNumbers() {
+    const department = document.getElementById('editDepartment').value;
+    const courtNumberContainer = document.getElementById('editCourtNumberContainer');
+    
+    if (!department || department === '' || department.includes('İcra Dairesi')) {
+        courtNumberContainer.style.display = 'none';
+        return;
+    }
+
+    const courtNumberSelect = document.getElementById('editCourtNumber');
+    courtNumberSelect.innerHTML = `
+        <option value="">Seçiniz</option>
+        <option value="${department}">${department}</option>
+        ${Array.from({length: 50}, (_, i) => i + 1).map(num => 
+            `<option value="${num}.${department}">${num}.${department}</option>`
+        ).join('')}
+    `;
+    
+    courtNumberContainer.style.display = 'block';
+}
+
+// Değişiklikleri kaydet
+function saveChanges(caseId) {
+    const data = {
+        file_type: document.getElementById('editFileType').value,
+        courthouse: document.getElementById('editCourthouse').value,
+        department: document.getElementById('editCourtNumber')?.value || document.getElementById('editDepartment').value,
+        client_name: document.getElementById('editClientName').value,
+        status: document.getElementById('editStatus').value,
+        open_date: document.getElementById('editOpenDate').value,
+        next_hearing: document.getElementById('editNextHearing').value,
+        hearing_time: document.getElementById('editHearingTime').value,
+        description: document.getElementById('editDescription').value
+    };
+
+    // Tüm gerekli alanların dolu olduğunu kontrol et
+    if (!data.file_type || !data.courthouse || !data.department || !data.client_name) {
+        alert('Lütfen gerekli alanları doldurunuz.');
+        return;
+    }
 
     fetch(`/edit_case/${caseId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            file_type: newFileType,
-            year: newYear,
-            case_number: newCaseNumber,
-            client_name: newClientName
-        })
-    }).then(response => response.json())
-      .then(data => {
-          if (data.success) {
-              alert('Dosya güncellendi!');
-              location.reload();
-          } else {
-              alert('Güncelleme başarısız!');
-          }
-      });
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // Duruşma tarihi ve saati varsa takvime ekle
+            if (data.next_hearing && data.hearing_time) {
+                syncHearingToCalendar(caseId, data.next_hearing, data.hearing_time);
+            }
+            
+            closeEditModal();
+            showDetails(caseId);
+        } else {
+            throw new Error(result.message || 'Güncelleme sırasında bir hata oluştu');
+        }
+    })
+    .catch(error => {
+        console.error('Hata:', error);
+        alert('Güncelleme sırasında bir hata oluştu: ' + error.message);
+    });
 }
 
+// Masraf ekle modalını güncelle
+function showExpenseModal() {
+    const expenseHtml = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Masraf Ekle</h2>
+                <button class="close-btn" onclick="closeExpenseModal()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="expenseForm">
+                    <div class="detail-grid">
+                        <div class="detail-group">
+                            <label>Masraf Türü</label>
+                            <select id="expenseType" onchange="handleExpenseTypeChange()" required>
+                                <option value="">Seçiniz</option>
+                                ${expenseTypes.map(type => 
+                                    `<option value="${type}">${type}</option>`
+                                ).join('')}
+                            </select>
+                            <input type="text" id="otherExpenseType" 
+                                   placeholder="Masraf türünü yazınız" 
+                                   style="display: none; margin-top: 10px;">
+                        </div>
+                        <div class="detail-group">
+                            <label>Tutar (₺)</label>
+                            <input type="number" id="expenseAmount" step="0.01" required>
+                        </div>
+                        <div class="detail-group">
+                            <label>Tarih</label>
+                            <input type="date" id="expenseDate" required 
+                                   value="${new Date().toISOString().split('T')[0]}">
+                        </div>
+                        <div class="detail-group">
+                            <label>Ödeme Durumu</label>
+                            <select id="expenseStatus">
+                                <option value="false">Ödenmedi</option>
+                                <option value="true">Ödendi</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="detail-group">
+                        <label>Açıklama</label>
+                        <textarea id="expenseDescription" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" onclick="closeExpenseModal()">İptal</button>
+                <button class="btn primary" onclick="saveExpense()">Kaydet</button>
+            </div>
+        </div>
+    `;
+    
+    const expenseModal = document.createElement('div');
+    expenseModal.id = 'expenseModal';
+    expenseModal.className = 'file-detail-modal';
+    expenseModal.innerHTML = expenseHtml;
+    document.body.appendChild(expenseModal);
+    expenseModal.style.display = 'flex';
+}
+
+// Diğer seçeneği için input alanını göster/gizle
+function handleExpenseTypeChange() {
+    const expenseType = document.getElementById('expenseType');
+    const otherExpenseType = document.getElementById('otherExpenseType');
+    
+    if (expenseType.value === 'Diğer') {
+        otherExpenseType.style.display = 'block';
+        otherExpenseType.required = true;
+    } else {
+        otherExpenseType.style.display = 'none';
+        otherExpenseType.required = false;
+    }
+}
+
+// Masraf kaydetme fonksiyonunu güncelle
+function saveExpense() {
+    const expenseType = document.getElementById('expenseType');
+    const otherExpenseType = document.getElementById('otherExpenseType');
+    const amount = document.getElementById('expenseAmount');
+    const date = document.getElementById('expenseDate');
+    const status = document.getElementById('expenseStatus');
+    const description = document.getElementById('expenseDescription');
+
+    // Form validasyonu
+    if (!expenseType.value) {
+        alert('Lütfen masraf türünü seçiniz.');
+        return;
+    }
+    if (expenseType.value === 'Diğer' && !otherExpenseType.value) {
+        alert('Lütfen masraf türünü yazınız.');
+        return;
+    }
+    if (!amount.value || amount.value <= 0) {
+        alert('Lütfen geçerli bir tutar giriniz.');
+        return;
+    }
+    if (!date.value) {
+        alert('Lütfen tarih seçiniz.');
+        return;
+    }
+
+    const data = {
+        expense_type: expenseType.value === 'Diğer' ? otherExpenseType.value : expenseType.value,
+        amount: parseFloat(amount.value),
+        date: date.value,
+        is_paid: status.value === 'true',
+        description: description.value || ''
+    };
+
+    fetch(`/add_expense/${currentCaseId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Sunucu hatası');
+        }
+        return response.json();
+    })
+    .then(result => {
+        if (result.success) {
+            closeExpenseModal();
+            showDetails(currentCaseId);
+        } else {
+            throw new Error(result.message || 'Masraf eklenirken bir hata oluştu');
+        }
+    })
+    .catch(error => {
+        console.error('Hata:', error);
+        alert('Masraf eklenirken bir hata oluştu: ' + error.message);
+    });
+}
+
+// Belge yükle butonu için fonksiyon
+function showUploadModal() {
+    const uploadHtml = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Belge Yükle</h2>
+                <button class="close-btn" onclick="closeUploadModal()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm">
+                    <div class="detail-group">
+                        <label>Belge Türü</label>
+                        <select id="documentType" required>
+                            <option value="">Seçiniz</option>
+                            ${documentTypes.map(type => 
+                                `<option value="${type}">${type}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div class="detail-group">
+                        <label>Belge</label>
+                        <input type="file" id="documentFile" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" onclick="closeUploadModal()">İptal</button>
+                <button class="btn primary" onclick="uploadDocument()">Yükle</button>
+            </div>
+        </div>
+    `;
+    
+    const uploadModal = document.createElement('div');
+    uploadModal.id = 'uploadModal';
+    uploadModal.className = 'file-detail-modal';
+    uploadModal.innerHTML = uploadHtml;
+    document.body.appendChild(uploadModal);
+    uploadModal.style.display = 'flex';
+}
+
+// Belge yükleme fonksiyonunu güncelle
+function uploadDocument() {
+    const documentType = document.getElementById('documentType');
+    const fileInput = document.getElementById('documentFile');
+    
+    if (!documentType.value) {
+        alert('Lütfen belge türünü seçiniz.');
+        return;
+    }
+    
+    if (!fileInput.files.length) {
+        alert('Lütfen bir belge seçiniz.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('document', fileInput.files[0]);
+    formData.append('document_type', documentType.value);
+
+    fetch(`/upload_document/${currentCaseId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Sunucu hatası');
+        }
+        return response.json();
+    })
+    .then(result => {
+        if (result.success) {
+            closeUploadModal();
+            showDetails(currentCaseId);
+        } else {
+            throw new Error(result.message || 'Belge yüklenirken bir hata oluştu');
+        }
+    })
+    .catch(error => {
+        console.error('Hata:', error);
+        alert('Belge yüklenirken bir hata oluştu: ' + error.message);
+    });
+}
+
+// Belge önizleme fonksiyonu
+function previewDocument(docId, filename) {
+    // Orijinal dosya uzantısını bul
+    let ext = '';
+    // Dosya adında nokta varsa son noktadan sonrasını al
+    if (filename.includes('.')) {
+        ext = filename.split('.').pop().toLowerCase();
+    } else {
+        // Eğer özel isim verilmiş ve uzantı yoksa, sunucudan dosya bilgisini al
+        fetch(`/get_document_info/${docId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.original_filename) {
+                    ext = data.original_filename.split('.').pop().toLowerCase();
+                    showPreviewModal(docId, filename, ext);
+                } else {
+                    alert('Dosya türü belirlenemedi.');
+                }
+            })
+            .catch(error => {
+                console.error('Hata:', error);
+                alert('Dosya bilgisi alınırken bir hata oluştu.');
+            });
+        return;
+    }
+    
+    showPreviewModal(docId, filename, ext);
+}
+
+// Önizleme modalını göster
+function showPreviewModal(docId, filename, ext) {
+    // Desteklenen dosya türleri
+    const supportedTypes = ['pdf', 'jpg', 'jpeg', 'png', 'tiff', 'tif'];
+    
+    if (!supportedTypes.includes(ext)) {
+        alert('Bu dosya türü için önizleme kullanılamıyor.');
+        return;
+    }
+
+    const previewHtml = `
+        <div class="modal-content preview-modal-content">
+            <div class="modal-header">
+                <h2>${filename}</h2>
+                <button class="close-btn" onclick="closePreviewModal()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="modal-body preview-modal-body">
+                <div class="document-preview-container">
+                    ${ext === 'pdf' ? 
+                        `<iframe id="previewFrame" src="/preview_document/${docId}" frameborder="0"></iframe>` :
+                        `<img src="/preview_document/${docId}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`
+                    }
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const previewModal = document.createElement('div');
+    previewModal.id = 'previewModal';
+    previewModal.className = 'file-detail-modal';
+    previewModal.innerHTML = previewHtml;
+    document.body.appendChild(previewModal);
+    previewModal.style.display = 'flex';
+}
+
+function closePreviewModal() {
+    const modal = document.getElementById('previewModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Belge indirme fonksiyonu
+function downloadDocument(docId) {
+    const link = document.createElement('a');
+    link.href = `/download_document/${docId}`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Belge silme fonksiyonu
+function deleteDocument(docId) {
+    if (confirm('Bu belgeyi silmek istediğinizden emin misiniz?')) {
+        fetch(`/delete_document/${docId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Sunucu hatası');
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result.success) {
+                showDetails(currentCaseId); // Belge listesini güncelle
+            } else {
+                throw new Error(result.message || 'Belge silinirken bir hata oluştu');
+            }
+        })
+        .catch(error => {
+            console.error('Hata:', error);
+            alert('Belge silinirken bir hata oluştu: ' + error.message);
+        });
+    }
+}
+
+// Modal kapatma fonksiyonları
+function closeEditModal() {
+    const modal = document.getElementById('editModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function closeExpenseModal() {
+    const modal = document.getElementById('expenseModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function closeUploadModal() {
+    const modal = document.getElementById('uploadModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Masraf silme fonksiyonu
+function deleteExpense(expenseId) {
+    if (confirm('Bu masrafı silmek istediğinizden emin misiniz?')) {
+        fetch(`/delete_expense/${expenseId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                // Masraf listesini güncelle
+                showDetails(currentCaseId);
+            } else {
+                throw new Error(result.message || 'Masraf silinirken bir hata oluştu');
+            }
+        })
+        .catch(error => {
+            console.error('Hata:', error);
+            alert('Masraf silinirken bir hata oluştu: ' + error.message);
+        });
+    }
+}
+
+// Açıklama düzenleme fonksiyonlarını ekle
+function editDescription() {
+    const displayDiv = document.getElementById('descriptionDisplay');
+    const editDiv = document.getElementById('descriptionEdit');
+    const textarea = document.getElementById('editDescriptionText');
+    const currentText = document.getElementById('detailDescription').textContent;
+    
+    textarea.value = currentText === 'Açıklama bulunmuyor.' ? '' : currentText;
+    displayDiv.style.display = 'none';
+    editDiv.style.display = 'block';
+    textarea.focus();
+}
+
+function cancelEditDescription() {
+    const displayDiv = document.getElementById('descriptionDisplay');
+    const editDiv = document.getElementById('descriptionEdit');
+    
+    displayDiv.style.display = 'block';
+    editDiv.style.display = 'none';
+}
+
+function saveDescription() {
+    const newDescription = document.getElementById('editDescriptionText').value;
+    
+    fetch(`/update_description/${currentCaseId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            description: newDescription
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            document.getElementById('detailDescription').textContent = 
+                newDescription || 'Açıklama bulunmuyor.';
+            cancelEditDescription();
+        } else {
+            throw new Error(result.message || 'Açıklama güncellenirken bir hata oluştu');
+        }
+    })
+    .catch(error => {
+        console.error('Hata:', error);
+        alert('Açıklama güncellenirken bir hata oluştu: ' + error.message);
+    });
+}
+
+// Duruşma bilgilerini takvime senkronize et
+function syncHearingToCalendar(caseId, hearingDate, hearingTime) {
+    fetch('/sync_hearing_to_calendar', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            case_id: caseId,
+            hearing_date: hearingDate,
+            hearing_time: hearingTime || '09:00'
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Sunucu hatası');
+        }
+        return response.json();
+    })
+    .then(result => {
+        if (!result.success) {
+            throw new Error(result.message || 'Takvim senkronizasyonu başarısız');
+        }
+    })
+    .catch(error => {
+        console.error('Takvim senkronizasyonu hatası:', error);
+        alert('Duruşma bilgileri takvime eklenirken bir hata oluştu: ' + error.message);
+    });
+}
+
+// Dosya silme fonksiyonu
 function deleteCase(caseId) {
-    // Silme işlemi
     if (confirm('Bu dosyayı silmek istediğinizden emin misiniz?')) {
         fetch(`/delete_case/${caseId}`, {
-            method: 'POST'
-        }).then(response => response.json())
-          .then(data => {
-              if (data.success) {
-                  alert('Dosya silindi!');
-                  location.reload();
-              } else {
-                  alert('Silme işlemi başarısız!');
-              }
-          });
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                // Tablodan ilgili satırı kaldır
+                const row = document.querySelector(`tr[data-case-id="${caseId}"]`);
+                if (row) {
+                    row.remove();
+                }
+            } else {
+                throw new Error(result.message || 'Dosya silinirken bir hata oluştu');
+            }
+        })
+        .catch(error => {
+            console.error('Hata:', error);
+            alert('Dosya silinirken bir hata oluştu: ' + error.message);
+        });
     }
 }
 </script>

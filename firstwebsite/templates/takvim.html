@@ -294,7 +294,13 @@
 }
 
 .calendar-day.today {
-    background: #e3f2fd;
+    background-color: #e3f2fd !important;
+    color: #1976d2 !important;
+    font-weight: bold;
+}
+
+.calendar-day.today .day-number {
+    color: #1976d2 !important;
 }
 
 .calendar-day.other-month {
@@ -706,7 +712,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 .weekend {
-    background-color: #faf6f3 !important;
+    background-color: #faf6f3;
 }
 
 .weekend.holiday {
@@ -718,7 +724,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 .holiday {
-    background-color: #ffebee !important;
+    background-color: #ffebee;
     position: relative;
 }
 
@@ -738,6 +744,30 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 
 .weekend .day-number {
     color: #495057;
+}
+
+/* Hafta sonu ve bugün çakıştığında bugünün stilini koruyalım */
+.calendar-day.weekend.today {
+    background-color: #e3f2fd !important;
+}
+
+.calendar-day.weekend.today .day-number {
+    color: #1976d2 !important;
+}
+
+/* Tatil günleri için stil */
+.holiday {
+    background-color: #ffebee;
+    position: relative;
+}
+
+/* Tatil günü bugüne denk geldiğinde de bugünün stilini koruyalım */
+.calendar-day.holiday.today {
+    background-color: #e3f2fd !important;
+}
+
+.calendar-day.holiday.today .day-number {
+    color: #1976d2 !important;
 }
 </style>
 

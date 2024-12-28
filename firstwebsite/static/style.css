@@ -757,3 +757,21 @@ input[type="file"] {
     font-size: 14px;
     color: #333;
 }
+
+.calendar td.today {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: bold;
+}
+
+/* Hafta sonu günleri için olan stil */
+.calendar td.weekend {
+    color: #ff4444;
+}
+
+/* Bugün hafta sonuna denk geldiğinde de aynı rengi koruyalım */
+.calendar td.weekend.today {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: bold;
+}
