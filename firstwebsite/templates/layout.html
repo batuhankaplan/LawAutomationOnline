@@ -359,6 +359,24 @@
                 </li>
                 
                 <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
+                
+                <!-- Hesaplamalar menüsü -->
+                <li class="has-submenu">
+                    <a href="#" class="menu-trigger">
+                        <div class="menu-left">
+                            <i class="material-icons">calculate</i>
+                            <span>Hesaplamalar</span>
+                        </div>
+                        <i class="material-icons menu-arrow">chevron_right</i>
+                    </a>
+                    <ul class="submenu">
+                        <li><a href="{{ url_for('hesaplamalar', type='faiz') }}"><i class="material-icons">trending_up</i>Faiz Hesaplama</a></li>
+                        <li><a href="{{ url_for('hesaplamalar', type='harc') }}"><i class="material-icons">account_balance</i>Harç Hesaplama</a></li>
+                        <li><a href="{{ url_for('hesaplamalar', type='isci') }}"><i class="material-icons">work</i>İşçi Alacağı Hesaplama</a></li>
+                        <li><a href="{{ url_for('hesaplamalar', type='vekalet') }}"><i class="material-icons">gavel</i>Vekalet Ücreti Hesaplama</a></li>
+                    </ul>
+                </li>
+                
                 <li><a href="{{ url_for('odemeler') }}"><i class="material-icons">payment</i>Ödemeler</a></li>
                 <li><a href="{{ url_for('iletisim') }}"><i class="material-icons">contact_mail</i>İletişim</a></li>
             </ul>
@@ -401,110 +419,41 @@
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Önce elementlerin varlığını kontrol et
-        const searchInput = document.querySelector('.search-box input');  // ID yerine class kullan
-        const searchResults = document.getElementById('search-results');
-
-        // Arama fonksiyonları sadece elementler varsa çalışsın
-        if (searchInput && searchResults) {
-            let searchTimeout;
-
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                const query = this.value.trim();
+        // Tüm dropdown menüleri seç
+        const menuTriggers = document.querySelectorAll('.menu-trigger');
+        
+        menuTriggers.forEach(trigger => {
+            trigger.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
                 
-                if (query.length < 2) {
-                    searchResults.style.display = 'none';
-                    return;
-                }
-
-                searchTimeout = setTimeout(() => {
-                    fetch(`/search?q=${encodeURIComponent(query)}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            searchResults.innerHTML = '';
-                            
-                            if (data.length === 0) {
-                                searchResults.style.display = 'none';
-                                return;
-                            }
-
-                            data.forEach(result => {
-                                const div = document.createElement('div');
-                                div.className = 'search-result-item';
-                                div.innerHTML = `
-                                    <span class="result-type">${result.type}</span>
-                                    <span class="result-title">${result.title}</span>
-                                `;
-                                
-                                div.addEventListener('click', () => {
-                                    // Sonuç türüne göre yönlendirme yap
-                                    if (result.source === 'case_file') {
-                                        // Dosya detaylarını göster
-                                        window.location.href = '/dosya_sorgula';
-                                        
-                                        // Local storage'a case_id'yi kaydet
-                                        localStorage.setItem('openCaseDetails', result.id);
-                                        
-                                    } else if (result.source === 'client') {
-                                        // Ödeme detaylarına git
-                                        window.location.href = `/odemeler?client_id=${result.id}`;
-                                    }
-                                    
-                                    // Search box'ı temizle ve kapat
-                                    searchInput.value = '';
-                                    searchResults.style.display = 'none';
-                                });
-                                
-                                searchResults.appendChild(div);
-                            });
-
-                            searchResults.style.display = 'block';
-                        });
-                }, 300);
-            });
-
-            document.addEventListener('click', function(e) {
-                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                    searchResults.style.display = 'none';
-                }
-            });
-        }
-
-        // Dosyalarım menüsü için ayrı bir try-catch bloğu kullanalım
-        try {
-            const menuTrigger = document.querySelector('.menu-trigger');
-            const submenuParent = document.querySelector('.has-submenu');
-            const submenu = document.querySelector('.submenu');
-
-            console.log('Menü elementleri:', {
-                menuTrigger,
-                submenuParent,
-                submenu
-            });
-
-            if (menuTrigger && submenuParent && submenu) {
-                menuTrigger.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    submenuParent.classList.toggle('active');
-                    submenu.classList.toggle('active');
-                });
-
-                // Dışarı tıklandığında menüyü kapat
-                document.addEventListener('click', function(e) {
-                    if (!submenuParent.contains(e.target)) {
-                        submenuParent.classList.remove('active');
-                        submenu.classList.remove('active');
+                // Önce diğer tüm açık menüleri kapat
+                menuTriggers.forEach(otherTrigger => {
+                    if (otherTrigger !== trigger) {
+                        otherTrigger.closest('.has-submenu').classList.remove('active');
+                        otherTrigger.nextElementSibling.classList.remove('active');
                     }
                 });
-            } else {
-                throw new Error('Menü elementleri bulunamadı');
-            }
-        } catch (error) {
-            console.error('Menü hatası:', error);
-        }
+                
+                // Tıklanan menüyü aç/kapat
+                const submenuParent = this.closest('.has-submenu');
+                const submenu = submenuParent.querySelector('.submenu');
+                
+                submenuParent.classList.toggle('active');
+                submenu.classList.toggle('active');
+            });
+        });
+        
+        // Sayfa herhangi bir yerine tıklandığında açık menüleri kapat
+        document.addEventListener('click', function(e) {
+            const submenuParents = document.querySelectorAll('.has-submenu');
+            submenuParents.forEach(parent => {
+                if (!parent.contains(e.target)) {
+                    parent.classList.remove('active');
+                    parent.querySelector('.submenu').classList.remove('active');
+                }
+            });
+        });
     });
     </script>
     

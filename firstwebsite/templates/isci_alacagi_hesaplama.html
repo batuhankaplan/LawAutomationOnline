@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block title %}İşçi Alacağı Hesaplama{% endblock %}
+
+{% block content %}
+<div class="calculator-container">
+    <h3 class="main-title"><i class="material-icons">payments</i> İşçi Alacağı Hesaplama</h3>
+    
+    <div id="hn-kidem-tazminati-widget">
+        <script src="https://e.hesaplama.net/kidem-tazminati.do?bgcolor=EEEEEE&tcolor=000000&hcolor=2C3E50&rcolor=FFFFFF&tsize=l&tfamily=n&btype=c&bsize=1px&bcolor=2C3E50" type="text/javascript"></script>
+    </div>
+
+    <div id="hn-ihbar-tazminati-widget">
+        <script src="https://e.hesaplama.net/ihbar-tazminati.do?bgcolor=EEEEEE&tcolor=000000&hcolor=2C3E50&rcolor=FFFFFF&tsize=l&tfamily=n&btype=c&bsize=1px&bcolor=2C3E50" type="text/javascript"></script>
+    </div>
+
+    <div id="hn-fazla-mesai-widget">
+        <script src="https://e.hesaplama.net/fazla-mesai.do?bgcolor=EEEEEE&tcolor=000000&hcolor=2C3E50&rcolor=FFFFFF&tsize=l&tfamily=n&btype=c&bsize=1px&bcolor=2C3E50" type="text/javascript"></script>
+    </div>
+
+    <div id="hn-yillik-izin-ucreti-widget">
+        <script src="https://e.hesaplama.net/yillik-izin-ucreti.do?bgcolor=EEEEEE&tcolor=000000&hcolor=2C3E50&rcolor=FFFFFF&tsize=l&tfamily=n&btype=c&bsize=1px&bcolor=2C3E50" type="text/javascript"></script>
+    </div>
+</div>  
+{% endblock %}

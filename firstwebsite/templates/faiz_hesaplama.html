@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block title %}Faiz Hesaplama{% endblock %}
+
+{% block content %}
+<div class="calculator-container">
+    <h3 class="main-title"><i class="material-icons">calculate</i> Faiz Hesaplama</h3>
+    
+    <div class="calculator-content">
+        <div id="hn-yasal-faiz-widget"></div>
+        <script src="https://e.hesaplama.net/yasal-faiz.do?bgcolor=FFFFFF&tcolor=000000&hcolor=2C3E50&rcolor=FFFFFF&tsize=l&tfamily=n&btype=c&bsize=1px&bcolor=2C3E50" type="text/javascript"></script>
+    </div>
+</div>
+<div id="hn-gecikme-zammi-widget"></div><script src="https://e.hesaplama.net/gecikme-zammi.do?bgcolor=EEEEEE&tcolor=000000&hcolor=2C3E50&rcolor=FFFFFF&tsize=l&tfamily=n&btype=c&bsize=1px&bcolor=2C3E50" type="text/javascript"></script>
+
+{% endblock %}

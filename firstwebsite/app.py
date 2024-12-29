@@ -9,6 +9,8 @@ import json
 import subprocess
 import tempfile
 from flask_mail import Mail, Message
+from bs4 import BeautifulSoup
+import requests
 
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'your_secret_key'
@@ -978,6 +980,48 @@ def send_contact_mail():
         return jsonify(success=True)
     except Exception as e:
         return jsonify(success=False, message=str(e))
+
+def get_current_rates():
+    try:
+        # TCMB'den güncel faiz oranlarını çek
+        url = "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Temel+Faaliyetler/Para+Politikasi/Reeskont+ve+Avans+Faiz+Oranlari"
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Faiz oranlarını parse et
+        rates = {
+            'reeskont': float(soup.find('reeskont').text),
+            'avans': float(soup.find('avans').text),
+            'temerrut': float(soup.find('temerrut').text),
+            'yasal': 9.0,  # Yasal faiz oranı
+            'mevduat': 45.0  # En yüksek mevduat faizi
+        }
+        return rates
+    except:
+        # Hata durumunda varsayılan değerleri döndür
+        return {
+            'reeskont': 13.75,
+            'avans': 14.75,
+            'temerrut': 19.0,
+            'yasal': 9.0,
+            'mevduat': 45.0
+        }
+
+@app.route('/hesaplamalar/<type>')
+def hesaplamalar(type):
+    if type == 'faiz':
+        current_rates = get_current_rates()
+        return render_template('faiz_hesaplama.html', rates=current_rates)
+    elif type == 'harc':
+        return render_template('harc_hesaplama.html')
+    elif type == 'isci':
+        return render_template('isci_alacagi_hesaplama.html')
+    elif type == 'vekalet':
+        return render_template('vekalet_hesaplama.html')
+
+@app.route("/isci-alacagi-hesaplama")
+def isci_alacagi_hesaplama():
+    return render_template("isci_alacagi_hesaplama.html")
 
 if __name__ == '__main__':
     with app.app_context():
