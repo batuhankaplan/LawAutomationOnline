@@ -1,0 +1,371 @@
+{% extends "layout.html" %}
+
+{% block title %}İletişim{% endblock %}
+
+{% block content %}
+<div class="contact-page">
+    <!-- Sol taraf - İletişim Bilgileri -->
+    <div class="contact-info">
+        <div class="info-card">
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kaplan Hukuk" class="contact-logo">
+            </div>
+            <div class="info-content">
+                <h2>İletişim Bilgileri</h2>
+                <div class="info-item">
+                    <i class="material-icons">email</i>
+                    <div>
+                        <h3>E-posta</h3>
+                        <p><a href="mailto:yzbatuhankaplan@outlook.com">yzbatuhankaplan@outlook.com</a></p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="material-icons">schedule</i>
+                    <div>
+                        <h3>Çalışma Saatleri</h3>
+                        <p>Pazartesi - Cuma: 09:00 - 18:00</p>
+                    </div>
+                </div>
+                <div class="social-links">
+                    <a href="#" class="social-link"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sağ taraf - İletişim Formu -->
+    <div class="contact-form-section">
+        <div class="form-card">
+            <h2>Bize Ulaşın</h2>
+            <p>Sorularınız ve önerileriniz için formu doldurun, size en kısa sürede dönüş yapalım.</p>
+            
+            <form id="contactForm" class="contact-form">
+                <div class="form-group">
+                    <label for="name">Ad Soyad</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">E-posta</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Mesajınız</label>
+                    <textarea id="message" name="message" rows="5" required></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <span>Gönder</span>
+                    <i class="material-icons">send</i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.contact-page {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 30px;
+    padding: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.contact-info, .contact-form-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-card, .form-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    height: 100%;
+}
+
+.logo-container {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.contact-logo {
+    max-width: 200px;
+    height: auto;
+}
+
+.info-content {
+    padding: 20px 0;
+}
+
+.info-content h2 {
+    color: #2c3e50;
+    margin-bottom: 25px;
+    font-size: 1.8rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 15px;
+    border-radius: 10px;
+    background: #f8f9fa;
+}
+
+.info-item i {
+    color: var(--primary-color);
+    font-size: 24px;
+}
+
+.info-item h3 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.info-item p {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.info-item a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.social-links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.social-link {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2c3e50;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.social-link:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-3px);
+}
+
+.form-card {
+    padding: 40px;
+}
+
+.form-card h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+}
+
+.form-card p {
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+    padding: 12px 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+    outline: none;
+}
+
+.submit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 30px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.submit-btn:hover {
+    background: var(--hover-color);
+    transform: translateY(-2px);
+}
+
+.submit-btn i {
+    font-size: 20px;
+}
+
+@media (max-width: 1024px) {
+    .contact-page {
+        grid-template-columns: 1fr;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .info-card, .form-card {
+        padding: 20px;
+    }
+}
+
+/* Koyu arka plan rengi için */
+.info-card {
+    background: rgb(45, 48, 61); /* İstediğiniz koyu renk */
+    color: white;
+}
+
+/* İçerik renklerini güncelle */
+.info-content h2 {
+    color: white;
+}
+
+.info-item {
+    background: rgba(255, 255, 255, 0.05); /* Daha koyu bir ton */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.info-item h3 {
+    color: white;
+}
+
+.info-item p {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.info-item a {
+    color: white;
+    transition: color 0.3s ease;
+}
+
+.info-item a:hover {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.info-item i {
+    color: white;
+}
+
+/* Sosyal medya ikonları */
+.social-link {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.social-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* Form kartı için hafif gri arka plan */
+.form-card {
+    background: #f8f9fa;
+}
+
+/* Form elemanları için arka plan rengi */
+.form-group input,
+.form-group textarea {
+    background: white;
+}
+
+/* Gönder butonu için renk uyumu */
+.submit-btn {
+    background: rgb(45, 48, 61);
+}
+
+.submit-btn:hover {
+    background: rgb(55, 58, 71); /* Biraz daha açık ton */
+}
+
+/* Logo container için arka plan kaldır */
+.logo-container {
+    background: transparent;
+}
+
+/* Responsive tasarım için gölgeleri güçlendir */
+@media (max-width: 1024px) {
+    .info-card, .form-card {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+}
+</style>
+
+<script>
+function submitForm(event) {
+    event.preventDefault();
+    
+    const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        message: document.getElementById('message').value
+    };
+
+    fetch('/send_contact_mail', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Mesajınız başarıyla gönderildi.');
+            document.getElementById('contactForm').reset();
+        } else {
+            alert('Mesaj gönderilirken bir hata oluştu: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Mesaj gönderilirken bir hata oluştu.');
+    });
+
+    return false;
+}
+</script>
+{% endblock %} 

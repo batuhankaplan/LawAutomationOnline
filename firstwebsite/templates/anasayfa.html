@@ -152,6 +152,69 @@
             </div>
             {% endif %}
         </div>
+
+        <!-- Adliye İstatistikleri - Yeni konumu -->
+        <div class="dashboard-card courthouse-stats">
+            <div class="card-header">
+                <h3><i class="material-icons">location_city</i>Adliye İstatistikleri</h3>
+            </div>
+            <div class="courthouse-grid">
+                {% for stat in courthouse_stats %}
+                <div class="courthouse-item">
+                    <div class="courthouse-icon">
+                        <i class="material-icons">business</i>
+                    </div>
+                    <div class="courthouse-details">
+                        <div class="courthouse-name">{{ stat.courthouse }}</div>
+                        <div class="courthouse-count">{{ stat.total_cases }} Dosya</div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="no-data">Henüz adliye verisi bulunmuyor.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- İlgili Bağlantılar -->
+        <div class="dashboard-card quick-links">
+            <div class="card-header">
+                <h3><i class="material-icons">link</i>İlgili Bağlantılar</h3>
+            </div>
+            <div class="links-container">
+                <a href="https://avukat.uyap.gov.tr/main/avukat/index.jsp?v=3784" target="_blank" class="quick-link">
+                    <div class="link-icon">
+                        <i class="material-icons">gavel</i>
+                    </div>
+                    <div class="link-content">
+                        <h4>UYAP</h4>
+                        <p>Ulusal Yargı Ağı Bilişim Sistemi</p>
+                    </div>
+                    <i class="material-icons link-arrow">open_in_new</i>
+                </a>
+
+                <a href="https://www.turkiye.gov.tr/" target="_blank" class="quick-link">
+                    <div class="link-icon">
+                        <i class="material-icons">account_balance</i>
+                    </div>
+                    <div class="link-content">
+                        <h4>e-Devlet</h4>
+                        <p>e-Devlet Kapısı</p>
+                    </div>
+                    <i class="material-icons link-arrow">open_in_new</i>
+                </a>
+
+                <a href="https://www.istanbulbarosu.org.tr/adliyerehberi.aspx" target="_blank" class="quick-link">
+                    <div class="link-icon">
+                        <i class="material-icons">location_on</i>
+                    </div>
+                    <div class="link-content">
+                        <h4>Adliye Rehberi</h4>
+                        <p>İstanbul Barosu Adliye Rehberi</p>
+                    </div>
+                    <i class="material-icons link-arrow">open_in_new</i>
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -553,6 +616,169 @@
 
 .total-box .stat-icon i {
     color: #8e44ad;
+}
+
+/* İlgili Bağlantılar Kartı */
+.quick-links {
+    margin-top: 20px;
+}
+
+.links-container {
+    padding: 15px;
+}
+
+.quick-link {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+}
+
+.quick-link:last-child {
+    margin-bottom: 0;
+}
+
+.quick-link:hover {
+    background: rgba(33, 150, 243, 0.1);
+    transform: translateX(5px);
+}
+
+.link-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgb(45, 48, 61);
+    border-radius: 8px;
+    margin-right: 15px;
+}
+
+.link-icon i {
+    color: white;
+    font-size: 20px;
+}
+
+.link-content {
+    flex: 1;
+}
+
+.link-content h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.link-content p {
+    margin: 3px 0 0 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.link-arrow {
+    color: #adb5bd;
+    font-size: 18px;
+    margin-left: 10px;
+    transition: transform 0.3s ease;
+}
+
+.quick-link:hover .link-arrow {
+    transform: translateX(3px);
+    color: var(--primary-color);
+}
+
+/* Responsive tasarım için */
+@media (max-width: 768px) {
+    .quick-link {
+        padding: 12px;
+    }
+
+    .link-icon {
+        width: 35px;
+        height: 35px;
+    }
+
+    .link-content h4 {
+        font-size: 0.95rem;
+    }
+
+    .link-content p {
+        font-size: 0.8rem;
+    }
+}
+
+/* Adliye İstatistikleri Kartı */
+.courthouse-stats {
+    margin-top: 20px;
+}
+
+.courthouse-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    padding: 15px;
+}
+
+.courthouse-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.courthouse-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.courthouse-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgb(45, 48, 61);
+    border-radius: 8px;
+}
+
+.courthouse-icon i {
+    color: white;
+    font-size: 20px;
+}
+
+.courthouse-details {
+    flex: 1;
+}
+
+.courthouse-name {
+    font-weight: 500;
+    color: #2c3e50;
+    font-size: 0.9rem;
+    margin-bottom: 3px;
+}
+
+.courthouse-count {
+    color: var(--primary-color);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .courthouse-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .courthouse-item {
+        padding: 12px;
+    }
 }
 </style>
 

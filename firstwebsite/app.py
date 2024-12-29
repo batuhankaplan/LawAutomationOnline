@@ -8,12 +8,19 @@ import time
 import json
 import subprocess
 import tempfile
+from flask_mail import Mail, Message
 
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///clients.db'
 app.config['UPLOAD_FOLDER'] = 'uploads/'
+app.config['MAIL_SERVER'] = 'smtp-mail.outlook.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'yzbatuhankaplan@outlook.com'
+app.config['MAIL_PASSWORD'] = 'your_mail_password'  # Mail şifrenizi buraya yazın
 db = SQLAlchemy(app)
+mail = Mail(app)
 
 # Türkçe tarih için locale ayarı
 try:
@@ -95,6 +102,14 @@ def anasayfa():
     # Toplam aktif dosya sayısını hesapla
     total_active_cases = CaseFile.query.filter_by(status='Aktif').count()
     
+    # Adliye istatistiklerini al (en çok dosyası olan ilk 4 adliye)
+    courthouse_stats = db.session.query(
+        CaseFile.courthouse,
+        db.func.count(CaseFile.id).label('total_cases')
+    ).group_by(CaseFile.courthouse)\
+    .order_by(db.func.count(CaseFile.id).desc())\
+    .limit(4).all()
+    
     return render_template('anasayfa.html', 
                          announcements=announcements,
                          hukuk_count=hukuk_count,
@@ -104,7 +119,8 @@ def anasayfa():
                          recent_activities=recent_activities,
                          total_activities=total_activities,
                          upcoming_hearings=upcoming_hearings,
-                         total_hearings=total_hearings)
+                         total_hearings=total_hearings,
+                         courthouse_stats=courthouse_stats)
 
 # Daha fazla aktivite yüklemek için yeni endpoint
 @app.route('/load_more_activities/<int:offset>')
@@ -194,6 +210,15 @@ class CalendarEvent(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     case_id = db.Column(db.Integer, db.ForeignKey('case_file.id'))
 
+# Adli tatil tarihlerini kontrol eden fonksiyon
+def is_adli_tatil(date):
+    # Adli tatil: 20 Temmuz - 31 Ağustos arası
+    if date.month == 7 and date.day >= 20:
+        return True
+    if date.month == 8:
+        return True
+    return False
+
 @app.route('/takvim')
 def takvim():
     events = CalendarEvent.query.all()
@@ -206,7 +231,21 @@ def takvim():
         'description': event.description
     } for event in events]
     
-    return render_template('takvim.html', events=events_data)
+    # Adli tatil tarihlerini ekle
+    current_year = datetime.now().year
+    adli_tatil_data = []
+    
+    # 2024-2027 yılları için adli tatil tarihlerini ekle
+    for year in range(2024, 2028):
+        adli_tatil_data.append({
+            'start': f'{year}-07-20',
+            'end': f'{year}-08-31',
+            'year': year
+        })
+    
+    return render_template('takvim.html', 
+                         events=events_data,
+                         adli_tatil_data=adli_tatil_data)
 
 @app.route('/dosyalarim')
 def dosyalarim():
@@ -910,6 +949,34 @@ def update_expense(expense_id):
         return jsonify(success=True)
     except Exception as e:
         db.session.rollback()
+        return jsonify(success=False, message=str(e))
+
+@app.route('/iletisim')
+def iletisim():
+    return render_template('iletisim.html')
+
+@app.route('/send_contact_mail', methods=['POST'])
+def send_contact_mail():
+    try:
+        data = request.get_json()
+        
+        msg = Message('Yeni İletişim Formu Mesajı',
+                    sender=app.config['MAIL_USERNAME'],
+                    recipients=[app.config['MAIL_USERNAME']])
+        
+        msg.body = f"""
+        Yeni bir iletişim formu mesajı alındı:
+        
+        Gönderen: {data['name']}
+        E-posta: {data['email']}
+        
+        Mesaj:
+        {data['message']}
+        """
+        
+        mail.send(msg)
+        return jsonify(success=True)
+    except Exception as e:
         return jsonify(success=False, message=str(e))
 
 if __name__ == '__main__':
