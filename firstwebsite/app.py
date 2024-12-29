@@ -47,6 +47,24 @@ class User(db.Model):
     password = db.Column(db.String(150), nullable=False)
     role = db.Column(db.String(50), nullable=False, default='user')
 
+class ActivityLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    activity_type = db.Column(db.String(50), nullable=False)  # 'dosya_ekleme', 'masraf_ekleme', 'belge_yukleme', vs.
+    description = db.Column(db.String(250), nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    related_case_id = db.Column(db.Integer, db.ForeignKey('case_file.id'), nullable=True)
+
+def log_activity(activity_type, description, user_id, case_id=None):
+    activity = ActivityLog(
+        activity_type=activity_type,
+        description=description,
+        user_id=user_id,
+        related_case_id=case_id
+    )
+    db.session.add(activity)
+    db.session.commit()
+
 @app.route('/')
 def anasayfa():
     # Duyuruları al
@@ -57,11 +75,49 @@ def anasayfa():
     ceza_count = CaseFile.query.filter_by(file_type='ceza').count()
     icra_count = CaseFile.query.filter_by(file_type='icra').count()
     
+    # Son aktiviteleri al (ilk 5 işlem)
+    recent_activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all()
+    # Toplam aktivite sayısını al
+    total_activities = ActivityLog.query.count()
+    
+    # Yaklaşan duruşmaları al (sadece ilk 3)
+    upcoming_hearings = CalendarEvent.query.filter(
+        CalendarEvent.date >= datetime.now().date(),
+        CalendarEvent.event_type == 'durusma'
+    ).order_by(CalendarEvent.date, CalendarEvent.time).limit(3).all()
+    
+    # Toplam duruşma sayısını al
+    total_hearings = CalendarEvent.query.filter(
+        CalendarEvent.date >= datetime.now().date(),
+        CalendarEvent.event_type == 'durusma'
+    ).count()
+    
+    # Toplam aktif dosya sayısını hesapla
+    total_active_cases = CaseFile.query.filter_by(status='Aktif').count()
+    
     return render_template('anasayfa.html', 
                          announcements=announcements,
                          hukuk_count=hukuk_count,
                          ceza_count=ceza_count,
-                         icra_count=icra_count)
+                         icra_count=icra_count,
+                         total_active_cases=total_active_cases,
+                         recent_activities=recent_activities,
+                         total_activities=total_activities,
+                         upcoming_hearings=upcoming_hearings,
+                         total_hearings=total_hearings)
+
+# Daha fazla aktivite yüklemek için yeni endpoint
+@app.route('/load_more_activities/<int:offset>')
+def load_more_activities(offset):
+    activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).offset(offset).limit(5).all()
+    
+    activities_data = [{
+        'type': activity.activity_type,
+        'description': activity.description,
+        'timestamp': activity.timestamp.strftime('%d.%m.%Y %H:%M')
+    } for activity in activities]
+    
+    return jsonify(activities=activities_data)
 
 class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -152,26 +208,28 @@ def takvim():
     
     return render_template('takvim.html', events=events_data)
 
-@app.route('/dosyalarim', methods=['GET', 'POST'])
+@app.route('/dosyalarim')
 def dosyalarim():
-    if request.method == 'POST':
-        file_type = request.form['file-type']
-        year = request.form['year']
-        case_number = request.form['case-number']
-        client_name = request.form['client-name']
-        query = CaseFile.query
-        if file_type:
-            query = query.filter_by(file_type=file_type)
-        if year:
-            query = query.filter_by(year=year)
-        if case_number:
-            query = query.filter_by(case_number=case_number)
-        if client_name:
-            query = query.filter(CaseFile.client_name.ilike(f'%{client_name}%'))
-        case_files = query.all()
-    else:
-        case_files = []
-    return render_template('dosyalarim.html', case_files=case_files)
+    # URL parametrelerini al
+    file_type = request.args.get('file_type')
+    status = request.args.get('status')
+    
+    # Sorguyu başlat
+    query = CaseFile.query
+    
+    # Filtreler
+    if file_type:
+        query = query.filter_by(file_type=file_type)
+    if status:
+        query = query.filter_by(status=status)
+    
+    # Sonuçları al
+    case_files = query.all()
+    
+    return render_template('dosyalarim.html', 
+                         case_files=case_files,
+                         selected_type=file_type,
+                         selected_status=status)
 
 @app.route('/duyurular', methods=['GET', 'POST'])
 def duyurular():
@@ -257,36 +315,28 @@ def bildirimler():
     notifications = Notification.query.filter_by(read=False).all()
     return render_template('bildirimler.html', notifications=notifications)
 
-@app.route('/dosya_sorgula', methods=['GET', 'POST'])
+@app.route('/dosya_sorgula')
 def dosya_sorgula():
-    if request.method == 'POST':
-        file_type = request.form['file-type']
-        year = request.form['year']
-        case_number = request.form['case-number']
-        client_name = request.form['client-name']
-        status = request.form['status']
-        
-        query = CaseFile.query
-        if file_type:
-            query = query.filter_by(file_type=file_type)
-        if year:
-            query = query.filter_by(year=year)
-        if case_number:
-            query = query.filter_by(case_number=case_number)
-        if client_name:
-            query = query.filter(CaseFile.client_name.ilike(f'%{client_name}%'))
-        if status:
-            query = query.filter_by(status=status)
-            
-        case_files = query.all()
-    else:
-        case_files = CaseFile.query.all()
+    # URL parametrelerini al
+    file_type = request.args.get('file_type')
+    status = request.args.get('status')
     
-    # Dosya türlerini büyük harfle başlat
-    for case_file in case_files:
-        case_file.file_type = case_file.file_type.title()
-        
-    return render_template('dosya_sorgula.html', case_files=case_files)
+    # Sorguyu başlat
+    query = CaseFile.query
+    
+    # Filtreler
+    if file_type:
+        query = query.filter_by(file_type=file_type)
+    if status:
+        query = query.filter_by(status=status)
+    
+    # Sonuçları al
+    case_files = query.all()
+    
+    return render_template('dosya_sorgula.html', 
+                         case_files=case_files,
+                         selected_type=file_type,
+                         selected_status=status)
 
 @app.route('/dosya_ekle', methods=['GET', 'POST'])
 def dosya_ekle():
@@ -313,6 +363,14 @@ def dosya_ekle():
             
             db.session.add(new_case_file)
             db.session.commit()
+            
+            # İşlem logu ekle
+            log_activity(
+                activity_type='dosya_ekleme',
+                description=f"Yeni dosya eklendi: {data['client-name']} - {data['case-number']}",
+                user_id=1,
+                case_id=new_case_file.id
+            )
             
             return jsonify(success=True)
             
@@ -381,6 +439,14 @@ def edit_case(case_id):
                 case_file.next_hearing = None
             
             db.session.commit()
+            
+            log_activity(
+                activity_type='dosya_duzenleme',
+                description=f"Dosya güncellendi: {case_file.client_name}",
+                user_id=1,
+                case_id=case_id
+            )
+            
             return jsonify(success=True)
         return jsonify(success=False, message="Dosya bulunamadı")
     except Exception as e:
@@ -490,18 +556,33 @@ def delete_event(event_id):
 
 @app.route('/add_expense/<int:case_id>', methods=['POST'])
 def add_expense(case_id):
-    data = request.get_json()
-    new_expense = Expense(
-        case_id=case_id,
-        expense_type=data['expense_type'],
-        amount=float(data['amount']),
-        date=datetime.strptime(data['date'], '%Y-%m-%d').date(),
-        description=data.get('description'),
-        is_paid=data['is_paid']
-    )
-    db.session.add(new_expense)
-    db.session.commit()
-    return jsonify(success=True)
+    try:
+        data = request.get_json()
+        case_file = CaseFile.query.get_or_404(case_id)
+        
+        new_expense = Expense(
+            case_id=case_id,
+            expense_type=data['expense_type'],
+            amount=data['amount'],
+            date=datetime.strptime(data['date'], '%Y-%m-%d').date(),
+            is_paid=data['is_paid'],
+            description=data.get('description', '')
+        )
+        
+        db.session.add(new_expense)
+        db.session.commit()
+        
+        log_activity(
+            activity_type='masraf_ekleme',
+            description=f"Yeni masraf eklendi: {case_file.client_name} - {data['expense_type']} (₺{data['amount']})",
+            user_id=1,
+            case_id=case_id
+        )
+        
+        return jsonify(success=True)
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, message=str(e))
 
 @app.route('/delete_expense/<int:expense_id>', methods=['POST'])
 def delete_expense(expense_id):
@@ -562,6 +643,15 @@ def upload_document(case_id):
             
             db.session.add(new_document)
             db.session.commit()
+            
+            # İşlem logu ekle
+            case_file = CaseFile.query.get(case_id)
+            log_activity(
+                activity_type='belge_yukleme',
+                description=f"Yeni belge yüklendi: {case_file.client_name} - {document_type} ({custom_name or file.filename})",
+                user_id=1,
+                case_id=case_id
+            )
             
             return jsonify(success=True)
             
@@ -708,48 +798,60 @@ def sync_hearing_to_calendar():
         case_id = data.get('case_id')
         hearing_date = data.get('hearing_date')
         hearing_time = data.get('hearing_time', '09:00')
-        status = data.get('status')  # Dosya durumunu al
+        status = data.get('status')
         
-        # Dosya bilgilerini al
         case_file = CaseFile.query.get(case_id)
         if not case_file:
             return jsonify(success=False, message="Dosya bulunamadı")
 
-        # Önce bu dosyaya ait mevcut duruşma etkinliğini bul
         existing_event = CalendarEvent.query.filter_by(
             case_id=case_id,
             event_type='durusma'
         ).first()
 
-        # Dosya kapalıysa veya duruşma tarihi yoksa
         if status == 'Kapalı' or not hearing_date:
             if existing_event:
                 db.session.delete(existing_event)
                 db.session.commit()
+                log_activity(
+                    activity_type='durusma_silme',
+                    description=f"Duruşma kaydı silindi: {case_file.client_name} - {case_file.case_number}",
+                    user_id=1,
+                    case_id=case_id
+                )
             return jsonify(success=True)
 
-        # Duruşma tarihi ve saatini ayarla
         event_date = datetime.strptime(hearing_date, '%Y-%m-%d').date()
         event_time = datetime.strptime(hearing_time, '%H:%M').time()
         
         if existing_event:
-            # Mevcut etkinliği güncelle
             existing_event.date = event_date
             existing_event.time = event_time
             existing_event.title = f"Duruşma - {case_file.client_name} ({case_file.case_number})"
-            existing_event.description = f"Dosya Türü: {case_file.file_type}\nAdliye: {case_file.courthouse}\nBirim: {case_file.department}\nMüvekkil: {case_file.client_name}\nDosya No: {case_file.case_number}"
+            existing_event.description = f"Dosya Türü: {case_file.file_type}\nAdliye: {case_file.courthouse}\nBirim: {case_file.department}"
+            log_activity(
+                activity_type='durusma_guncelleme',
+                description=f"Duruşma güncellendi: {case_file.client_name} - {event_date.strftime('%d.%m.%Y')} {event_time.strftime('%H:%M')}",
+                user_id=1,
+                case_id=case_id
+            )
         else:
-            # Yeni etkinlik oluştur
             new_event = CalendarEvent(
                 title=f"Duruşma - {case_file.client_name} ({case_file.case_number})",
                 date=event_date,
                 time=event_time,
                 event_type='durusma',
-                description=f"Dosya Türü: {case_file.file_type}\nAdliye: {case_file.courthouse}\nBirim: {case_file.department}\nMüvekkil: {case_file.client_name}\nDosya No: {case_file.case_number}",
+                description=f"Dosya Türü: {case_file.file_type}\nAdliye: {case_file.courthouse}\nBirim: {case_file.department}",
                 user_id=1,
-                case_id=case_id  # case_id alanını ekleyin
+                case_id=case_id
             )
             db.session.add(new_event)
+            log_activity(
+                activity_type='durusma_ekleme',
+                description=f"Yeni duruşma eklendi: {case_file.client_name} - {event_date.strftime('%d.%m.%Y')} {event_time.strftime('%H:%M')}",
+                user_id=1,
+                case_id=case_id
+            )
         
         db.session.commit()
         return jsonify(success=True)

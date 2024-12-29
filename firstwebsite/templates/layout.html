@@ -12,13 +12,10 @@
     <style>
     .search-container {
         position: relative;
-        max-width: 600px;
-        width: 100%;
+        width: 300px; /* Sabit genişlik */
     }
 
     .search-wrapper {
-        display: flex;
-        gap: 10px;
         width: 100%;
     }
 
@@ -150,6 +147,188 @@
         flex: 1;
         color: #2c3e50;
     }
+
+    /* Arama kutusu stillerini güncelle */
+    .search-box {
+        display: flex;
+        align-items: center;
+        background: white;
+        border-radius: 6px;
+        padding: 0 12px;
+        border: 1px solid #dee2e6;
+        max-width: 300px;
+        transition: all 0.2s ease;
+    }
+
+    .search-box:focus-within {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+    }
+
+    .search-box i {
+        color: #adb5bd;
+        font-size: 20px;
+        margin-right: 8px;
+    }
+
+    .search-box input {
+        border: none;
+        outline: none;
+        padding: 8px 0;
+        width: 100%;
+        font-size: 0.9rem;
+        color: #495057;
+        background: transparent;
+    }
+
+    .search-box input::placeholder {
+        color: #adb5bd;
+    }
+
+    /* Hover durumunda ikon rengini değiştir */
+    .search-box:hover i {
+        color: #495057;
+    }
+
+    /* Dropdown menü için basit stil */
+    #dosyalarim-dropdown {
+        list-style: none;
+        padding-left: 20px;
+        margin: 0;
+    }
+
+    #dosyalarim-dropdown li a {
+        display: block;
+        padding: 8px 15px;
+        color: #333;
+        text-decoration: none;
+    }
+
+    #dosyalarim-dropdown li a:hover {
+        background-color: #f5f5f5;
+    }
+
+    /* Menü stilleri */
+    .nav-links {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .nav-links li {
+        margin: 2px 0;
+    }
+
+    .nav-links a {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        color: #2c3e50;
+        text-decoration: none;
+        transition: background 0.3s;
+    }
+
+    .nav-links a:hover {
+        background: rgba(33, 150, 243, 0.1);
+    }
+
+    .nav-links i {
+        margin-right: 10px;
+    }
+
+    /* Dosyalarım menüsü için özel stiller */
+    .has-submenu {
+        position: relative;
+    }
+
+    .menu-trigger {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 10px 15px;
+        color: #2c3e50;
+        text-decoration: none;
+        cursor: pointer;
+        background: transparent;
+    }
+
+    .menu-left {
+        display: flex;
+        align-items: center;
+    }
+
+    .menu-left i {
+        margin-right: 10px;
+    }
+
+    .menu-arrow {
+        font-size: 20px !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        transition: transform 0.3s;
+    }
+
+    .has-submenu.active .menu-arrow {
+        transform: rotate(90deg);
+    }
+
+    .submenu {
+        display: none;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        border-left: 3px solid var(--primary-color);
+        background: transparent !important;
+    }
+
+    .submenu.active {
+        display: block;
+    }
+
+    /* Submenu link stillerini güncelle */
+    .submenu li {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .submenu li:last-child {
+        border-bottom: none; /* Son öğenin altındaki çizgiyi kaldır */
+    }
+
+    .submenu li a {
+        display: flex !important;
+        align-items: center;
+        padding: 8px 15px 8px 35px !important;
+        color: rgba(255, 255, 255, 0.7) !important;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .submenu li a i {
+        margin-right: 10px;
+        font-size: 18px;
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    .submenu li a:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff !important;
+    }
+
+    .submenu li a:hover i {
+        color: #fff !important;
+    }
+
+    /* Eski dropdown stillerini kaldır */
+    .dropdown, .dropdown-arrow, .menu-item, .menu-link {
+        all: unset;
+    }
+
+    /* Menu trigger efektlerini düzelt */
+    .menu-trigger:hover {
+        background: rgba(33, 150, 243, 0.1);
+    }
     </style>
 </head>
 
@@ -163,13 +342,22 @@
             <ul class="nav-links">
                 <li><a href="{{ url_for('anasayfa') }}"><i class="material-icons">home</i>Ana Sayfa</a></li>
                 <li><a href="{{ url_for('takvim') }}"><i class="material-icons">calendar_today</i>Takvim</a></li>
-                <li>
-                    <a href="#" class="dosyalarim-link"><i class="material-icons">folder</i>Dosyalarım</a>
-                    <ul id="dosyalarim-dropdown" class="dropdown">
-                        <li><a href="{{ url_for('dosya_sorgula') }}">Dosya Sorgula</a></li>
-                        <li><a href="{{ url_for('dosya_ekle') }}">Dosya Ekle</a></li>
+                
+                <!-- Dosyalarım menüsü -->
+                <li class="has-submenu">
+                    <a href="#" class="menu-trigger">
+                        <div class="menu-left">
+                            <i class="material-icons">folder</i>
+                            <span>Dosyalarım</span>
+                        </div>
+                        <i class="material-icons menu-arrow">chevron_right</i>
+                    </a>
+                    <ul class="submenu">
+                        <li><a href="{{ url_for('dosya_sorgula') }}"><i class="material-icons">search</i>Dosya Sorgula</a></li>
+                        <li><a href="{{ url_for('dosya_ekle') }}"><i class="material-icons">add</i>Dosya Ekle</a></li>
                     </ul>
                 </li>
+                
                 <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
                 <li><a href="{{ url_for('odemeler') }}"><i class="material-icons">payment</i>Ödemeler</a></li>
             </ul>
@@ -179,11 +367,10 @@
                 <header>
                     <div class="search-container">
                         <div class="search-wrapper">
-                            <input type="text" id="search-input" placeholder="Ara...">
-                            <button class="search-button">
+                            <div class="search-box">
                                 <i class="material-icons">search</i>
-                                <span>Ara</span>
-                            </button>
+                                <input type="text" placeholder="Ara...">
+                            </div>
                         </div>
                         <div id="search-results" class="search-results-dropdown"></div>
                     </div>
@@ -213,97 +400,110 @@
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('search-input');
+        // Önce elementlerin varlığını kontrol et
+        const searchInput = document.querySelector('.search-box input');  // ID yerine class kullan
         const searchResults = document.getElementById('search-results');
-        let searchTimeout;
 
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const query = this.value.trim();
-            
-            if (query.length < 2) {
-                searchResults.style.display = 'none';
-                return;
-            }
+        // Arama fonksiyonları sadece elementler varsa çalışsın
+        if (searchInput && searchResults) {
+            let searchTimeout;
 
-            searchTimeout = setTimeout(() => {
-                fetch(`/search?q=${encodeURIComponent(query)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        searchResults.innerHTML = '';
-                        
-                        if (data.length === 0) {
-                            searchResults.style.display = 'none';
-                            return;
-                        }
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+                
+                if (query.length < 2) {
+                    searchResults.style.display = 'none';
+                    return;
+                }
 
-                        data.forEach(result => {
-                            const div = document.createElement('div');
-                            div.className = 'search-result-item';
-                            div.innerHTML = `
-                                <span class="result-type">${result.type}</span>
-                                <span class="result-title">${result.title}</span>
-                            `;
+                searchTimeout = setTimeout(() => {
+                    fetch(`/search?q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            searchResults.innerHTML = '';
                             
-                            div.addEventListener('click', () => {
-                                // Sonuç türüne göre yönlendirme yap
-                                if (result.source === 'case_file') {
-                                    // Dosya detaylarını göster
-                                    window.location.href = '/dosya_sorgula';
-                                    
-                                    // Local storage'a case_id'yi kaydet
-                                    localStorage.setItem('openCaseDetails', result.id);
-                                    
-                                } else if (result.source === 'client') {
-                                    // Ödeme detaylarına git
-                                    window.location.href = `/odemeler?client_id=${result.id}`;
-                                }
-                                
-                                // Search box'ı temizle ve kapat
-                                searchInput.value = '';
+                            if (data.length === 0) {
                                 searchResults.style.display = 'none';
+                                return;
+                            }
+
+                            data.forEach(result => {
+                                const div = document.createElement('div');
+                                div.className = 'search-result-item';
+                                div.innerHTML = `
+                                    <span class="result-type">${result.type}</span>
+                                    <span class="result-title">${result.title}</span>
+                                `;
+                                
+                                div.addEventListener('click', () => {
+                                    // Sonuç türüne göre yönlendirme yap
+                                    if (result.source === 'case_file') {
+                                        // Dosya detaylarını göster
+                                        window.location.href = '/dosya_sorgula';
+                                        
+                                        // Local storage'a case_id'yi kaydet
+                                        localStorage.setItem('openCaseDetails', result.id);
+                                        
+                                    } else if (result.source === 'client') {
+                                        // Ödeme detaylarına git
+                                        window.location.href = `/odemeler?client_id=${result.id}`;
+                                    }
+                                    
+                                    // Search box'ı temizle ve kapat
+                                    searchInput.value = '';
+                                    searchResults.style.display = 'none';
+                                });
+                                
+                                searchResults.appendChild(div);
                             });
-                            
-                            searchResults.appendChild(div);
+
+                            searchResults.style.display = 'block';
                         });
-
-                        searchResults.style.display = 'block';
-                    });
-            }, 300);
-        });
-
-        // Sayfa herhangi bir yerine tıklandığında sonuçları gizle
-        document.addEventListener('click', function(e) {
-            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
-            }
-        });
-
-        // Dosyalarım menüsü için gerekli elementleri seçelim
-        const dosyalarimLink = document.querySelector('.dosyalarim-link');
-        const dosyalarimDropdown = document.getElementById('dosyalarim-dropdown');
-
-        // Dosyalarım linkine tıklandığında
-        dosyalarimLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (dosyalarimDropdown.style.display === "none" || dosyalarimDropdown.style.display === "") {
-                dosyalarimDropdown.style.display = "block";
-            } else {
-                dosyalarimDropdown.style.display = "none";
-            }
-        });
-
-        // Alt menü linklerine tıklandığında menünün kapanmasını engelleyelim
-        const dropdownLinks = dosyalarimDropdown.querySelectorAll('a');
-        dropdownLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.stopPropagation();
-                // Menüyü açık tutmak için display özelliğini koruyalım
-                dosyalarimDropdown.style.display = "block";
+                }, 300);
             });
-        });
+
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.style.display = 'none';
+                }
+            });
+        }
+
+        // Dosyalarım menüsü için ayrı bir try-catch bloğu kullanalım
+        try {
+            const menuTrigger = document.querySelector('.menu-trigger');
+            const submenuParent = document.querySelector('.has-submenu');
+            const submenu = document.querySelector('.submenu');
+
+            console.log('Menü elementleri:', {
+                menuTrigger,
+                submenuParent,
+                submenu
+            });
+
+            if (menuTrigger && submenuParent && submenu) {
+                menuTrigger.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    submenuParent.classList.toggle('active');
+                    submenu.classList.toggle('active');
+                });
+
+                // Dışarı tıklandığında menüyü kapat
+                document.addEventListener('click', function(e) {
+                    if (!submenuParent.contains(e.target)) {
+                        submenuParent.classList.remove('active');
+                        submenu.classList.remove('active');
+                    }
+                });
+            } else {
+                throw new Error('Menü elementleri bulunamadı');
+            }
+        } catch (error) {
+            console.error('Menü hatası:', error);
+        }
     });
     </script>
     
