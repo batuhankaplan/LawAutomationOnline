@@ -33,12 +33,12 @@
 
                 <div class="input-group">
                     <label for="department">Birim</label>
-                    <select id="department" name="department" onchange="updateCourtNumbers()">
+                    <select id="department" name="department">
                         <option value="">Tümü</option>
                     </select>
                 </div>
 
-                <div id="court-number-container" class="input-group" style="display: none;">
+                <div class="input-group">
                     <label for="court-number">Mahkeme</label>
                     <select id="court-number" name="court-number">
                         <option value="">Tümü</option>
@@ -748,10 +748,218 @@
 .delete-btn:hover {
     color: #dc3545;
 }
+
+/* Masraf ekleme modalı içeriğini güncelle */
+.modal-content expense-modal {
+    max-width: 800px;
+}
+
+.expense-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.expense-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.expense-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.expense-type-wrapper {
+    position: relative;
+}
+
+.amount-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.currency-symbol {
+    position: absolute;
+    right: 10px;
+    color: #666;
+}
+
+.status-toggle {
+    position: relative;
+    width: 100%;
+}
+
+.toggle-input {
+    display: none;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 10px;
+    background: #f1f1f1;
+    border-radius: 20px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.toggle-label::before {
+    content: '';
+    position: absolute;
+    width: 50%;
+    height: 85%;
+    border-radius: 15px;
+    background: white;
+    left: 3px;
+    transition: all 0.3s ease;
+}
+
+.toggle-input:checked + .toggle-label::before {
+    left: calc(50% - 3px);
+}
+
+.toggle-input:checked + .toggle-label {
+    background: var(--success-color);
+    color: white;
+}
+
+.toggle-text-off,
+.toggle-text-on {
+    position: relative;
+    z-index: 1;
+    font-size: 0.9rem;
+    padding: 0 5px;
+}
+
+.toggle-input:checked + .toggle-label .toggle-text-off {
+    color: rgba(255,255,255,0.5);
+}
+
+.toggle-input:not(:checked) + .toggle-label .toggle-text-on {
+    color: rgba(0,0,0,0.5);
+}
+
+.preview-modal-content {
+    width: 95vw;
+    height: 95vh;
+    max-width: none;
+}
+
+.preview-modal-body {
+    padding: 0;
+    height: calc(95vh - 120px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f5f5f5;
+}
+
+.document-preview-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+}
+
+.document-preview-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.document-preview-container img {
+    max-width: none;
+    max-height: none;
+    object-fit: contain;
+}
+
+.expense-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-right: 10px;
+}
+
+.status-paid {
+    color: #2e7d32;
+}
+
+.status-unpaid {
+    color: #c62828;
+}
+
+.expense-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.expense-actions .btn {
+    padding: 4px;
+    min-width: auto;
+}
+
+.expense-actions .btn i {
+    font-size: 18px;
+}
+
+.document-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.document-original-name {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.document-name {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.document-date {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* İşlem butonları için stil güncellemesi */
+.actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Ayırıcı çizgiyi kaldır */
+.actions span {
+    display: none;
+}
 </style>
 
 <script>
 let currentCaseId = null;
+let currentExpenses = [];
 
 // Adliye ve birim listelerini tanımla
 const courthouses = [
@@ -1030,6 +1238,7 @@ function showDetails(caseId) {
 
             // Masrafları göster
             if (data.expenses && Array.isArray(data.expenses)) {
+                currentExpenses = data.expenses;
                 const expensesList = document.getElementById('editExpensesList');
                 expensesList.innerHTML = data.expenses.map(expense => `
                     <div class="expense-item">
@@ -1040,14 +1249,15 @@ function showDetails(caseId) {
                             <div class="expense-description">${expense.description || ''}</div>
                         </div>
                         <div class="expense-actions">
-                            <div class="expense-status-group">
-                                <i class="material-icons ${expense.is_paid ? 'status-paid' : 'status-unpaid'}">
-                                    ${expense.is_paid ? 'check_circle' : 'cancel'}
-                                </i>
-                                <button type="button" class="delete-btn-common" onclick="deleteExpense(${expense.id})">
-                                    <i class="material-icons">delete</i>
-                                </button>
+                            <div class="expense-status ${expense.is_paid ? 'status-paid' : 'status-unpaid'}">
+                                ${expense.is_paid ? 'Ödendi' : 'Ödenmedi'}
                             </div>
+                            <button type="button" class="btn small" onclick="editExpense(${expense.id})">
+                                <i class="material-icons">edit</i>
+                            </button>
+                            <button type="button" class="btn small danger" onclick="deleteExpense(${expense.id})">
+                                <i class="material-icons">delete</i>
+                            </button>
                         </div>
                     </div>
                 `).join('') || '<p>Henüz masraf kaydı bulunmuyor.</p>';
@@ -1056,33 +1266,46 @@ function showDetails(caseId) {
             // Belgeleri göster
             const documentsList = document.getElementById('documentsList');
             if (documentsList && data.documents) {
-                documentsList.innerHTML = data.documents.map(doc => `
-                    <div class="document-item">
-                        <div class="document-type-header">
-                            ${doc.document_type}
-                        </div>
-                        <div class="document-content">
-                            <div class="document-main">
-                                <div class="document-info">
-                                    <i class="material-icons">${getFileIcon(doc.filename)}</i>
-                                    <span class="document-name">${doc.filename}</span>
-                                    <span class="document-date">${doc.upload_date}</span>
-                                </div>
-                                <div class="document-actions">
-                                    <button class="btn small" onclick="previewDocument(${doc.id}, '${doc.filename.replace(/'/g, "\\'")}')" title="Önizle">
-                                        <i class="material-icons">visibility</i>
-                                    </button>
-                                    <button class="btn small" onclick="downloadDocument(${doc.id})" title="İndir">
-                                        <i class="material-icons">download</i>
-                                    </button>
-                                    <button class="btn danger small" onclick="deleteDocument(${doc.id})" title="Sil">
-                                        <i class="material-icons">delete</i>
-                                    </button>
+                documentsList.innerHTML = data.documents.map(doc => {
+                    // Dosya adı ve uzantıyı ayır
+                    const fileNameParts = doc.filename ? doc.filename.split('.') : ['', ''];
+                    const fileName = fileNameParts.slice(0, -1).join('.');
+                    const fileExt = fileNameParts[fileNameParts.length - 1];
+                    
+                    // Orijinal dosya adını al
+                    const originalName = doc.filepath ? doc.filepath.split('_').slice(2).join('_') : '';
+                    
+                    return `
+                        <div class="document-item">
+                            <div class="document-type-header">
+                                ${doc.document_type}
+                            </div>
+                            <div class="document-content">
+                                <div class="document-main">
+                                    <div class="document-info">
+                                        <i class="material-icons">${getFileIcon(doc.filename || '')}</i>
+                                        <div class="document-details">
+                                            <span class="document-name">${fileName}</span>
+                                            <span class="document-original-name">${originalName}</span>
+                                            <span class="document-date">${doc.upload_date}</span>
+                                        </div>
+                                    </div>
+                                    <div class="document-actions">
+                                        <button class="btn small" onclick="previewDocument(${doc.id}, '${doc.filename || ''}')" title="Önizle">
+                                            <i class="material-icons">visibility</i>
+                                        </button>
+                                        <button class="btn small" onclick="downloadDocument(${doc.id})" title="İndir">
+                                            <i class="material-icons">download</i>
+                                        </button>
+                                        <button class="btn danger small" onclick="deleteDocument(${doc.id})" title="Sil">
+                                            <i class="material-icons">delete</i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                `).join('') || '<p>Henüz belge yüklenmemiş.</p>';
+                    `;
+                }).join('') || '<p>Henüz belge yüklenmemiş.</p>';
             }
 
             // Modalı göster
@@ -1101,6 +1324,8 @@ function capitalizeFileType(fileType) {
 
 // Dosya uzantısına göre ikon seç
 function getFileIcon(filename) {
+    if (!filename) return 'insert_drive_file';
+    
     const ext = filename.split('.').pop().toLowerCase();
     switch (ext) {
         case 'pdf': return 'picture_as_pdf';
@@ -1136,6 +1361,10 @@ function editCase(caseId) {
     fetch(`/case_details/${caseId}`)
         .then(response => response.json())
         .then(data => {
+            // Tarihi YYYY-MM-DD formatına çevir
+            const openDate = data.open_date ? data.open_date.split('.').reverse().join('-') : '';
+            const nextHearing = data.next_hearing ? data.next_hearing.split('.').reverse().join('-') : '';
+
             const editHtml = `
                 <div class="modal-content">
                     <div class="modal-header">
@@ -1190,12 +1419,12 @@ function editCase(caseId) {
                                 </div>
                                 <div class="detail-group">
                                     <label>Açılış Tarihi</label>
-                                    <input type="date" id="editOpenDate" value="${data.open_date || ''}" disabled>
+                                    <input type="date" id="editOpenDate" value="${openDate}" disabled>
                                 </div>
                                 <div class="detail-group">
-                                    <label>Sonraki Duruşma</label>
+                                    <label>Sonraki Duruşma (Opsiyonel)</label>
                                     <div class="hearing-datetime">
-                                        <input type="date" id="editNextHearing" value="${data.next_hearing || ''}">
+                                        <input type="date" id="editNextHearing" value="${nextHearing}">
                                         <input type="time" id="editHearingTime" value="${data.hearing_time || '09:00'}">
                                     </div>
                                 </div>
@@ -1267,18 +1496,18 @@ function saveChanges(caseId) {
     const data = {
         file_type: document.getElementById('editFileType').value,
         courthouse: document.getElementById('editCourthouse').value,
-        department: document.getElementById('editCourtNumber')?.value || document.getElementById('editDepartment').value,
+        department: document.getElementById('editDepartment').value,
         client_name: document.getElementById('editClientName').value,
         status: document.getElementById('editStatus').value,
         open_date: document.getElementById('editOpenDate').value,
-        next_hearing: document.getElementById('editNextHearing').value,
-        hearing_time: document.getElementById('editHearingTime').value,
-        description: document.getElementById('editDescription').value
+        next_hearing: document.getElementById('editNextHearing').value || null,
+        hearing_time: document.getElementById('editHearingTime').value || null,
+        description: document.getElementById('editDescription')?.value
     };
 
-    // Tüm gerekli alanların dolu olduğunu kontrol et
-    if (!data.file_type || !data.courthouse || !data.department || !data.client_name) {
-        alert('Lütfen gerekli alanları doldurunuz.');
+    // Sadece müvekkil adı kontrolü yap
+    if (!data.client_name) {
+        alert('Lütfen müvekkil adını giriniz.');
         return;
     }
 
@@ -1292,10 +1521,8 @@ function saveChanges(caseId) {
     .then(response => response.json())
     .then(result => {
         if (result.success) {
-            // Duruşma tarihi ve saati varsa takvime ekle
-            if (data.next_hearing && data.hearing_time) {
-                syncHearingToCalendar(caseId, data.next_hearing, data.hearing_time);
-            }
+            // Takvim senkronizasyonu için dosya durumunu da gönder
+            syncHearingToCalendar(caseId, data.next_hearing, data.hearing_time, data.status);
             
             closeEditModal();
             showDetails(caseId);
@@ -1312,7 +1539,7 @@ function saveChanges(caseId) {
 // Masraf ekle modalını güncelle
 function showExpenseModal() {
     const expenseHtml = `
-        <div class="modal-content">
+        <div class="modal-content expense-modal">
             <div class="modal-header">
                 <h2>Masraf Ekle</h2>
                 <button class="close-btn" onclick="closeExpenseModal()">
@@ -1320,40 +1547,54 @@ function showExpenseModal() {
                 </button>
             </div>
             <div class="modal-body">
-                <form id="expenseForm">
-                    <div class="detail-grid">
-                        <div class="detail-group">
+                <form id="expenseForm" class="expense-form">
+                    <div class="expense-grid">
+                        <div class="expense-group">
                             <label>Masraf Türü</label>
-                            <select id="expenseType" onchange="handleExpenseTypeChange()" required>
-                                <option value="">Seçiniz</option>
-                                ${expenseTypes.map(type => 
-                                    `<option value="${type}">${type}</option>`
-                                ).join('')}
-                            </select>
-                            <input type="text" id="otherExpenseType" 
-                                   placeholder="Masraf türünü yazınız" 
-                                   style="display: none; margin-top: 10px;">
+                            <div class="expense-type-wrapper">
+                                <select id="expenseType" onchange="handleExpenseTypeChange()" required>
+                                    <option value="">Seçiniz</option>
+                                    ${expenseTypes.map(type => 
+                                        `<option value="${type}">${type}</option>`
+                                    ).join('')}
+                                </select>
+                                <input type="text" id="otherExpenseType" 
+                                       class="other-expense-input"
+                                       placeholder="Masraf türünü yazınız" 
+                                       style="display: none;">
+                            </div>
                         </div>
-                        <div class="detail-group">
-                            <label>Tutar (₺)</label>
-                            <input type="number" id="expenseAmount" step="0.01" required>
+                        
+                        <div class="expense-group">
+                            <label>Tutar</label>
+                            <div class="amount-wrapper">
+                                <input type="number" id="expenseAmount" step="0.01" required>
+                                <span class="currency-symbol">₺</span>
+                            </div>
                         </div>
-                        <div class="detail-group">
+                        
+                        <div class="expense-group">
                             <label>Tarih</label>
                             <input type="date" id="expenseDate" required 
                                    value="${new Date().toISOString().split('T')[0]}">
                         </div>
-                        <div class="detail-group">
+                        
+                        <div class="expense-group">
                             <label>Ödeme Durumu</label>
-                            <select id="expenseStatus">
-                                <option value="false">Ödenmedi</option>
-                                <option value="true">Ödendi</option>
-                            </select>
+                            <div class="status-toggle">
+                                <input type="checkbox" id="expenseStatus" class="toggle-input">
+                                <label for="expenseStatus" class="toggle-label">
+                                    <span class="toggle-text-off">Ödenmedi</span>
+                                    <span class="toggle-text-on">Ödendi</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
-                    <div class="detail-group">
+                    
+                    <div class="expense-group full-width">
                         <label>Açıklama</label>
-                        <textarea id="expenseDescription" rows="3"></textarea>
+                        <textarea id="expenseDescription" rows="3" 
+                                  placeholder="Masraf ile ilgili açıklama ekleyin..."></textarea>
                     </div>
                 </form>
             </div>
@@ -1417,7 +1658,7 @@ function saveExpense() {
         expense_type: expenseType.value === 'Diğer' ? otherExpenseType.value : expenseType.value,
         amount: parseFloat(amount.value),
         date: date.value,
-        is_paid: status.value === 'true',
+        is_paid: status.checked,
         description: description.value || ''
     };
 
@@ -1428,12 +1669,7 @@ function saveExpense() {
         },
         body: JSON.stringify(data)
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Sunucu hatası');
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(result => {
         if (result.success) {
             closeExpenseModal();
@@ -1473,6 +1709,10 @@ function showUploadModal() {
                         <label>Belge</label>
                         <input type="file" id="documentFile" required>
                     </div>
+                    <div class="detail-group">
+                        <label>Belge Adı (Opsiyonel)</label>
+                        <input type="text" id="documentName" placeholder="Belgeye özel bir isim verin">
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -1494,6 +1734,7 @@ function showUploadModal() {
 function uploadDocument() {
     const documentType = document.getElementById('documentType');
     const fileInput = document.getElementById('documentFile');
+    const documentName = document.getElementById('documentName');
     
     if (!documentType.value) {
         alert('Lütfen belge türünü seçiniz.');
@@ -1508,17 +1749,15 @@ function uploadDocument() {
     const formData = new FormData();
     formData.append('document', fileInput.files[0]);
     formData.append('document_type', documentType.value);
+    if (documentName.value) {
+        formData.append('document_name', documentName.value);
+    }
 
     fetch(`/upload_document/${currentCaseId}`, {
         method: 'POST',
         body: formData
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Sunucu hatası');
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(result => {
         if (result.success) {
             closeUploadModal();
@@ -1562,16 +1801,8 @@ function previewDocument(docId, filename) {
     showPreviewModal(docId, filename, ext);
 }
 
-// Önizleme modalını göster
+// Önizleme modalını güncelle
 function showPreviewModal(docId, filename, ext) {
-    // Desteklenen dosya türleri
-    const supportedTypes = ['pdf', 'jpg', 'jpeg', 'png', 'tiff', 'tif'];
-    
-    if (!supportedTypes.includes(ext)) {
-        alert('Bu dosya türü için önizleme kullanılamıyor.');
-        return;
-    }
-
     const previewHtml = `
         <div class="modal-content preview-modal-content">
             <div class="modal-header">
@@ -1584,7 +1815,7 @@ function showPreviewModal(docId, filename, ext) {
                 <div class="document-preview-container">
                     ${ext === 'pdf' ? 
                         `<iframe id="previewFrame" src="/preview_document/${docId}" frameborder="0"></iframe>` :
-                        `<img src="/preview_document/${docId}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`
+                        `<img src="/preview_document/${docId}" alt="Belge önizleme">`
                     }
                 </div>
             </div>
@@ -1742,7 +1973,7 @@ function saveDescription() {
 }
 
 // Duruşma bilgilerini takvime senkronize et
-function syncHearingToCalendar(caseId, hearingDate, hearingTime) {
+function syncHearingToCalendar(caseId, hearingDate, hearingTime, status) {
     fetch('/sync_hearing_to_calendar', {
         method: 'POST',
         headers: {
@@ -1751,15 +1982,11 @@ function syncHearingToCalendar(caseId, hearingDate, hearingTime) {
         body: JSON.stringify({
             case_id: caseId,
             hearing_date: hearingDate,
-            hearing_time: hearingTime || '09:00'
+            hearing_time: hearingTime || '09:00',
+            status: status
         })
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Sunucu hatası');
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(result => {
         if (!result.success) {
             throw new Error(result.message || 'Takvim senkronizasyonu başarısız');
@@ -1767,7 +1994,7 @@ function syncHearingToCalendar(caseId, hearingDate, hearingTime) {
     })
     .catch(error => {
         console.error('Takvim senkronizasyonu hatası:', error);
-        alert('Duruşma bilgileri takvime eklenirken bir hata oluştu: ' + error.message);
+        alert('Duruşma bilgileri güncellenirken bir hata oluştu: ' + error.message);
     });
 }
 
@@ -1797,6 +2024,125 @@ function deleteCase(caseId) {
             alert('Dosya silinirken bir hata oluştu: ' + error.message);
         });
     }
+}
+
+// Masraf düzenleme fonksiyonunu ekle
+function editExpense(expenseId) {
+    const expense = currentExpenses.find(e => e.id === expenseId);
+    if (!expense) return;
+
+    // Tarihi YYYY-MM-DD formatına çevir
+    const formattedDate = expense.date.split('.').reverse().join('-');
+
+    const expenseHtml = `
+        <div class="modal-content expense-modal">
+            <div class="modal-header">
+                <h2>Masraf Düzenle</h2>
+                <button class="close-btn" onclick="closeExpenseModal()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="expenseForm" class="expense-form">
+                    <div class="expense-grid">
+                        <div class="expense-group">
+                            <label>Masraf Türü</label>
+                            <div class="expense-type-wrapper">
+                                <select id="expenseType" onchange="handleExpenseTypeChange()" required>
+                                    <option value="">Seçiniz</option>
+                                    ${expenseTypes.map(type => 
+                                        `<option value="${type}" ${expense.expense_type === type ? 'selected' : ''}>${type}</option>`
+                                    ).join('')}
+                                </select>
+                                <input type="text" id="otherExpenseType" 
+                                       class="other-expense-input"
+                                       placeholder="Masraf türünü yazınız" 
+                                       style="display: none;"
+                                       value="${expense.expense_type}">
+                            </div>
+                        </div>
+                        
+                        <div class="expense-group">
+                            <label>Tutar</label>
+                            <div class="amount-wrapper">
+                                <input type="number" id="expenseAmount" step="0.01" required value="${expense.amount}">
+                                <span class="currency-symbol">₺</span>
+                            </div>
+                        </div>
+                        
+                        <div class="expense-group">
+                            <label>Tarih</label>
+                            <input type="date" id="expenseDate" required value="${formattedDate}">
+                        </div>
+                        
+                        <div class="expense-group">
+                            <label>Ödeme Durumu</label>
+                            <div class="status-toggle">
+                                <input type="checkbox" id="expenseStatus" class="toggle-input" ${expense.is_paid ? 'checked' : ''}>
+                                <label for="expenseStatus" class="toggle-label">
+                                    <span class="toggle-text-off">Ödenmedi</span>
+                                    <span class="toggle-text-on">Ödendi</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="expense-group full-width">
+                        <label>Açıklama</label>
+                        <textarea id="expenseDescription" rows="3" 
+                                  placeholder="Masraf ile ilgili açıklama ekleyin...">${expense.description || ''}</textarea>
+                    </div>
+                    <input type="hidden" id="expenseId" value="${expense.id}">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" onclick="closeExpenseModal()">İptal</button>
+                <button class="btn primary" onclick="updateExpense()">Güncelle</button>
+            </div>
+        </div>
+    `;
+    
+    const expenseModal = document.createElement('div');
+    expenseModal.id = 'expenseModal';
+    expenseModal.className = 'file-detail-modal';
+    expenseModal.innerHTML = expenseHtml;
+    document.body.appendChild(expenseModal);
+    expenseModal.style.display = 'flex';
+}
+
+// Masraf güncelleme fonksiyonu
+function updateExpense() {
+    const expenseId = document.getElementById('expenseId').value;
+    const data = {
+        expense_type: document.getElementById('expenseType').value === 'Diğer' ? 
+                     document.getElementById('otherExpenseType').value : 
+                     document.getElementById('expenseType').value,
+        amount: parseFloat(document.getElementById('expenseAmount').value),
+        date: document.getElementById('expenseDate').value,
+        is_paid: document.getElementById('expenseStatus').checked,
+        description: document.getElementById('expenseDescription').value || ''
+    };
+
+    fetch(`/update_expense/${expenseId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            closeExpenseModal();
+            showDetails(currentCaseId);
+        } else {
+            throw new Error(result.message || 'Masraf güncellenirken bir hata oluştu');
+        }
+    })
+    .catch(error => {
+        console.error('Hata:', error);
+        alert('Masraf güncellenirken bir hata oluştu: ' + error.message);
+    });
 }
 </script>
 {% endblock %}

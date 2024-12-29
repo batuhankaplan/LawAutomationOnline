@@ -8,52 +8,148 @@
         <h1>Dosya Ekle</h1>
     </div>
 </header>
-<div class="form-container">
-    <form method="POST" class="add-file-form">
-        <div class="form-group">
-            <label for="file-type">Dosya Türü</label>
-            <select id="file-type" name="file-type" onchange="updateDepartments()">
-                <option value="">Seçiniz</option>
-                <option value="hukuk">Hukuk</option>
-                <option value="ceza">Ceza</option>
-                <option value="icra">İcra</option>
-            </select>
+
+<div class="inbox">
+    <form method="POST" class="search-form" onsubmit="return submitForm(event)">
+        <div class="form-column">
+            <div class="input-group">
+                <label for="file-type">Dosya Türü</label>
+                <select id="file-type" name="file-type" onchange="updateDepartments()">
+                    <option value="">Seçiniz</option>
+                    <option value="hukuk">Hukuk</option>
+                    <option value="ceza">Ceza</option>
+                    <option value="icra">İcra</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="courthouse">Adliye</label>
+                <select id="courthouse" name="courthouse">
+                    <option value="">Seçiniz</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="department">Birim</label>
+                <select id="department" name="department">
+                    <option value="">Seçiniz</option>
+                </select>
+            </div>
+
+            <div class="input-group" id="court-number-container" style="display: none;">
+                <label for="court-number">Mahkeme</label>
+                <select id="court-number" name="court-number">
+                    <option value="">Seçiniz</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="year">Yıl</label>
+                <input type="number" id="year" name="year" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="case-number">Esas No</label>
+                <input type="text" id="case-number" name="case-number" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="client-name">Müvekkil Adı</label>
+                <input type="text" id="client-name" name="client-name" required>
+            </div>
+
+            <div class="input-group">
+                <label for="open-date">Açılış Tarihi</label>
+                <input type="date" id="open-date" name="open-date" required value="{{ today_date }}">
+            </div>
         </div>
-        <div class="form-group">
-            <label for="courthouse">Adliye</label>
-            <select id="courthouse" name="courthouse">
-                <option value="">Seçiniz</option>
-                <!-- Adliye listesi JavaScript ile doldurulacak -->
-            </select>
+
+        <div class="search-button-container">
+            <button type="submit" class="btn">Ekle</button>
         </div>
-        <div class="form-group">
-            <label for="department">Birim</label>
-            <select id="department" name="department">
-                <option value="">Seçiniz</option>
-                <!-- Birim listesi JavaScript ile doldurulacak -->
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="year">Yıl</label>
-            <input type="number" id="year" name="year" required>
-        </div>
-        <div class="form-group">
-            <label for="case-number">Esas No</label>
-            <input type="text" id="case-number" name="case-number" required>
-        </div>
-        <div class="form-group">
-            <label for="client-name">Müvekkil Adı</label>
-            <input type="text" id="client-name" name="client-name" required>
-        </div>
-        <div class="form-group">
-            <label for="open-date">Açılış Tarihi</label>
-            <input type="date" id="open-date" name="open-date" required value="{{ today_date }}">
-        </div>
-        <button type="submit">Ekle</button>
     </form>
 </div>
 
+<style>
+.inbox {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 25px;
+}
+
+.search-form {
+    width: 100%;
+}
+
+.form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 90%;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input-group label {
+    font-weight: 500;
+    color: #2c3e50;
+    font-size: 0.9rem;
+    margin-bottom: -2px;
+}
+
+.input-group input,
+.input-group select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #2c3e50;
+    background: white;
+    height: 32px;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.search-button-container {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 15px;
+    margin-top: 0;
+    border-top: 1px solid #dee2e6;
+}
+
+.btn {
+    padding: 6px 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 32px;
+}
+
+.btn:hover {
+    background: var(--hover-color);
+}
+</style>
+
 <script>
+// Adliye ve birim listelerini tanımla
 const courthouses = [
     "İstanbul Adliyesi (Çağlayan)",
     "İstanbul Anadolu Adliyesi (Kartal)",
@@ -65,88 +161,7 @@ const courthouses = [
     "Çatalca Adliyesi",
     "Üsküdar Adliyesi",
     "Adalar Adliyesi",
-    "Sarıyer Adliyesi",
-    "Afşin Adliyesi",
-    "Ağrı Adliyesi",
-    "Aksaray Adliyesi",
-    "Alanya Adliyesi",
-    "Amasya Adliyesi",
-    "Ankara Adliyesi",
-    "Antalya Adliyesi",
-    "Ardahan Adliyesi",
-    "Artvin Adliyesi",
-    "Aydın Adliyesi",
-    "Ayvalık Adliyesi",
-    "Balıkesir Adliyesi",
-    "Bartın Adliyesi",
-    "Batman Adliyesi",
-    "Bayburt Adliyesi",
-    "Bilecik Adliyesi",
-    "Bingöl Adliyesi",
-    "Bitlis Adliyesi",
-    "Bodrum Adliyesi",
-    "Bolu Adliyesi",
-    "Burdur Adliyesi",
-    "Bursa Adliyesi",
-    "Çanakkale Adliyesi",
-    "Çankırı Adliyesi",
-    "Çorum Adliyesi",
-    "Denizli Adliyesi",
-    "Diyarbakır Adliyesi",
-    "Düzce Adliyesi",
-    "Edirne Adliyesi",
-    "Elazığ Adliyesi",
-    "Erzincan Adliyesi",
-    "Erzurum Adliyesi",
-    "Eskişehir Adliyesi",
-    "Fethiye Adliyesi",
-    "Gaziantep Adliyesi",
-    "Giresun Adliyesi",
-    "Gümüşhane Adliyesi",
-    "Hakkari Adliyesi",
-    "Hatay Adliyesi",
-    "Iğdır Adliyesi",
-    "Isparta Adliyesi",
-    "İzmir Adliyesi",
-    "Kahramanmaraş Adliyesi",
-    "Karabük Adliyesi",
-    "Karaman Adliyesi",
-    "Kars Adliyesi",
-    "Kastamonu Adliyesi",
-    "Kayseri Adliyesi",
-    "Kırklareli Adliyesi",
-    "Kırıkkale Adliyesi",
-    "Kırşehir Adliyesi",
-    "Kilis Adliyesi",
-    "Konya Adliyesi",
-    "Kütahya Adliyesi",
-    "Malatya Adliyesi",
-    "Manisa Adliyesi",
-    "Mardin Adliyesi",
-    "Mersin Adliyesi",
-    "Muğla Adliyesi",
-    "Muş Adliyesi",
-    "Nevşehir Adliyesi",
-    "Niğde Adliyesi",
-    "Ordu Adliyesi",
-    "Osmaniye Adliyesi",
-    "Rize Adliyesi",
-    "Sakarya Adliyesi",
-    "Samsun Adliyesi",
-    "Şanlıurfa Adliyesi",
-    "Siirt Adliyesi",
-    "Sinop Adliyesi",
-    "Sivas Adliyesi",
-    "Şırnak Adliyesi",
-    "Tekirdağ Adliyesi",
-    "Tokat Adliyesi",
-    "Trabzon Adliyesi",
-    "Tunceli Adliyesi",
-    "Uşak Adliyesi",
-    "Van Adliyesi",
-    "Yalova Adliyesi",
-    "Yozgat Adliyesi",
-    "Zonguldak Adliyesi"
+    "Sarıyer Adliyesi"
 ];
 
 const departments = {
@@ -159,8 +174,7 @@ const departments = {
         "Kadastro Mahkemesi",
         "Ticaret Mahkemesi",
         "Fikri ve Sınai Haklar Hukuk Mahkemesi",
-        "İcra Hukuk Mahkemesi",
-        "Tapu ve Kadastro Mahkemesi"
+        "İcra Hukuk Mahkemesi"
     ],
     ceza: [
         "Asliye Ceza Mahkemesi",
@@ -168,15 +182,19 @@ const departments = {
         "Sulh Ceza Hakimliği",
         "Çocuk Mahkemesi",
         "Çocuk Ağır Ceza Mahkemesi",
-        "Fikri ve Sınai Haklar Ceza Mahkemesi",
         "İcra Ceza Mahkemesi",
-        "Trafik Mahkemesi",
-        "Devlet Güvenlik Mahkemesi",
-        "Bölge Adliye Mahkemesi Ceza Daireleri",
-        "Yargıtay Ceza Daireleri"
+        "Fikri ve Sınai Haklar Ceza Mahkemesi"
     ],
     icra: Array.from({length: 30}, (_, i) => `${i + 1}. İcra Dairesi`)
 };
+
+// Sayfa yüklendiğinde
+document.addEventListener('DOMContentLoaded', function() {
+    populateCourthouses();
+    
+    // Dosya türü değiştiğinde birimleri güncelle
+    document.getElementById('file-type').addEventListener('change', updateDepartments);
+});
 
 // Adliye listesini doldur
 function populateCourthouses() {
@@ -187,10 +205,11 @@ function populateCourthouses() {
     });
 }
 
-// Birim seçildikten sonra mahkeme numarası seçimini göster
+// Dosya türüne göre birimleri güncelle
 function updateDepartments() {
     const fileType = document.getElementById('file-type').value;
     const departmentSelect = document.getElementById('department');
+    const courtNumberContainer = document.getElementById('court-number-container');
     
     departmentSelect.innerHTML = '<option value="">Seçiniz</option>';
     
@@ -200,52 +219,42 @@ function updateDepartments() {
         });
     }
 
-    // Birim seçimi değiştiğinde mahkeme numarası seçimini güncelle
+    // Birim değiştiğinde mahkeme seçeneğini güncelle
     departmentSelect.onchange = function() {
         updateCourtNumbers(this.value);
     };
 }
 
-// Mahkeme numarası seçimini güncelle
+// Mahkeme numaralarını güncelle
 function updateCourtNumbers(department) {
-    // İcra dairesi için ayrı işlem yapma
-    if (department.includes('İcra Dairesi')) {
+    const courtNumberContainer = document.getElementById('court-number-container');
+    const courtNumberSelect = document.getElementById('court-number');
+    
+    // İcra dairesi kontrolü
+    if (!department || department === '' || department.includes('İcra Dairesi')) {
+        courtNumberContainer.style.display = 'none';
         return;
     }
 
-    let courtNumberContainer = document.getElementById('court-number-container');
-    if (!courtNumberContainer) {
-        courtNumberContainer = document.createElement('div');
-        courtNumberContainer.id = 'court-number-container';
-        courtNumberContainer.className = 'form-group';
-        document.getElementById('department').parentNode.after(courtNumberContainer);
-    }
-
-    courtNumberContainer.innerHTML = `
-        <label for="court-number">Mahkeme</label>
-        <select id="court-number" name="court-number">
-            <option value="${department}">${department}</option>
-            ${Array.from({length: 50}, (_, i) => i + 1).map(num => 
-                `<option value="${num}.${department}">${num}.${department}</option>`
-            ).join('')}
-        </select>
+    courtNumberSelect.innerHTML = `
+        <option value="">Seçiniz</option>
+        <option value="${department}">${department}</option>
+        ${Array.from({length: 50}, (_, i) => i + 1).map(num => 
+            `<option value="${num}.${department}">${num}.${department}</option>`
+        ).join('')}
     `;
+    
+    courtNumberContainer.style.display = 'block';
 }
 
-// Form submit işlemini güncelle
-document.querySelector('.add-file-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const courtNumber = document.getElementById('court-number');
-    const department = document.getElementById('department');
-    
-    // Seçilen mahkeme numarasını department değeri olarak kullan
-    const finalDepartment = courtNumber && courtNumber.value ? courtNumber.value : department.value;
+// Form gönderimi için yeni fonksiyon
+function submitForm(event) {
+    event.preventDefault();
     
     const formData = {
         'file-type': document.getElementById('file-type').value,
         'courthouse': document.getElementById('courthouse').value,
-        'department': finalDepartment,
+        'department': document.getElementById('court-number')?.value || document.getElementById('department').value,
         'year': document.getElementById('year').value,
         'case-number': document.getElementById('case-number').value,
         'client-name': document.getElementById('client-name').value,
@@ -256,7 +265,7 @@ document.querySelector('.add-file-form').addEventListener('submit', function(e) 
     for (let key in formData) {
         if (!formData[key]) {
             alert('Lütfen tüm alanları doldurunuz.');
-            return;
+            return false;
         }
     }
 
@@ -281,63 +290,8 @@ document.querySelector('.add-file-form').addEventListener('submit', function(e) 
         console.error('Hata:', error);
         alert('Dosya eklenirken bir hata oluştu: ' + error.message);
     });
-});
 
-// Sayfa yüklendiğinde adliye listesini doldur
-document.addEventListener('DOMContentLoaded', populateCourthouses);
+    return false;
+}
 </script>
-
-<style>
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #2c3e50;
-}
-
-.form-group select,
-.form-group input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    font-size: 0.95rem;
-}
-
-.form-group select:focus,
-.form-group input:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
-}
-
-#court-number-container {
-    margin-top: 15px;
-}
-
-#court-number-container select {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    font-size: 0.95rem;
-}
-
-#court-number-container select:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
-}
-
-#court-number-container label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #2c3e50;
-}
-</style>
 {% endblock %}

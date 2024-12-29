@@ -133,9 +133,10 @@ class CalendarEvent(db.Model):
     title = db.Column(db.String(200), nullable=False)
     date = db.Column(db.Date, nullable=False)
     time = db.Column(db.Time, nullable=False)
-    event_type = db.Column(db.String(50), nullable=False)  # 'durusma', 'tahliye', 'is', 'randevu', 'diger'
+    event_type = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    case_id = db.Column(db.Integer, db.ForeignKey('case_file.id'))
 
 @app.route('/takvim')
 def takvim():
@@ -369,20 +370,15 @@ def edit_case(case_id):
         data = request.get_json()
         case_file = db.session.get(CaseFile, case_id)
         if case_file:
-            # Temel bilgileri güncelle
-            case_file.file_type = data.get('file_type', case_file.file_type)
-            case_file.courthouse = data.get('courthouse', case_file.courthouse)  # Adliye bilgisini koru
-            case_file.department = data.get('department', case_file.department)  # Birim bilgisini koru
-            case_file.case_number = data.get('case_number', case_file.case_number)
             case_file.client_name = data.get('client_name', case_file.client_name)
             case_file.status = data.get('status', case_file.status)
             case_file.description = data.get('description', case_file.description)
             
-            # Tarih alanlarını güncelle
-            if data.get('open_date'):
-                case_file.open_date = datetime.strptime(data['open_date'], '%Y-%m-%d').date()
+            # Duruşma tarihi ve saati opsiyonel
             if data.get('next_hearing'):
                 case_file.next_hearing = datetime.strptime(data['next_hearing'], '%Y-%m-%d').date()
+            else:
+                case_file.next_hearing = None
             
             db.session.commit()
             return jsonify(success=True)
@@ -536,12 +532,17 @@ def upload_document(case_id):
 
         file = request.files['document']
         document_type = request.form.get('document_type')
+        custom_name = request.form.get('document_name')
         
         if not document_type:
             return jsonify(success=False, message="Belge türü seçilmedi")
 
         if file and allowed_file(file.filename):
             original_filename = secure_filename(file.filename)
+            file_ext = original_filename.rsplit('.', 1)[1].lower()
+            
+            # Özel isim varsa kullan, yoksa orijinal dosya adını kullan
+            display_name = custom_name if custom_name else original_filename.rsplit('.', 1)[0]
             
             # Benzersiz dosya adı oluştur
             unique_filename = f"{case_id}_{int(time.time())}_{original_filename}"
@@ -553,8 +554,8 @@ def upload_document(case_id):
             new_document = Document(
                 case_id=case_id,
                 document_type=document_type,
-                filename=original_filename,
-                filepath=unique_filename,
+                filename=f"{display_name}.{file_ext}",  # Görünen isim
+                filepath=unique_filename,  # Gerçek dosya yolu
                 upload_date=datetime.now(),
                 user_id=1
             )
@@ -706,29 +707,51 @@ def sync_hearing_to_calendar():
         data = request.get_json()
         case_id = data.get('case_id')
         hearing_date = data.get('hearing_date')
-        hearing_time = data.get('hearing_time', '09:00')  # Varsayılan saat 09:00
+        hearing_time = data.get('hearing_time', '09:00')
+        status = data.get('status')  # Dosya durumunu al
         
         # Dosya bilgilerini al
         case_file = CaseFile.query.get(case_id)
         if not case_file:
             return jsonify(success=False, message="Dosya bulunamadı")
 
-        # Takvim olayı oluştur
+        # Önce bu dosyaya ait mevcut duruşma etkinliğini bul
+        existing_event = CalendarEvent.query.filter_by(
+            case_id=case_id,
+            event_type='durusma'
+        ).first()
+
+        # Dosya kapalıysa veya duruşma tarihi yoksa
+        if status == 'Kapalı' or not hearing_date:
+            if existing_event:
+                db.session.delete(existing_event)
+                db.session.commit()
+            return jsonify(success=True)
+
+        # Duruşma tarihi ve saatini ayarla
         event_date = datetime.strptime(hearing_date, '%Y-%m-%d').date()
         event_time = datetime.strptime(hearing_time, '%H:%M').time()
         
-        new_event = CalendarEvent(
-            title=f"Duruşma - {case_file.client_name} ({case_file.case_number})",
-            date=event_date,
-            time=event_time,
-            event_type='durusma',
-            description=f"Dosya Türü: {case_file.file_type}\nAdliye: {case_file.courthouse}\nBirim: {case_file.department}\nMüvekkil: {case_file.client_name}\nDosya No: {case_file.case_number}",
-            user_id=1
-        )
+        if existing_event:
+            # Mevcut etkinliği güncelle
+            existing_event.date = event_date
+            existing_event.time = event_time
+            existing_event.title = f"Duruşma - {case_file.client_name} ({case_file.case_number})"
+            existing_event.description = f"Dosya Türü: {case_file.file_type}\nAdliye: {case_file.courthouse}\nBirim: {case_file.department}\nMüvekkil: {case_file.client_name}\nDosya No: {case_file.case_number}"
+        else:
+            # Yeni etkinlik oluştur
+            new_event = CalendarEvent(
+                title=f"Duruşma - {case_file.client_name} ({case_file.case_number})",
+                date=event_date,
+                time=event_time,
+                event_type='durusma',
+                description=f"Dosya Türü: {case_file.file_type}\nAdliye: {case_file.courthouse}\nBirim: {case_file.department}\nMüvekkil: {case_file.client_name}\nDosya No: {case_file.case_number}",
+                user_id=1,
+                case_id=case_id  # case_id alanını ekleyin
+            )
+            db.session.add(new_event)
         
-        db.session.add(new_event)
         db.session.commit()
-        
         return jsonify(success=True)
     except Exception as e:
         db.session.rollback()
@@ -758,6 +781,30 @@ def update_description(case_id):
         case_file.description = data.get('description', '')
         db.session.commit()
         
+        return jsonify(success=True)
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, message=str(e))
+
+@app.route('/update_expense/<int:expense_id>', methods=['POST'])
+def update_expense(expense_id):
+    try:
+        data = request.get_json()
+        expense = Expense.query.get_or_404(expense_id)
+        
+        # Tarih formatını kontrol et
+        try:
+            expense_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify(success=False, message="Geçersiz tarih formatı")
+        
+        expense.expense_type = data['expense_type']
+        expense.amount = data['amount']
+        expense.date = expense_date
+        expense.is_paid = data['is_paid']
+        expense.description = data['description']
+        
+        db.session.commit()
         return jsonify(success=True)
     except Exception as e:
         db.session.rollback()
