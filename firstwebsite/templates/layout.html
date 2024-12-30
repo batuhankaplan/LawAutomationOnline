@@ -454,7 +454,58 @@
                 }
             });
         });
+
+        // Arama kutusu için kod
+        const searchInput = document.querySelector('.search-box input');
+        const searchResults = document.getElementById('search-results');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    fetch(`/search?q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.length > 0) {
+                                searchResults.innerHTML = data.map(result => `
+                                    <div class="search-result-item" onclick="handleSearchResult('${result.source}', ${result.id})">
+                                        <span class="result-type">${result.type}</span>
+                                        <span class="result-title">${result.title}</span>
+                                    </div>
+                                `).join('');
+                                searchResults.style.display = 'block';
+                            } else {
+                                searchResults.innerHTML = '<div class="search-result-item">Sonuç bulunamadı</div>';
+                                searchResults.style.display = 'block';
+                            }
+                        });
+                }, 300);
+            } else {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        // Sayfa herhangi bir yerine tıklandığında sonuçları gizle
+        document.addEventListener('click', function(e) {
+            if (!searchResults.contains(e.target) && e.target !== searchInput) {
+                searchResults.style.display = 'none';
+            }
+        });
     });
+
+    // Arama sonucu tıklama işleyicisi
+    function handleSearchResult(source, id) {
+        if (source === 'case_file') {
+            // Dosya sorgula sayfasına git ve detayları göster
+            window.location.href = `/dosya_sorgula?show_details=${id}`;
+        } else if (source === 'client') {
+            // Müşteri detaylarına git
+            window.location.href = `/musteri_detay/${id}`;
+        }
+    }
     </script>
     
 </body>

@@ -356,28 +356,44 @@ def bildirimler():
     notifications = Notification.query.filter_by(read=False).all()
     return render_template('bildirimler.html', notifications=notifications)
 
-@app.route('/dosya_sorgula')
+@app.route('/dosya_sorgula', methods=['GET', 'POST'])
 def dosya_sorgula():
-    # URL parametrelerini al
-    file_type = request.args.get('file_type')
-    status = request.args.get('status')
-    
-    # Sorguyu başlat
-    query = CaseFile.query
-    
-    # Filtreler
-    if file_type:
-        query = query.filter_by(file_type=file_type)
-    if status:
-        query = query.filter_by(status=status)
-    
-    # Sonuçları al
-    case_files = query.all()
+    if request.method == 'POST':
+        # Form verilerini al
+        file_type = request.form.get('file-type')
+        courthouse = request.form.get('courthouse')
+        department = request.form.get('department')
+        year = request.form.get('year')
+        case_number = request.form.get('case-number')
+        client_name = request.form.get('client-name')
+        status = request.form.get('status')
+        
+        # Sorguyu başlat
+        query = CaseFile.query
+        
+        # Filtreler
+        if file_type:
+            query = query.filter_by(file_type=file_type)
+        if courthouse:
+            query = query.filter_by(courthouse=courthouse)
+        if department:
+            query = query.filter_by(department=department)
+        if year:
+            query = query.filter_by(year=year)
+        if case_number:
+            query = query.filter_by(case_number=case_number)
+        if client_name:
+            query = query.filter(CaseFile.client_name.ilike(f'%{client_name}%'))
+        if status:
+            query = query.filter_by(status=status)
+        
+        # Sonuçları al
+        case_files = query.all()
+    else:
+        case_files = []
     
     return render_template('dosya_sorgula.html', 
-                         case_files=case_files,
-                         selected_type=file_type,
-                         selected_status=status)
+                         case_files=case_files)
 
 @app.route('/dosya_ekle', methods=['GET', 'POST'])
 def dosya_ekle():
@@ -433,9 +449,12 @@ def case_details(case_id):
         documents = [{
             'id': doc.id,
             'filename': doc.filename,
-            'document_type': doc.document_type,  # Belge türünü ekle
+            'document_type': doc.document_type,
             'upload_date': doc.upload_date.strftime('%d.%m.%Y')
         } for doc in case_file.documents]
+        
+        # Dosya numarasını yıl/esas no formatında hazırla
+        formatted_case_number = f"{case_file.year}/{case_file.case_number}"
         
         return jsonify({
             'success': True,
@@ -443,7 +462,7 @@ def case_details(case_id):
             'courthouse': case_file.courthouse,
             'department': case_file.department,
             'year': case_file.year,
-            'case_number': case_file.case_number,
+            'case_number': formatted_case_number,  # Formatlanmış dosya numarası
             'client_name': case_file.client_name,
             'status': case_file.status,
             'open_date': case_file.open_date.strftime('%d.%m.%Y') if case_file.open_date else None,
@@ -515,16 +534,22 @@ def search():
     results = []
     
     if len(query) >= 2:
-        # Dosya araması
+        # Dosya araması - müvekkil adı veya esas numarasına göre
         case_files = CaseFile.query.filter(
-            CaseFile.client_name.ilike(f'%{query}%')
+            db.or_(
+                CaseFile.client_name.ilike(f'%{query}%'),
+                CaseFile.case_number.ilike(f'%{query}%')
+            )
         ).all()
         
         for case in case_files:
+            # Başlık formatını güncelle - yıl/esas no formatında
+            formatted_case_number = f"{case.year}/{case.case_number}"
+            title = f"{case.client_name} - {formatted_case_number} ({case.file_type.title()})"
             results.append({
                 'type': 'Dosya',
-                'title': f"{case.client_name} - {case.file_type.title()} Dosyası",
-                'url': f'#',  # URL yerine case_id kullanacağız
+                'title': title,
+                'url': f'#',
                 'id': case.id,
                 'source': 'case_file'
             })
@@ -539,7 +564,7 @@ def search():
             results.append({
                 'type': 'Müşteri',
                 'title': f"{client.name} {client.surname} - Ödeme Bilgileri",
-                'url': f'#',  # URL yerine client_id kullanacağız
+                'url': f'#',
                 'id': client.id,
                 'source': 'client'
             })

@@ -110,11 +110,11 @@
                 </span>
             </td>
             <td>
-                <button class="action-btn view-btn" onclick="showDetails({{ case_file.id }})" title="Dosya Detayları">
+                <button class="action-btn view-btn" onclick="showDetails('{{ case_file.id }}')" title="Dosya Detayları">
                     <i class="material-icons">visibility</i>
                 </button>
                 <span style="color: #dee2e6; margin: 0 8px;">|</span>
-                <button class="action-btn delete-btn" onclick="deleteCase({{ case_file.id }})" title="Dosyayı Sil">
+                <button class="action-btn delete-btn" onclick="deleteCase('{{ case_file.id }}')" title="Dosyayı Sil">
                     <i class="material-icons">delete</i>
                 </button>
             </td>
@@ -1146,6 +1146,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (departmentSelect) {
         departmentSelect.addEventListener('change', updateCourtNumbers);
+    }
+
+    // URL'den show_details parametresini al
+    const urlParams = new URLSearchParams(window.location.search);
+    const showDetailsId = urlParams.get('show_details');
+    
+    // Eğer show_details parametresi varsa, dosya detaylarını göster
+    if (showDetailsId) {
+        showDetails(showDetailsId);
     }
 });
 
