@@ -11,6 +11,14 @@ import tempfile
 from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
 import requests
+from uyap_integration import UYAPIntegration
+from pyngrok import ngrok
+
+# Auth token'ı buraya ekleyin
+ngrok.set_auth_token("2r4SXKJXTPGaIv0xl4p1EHRXH0Z_2S8hVH6A8PqH9RzjwFo81")
+
+app = Flask(__name__, static_url_path='/static')
+app.config['SECRET_KEY'] = 'your_secret_key'
 
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'your_secret_key'
@@ -1048,10 +1056,101 @@ def hesaplamalar(type):
 def isci_alacagi_hesaplama():
     return render_template("isci_alacagi_hesaplama.html")
 
+@app.route('/uyap_sync', methods=['POST'])
+def uyap_sync():
+    try:
+        print("UYAP senkronizasyonu başlatılıyor...")
+        uyap = UYAPIntegration()
+        
+        # UYAP'a giriş yap
+        print("UYAP'a giriş yapılıyor...")
+        if not uyap.login():
+            error_msg = "UYAP girişi başarısız oldu. Lütfen e-imza ile giriş yaptığınızdan emin olun."
+            print(error_msg)
+            return jsonify(success=False, message=error_msg)
+        
+        print("UYAP'a giriş başarılı, dosyalar çekiliyor...")
+        # Dosyaları çek
+        cases = uyap.get_case_files()
+        
+        if not cases:
+            error_msg = "Hiç dosya bulunamadı. Bu durum şunlardan kaynaklanabilir:\n" + \
+                       "1. Menü öğeleri bulunamadı\n" + \
+                       "2. Dosya türü veya yargı birimi seçilemedi\n" + \
+                       "3. Sorgulama sonucu döndürülemedi"
+            print(error_msg)
+            return jsonify(success=False, message=error_msg)
+        
+        print(f"{len(cases)} adet dosya bulundu, veritabanına kaydediliyor...")
+        # Her dosya için veritabanına kaydet
+        saved_count = 0
+        for case in cases:
+            try:
+                # Dosya detaylarını çek
+                details = uyap.get_case_details(case['dosya_no'])
+                
+                # Mevcut dosyayı kontrol et
+                existing_case = CaseFile.query.filter_by(
+                    case_number=case['dosya_no']
+                ).first()
+                
+                if existing_case:
+                    print(f"Mevcut dosya güncelleniyor: {case['dosya_no']}")
+                    # Mevcut dosyayı güncelle
+                    existing_case.courthouse = case['mahkeme']
+                    existing_case.status = case['durum']
+                    if details:
+                        existing_case.next_hearing = details.get('durusma_tarihi')
+                        existing_case.description = details.get('son_islem')
+                    saved_count += 1
+                else:
+                    print(f"Yeni dosya ekleniyor: {case['dosya_no']}")
+                    # Yeni dosya oluştur
+                    new_case = CaseFile(
+                        file_type=case['dosya_turu'].lower(),
+                        courthouse=case['mahkeme'],
+                        department=case['yargi_birimi'],
+                        year=int(case['dosya_no'].split('/')[0]) if '/' in case['dosya_no'] else datetime.now().year,
+                        case_number=case['dosya_no'],
+                        client_name=case['taraflar'].split('/')[-1].strip(),
+                        status=case['durum'],
+                        description=case.get('son_islem', ''),
+                        user_id=1  # Aktif kullanıcı ID'si
+                    )
+                    db.session.add(new_case)
+                    saved_count += 1
+            except Exception as e:
+                print(f"Dosya kaydedilirken hata: {str(e)}")
+                continue
+        
+        try:
+            db.session.commit()
+            print(f"Veritabanına {saved_count} dosya kaydedildi.")
+        except Exception as e:
+            db.session.rollback()
+            error_msg = f"Veritabanı kayıt hatası: {str(e)}"
+            print(error_msg)
+            return jsonify(success=False, message=error_msg)
+        
+        uyap.close()
+        return jsonify(success=True, message=f"{saved_count} dosya senkronize edildi")
+        
+    except Exception as e:
+        error_msg = f"Beklenmeyen hata: {str(e)}"
+        print(error_msg)
+        return jsonify(success=False, message=error_msg)
+
 if __name__ == '__main__':
     with app.app_context():
         # Mevcut veritabanını sil
         db.drop_all()
         # Yeni şema ile veritabanını oluştur
         db.create_all()
+    
+    # Ngrok tüneli oluştur
+    http_tunnel = ngrok.connect(5000)
+    tunnel_url = http_tunnel.public_url
+    print(f'\n * Ngrok Tünel URL: {tunnel_url}')
+    print(' * Bu URL\'i iPad\'inizde açabilirsiniz\n')
+    
     app.run(debug=True)

@@ -1,66 +1,148 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block title %}Dosyalarım{% endblock %}
 
 {% block content %}
-<header>
-    <div class="header-left">
-        <h1>Dosyalarım</h1>
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Dosyalarım</h2>
+        </div>
+        <div class="col-auto">
+            <button id="uyapSyncBtn" class="btn btn-primary">
+                <i class="fas fa-sync-alt"></i> UYAP'tan Dosyaları Çek
+            </button>
+        </div>
     </div>
-</header>
-<div class="form-container">
-    <form method="POST" class="search-form">
-        <div class="form-grid">
-            <div class="input-group">
-                <label for="file-type">Dosya Türü</label>
-                <select id="file-type" name="file-type">
-                    <option value="">Tümü</option>
-                    <option value="ceza">Ceza</option>
-                    <option value="hukuk">Hukuk</option>
-                    <option value="icra">İcra</option>
-                    <option value="savcilik">Savcılık</option>
-                    <option value="aihm">AİHM</option>
-                    <option value="aym">AYM</option>
-                </select>
+
+    <!-- Filtreler -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="file-type" class="form-label">Dosya Türü</label>
+                    <select name="file_type" id="file-type" class="form-select">
+                        <option value="">Tümü</option>
+                        <option value="hukuk" {% if selected_type == 'hukuk' %}selected{% endif %}>Hukuk</option>
+                        <option value="ceza" {% if selected_type == 'ceza' %}selected{% endif %}>Ceza</option>
+                        <option value="icra" {% if selected_type == 'icra' %}selected{% endif %}>İcra</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="status" class="form-label">Durum</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">Tümü</option>
+                        <option value="Aktif" {% if selected_status == 'Aktif' %}selected{% endif %}>Aktif</option>
+                        <option value="Kapalı" {% if selected_status == 'Kapalı' %}selected{% endif %}>Kapalı</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Filtrele</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dosya Listesi -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Dosya No</th>
+                    <th>Mahkeme</th>
+                    <th>Birim</th>
+                    <th>Müvekkil</th>
+                    <th>Durum</th>
+                    <th>Son Duruşma</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for case in case_files %}
+                <tr>
+                    <td>{{ case.year }}/{{ case.case_number }}</td>
+                    <td>{{ case.courthouse }}</td>
+                    <td>{{ case.department }}</td>
+                    <td>{{ case.client_name }}</td>
+                    <td>
+                        <span class="badge {% if case.status == 'Aktif' %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ case.status }}
+                        </span>
+                    </td>
+                    <td>{{ case.next_hearing.strftime('%d.%m.%Y') if case.next_hearing else '-' }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info view-case" data-case-id="{{ case.id }}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- UYAP Senkronizasyon Modal -->
+<div class="modal fade" id="uyapSyncModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">UYAP Senkronizasyonu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="input-group">
-                <label for="year">Yıl</label>
-                <input type="number" id="year" name="year">
+            <div class="modal-body">
+                <p>UYAP'a giriş yapmanız ve e-imzanızı kullanmanız gerekecektir. Bu işlem birkaç dakika sürebilir.</p>
+                <div class="progress d-none">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                </div>
             </div>
-            <div class="input-group">
-                <label for="case-number">Esas No</label>
-                <input type="text" id="case-number" name="case-number">
-            </div>
-            <div class="input-group">
-                <label for="client-name">Müvekkil Adı</label>
-                <input type="text" id="client-name" name="client-name">
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="startSync">Senkronizasyonu Başlat</button>
             </div>
         </div>
-        <div style="text-align: right; margin-top: 15px;">
-            <button type="submit" class="btn">Ara</button>
-        </div>
-    </form>
+    </div>
 </div>
-<div class="table-container">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Dosya Türü</th>
-                <th>Yıl</th>
-                <th>Esas No</th>
-                <th>Müvekkil Adı</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for case_file in case_files %}
-            <tr>
-                <td>{{ case_file.file_type }}</td>
-                <td>{{ case_file.year }}</td>
-                <td>{{ case_file.case_number }}</td>
-                <td>{{ case_file.client_name }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // UYAP Senkronizasyon butonu
+    $('#uyapSyncBtn').click(function() {
+        $('#uyapSyncModal').modal('show');
+    });
+
+    // Senkronizasyonu başlat
+    $('#startSync').click(function() {
+        const $modal = $('#uyapSyncModal');
+        const $progress = $modal.find('.progress');
+        const $buttons = $modal.find('.modal-footer button');
+        
+        $progress.removeClass('d-none');
+        $buttons.prop('disabled', true);
+        
+        $.ajax({
+            url: '/uyap_sync',
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    toastr.error(response.message || 'Senkronizasyon sırasında bir hata oluştu');
+                }
+            },
+            error: function() {
+                toastr.error('Senkronizasyon sırasında bir hata oluştu');
+            },
+            complete: function() {
+                $progress.addClass('d-none');
+                $buttons.prop('disabled', false);
+                $modal.modal('hide');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
 {% endblock %}

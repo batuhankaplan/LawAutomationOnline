@@ -6,6 +6,9 @@
 <header>
     <div class="header-left">
         <h1>Dosya Ekle</h1>
+        <button id="uyapSyncBtn" class="btn" style="margin-left: 15px;">
+            <i class="fas fa-sync-alt"></i> UYAP'tan Dosyaları Çek
+        </button>
     </div>
 </header>
 
@@ -16,12 +19,15 @@
                 <label for="file-type">Dosya Türü</label>
                 <select id="file-type" name="file-type" onchange="updateDepartments()">
                     <option value="">Seçiniz</option>
-                    <option value="hukuk">Hukuk</option>
                     <option value="ceza">Ceza</option>
+                    <option value="hukuk">Hukuk</option>
                     <option value="icra">İcra</option>
+                    <option value="savcilik">Savcılık</option>
+                    <option value="aihm">AİHM</option>
+                    <option value="aym">AYM</option>
                 </select>
             </div>
-            
+
             <div class="input-group">
                 <label for="courthouse">Adliye</label>
                 <select id="courthouse" name="courthouse">
@@ -68,6 +74,26 @@
             <button type="submit" class="btn">Ekle</button>
         </div>
     </form>
+</div>
+
+<!-- UYAP Senkronizasyon Modal -->
+<div class="modal" id="uyapSyncModal" tabindex="-1" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5>UYAP Senkronizasyonu</h5>
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p>UYAP'a giriş yapmanız ve e-imzanızı kullanmanız gerekecektir. Bu işlem birkaç dakika sürebilir.</p>
+            <div class="progress" style="display: none;">
+                <div class="progress-bar"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary close-modal">İptal</button>
+            <button type="button" class="btn" id="startSync">Senkronizasyonu Başlat</button>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -146,6 +172,90 @@
 .btn:hover {
     background: var(--hover-color);
 }
+
+/* Modal Stilleri */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 0;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+    padding: 15px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-body {
+    padding: 15px;
+}
+
+.modal-footer {
+    padding: 15px;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: black;
+}
+
+.progress {
+    width: 100%;
+    height: 20px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 100%;
+    background-color: var(--primary-color);
+    animation: progress-animation 2s linear infinite;
+}
+
+@keyframes progress-animation {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
 </style>
 
 <script>
@@ -194,6 +304,57 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Dosya türü değiştiğinde birimleri güncelle
     document.getElementById('file-type').addEventListener('change', updateDepartments);
+    
+    // Modal işlemleri
+    const modal = document.getElementById('uyapSyncModal');
+    const btn = document.getElementById('uyapSyncBtn');
+    const closeBtn = document.querySelector('.close');
+    const closeModalBtn = document.querySelector('.close-modal');
+    const startSyncBtn = document.getElementById('startSync');
+    const progress = document.querySelector('.progress');
+    
+    btn.onclick = function() {
+        modal.style.display = "block";
+    }
+    
+    closeBtn.onclick = closeModalBtn.onclick = function() {
+        modal.style.display = "none";
+        progress.style.display = "none";
+    }
+    
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+            progress.style.display = "none";
+        }
+    }
+    
+    startSyncBtn.onclick = function() {
+        progress.style.display = "block";
+        startSyncBtn.disabled = true;
+        closeModalBtn.disabled = true;
+        
+        fetch('/uyap_sync', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.reload();
+            } else {
+                alert('Hata: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Bir hata oluştu: ' + error);
+        })
+        .finally(() => {
+            progress.style.display = "none";
+            startSyncBtn.disabled = false;
+            closeModalBtn.disabled = false;
+        });
+    }
 });
 
 // Adliye listesini doldur
