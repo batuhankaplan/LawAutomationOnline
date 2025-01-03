@@ -12,10 +12,6 @@ from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
 import requests
 from uyap_integration import UYAPIntegration
-from pyngrok import ngrok
-
-# Auth token'ı buraya ekleyin
-ngrok.set_auth_token("2r4SXKJXTPGaIv0xl4p1EHRXH0Z_2S8hVH6A8PqH9RzjwFo81")
 
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'your_secret_key'
@@ -1146,11 +1142,5 @@ if __name__ == '__main__':
         db.drop_all()
         # Yeni şema ile veritabanını oluştur
         db.create_all()
-    
-    # Ngrok tüneli oluştur
-    http_tunnel = ngrok.connect(5000)
-    tunnel_url = http_tunnel.public_url
-    print(f'\n * Ngrok Tünel URL: {tunnel_url}')
-    print(' * Bu URL\'i iPad\'inizde açabilirsiniz\n')
     
     app.run(debug=True)

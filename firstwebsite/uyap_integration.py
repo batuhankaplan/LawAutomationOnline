@@ -9,49 +9,99 @@ from selenium.webdriver.chrome.options import Options
 import time
 import json
 from selenium.webdriver.common.keys import Keys
+import os
+import subprocess
 
 class UYAPIntegration:
     def __init__(self):
-        # Chrome ayarlarını yapılandır
-        chrome_options = Options()
-        chrome_options.add_argument('--start-maximized')
-        chrome_options.add_argument('--disable-notifications')
-        chrome_options.add_argument('--enable-automation')  # Otomasyonu etkinleştir
-        chrome_options.add_argument('--no-sandbox')  # Sandbox modunu devre dışı bırak
-        chrome_options.add_argument('--disable-dev-shm-usage')  # Paylaşılan bellek kullanımını devre dışı bırak
-        chrome_options.add_experimental_option('useAutomationExtension', False)  # Otomasyon uzantısını devre dışı bırak
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])  # Otomasyon bildirimini gizle
-        
-        # Chrome sürücüsünü başlat
-        service = Service(ChromeDriverManager().install())
-        self.driver = webdriver.Chrome(service=service, options=chrome_options)
-        self.base_url = "https://avukatbeta.uyap.gov.tr"
+        try:
+            # Chrome ayarlarını yapılandır
+            chrome_path = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+            debug_port = 9222
+            
+            # Mevcut Chrome profilini kullan
+            user_data_dir = os.path.join(os.getenv('LOCALAPPDATA'), 'Google', 'Chrome', 'User Data')
+            
+            # Chrome'u başlat
+            subprocess.Popen([
+                chrome_path,
+                f"--remote-debugging-port={debug_port}",
+                f"--user-data-dir={user_data_dir}",
+                "--profile-directory=Default",
+                "--no-first-run",
+                "--no-default-browser-check",
+                "--start-maximized",
+                "--disable-popup-blocking",
+                "--disable-notifications",
+                "--homepage=https://avukatbeta.uyap.gov.tr/giris"
+            ])
+            
+            time.sleep(3)  # Chrome'un başlaması için bekle
+            
+            # Chrome'a bağlan
+            chrome_options = Options()
+            chrome_options.add_experimental_option("debuggerAddress", f"localhost:{debug_port}")
+            chrome_options.add_argument("--start-maximized")
+            
+            # Chrome sürücüsünü başlat
+            service = Service(ChromeDriverManager().install())
+            self.driver = webdriver.Chrome(service=service, options=chrome_options)
+            
+            # Doğrudan UYAP sayfasına git
+            self.driver.get("https://avukatbeta.uyap.gov.tr/giris")
+            print("Chrome başarıyla başlatıldı ve UYAP sayfasına yönlendirildi.")
+            
+        except Exception as e:
+            print(f"Chrome başlatma hatası: {str(e)}")
+            raise
         
         # İşlenen birimleri takip etmek için sözlük
         self.islenen_birimler = {}
         
     def login(self):
         """
-        UYAP Avukat Portalına giriş yapar
+        UYAP Avukat Portalına giriş yapar ve detaylı arama sayfasına gider
         Not: E-imza ile giriş yapılacağı için kullanıcının manuel olarak giriş yapması beklenir
         """
         try:
-            self.driver.get(self.base_url)
+            # URL'yi kontrol et ve gerekirse düzelt
+            current_url = self.driver.current_url
+            if "avukatbeta.uyap.gov.tr" not in current_url:
+                print(f"Yanlış sayfaya yönlendirildi: {current_url}")
+                print("UYAP sayfasına yeniden yönlendiriliyor...")
+                self.driver.get("https://avukatbeta.uyap.gov.tr")
+                time.sleep(2)
+            
             print("UYAP sayfası açıldı, e-imza ile giriş bekleniyor...")
             
-            # E-imza ile giriş için yeterli süre tanı (60 saniye)
-            time.sleep(60)
+            # Giriş başarılı olana kadar maksimum 30 saniye bekle
+            max_wait = 30
+            start_time = time.time()
             
-            # Giriş başarılı mı kontrol et - sol menüyü ara
+            while time.time() - start_time < max_wait:
+                try:
+                    # Ana sayfadaki herhangi bir menü öğesini kontrol et
+                    menu_item = WebDriverWait(self.driver, 1).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, "span.dx-menu-item-text"))
+                    )
+                    print("Giriş başarılı! Detaylı arama sayfasına yönlendiriliyor...")
+                    break
+                except:
+                    time.sleep(1)  # 1 saniye bekle ve tekrar kontrol et
+                    continue
+            
+            # Ana sayfadaki detaylı arama ikonuna tıkla
             try:
-                # Sol menüdeki Dosya Sorgulama İşlemleri'ni kontrol et
-                WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located((By.XPATH, "//span[contains(text(), 'Dosya Sorgulama İşlemleri')]"))
+                # Detaylı arama ikonunu bul ve tıkla (pembe renkli kutu)
+                detayli_arama = WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "div.dx-box-item div.dx-box-item:nth-child(2)"))
                 )
-                print("Giriş başarılı!")
+                detayli_arama.click()
+                time.sleep(2)
+                print("Detaylı arama sayfası açıldı!")
                 return True
-            except:
-                print("Giriş başarısız - menü elemanları bulunamadı")
+            except Exception as e:
+                print(f"Detaylı arama sayfası açılamadı: {str(e)}")
                 return False
                 
         except Exception as e:
@@ -97,57 +147,66 @@ class UYAPIntegration:
         UYAP'tan dava dosyalarını çeker
         """
         try:
-            # 1. Adım: Dosya Sorgulama İşlemleri menüsüne tıkla
-            def click_dosya_sorgulama():
-                print("\n1. Adım: Dosya Sorgulama İşlemleri menüsüne tıklanıyor...")
-                dosya_sorgulama = WebDriverWait(self.driver, 20).until(
-                    EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Dosya Sorgulama İşlemleri')]"))
-                )
-                self.driver.execute_script("arguments[0].click();", dosya_sorgulama)
-                time.sleep(3)
-                print("Dosya Sorgulama İşlemleri menüsüne tıklama başarılı")
+            print("\nDosyalar alınıyor...")
             
-            self.safe_action(click_dosya_sorgulama)
-
-            # 2. Adım: Dosya Sorgula seçeneğine tıkla
-            def click_dosya_sorgula():
-                print("\n2. Adım: Dosya Sorgula seçeneğine tıklanıyor...")
-                dosya_sorgula = WebDriverWait(self.driver, 20).until(
-                    EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Dosya Sorgula')]"))
+            # Dava Açılış İşlemleri menüsüne tıkla
+            def click_dava_acilis():
+                dava_acilis = WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Dava Açılış İşlemleri')]"))
                 )
-                self.driver.execute_script("arguments[0].click();", dosya_sorgula)
-                time.sleep(3)
-                print("Dosya Sorgula seçeneğine tıklama başarılı")
-            
-            self.safe_action(click_dosya_sorgula)
-
-            # Diğer adımlar için de aynı mantık...
-            # Her işlem öncesi ve sonrası popup kontrolü yapılacak
-
-            # Örnek olarak yargı türü seçimi:
-            def select_yargi_turu(yargi_turu):
-                print(f"\nYargı türü '{yargi_turu}' için işlem başlatılıyor...")
-                inputs = WebDriverWait(self.driver, 20).until(
-                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, "input.dx-texteditor-input"))
-                )
-                yargi_turu_input = inputs[0]
-                yargi_turu_input.clear()
-                yargi_turu_input.send_keys(yargi_turu)
+                self.driver.execute_script("arguments[0].click();", dava_acilis)
                 time.sleep(2)
-                self.check_and_close_popup()  # Ara kontrol
-                yargi_turu_input.send_keys(Keys.ENTER)
+                print("Dava Açılış İşlemleri menüsü açıldı")
+            
+            self.safe_action(click_dava_acilis)
+            
+            # Sık Kullanılan Dosyalarım'a tıkla
+            def click_sik_kullanilanlar():
+                sik_kullanilanlar = WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'Sık Kullanılan Dosyalarım')]"))
+                )
+                self.driver.execute_script("arguments[0].click();", sik_kullanilanlar)
                 time.sleep(2)
-                print(f"'{yargi_turu}' seçildi")
+                print("Sık Kullanılan Dosyalarım sayfası açıldı")
             
-            # Her yargı türü için işlem yap
-            for yargi_turu in ["Ceza", "Hukuk", "İcra"]:
-                self.safe_action(lambda: select_yargi_turu(yargi_turu))
-                
-                # Yargı birimi seçimi ve diğer işlemler...
-                # Her kritik işlem için safe_action kullan
+            self.safe_action(click_sik_kullanilanlar)
             
-            return []
-
+            # Sonuçları kaydet
+            def save_results():
+                try:
+                    # Tablo elementini bul
+                    table = WebDriverWait(self.driver, 10).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, "div.dx-datagrid-content table"))
+                    )
+                    
+                    # Tüm satırları al
+                    rows = table.find_elements(By.TAG_NAME, "tr")
+                    dosyalar = []
+                    
+                    for row in rows[1:]:  # Başlık satırını atla
+                        try:
+                            cells = row.find_elements(By.TAG_NAME, "td")
+                            if len(cells) >= 4:  # Sık kullanılanlar tablosunda genelde 4 sütun var
+                                dosya = {
+                                    'dosya_no': cells[0].text.strip(),
+                                    'mahkeme': cells[1].text.strip(),
+                                    'taraflar': cells[2].text.strip(),
+                                    'durum': cells[3].text.strip() if len(cells) > 3 else 'Aktif'
+                                }
+                                print(f"Dosya bulundu: {dosya['dosya_no']}")
+                                dosyalar.append(dosya)
+                        except Exception as e:
+                            print(f"Satır okuma hatası: {str(e)}")
+                            continue
+                    
+                    return dosyalar
+                    
+                except Exception as e:
+                    print(f"Tablo okuma hatası: {str(e)}")
+                    return []
+            
+            return self.safe_action(save_results)
+            
         except Exception as e:
             print(f"Dosya çekme işleminde beklenmeyen hata: {str(e)}")
             return []
@@ -257,3 +316,82 @@ class UYAPIntegration:
         except Exception as e:
             print(f"Sonuçlar kaydedilirken hata: {str(e)}")
             return 
+
+    def search_files(self, yargi_turu="Ceza"):
+        """
+        Dosya sorgulama işlemini gerçekleştirir
+        """
+        try:
+            print(f"{yargi_turu} türü için dosya sorgulaması başlatılıyor...")
+            
+            # Ana sayfaya git
+            self.driver.get("https://avukatbeta.uyap.gov.tr")
+            time.sleep(2)
+            
+            # Detaylı Arama butonunu bul ve tıkla
+            detayli_arama = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "div.dx-box-item button[title='Detaylı Arama']"))
+            )
+            detayli_arama.click()
+            time.sleep(2)
+            
+            # Yargı türü seçim kutusunu bul
+            yargi_turu_dropdown = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "div[class*='yargiTuru']"))
+            )
+            yargi_turu_dropdown.click()
+            time.sleep(1)
+            
+            # Yargı türünü seç
+            yargi_turu_secim = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, f"//div[contains(@class, 'dx-item-content') and contains(text(), '{yargi_turu}')]"))
+            )
+            yargi_turu_secim.click()
+            time.sleep(1)
+            
+            # Sorgula butonunu bul ve tıkla
+            sorgula_button = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "div.dx-button-content:has(span:contains('Sorgula'))"))
+            )
+            sorgula_button.click()
+            
+            print(f"{yargi_turu} türündeki dosyalar sorgulanıyor...")
+            time.sleep(5)  # Sonuçların yüklenmesi için bekle
+            
+            # Sonuçları kaydet
+            try:
+                # Tablo elementini bul
+                table = WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "div.dx-datagrid-content table"))
+                )
+                
+                # Tüm satırları al
+                rows = table.find_elements(By.TAG_NAME, "tr")
+                dosyalar = []
+                
+                for row in rows[1:]:  # Başlık satırını atla
+                    try:
+                        cells = row.find_elements(By.TAG_NAME, "td")
+                        if len(cells) >= 4:
+                            dosya = {
+                                'dosya_no': cells[0].text.strip(),
+                                'mahkeme': cells[1].text.strip(),
+                                'taraflar': cells[2].text.strip(),
+                                'durum': cells[3].text.strip() if len(cells) > 3 else 'Aktif',
+                                'dosya_turu': yargi_turu
+                            }
+                            print(f"Dosya bulundu: {dosya['dosya_no']} ({yargi_turu})")
+                            dosyalar.append(dosya)
+                    except Exception as e:
+                        print(f"Satır okuma hatası: {str(e)}")
+                        continue
+                
+                return dosyalar
+                
+            except Exception as e:
+                print(f"Tablo okuma hatası: {str(e)}")
+                return []
+            
+        except Exception as e:
+            print(f"Dosya sorgulama hatası: {str(e)}")
+            return [] 
