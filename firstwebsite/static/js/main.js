@@ -54,6 +54,31 @@ function handleAjaxError(xhr, status, error) {
     toastr.error(errorMessage);
 }
 
+// Detayları göster
+function showDetails(caseId) {
+    $.ajax({
+        url: '/get_case_details/' + caseId,
+        type: 'GET',
+        success: function(data) {
+            document.getElementById('detailFileType').textContent = data.file_type;
+            document.getElementById('detailCourthouse').textContent = data.courthouse;
+            document.getElementById('detailDepartment').textContent = data.department;
+            document.getElementById('detailCaseNumber').textContent = data.case_number;
+            document.getElementById('detailClientName').textContent = data.client_name;
+            document.getElementById('detailPhoneNumber').textContent = data.phone_number || '-';
+            document.getElementById('detailStatus').textContent = data.status;
+            document.getElementById('detailOpenDate').textContent = formatDate(data.open_date);
+            document.getElementById('detailNextHearing').textContent = data.next_hearing ? formatDate(data.next_hearing) : '-';
+            document.getElementById('detailHearingTime').textContent = data.hearing_time || '-';
+            document.getElementById('detailDescription').textContent = data.description || 'Açıklama bulunmuyor.';
+
+            // Modal'ı göster
+            $('#fileDetailModal').modal('show');
+        },
+        error: handleAjaxError
+    });
+}
+
 // Sayfa yüklendiğinde çalışacak kodlar
 $(document).ready(function() {
     // Bootstrap tooltip'lerini aktifleştir

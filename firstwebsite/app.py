@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, request, send_from_directory, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from datetime import datetime, timedelta
 import os
 from werkzeug.utils import secure_filename
@@ -15,10 +16,8 @@ from uyap_integration import UYAPIntegration
 
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'your_secret_key'
-
-app = Flask(__name__, static_url_path='/static')
-app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///clients.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['MAIL_SERVER'] = 'smtp-mail.outlook.com'
 app.config['MAIL_PORT'] = 587
@@ -26,6 +25,7 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'yzbatuhankaplan@outlook.com'
 app.config['MAIL_PASSWORD'] = 'your_mail_password'  # Mail şifrenizi buraya yazın
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 mail = Mail(app)
 
 # Türkçe tarih için locale ayarı
@@ -192,9 +192,11 @@ class CaseFile(db.Model):
     year = db.Column(db.Integer, nullable=False)
     case_number = db.Column(db.String(50), nullable=False)
     client_name = db.Column(db.String(150), nullable=False)
+    phone_number = db.Column(db.String(20))
     status = db.Column(db.String(50), default='Aktif')
     open_date = db.Column(db.Date)
     next_hearing = db.Column(db.Date)
+    hearing_time = db.Column(db.String(5))  # HH:MM formatında
     expenses = db.relationship('Expense', backref='case_file', lazy=True)
     documents = db.relationship('Document', backref='case_file', lazy=True)
     description = db.Column(db.Text)
@@ -417,6 +419,7 @@ def dosya_ekle():
                 year=int(data['year']),
                 case_number=data['case-number'],
                 client_name=data['client-name'],
+                phone_number=data.get('phone-number', ''),
                 status='Aktif',
                 open_date=datetime.strptime(data['open-date'], '%Y-%m-%d').date(),
                 user_id=1
@@ -468,9 +471,11 @@ def case_details(case_id):
             'year': case_file.year,
             'case_number': formatted_case_number,  # Formatlanmış dosya numarası
             'client_name': case_file.client_name,
+            'phone_number': case_file.phone_number,
             'status': case_file.status,
             'open_date': case_file.open_date.strftime('%d.%m.%Y') if case_file.open_date else None,
             'next_hearing': case_file.next_hearing.strftime('%d.%m.%Y') if case_file.next_hearing else None,
+            'hearing_time': case_file.hearing_time,  # Eklenen hearing_time alanı
             'expenses': [{
                 'id': expense.id,
                 'expense_type': expense.expense_type,
@@ -493,8 +498,10 @@ def edit_case(case_id):
         case_file = db.session.get(CaseFile, case_id)
         if case_file:
             case_file.client_name = data.get('client_name', case_file.client_name)
+            case_file.phone_number = data.get('phone_number', case_file.phone_number)
             case_file.status = data.get('status', case_file.status)
             case_file.description = data.get('description', case_file.description)
+            case_file.hearing_time = data.get('hearing_time', case_file.hearing_time)  # Güncellenen hearing_time alanı
             
             # Duruşma tarihi ve saati opsiyonel
             if data.get('next_hearing'):
@@ -1097,6 +1104,7 @@ def uyap_sync():
                     existing_case.status = case['durum']
                     if details:
                         existing_case.next_hearing = details.get('durusma_tarihi')
+                        existing_case.hearing_time = details.get('durusma_saati')  # Güncellenen hearing_time alanı
                         existing_case.description = details.get('son_islem')
                     saved_count += 1
                 else:
@@ -1109,8 +1117,10 @@ def uyap_sync():
                         year=int(case['dosya_no'].split('/')[0]) if '/' in case['dosya_no'] else datetime.now().year,
                         case_number=case['dosya_no'],
                         client_name=case['taraflar'].split('/')[-1].strip(),
+                        phone_number=case.get('phone_number', ''),
                         status=case['durum'],
                         description=case.get('son_islem', ''),
+                        hearing_time=case.get('durusma_saati', ''),  # Güncellenen hearing_time alanı
                         user_id=1  # Aktif kullanıcı ID'si
                     )
                     db.session.add(new_case)

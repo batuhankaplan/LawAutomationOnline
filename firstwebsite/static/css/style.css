@@ -64,6 +64,57 @@ main {
     margin-top: auto;
 }
 
+/* Sonraki Duruşma Bilgisi Kutusu */
+.next-hearing-box {
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.hearing-icon {
+    background-color: #e9ecef;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+}
+
+.hearing-icon i {
+    color: #6c757d;
+    font-size: 24px;
+}
+
+.hearing-info {
+    flex: 1;
+}
+
+.hearing-date, .hearing-time {
+    margin-bottom: 8px;
+}
+
+.hearing-date:last-child, .hearing-time:last-child {
+    margin-bottom: 0;
+}
+
+.hearing-date label, .hearing-time label {
+    display: block;
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 4px;
+}
+
+.hearing-date span, .hearing-time span {
+    font-size: 16px;
+    font-weight: 500;
+    color: #212529;
+}
+
 /* Responsive ayarlar */
 @media (max-width: 768px) {
     .container {

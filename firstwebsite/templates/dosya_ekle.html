@@ -65,6 +65,11 @@
             </div>
 
             <div class="input-group">
+                <label for="phone-number">Telefon Numarası</label>
+                <input type="tel" id="phone-number" name="phone-number" pattern="[0-9]{10,11}" placeholder="5XX XXX XX XX">
+            </div>
+
+            <div class="input-group">
                 <label for="open-date">Açılış Tarihi</label>
                 <input type="date" id="open-date" name="open-date" required value="{{ today_date }}">
             </div>
@@ -419,6 +424,7 @@ function submitForm(event) {
         'year': document.getElementById('year').value,
         'case-number': document.getElementById('case-number').value,
         'client-name': document.getElementById('client-name').value,
+        'phone-number': document.getElementById('phone-number').value,
         'open-date': document.getElementById('open-date').value
     };
 
