@@ -1,16 +1,22 @@
 YAPILACAKLAR:
-1) Müvekkil kayıtlarına müvekkillerin telefon numaraları da eklenecek. #YAPILDI
-2) Dosya detayları modalında "Esas No" nun gösterildiği yerde esas no nun başına dosya eklerken seçtiğimiz yıl gelecek. Örnek: dosyanın esas no 405, dosyanın yılı 2021 ise dosya detayları modalında Esas No kısmında 2021/405 şeklinde gösterilecek.
-3) Dosya detayları modalında düzenleme butonu eklenecek ve bu buton ile Dosya Türü, Adliye, Birim, Müvekkil adı, açılış tarihi, esas no, müvekkil telefon numarası, durum ve sonraki duruşma bilgileri düzenlenebilecek.
-4) Takvimdeki etkinlik seçeneklerine e-duruşma seçeneği de eklenecek. #YAPIM AŞAMASINDA
-5) Kullanıcı sistemi geliştirilecek. Kullanıcıların yaptıkları işlemlerin loglanması lazım. 
+1) Takvimdeki etkinlik seçeneklerine e-duruşma seçeneği de eklenecek. #YAPIM AŞAMASINDA
+2) Kullanıcı sistemi geliştirilecek. Kullanıcı giriş sayfası için bootstrap kullanılacak. Kullanıcıların yaptıkları işlemlerin loglanması lazım. 
 Ayrıca tüm sayfalarda görünür olacak şekilde (layout.html'de) sağ üstte tarih ve saat bilgisin sağ tarafında kullanıcı ismi ve kullanıcının yuvarlak bir resim boxu olmalı.
 Kullanıcının ufak yuvarlak resim boxunun üstüne basınca seçenekler açılacak. Profil / Ayarlar / Çıkış gibi seçenekler olacak.
-6) Son işlemler gösterim tablosunda işlemi hangi kullancının yaptığı gösterilecek. (Bunun için kullanıcı giriş bilgilerinde kayıt olurken kullandığı isim kullanılacak.)
+3) Son işlemler gösterim tablosunda işlemi hangi kullancının yaptığı gösterilecek. (Bunun için kullanıcı giriş bilgilerinde kayıt olurken kullandığı isim kullanılacak.)
+4) Ceza infaz hesaplama.
+5) Son gün uyarısı.
+6) İş atama sistemi.
+7) Ödeme silme butonu yok.
 
 HATA VE BUGLAR:
-1) Dosya ekle sayfasında göstermemesi gereken uyarılar gösteriyor (mesela duyurulara bir duyuru ekliyorum, duyurular sayfasında "Duyuru eklendi" uyarısı gelmezken bu uyarı dosya ekle sayfasında geliyor). (image upload)
+1) (mesela duyurulara bir duyuru ekliyorum, duyurular sayfasında "Duyuru eklendi" uyarısı gelmiyor). (image upload)
 2) Anasayfada adliye istatistikleri 2 den fazla gösterince bug'a giriyor.
 3) Anasayafadaki son işlemler de daha fazla göster kısmı buglı.
 4) Takvimde mecvut etkinliği silme butonu bozuk.
 5) Anasayafadaki search box bozuk. Arama yapmıyor. Üç kelime girdikten sonra sonuçları listemesi lazımdı.
+6) Dosya sil fonksiyonu buglı.
+7) Takvimde etkinliği düzenleyince yeni etkinlik ekliyor.
+8) Search boxtan arama yapıp ilgili dosyanın detayları ekranı açıldıktan sonra o ekranı kapatsakta dosya sorgula ekranında arama yapınca otomatik o son dosya detayları ekranı açılıyor.
+9) Search boxta kayıtlı ödeme ismiyle birini arayıp tıklatınca hatalı sayfaya atıyor. Hata: Not Found
+The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. (url:http://127.0.0.1:5000/musteri_detay/1) (Ödemeler ekranında bir detay sayfası ekleyelim search boxta aratınca da otomatik ödeme detaylarına atsın)
