@@ -63,6 +63,7 @@
                     <div class="select-wrapper">
                         <select id="eventType" required>
                             <option value="durusma">Duruşma</option>
+                            <option value="e-durusma">E-Duruşma</option>
                             <option value="tahliye">Tahliye</option>
                             <option value="is">Yapılacak İş</option>
                             <option value="randevu">Randevu</option>
@@ -150,18 +151,58 @@
 
 <style>
 .page-container {
-    max-width: 1000px;
-    margin: 20px auto;
-    padding: 0 20px;
+    padding: 1rem;
+    height: calc(100vh - 2rem);
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .calendar-wrapper {
     background: white;
-    border-radius: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-    margin: 0;
-    overflow: hidden;
-    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 95%;
+    height: 95%;
+    margin: 0 auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-top: 1rem;
+}
+
+#calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #e0e0e0;
+    border: 1px solid #e0e0e0;
+    flex: 1;
+}
+
+.calendar-day {
+    position: relative;
+    background: white;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: #f5f5f5;
+    padding: 0.75rem 0;
+    font-weight: 600;
+    font-size: 1rem;
+    text-align: center;
 }
 
 .calendar-header {
@@ -248,44 +289,10 @@
     gap: 10px;
 }
 
-.calendar-container {
-    padding: 20px;
-    background: #f8f9fa;
-}
-
-.weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
-    margin-bottom: 10px;
-    font-weight: 500;
-    color: #2c3e50;
-    padding: 10px 2px;
-    border-bottom: 2px solid #dee2e6;
-}
-
-#calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
-    background: #dee2e6;
-    padding: 2px;
-    border: 1px solid #ced4da;
-    border-radius: 8px;
-}
-
 .calendar-day {
-    aspect-ratio: 1;
+    min-height: 150px;
+    padding: 10px;
     background: white;
-    padding: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    min-height: 100px;
-    border: 1px solid #e9ecef;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
 }
 
 .calendar-day:hover {
@@ -372,6 +379,7 @@
 }
 
 .event-durusma { background: #e74c3c; }
+.event-e-durusma { background: #2196F3; }
 .event-tahliye { background: #3498db; }
 .event-is { background: #2ecc71; }
 .event-randevu { background: #9b59b6; }
@@ -393,11 +401,13 @@
 
 .modal-content {
     background: white;
-    border-radius: 12px;
+    border-radius: 10px;
+    padding: 20px;
+    position: relative;
     width: 90%;
-    max-width: 450px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    overflow: hidden;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 /* Modal başlık */
@@ -412,14 +422,19 @@
 
 .modal-header h3 {
     margin: 0;
-    color: #2c3e50;
-    font-size: 1.25rem;
+    color: #333;
+    font-size: 1.5rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
 }
 
 /* Form grupları */
 .modal-body {
-    padding: 20px;
-    overflow-x: hidden;
+    margin: 20px 0;
+    overflow-y: auto;
+    max-height: calc(80vh - 140px);
 }
 
 .form-group {
@@ -628,6 +643,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 .event-type-badge.durusma { background: #e74c3c; }
+.event-type-badge.e-durusma { background: #2196F3; }
 .event-type-badge.tahliye { background: #3498db; }
 .event-type-badge.is { background: #2ecc71; }
 .event-type-badge.randevu { background: #9b59b6; }
@@ -640,7 +656,11 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .event-detail-content h3 {
     margin: 0 0 15px 0;
     font-size: 1.4rem;
-    color: #2c3e50;
+    color: #333;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
 }
 
 .event-meta {
@@ -661,16 +681,24 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 .event-description {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
     margin-top: 15px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.5;
+    max-width: 100%;
 }
 
-.event-description p {
-    margin: 0;
+.event-detail-description {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
     line-height: 1.5;
-    color: #2c3e50;
+    max-width: 100%;
 }
 
 .btn.danger {
@@ -782,6 +810,44 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .calendar-day.adli-tatil .holiday-name {
     color: #4CAF50;
     font-size: 0.7rem;
+}
+
+.event-title {
+    font-weight: 500;
+    margin: 5px 0;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+#detailTitle {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.calendar-day .event {
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-left: 3px solid;
+}
+
+.calendar-day .event-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
 }
 </style>
 
@@ -916,6 +982,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     eventItem.className = `event-item event-${event.event_type}`;
                     
                     const eventContent = document.createElement('span');
+                    eventContent.className = 'event-title';
                     eventContent.textContent = `${event.time} ${event.title}`;
                     
                     eventItem.onclick = (e) => {
@@ -1096,6 +1163,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function getEventTypeName(type) {
         const types = {
             'durusma': 'Duruşma',
+            'e-durusma': 'E-Duruşma',
             'tahliye': 'Tahliye',
             'is': 'Yapılacak İş',
             'randevu': 'Randevu',

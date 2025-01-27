@@ -1,5 +1,5 @@
 YAPILACAKLAR:
-1) Takvimdeki etkinlik seçeneklerine e-duruşma seçeneği de eklenecek. #YAPIM AŞAMASINDA
+1) Takvimdeki etkinlik seçeneklerine e-duruşma seçeneği de eklenecek. #YAPIlLDI
 2) Kullanıcı sistemi geliştirilecek. Kullanıcı giriş sayfası için bootstrap kullanılacak. Kullanıcıların yaptıkları işlemlerin loglanması lazım. 
 Ayrıca tüm sayfalarda görünür olacak şekilde (layout.html'de) sağ üstte tarih ve saat bilgisin sağ tarafında kullanıcı ismi ve kullanıcının yuvarlak bir resim boxu olmalı.
 Kullanıcının ufak yuvarlak resim boxunun üstüne basınca seçenekler açılacak. Profil / Ayarlar / Çıkış gibi seçenekler olacak.
