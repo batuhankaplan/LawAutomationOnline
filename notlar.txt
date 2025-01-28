@@ -1,13 +1,15 @@
 YAPILACAKLAR:
 1) Takvimdeki etkinlik seçeneklerine e-duruşma seçeneği de eklenecek. #YAPIlLDI
-2) Kullanıcı sistemi geliştirilecek. Kullanıcı giriş sayfası için bootstrap kullanılacak. Kullanıcıların yaptıkları işlemlerin loglanması lazım. 
-Ayrıca tüm sayfalarda görünür olacak şekilde (layout.html'de) sağ üstte tarih ve saat bilgisin sağ tarafında kullanıcı ismi ve kullanıcının yuvarlak bir resim boxu olmalı.
-Kullanıcının ufak yuvarlak resim boxunun üstüne basınca seçenekler açılacak. Profil / Ayarlar / Çıkış gibi seçenekler olacak.
-3) Son işlemler gösterim tablosunda işlemi hangi kullancının yaptığı gösterilecek. (Bunun için kullanıcı giriş bilgilerinde kayıt olurken kullandığı isim kullanılacak.)
+2) Ödeme silme butonu yok. #YAPILDI
+3) (Ödemelere açıklama ekleme yok) #YAPILDI
 4) Ceza infaz hesaplama.
 5) Son gün uyarısı.
 6) İş atama sistemi.
-7) Ödeme silme butonu yok.
+7) Kullanıcı sistemi geliştirilecek. Kullanıcı giriş sayfası için bootstrap kullanılacak. Kullanıcıların yaptıkları işlemlerin loglanması lazım. 
+Ayrıca tüm sayfalarda görünür olacak şekilde (layout.html'de) sağ üstte tarih ve saat bilgisin sağ tarafında kullanıcı ismi ve kullanıcının yuvarlak bir resim boxu olmalı.
+Kullanıcının ufak yuvarlak resim boxunun üstüne basınca seçenekler açılacak. Profil / Ayarlar / Çıkış gibi seçenekler olacak.
+8) Son işlemler gösterim tablosunda işlemi hangi kullancının yaptığı gösterilecek. (Bunun için kullanıcı giriş bilgilerinde kayıt olurken kullandığı isim kullanılacak.)
+9) İşçi görüşme tutanağı formu eklenebilir.
 
 HATA VE BUGLAR:
 1) (mesela duyurulara bir duyuru ekliyorum, duyurular sayfasında "Duyuru eklendi" uyarısı gelmiyor). (image upload)

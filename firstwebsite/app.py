@@ -1,12 +1,13 @@
-from flask import Flask, render_template, redirect, url_for, request, send_from_directory, jsonify, send_file
+from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from datetime import datetime
+import json
 from datetime import datetime, timedelta
 import os
 from werkzeug.utils import secure_filename
 import locale
 import time
-import json
 import subprocess
 import tempfile
 from flask_mail import Mail, Message
@@ -16,7 +17,7 @@ from uyap_integration import UYAPIntegration
 
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///clients.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['MAIL_SERVER'] = 'smtp-mail.outlook.com'
@@ -25,7 +26,7 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'yzbatuhankaplan@outlook.com'
 app.config['MAIL_PASSWORD'] = 'your_mail_password'  # Mail şifrenizi buraya yazın
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+migrate = Migrate(app, db)  # Migrate nesnesini oluştur
 mail = Mail(app)
 
 # Türkçe tarih için locale ayarı
@@ -152,6 +153,7 @@ class Client(db.Model):
     date = db.Column(db.String(10), nullable=False)
     payments = db.relationship('Payment', backref='client', lazy=True)
     status = db.Column(db.String(10), nullable=False, default='Ödenmedi')
+    description = db.Column(db.Text, nullable=True)  # Açıklama alanı eklendi
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -322,9 +324,43 @@ def update_client(client_id):
         client.installments = data['installments']
         client.date = data['date']
         client.status = data['status']
-        db.session.commit()
-        return jsonify(success=True)
-    return jsonify(success=False)
+        client.description = data.get('description', '')  # Açıklama alanını güncelle
+        
+        try:
+            db.session.commit()
+            return jsonify({'success': True})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'success': False, 'error': str(e)})
+    
+    return jsonify({'success': False, 'error': 'Müşteri bulunamadı'})
+
+@app.route('/delete_client/<int:client_id>', methods=['DELETE'])  # POST yerine DELETE metodu
+def delete_client(client_id):
+    try:
+        client = Client.query.get(client_id)
+        if client:
+            # İlgili ödemeleri sil
+            Payment.query.filter_by(client_id=client_id).delete()
+            
+            # Müşteriyi sil
+            db.session.delete(client)
+            db.session.commit()
+            
+            # Aktivite loguna kaydet
+            log_activity(
+                'delete',
+                f'Ödeme silindi: {client.name} {client.surname}',
+                1  # TODO: Gerçek kullanıcı ID'sini kullan
+            )
+            
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Müşteri bulunamadı'})
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/musteri_sorgula', methods=['GET', 'POST'])
 def musteri_sorgula():
