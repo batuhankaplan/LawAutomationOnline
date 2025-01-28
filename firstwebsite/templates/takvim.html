@@ -56,7 +56,7 @@
                 <i class="material-icons">close</i>
             </button>
         </div>
-        <form id="eventForm">
+        <form id="eventForm" data-event-id="">
             <div class="modal-body">
                 <div class="form-group">
                     <label>Etkinlik Türü</label>
@@ -156,34 +156,40 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    box-sizing: border-box;
 }
 
 .calendar-wrapper {
     background: white;
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    width: 95%;
-    height: 95%;
+    width: 90%;
+    height: 90%;
     margin: 0 auto;
-    padding: 1.5rem;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
+    min-height: 600px;
 }
 
 .calendar-container {
     flex: 1;
     display: flex;
     flex-direction: column;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
+    overflow: auto;
+    min-height: 0;
 }
 
 #calendar-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(120px, 1fr));
+    grid-template-rows: repeat(6, minmax(100px, 1fr));
     gap: 1px;
     background: #e0e0e0;
     border: 1px solid #e0e0e0;
-    flex: 1;
+    min-width: min-content;
 }
 
 .calendar-day {
@@ -192,6 +198,8 @@
     padding: 0.5rem;
     display: flex;
     flex-direction: column;
+    min-height: 100px;
+    min-width: 120px;
 }
 
 .weekdays {
@@ -199,9 +207,9 @@
     grid-template-columns: repeat(7, 1fr);
     gap: 1px;
     background: #f5f5f5;
-    padding: 0.75rem 0;
+    padding: 0.5rem 0;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.9rem;
     text-align: center;
 }
 
@@ -358,7 +366,17 @@
     flex-direction: column;
     gap: 2px;
     padding-right: 4px;
-    max-height: calc(100% - 30px);
+}
+
+.event {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .event-item {
@@ -379,7 +397,7 @@
 }
 
 .event-durusma { background: #e74c3c; }
-.event-e-durusma { background: #2196F3; }
+.event-e-durusma { background: #FF9800; }
 .event-tahliye { background: #3498db; }
 .event-is { background: #2ecc71; }
 .event-randevu { background: #9b59b6; }
@@ -643,7 +661,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 .event-type-badge.durusma { background: #e74c3c; }
-.event-type-badge.e-durusma { background: #2196F3; }
+.event-type-badge.e-durusma { background: #FF9800; }
 .event-type-badge.tahliye { background: #3498db; }
 .event-type-badge.is { background: #2ecc71; }
 .event-type-badge.randevu { background: #9b59b6; }
@@ -849,6 +867,55 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     max-width: 100%;
     display: block;
 }
+
+@media (max-height: 800px) {
+    .calendar-wrapper {
+        height: 95%;
+        padding: 0.75rem;
+    }
+    
+    .calendar-day {
+        min-height: 80px;
+    }
+    
+    #calendar-grid {
+        grid-template-rows: repeat(6, minmax(80px, 1fr));
+    }
+}
+
+@media (max-width: 1024px) {
+    .calendar-wrapper {
+        width: 95%;
+    }
+    
+    #calendar-grid {
+        grid-template-columns: repeat(7, minmax(100px, 1fr));
+    }
+    
+    .calendar-day {
+        min-width: 100px;
+    }
+}
+
+/* Scrollbar stilleri */
+.calendar-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.calendar-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.calendar-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.calendar-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
 </style>
 
 <script>
@@ -1027,11 +1094,15 @@ document.addEventListener('DOMContentLoaded', function() {
             date: document.getElementById('selectedDate').value,
             time: document.getElementById('eventTime').value,
             event_type: document.getElementById('eventType').value,
-            description: document.getElementById('eventDescription').value
+            description: document.getElementById('eventDescription').value,
+            id: document.getElementById('eventForm').getAttribute('data-event-id') // Etkinlik ID'sini ekle
         };
 
-        fetch('/add_event', {
-            method: 'POST',
+        const endpoint = eventData.id ? `/update_event/${eventData.id}` : '/add_event';
+        const method = eventData.id ? 'PUT' : 'POST';
+
+        fetch(endpoint, {
+            method: method,
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -1091,19 +1162,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Yeni etkinlik butonu için event listener
     document.getElementById('addEventBtn').onclick = function() {
+        const modal = document.getElementById('eventModal');
+        const form = document.getElementById('eventForm');
+        
+        // Form'u sıfırla
+        form.reset();
+        document.getElementById('modalTitle').textContent = 'Yeni Etkinlik';
+        // Etkinlik ID'sini temizle
+        form.removeAttribute('data-event-id');
+        
         const today = new Date();
-        showModal(today);
+        document.getElementById('selectedDate').value = today.toLocaleDateString('en-CA');
+        
+        modal.style.display = 'flex';
     };
 
     // Etkinlik düzenleme fonksiyonu
     function editEvent(event) {
         const modal = document.getElementById('eventModal');
+        const form = document.getElementById('eventForm');
+        
         document.getElementById('modalTitle').textContent = 'Etkinlik Düzenle';
         document.getElementById('selectedDate').value = event.date;
         document.getElementById('eventType').value = event.event_type;
         document.getElementById('eventTime').value = event.time;
         document.getElementById('eventTitle').value = event.title;
         document.getElementById('eventDescription').value = event.description;
+        
+        // Etkinlik ID'sini form'a ekle
+        form.setAttribute('data-event-id', event.id);
         
         modal.style.display = 'flex';
     }
@@ -1158,6 +1245,25 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('closeDetailModal').onclick = function() {
         document.getElementById('eventDetailModal').style.display = 'none';
     };
+
+    // Modal kapatma işlemlerini güncelle
+    document.querySelector('.close-btn').onclick = function() {
+        const modal = document.getElementById('eventModal');
+        const form = document.getElementById('eventForm');
+        
+        form.reset();
+        form.removeAttribute('data-event-id');
+        modal.style.display = 'none';
+    }
+
+    document.getElementById('cancelBtn').onclick = function() {
+        const modal = document.getElementById('eventModal');
+        const form = document.getElementById('eventForm');
+        
+        form.reset();
+        form.removeAttribute('data-event-id');
+        modal.style.display = 'none';
+    }
 
     // Etkinlik türü adını döndüren yardımcı fonksiyon
     function getEventTypeName(type) {

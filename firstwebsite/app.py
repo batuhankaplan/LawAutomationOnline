@@ -615,8 +615,17 @@ def update_event(event_id):
     if event:
         event.title = data['title']
         event.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        event.time = datetime.strptime(data['time'], '%H:%M').time()
         event.event_type = data['event_type']
         event.description = data['description']
+        
+        # Eğer etkinlik bir duruşma ise ve bir dosyaya bağlıysa
+        if event.case_id and event.event_type in ['durusma', 'e-durusma']:
+            case = CaseFile.query.get(event.case_id)
+            if case:
+                case.next_hearing = event.date
+                case.hearing_time = event.time.strftime('%H:%M')
+        
         db.session.commit()
         return jsonify({'success': True})
     
