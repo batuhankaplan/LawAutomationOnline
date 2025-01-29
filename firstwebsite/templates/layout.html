@@ -358,8 +358,6 @@
                     </ul>
                 </li>
                 
-                <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
-                
                 <!-- Hesaplamalar menüsü -->
                 <li class="has-submenu">
                     <a href="#" class="menu-trigger">
@@ -373,9 +371,12 @@
                         <li><a href="{{ url_for('hesaplamalar', type='faiz') }}"><i class="material-icons">trending_up</i>Faiz Hesaplama</a></li>
                         <li><a href="{{ url_for('hesaplamalar', type='harc') }}"><i class="material-icons">account_balance</i>Harç Hesaplama</a></li>
                         <li><a href="{{ url_for('hesaplamalar', type='isci') }}"><i class="material-icons">work</i>İşçi Alacağı Hesaplama</a></li>
-                        <li><a href="{{ url_for('hesaplamalar', type='vekalet') }}"><i class="material-icons">gavel</i>Vekalet Ücreti Hesaplama</a></li>
+                        <li><a href="{{ url_for('hesaplamalar', type='vekalet') }}"><i class="material-icons">payments</i>Vekalet Ücreti Hesaplama</a></li>
+                        <li><a href="{{ url_for('hesaplamalar', type='ceza_infaz') }}"><i class="material-icons">gavel</i>Ceza İnfaz Hesaplama</a></li>
                     </ul>
                 </li>
+                
+                <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
                 
                 <li><a href="{{ url_for('odemeler') }}"><i class="material-icons">payment</i>Ödemeler</a></li>
                 <li><a href="{{ url_for('iletisim') }}"><i class="material-icons">contact_mail</i>İletişim</a></li>
@@ -407,7 +408,7 @@
             </main>
             <footer class="site-footer">
                 <div class="footer-content">
-                    <span>© 2024 Kaplan Hukuk</span>
+                    <span> 2024 Kaplan Hukuk</span>
                     <div class="social-links">
                         <a href="#"><i class="fab fa-twitter"></i></a>
                         <a href="#"><i class="fab fa-instagram"></i></a>

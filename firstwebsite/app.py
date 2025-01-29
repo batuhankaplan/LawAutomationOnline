@@ -1099,6 +1099,8 @@ def hesaplamalar(type):
         return render_template('isci_alacagi_hesaplama.html')
     elif type == 'vekalet':
         return render_template('vekalet_hesaplama.html')
+    elif type == 'ceza_infaz':
+        return render_template('ceza_infaz_hesaplama.html')
 
 @app.route("/isci-alacagi-hesaplama")
 def isci_alacagi_hesaplama():

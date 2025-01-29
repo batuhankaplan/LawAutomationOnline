@@ -48,6 +48,7 @@
                             <li><a class="dropdown-item" href="/hesaplamalar/harc">Harç Hesaplama</a></li>
                             <li><a class="dropdown-item" href="/hesaplamalar/isci">İşçi Alacağı Hesaplama</a></li>
                             <li><a class="dropdown-item" href="/hesaplamalar/vekalet">Vekalet Ücreti Hesaplama</a></li>
+                            <li><a class="dropdown-item" href="/hesaplamalar/ceza_infaz">Ceza İnfaz Hesaplama</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
@@ -89,7 +90,7 @@
     <!-- Footer -->
     <footer class="footer mt-auto py-3 bg-light">
         <div class="container text-center">
-            <span class="text-muted">© 2024 Hukuk Otomasyon. Tüm hakları saklıdır.</span>
+            <span class="text-muted"> 2024 Hukuk Otomasyon. Tüm hakları saklıdır.</span>
         </div>
     </footer>
 

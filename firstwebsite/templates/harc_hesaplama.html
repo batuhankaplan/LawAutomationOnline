@@ -3,145 +3,311 @@
 {% block title %}Harç Hesaplama{% endblock %}
 
 {% block content %}
-<div class="calculator-container">
-    <h3><i class="material-icons">account_balance</i> Hukuk Harç Hesaplama</h3>
-    
-    <div class="form-group">
-        <label>Harç Türü</label>
-        <select id="harcTuru" onchange="harcTuruDegisti()">
-            <option value="">Harç Türü Seçin</option>
-            <option value="basvurma">Başvurma Harcı</option>
-            <option value="karar">Karar ve İlam Harcı</option>
-            <option value="icra">İcra Tahsil Harcı</option>
-            <option value="temyiz">Temyiz Başvuru Harcı</option>
-            <option value="istinaf">İstinaf Başvuru Harcı</option>
-            <option value="keşif">Keşif Harcı</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Dava/Takip Değeri (TL)</label>
-        <input type="number" id="davaDegeri" step="0.01">
-    </div>
-
-    <button onclick="hesaplaHarc()" class="calculate-btn">Hesapla</button>
-
-    <div id="harcSonuc" class="result-box"></div>
-</div>
-
 <style>
-.calculator-container {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: #333;
-}
-
-.form-group select,
-.form-group input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
-}
-
-.calculate-btn {
-    background: #2c3e50;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-    font-size: 16px;
-}
-
-.calculate-btn:hover {
-    background: #34495e;
-}
-
-.result-box {
-    margin-top: 20px;
-    padding: 15px;
-    background: #f8f9fa;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    display: none;
-}
-
-h3 {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-    color: #2c3e50;
-}
+    .harc-banner {
+        background-color: #2c313d;
+        color: white;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        width: 100%;
+    }
+    .harc-banner h1 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    .harc-banner p {
+        margin: 0.25rem 0 0;
+        opacity: 0.9;
+        font-size: 0.8rem;
+    }
+    .harc-form-container {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        width: 100%;
+    }
+    .harc-form-group {
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 0.75rem;
+    }
+    .harc-form-group:last-child {
+        border-bottom: none;
+    }
+    .harc-form-group label.harc-section-title {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #2d3748;
+        padding-bottom: 0.25rem;
+        border-bottom: 2px solid #2c313d;
+    }
+    .harc-form-group label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        color: #333;
+        font-size: 0.9rem;
+    }
+    .harc-form-control {
+        width: 100%;
+        padding: 0.4rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.375rem;
+        background-color: #fff;
+        font-size: 0.9rem;
+    }
+    .harc-form-control:focus {
+        border-color: #4285f4;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+    }
+    .harc-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .harc-btn-primary {
+        background-color: #4285f4;
+        color: white;
+        border: none;
+    }
+    .harc-btn-primary:hover {
+        background-color: #3367d6;
+    }
+    .harc-btn-secondary {
+        background-color: #6b7280;
+        color: white;
+        border: none;
+    }
+    .harc-btn-secondary:hover {
+        background-color: #4b5563;
+    }
+    .harc-input-group {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+    }
+    #results {
+        margin-top: 1rem;
+        padding: 1rem;
+    }
+    .harc-toggle-button input[value="1"]:checked + span {
+        background-color: #22c55e;
+        color: white;
+    }
+    .harc-toggle-button input[value="0"]:checked + span {
+        background-color: #ef4444;
+        color: white;
+    }
+    .harc-toggle-button span {
+        color: #4b5563;
+    }
+    .harc-toggle-button:hover span {
+        background-color: #e5e7eb;
+    }
 </style>
 
+<!-- Banner -->
+<div class="harc-banner">
+    <h1>Harç Hesaplama</h1>
+</div>
+
+<!-- Form -->
+<div class="harc-form-container">
+    <form id="harcForm">
+        <!-- Mahkeme Türü -->
+        <div class="harc-form-group">
+            <label class="harc-section-title">Mahkeme Türü</label>
+            <select class="harc-form-control" name="mahkeme_turu" id="mahkeme_turu" required>
+                <option value="">Seçiniz</option>
+                <option value="sulh">Sulh Hukuk Mahkemesi</option>
+                <option value="asliye">Asliye Hukuk Mahkemesi</option>
+                <option value="aile">Aile Mahkemesi</option>
+                <option value="is">İş Mahkemesi</option>
+                <option value="ticaret">Ticaret Mahkemesi</option>
+                <option value="tuketici">Tüketici Mahkemesi</option>
+            </select>
+        </div>
+
+        <!-- Hesaplama Tipi -->
+        <div class="harc-form-group">
+            <label class="harc-section-title">Hesaplama Tipi</label>
+            <select class="harc-form-control" name="hesaplama_tipi" id="hesaplama_tipi" required>
+                <option value="">Seçiniz</option>
+                <option value="dava">Dava Açma</option>
+                <option value="istinaf">İstinaf Başvurusu</option>
+                <option value="temyiz">Temyiz Başvurusu</option>
+                <option value="icra">İcra Takibi</option>
+            </select>
+        </div>
+
+        <!-- Dava Değeri -->
+        <div class="harc-form-group">
+            <label class="harc-section-title">Dava Değeri</label>
+            <input type="number" id="dava_degeri" name="dava_degeri" class="harc-form-control" placeholder="Dava değerini giriniz" step="0.01" required>
+        </div>
+
+        <!-- Tanık Sayısı -->
+        <div class="harc-form-group">
+            <label class="harc-section-title">Tanık Sayısı</label>
+            <input type="number" id="tanik_sayisi" name="tanik_sayisi" class="harc-form-control" value="0" min="0">
+        </div>
+
+        <!-- Bilirkişi Sayısı -->
+        <div class="harc-form-group">
+            <label class="harc-section-title">Bilirkişi Sayısı</label>
+            <input type="number" id="bilirkisi_sayisi" name="bilirkisi_sayisi" class="harc-form-control" value="0" min="0">
+        </div>
+
+        <!-- Keşif Harcı -->
+        <div class="harc-form-group">
+            <label class="harc-section-title">Keşif Harcı Dahil Et</label>
+            <div class="harc-toggle-container" style="margin-top: 10px;">
+                <div class="harc-toggle-buttons" style="display: inline-flex; background: #f3f4f6; border-radius: 6px; padding: 2px;">
+                    <label class="harc-toggle-button" style="position: relative; cursor: pointer;">
+                        <input type="radio" name="kesif_harci" value="1" style="position: absolute; opacity: 0;">
+                        <span style="display: flex; align-items: center; padding: 4px 12px; border-radius: 4px; transition: all 0.3s; font-size: 0.85rem;">
+                            <i class="material-icons" style="font-size: 16px; margin-right: 2px;">done</i>Evet
+                        </span>
+                    </label>
+                    <label class="harc-toggle-button" style="position: relative; cursor: pointer;">
+                        <input type="radio" name="kesif_harci" value="0" checked style="position: absolute; opacity: 0;">
+                        <span style="display: flex; align-items: center; padding: 4px 12px; border-radius: 4px; transition: all 0.3s; font-size: 0.85rem;">
+                            <i class="material-icons" style="font-size: 16px; margin-right: 2px;">close</i>Hayır
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end space-x-4">
+            <button type="reset" class="harc-btn harc-btn-secondary">Temizle</button>
+            <button type="button" id="calculateBtn" class="harc-btn harc-btn-primary">Hesapla</button>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="hidden mt-6 p-4 bg-gray-50 rounded-lg">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Hesaplama Sonuçları:</h2>
+            <div class="space-y-3">
+                <div class="border-b pb-2">
+                    <p id="basvurma_harci" class="text-gray-700"></p>
+                    <p id="vekalet_harci" class="text-gray-700"></p>
+                    <p id="pesin_harc" class="text-gray-700"></p>
+                </div>
+                <div class="border-b pb-2">
+                    <p id="gider_avansi" class="text-gray-700"></p>
+                    <p id="vekalet_pulu" class="text-gray-700"></p>
+                </div>
+                <div class="border-b pb-2">
+                    <p id="toplam_harc" class="text-gray-700"></p>
+                    <p id="toplam_masraf" class="text-gray-700"></p>
+                    <p id="genel_toplam" class="text-gray-700"></p>
+                </div>
+                <div class="mt-4">
+                    <p id="aciklama" class="text-sm text-gray-600"></p>
+                </div>
+                <div class="mt-4 border-t pt-4">
+                    <p style="color: #ff0000; font-weight: 500;">* Burada yapılan hesaplamalar tamamen tahmini olup hiç bir kesinlik içermez. Hesaplama sonuçları ile ilgili sistem herhangi bir mesuliyet kabul etmemektedir.</p>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
 <script>
-const harcOranlari = {
+const harcVerileri = {
     basvurma: {
-        oran: 0.0594,
-        sabit: 80.70
+        sulh: 195.80,
+        asliye: 427.60,
+        aile: 427.60,
+        is: 427.60,
+        ticaret: 427.60,
+        tuketici: 427.60
     },
-    karar: {
-        oran: 0.0666,
-        sabit: 80.70
-    },
-    icra: {
-        oran: 0.0099,
-        sabit: 80.70
-    },
-    temyiz: {
-        oran: 0.0594,
-        sabit: 269.00
-    },
-    istinaf: {
-        oran: 0.0396,
-        sabit: 176.70
-    },
-    keşif: {
-        sabit: 403.30
+    vekalet: 60.80,
+    vekalet_pulu: 96.00,
+    gider_avansi: 1120.00,
+    kesif: 403.30,
+    pesin_harc_orani: {
+        dava: 0.06831,  // Binde 68.31
+        istinaf: 0.0396, // Binde 39.6
+        temyiz: 0.0594,  // Binde 59.4
+        icra: 0.0099     // Binde 9.9
     }
 };
 
-function hesaplaHarc() {
-    const harcTuru = document.getElementById('harcTuru').value;
-    const davaDegeri = parseFloat(document.getElementById('davaDegeri').value) || 0;
-    
-    if (!harcTuru) {
-        alert('Lütfen harç türü seçin');
-        return;
+document.getElementById("calculateBtn").addEventListener("click", function() {
+    try {
+        // Form değerlerini al
+        const mahkemeTuru = document.getElementById('mahkeme_turu').value;
+        const hesaplamaTipi = document.getElementById('hesaplama_tipi').value;
+        const davaDegeri = parseFloat(document.getElementById('dava_degeri').value) || 0;
+        const tanikSayisi = parseInt(document.getElementById('tanik_sayisi').value) || 0;
+        const bilirkisiSayisi = parseInt(document.getElementById('bilirkisi_sayisi').value) || 0;
+        const kesifHarci = document.querySelector('input[name="kesif_harci"][value="1"]').checked;
+
+        if (!mahkemeTuru || !hesaplamaTipi || davaDegeri <= 0) {
+            alert("Lütfen gerekli alanları doldurunuz.");
+            return;
+        }
+
+        // Başvurma harcı
+        const basvurmaHarci = harcVerileri.basvurma[mahkemeTuru];
+
+        // Peşin harç hesaplama
+        let pesinHarc = 0;
+        if (davaDegeri <= 25038) {
+            pesinHarc = basvurmaHarci;
+        } else {
+            pesinHarc = (davaDegeri * harcVerileri.pesin_harc_orani[hesaplamaTipi]) / 4;
+        }
+
+        // Gider avansı hesaplama
+        let giderAvansi = harcVerileri.gider_avansi;
+        giderAvansi += (tanikSayisi * 50); // Her tanık için 50 TL
+        giderAvansi += (bilirkisiSayisi * 1000); // Her bilirkişi için 1000 TL
+        if (kesifHarci) {
+            giderAvansi += harcVerileri.kesif;
+        }
+
+        // Toplam hesaplama
+        const toplamHarc = basvurmaHarci + harcVerileri.vekalet + pesinHarc;
+        const toplamMasraf = giderAvansi;
+        const genelToplam = toplamHarc + toplamMasraf + harcVerileri.vekalet_pulu;
+
+        // Sonuçları göster
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.classList.remove("hidden");
+
+        document.getElementById("basvurma_harci").textContent = `Başvurma Harcı: ${basvurmaHarci.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL`;
+        document.getElementById("vekalet_harci").textContent = `Vekalet Harcı: ${harcVerileri.vekalet.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL`;
+        document.getElementById("pesin_harc").textContent = `Peşin Harç: ${pesinHarc.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL`;
+        document.getElementById("gider_avansi").textContent = `Gider Avansı: ${giderAvansi.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL`;
+        document.getElementById("vekalet_pulu").textContent = `Vekalet Pulu: ${harcVerileri.vekalet_pulu.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL`;
+        document.getElementById("toplam_harc").textContent = `Toplam Harç: ${toplamHarc.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL`;
+        document.getElementById("toplam_masraf").textContent = `Toplam Masraf: ${toplamMasraf.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL`;
+        document.getElementById("genel_toplam").textContent = `Genel Toplam: ${genelToplam.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL`;
+
+        // Açıklama metni
+        let aciklama = "Hesaplanan tutarlar 2024 yılı yasal parametrelerine göre yapılmıştır. ";
+        if (davaDegeri > 25038) {
+            aciklama += "Dava değeri 25.038 TL üzerinde olduğu için peşin harç nispi olarak hesaplanmıştır.";
+        }
+        document.getElementById("aciklama").textContent = aciklama;
+
+    } catch (error) {
+        console.error("Hesaplama hatası:", error);
+        alert("Hesaplama sırasında bir hata oluştu. Lütfen tüm alanları kontrol ediniz.");
     }
-    
-    let sonuc = 0;
-    const harcBilgi = harcOranlari[harcTuru];
-    
-    if (harcTuru === 'keşif') {
-        sonuc = harcBilgi.sabit;
-    } else {
-        sonuc = Math.max(harcBilgi.sabit, davaDegeri * harcBilgi.oran);
-    }
-    
-    const sonucDiv = document.getElementById('harcSonuc');
-    sonucDiv.innerHTML = `
-        <p><strong>Harç Tutarı:</strong> ${sonuc.toLocaleString('tr-TR', {minimumFractionDigits: 2})} TL</p>
-        <p><small>Not: Bu hesaplama tahmini değerler içerir. Kesin harç tutarı için mahkeme veznesine başvurunuz.</small></p>
-    `;
-    sonucDiv.style.display = 'block';
-}
+});
 </script>
 {% endblock %} 

@@ -1,0 +1,389 @@
+{% extends "layout.html" %}
+
+{% block title %}Ceza İnfaz Hesaplama{% endblock %}
+
+{% block content %}
+<style>
+    .infaz-banner {
+        background-color: #2c313d;
+        color: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        width: 100%;
+    }
+    .infaz-banner h1 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    .infaz-banner p {
+        margin: 0.25rem 0 0;
+        opacity: 0.9;
+        font-size: 0.85rem;
+        color: #ff0000;
+        font-weight: 500;
+    }
+    .infaz-form-container {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        width: 100%;
+    }
+    .infaz-form-group {
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 1rem;
+    }
+    .infaz-form-group:last-child {
+        border-bottom: none;
+    }
+    .infaz-form-group label.infaz-section-title {
+        display: block;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: #2d3748;
+        padding-bottom: 0.25rem;
+        border-bottom: 2px solid #2c313d;
+    }
+    .infaz-form-group label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        color: #333;
+        font-size: 0.9rem;
+    }
+    .infaz-form-control {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.375rem;
+        background-color: #fff;
+        font-size: 0.9rem;
+    }
+    .infaz-form-control:focus {
+        border-color: #2c313d;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+    }
+    .infaz-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .infaz-btn-primary {
+        background-color: #4285f4;
+        color: white;
+        border: none;
+    }
+    .infaz-btn-primary:hover {
+        background-color: #3367d6;
+    }
+    .infaz-btn-secondary {
+        background-color: #6b7280 ;
+        color: white;
+        border: none;
+    }
+    .infaz-btn-secondary:hover {
+        background-color: #4b5563;
+    }
+    .infaz-radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .infaz-radio-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 0.375rem;
+        transition: background-color 0.2s;
+    }
+    .infaz-radio-option:hover {
+        background-color: #f7fafc;
+    }
+    .infaz-radio-option input[type="radio"] {
+        margin-right: 0.5rem;
+    }
+    .infaz-input-group {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+</style>
+
+<!-- Banner -->
+<div class="infaz-banner">
+    <h1>Ceza İnfaz Hesaplama</h1>
+</div>
+
+<!-- Form -->
+<div class="infaz-form-container">
+    <form id="infazForm">
+        <!-- Suç Türü -->
+        <div class="infaz-form-group">
+            <label class="infaz-section-title">Suç Türü</label>
+            <select class="infaz-form-control" name="suc" id="suc_turu" required>
+                <option value="">Suç türü seçiniz</option>
+                <option value="0.5">Adî Suçlar (Aşağıdaki suçlar dışındaki tüm suçlar)</option>
+                <option value="0.66">Kasten Öldürme (TCK 81, 82, 83)</option>
+                <option value="0.66">Neticesi Sebebiyle Ağırlaşmış Yaralama (Yüzde Sürekli Değişikliğe Sebebiyet Verme) (TCK 86, 87/2-d)</option>
+                <option value="0.66">Eşe veya Üstsoya-altsoya veya Kardeşe ya da Savunmasız Kişiye Karşı Kasten Yaralama ve Neticesi Sebebiyle Ağırlaşmış Yaralama (TCK 86/3-a-b, 87/1,2)</option>
+                <option value="0.66">İşkence ve Eziyet (TCK 94,95,96)</option>
+                <option value="0.66">Basit Cinsel Saldırı (TCK 102/1)</option>
+                <option value="0.75">Nitelikli Cinsel Saldırı (TCK 102/2)</option>
+                <option value="0.75">Çocuğun Cinsel İstismarı (TCK 103)</option>
+                <option value="0.75">Reşit Olmayanla Cinsel İlişki (TCK 104)</option>
+                <option value="0.66">Cinsel Taciz (TCK 105)</option>
+                <option value="0.75">Terör Suçları (3713 sy. yasa kapsamındaki suçlar)</option>
+                <option value="0.66">Özel Hayata Karşı Suçlar (TCK 132 - 138 arası)</option>
+                <option value="0.75">Devletin Güvenliğine Karşı Suçlar (TCK 302 - 339 arası)</option>
+                <option value="0.75">Uyuşturucu Ticareti (TCK 188)</option>
+                <option value="0.66">MİT Kanunu Kapsamındaki Suçlar (2937 sayılı kanun kapsamında)</option>
+            </select>
+        </div>
+
+        <!-- Suç Tarihi ve Doğum Tarihi -->
+        <div class="infaz-form-group">
+            <label class="infaz-section-title">Tarih Bilgileri</label>
+            <div class="infaz-input-group">
+                <div>
+                    <label for="suc_tarihi">Suç Tarihi:</label>
+                    <input type="date" id="suc_tarihi" name="suc_tarihi" class="infaz-form-control" required>
+                </div>
+                <div>
+                    <label for="dogum_tarihi">Doğum Tarihi:</label>
+                    <input type="date" id="dogum_tarihi" name="dogum_tarihi" class="infaz-form-control" required>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ceza Türü -->
+        <div class="infaz-form-group">
+            <label class="infaz-section-title">Ceza Bilgileri</label>
+            <div>
+                <label>Ceza Türü:</label>
+                <select class="infaz-form-control" name="ceza_turu" id="ceza_turu">
+                    <option value="sureli">Süreli Hapis Cezası</option>
+                    <option value="agirlastirilmis">Ağırlaştırılmış Müebbet Hapis Cezası</option>
+                    <option value="muebbet">Müebbet Hapis Cezası</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Ceza Süresi -->
+        <div class="infaz-form-group">
+            <label class="infaz-section-title">Ceza Süresi</label>
+            <div class="infaz-input-group">
+                <input type="number" id="ceza_yil" name="ceza_yil" class="infaz-form-control" placeholder="Yıl" min="0">
+                <input type="number" id="ceza_ay" name="ceza_ay" class="infaz-form-control" placeholder="Ay" min="0" max="11">
+                <input type="number" id="ceza_gun" name="ceza_gun" class="infaz-form-control" placeholder="Gün" min="0" max="30">
+            </div>
+        </div>
+
+        <!-- Mahsup -->
+        <div class="infaz-form-group">
+            <label class="infaz-section-title">Mahsup Bilgileri</label>
+            <div>
+                <label>Mahsup (Gün):</label>
+                <input type="number" id="mahsup_gun" name="mahsup_gun" class="infaz-form-control" placeholder="0" min="0">
+            </div>
+        </div>
+
+        <!-- Özel Durum -->
+        <div class="infaz-form-group">
+            <label class="infaz-section-title">Özel Durum</label>
+            <div>
+                <select class="infaz-form-control" id="ozel_durum">
+                    <option value="yok">Yok</option>
+                    <option value="0-6_cocuk">0-6 yaş aralığında çocuğu bulunan kadın hükümlü</option>
+                    <option value="65_yas">65 yaşını bitirmiş hükümlü</option>
+                    <option value="70_yas">70 yaşını bitirmiş hükümlü</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-end space-x-4">
+            <button type="reset" class="infaz-btn infaz-btn-secondary">Temizle</button>
+            <button type="button" id="calculateBtn" class="infaz-btn infaz-btn-primary">Hesapla</button>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="hidden mt-6 p-4 bg-gray-50 rounded-lg">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Hesaplama Sonuçları:</h2>
+            <div class="space-y-3">
+                <div class="border-b pb-2">
+                    <p id="ceza_ozet" class="font-medium text-gray-900"></p>
+                </div>
+                <div class="border-b pb-2">
+                    <p id="kosullu_sali" class="text-gray-700"></p>
+                    <p id="denetim_sure" class="text-gray-700"></p>
+                    <p id="toplam_yatari" class="text-gray-700"></p>
+                </div>
+                <div class="border-b pb-2">
+                    <p id="acik_ceza" class="text-gray-700"></p>
+                    <p id="kapali_ceza" class="text-gray-700"></p>
+                </div>
+                <div class="mt-4">
+                    <p id="aciklama" class="text-sm text-gray-600"></p>
+                </div>
+                <div class="mt-4 border-t pt-4">
+                    <p style="color: #ff0000; font-weight: 500;">* Burada yapılan hesaplamalar tamamen tahmini olup hiç bir kesinlik içermez. Hesaplama sonuçları ile ilgili sistem herhangi bir mesuliyet kabul etmemektedir.</p>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Mahsup input kontrolü
+    document.querySelectorAll('input[name="mahsup"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.getElementById('mahsup_gun').disabled = this.value === 'yok';
+        });
+    });
+
+    // Ceza türü değiştiğinde süre inputlarını kontrol et
+    document.getElementById('ceza_turu').addEventListener('change', function() {
+        const inputs = ['ceza_yil', 'ceza_ay', 'ceza_gun'];
+        const isSureli = this.value === 'sureli';
+        inputs.forEach(id => {
+            const input = document.getElementById(id);
+            input.disabled = !isSureli;
+            if (!isSureli) {
+                input.value = '';
+            }
+        });
+    });
+
+    document.getElementById("calculateBtn").addEventListener("click", function() {
+        try {
+            // Suç tipi değerini al
+            const sucTipiElement = document.getElementById('suc_turu');
+            if (!sucTipiElement.value) {
+                alert("Lütfen bir suç türü seçiniz.");
+                return;
+            }
+            const sucTipi = parseFloat(sucTipiElement.value);
+
+            // Suç tarihi kontrolü
+            const sucTarihiValue = document.getElementById("suc_tarihi").value;
+            if (!sucTarihiValue) {
+                alert("Lütfen suç tarihini giriniz.");
+                return;
+            }
+            const sucTarihi = new Date(sucTarihiValue);
+
+            // Ceza türü kontrolü
+            const cezaTuru = document.getElementById('ceza_turu').value;
+            
+            // Ceza süresi kontrolü
+            const yil = parseInt(document.getElementById("ceza_yil").value) || 0;
+            const ay = parseInt(document.getElementById("ceza_ay").value) || 0;
+            const gun = parseInt(document.getElementById("ceza_gun").value) || 0;
+
+            if (cezaTuru === "sureli" && yil === 0 && ay === 0 && gun === 0) {
+                alert("Lütfen ceza süresini giriniz.");
+                return;
+            }
+
+            // Mahsup gün kontrolü
+            const mahsupGun = parseInt(document.getElementById("mahsup_gun").value) || 0;
+
+            // Özel durum kontrolü
+            const ozelDurum = document.getElementById('ozel_durum').value;
+
+            // Toplam gün hesaplama
+            let toplamGun;
+            
+            if (cezaTuru === "sureli") {
+                toplamGun = yil * 365 + ay * 30 + gun;
+            } else if (cezaTuru === "muebbet") {
+                toplamGun = 24 * 365; // 24 yıl
+            } else if (cezaTuru === "agirlastirilmis") {
+                toplamGun = 30 * 365; // 30 yıl
+            }
+            
+            // Mahsup süresini düş
+            toplamGun -= mahsupGun;
+
+            if (toplamGun < 0) {
+                alert("Mahsup süresi toplam ceza süresinden fazla olamaz.");
+                return;
+            }
+
+            // Koşullu salıverilme süresi hesaplama
+            let kosulluSalivermeGun = Math.ceil(toplamGun * sucTipi);
+
+            // Denetimli serbestlik süresi
+            let denetimliSerbestlikGun = 365; // 1 yıl
+            
+            // 30.03.2020 öncesi suçlar için özel durum
+            if (sucTarihi < new Date('2020-03-30')) {
+                denetimliSerbestlikGun = 1095; // 3 yıl
+            }
+
+            // Özel durum kontrolleri
+            if (ozelDurum === '0-6_cocuk' || ozelDurum === '70_yas') {
+                denetimliSerbestlikGun = 1460; // 4 yıl
+            }
+
+            // Açık cezaevine ayrılma süresi hesaplama
+            const kapaliCezaeviGun = Math.ceil(toplamGun * 0.1); // Toplam cezanın %10'u kapalıda
+            const acikCezaeviGun = kosulluSalivermeGun - kapaliCezaeviGun;
+
+            // Sonuçları formatlayarak göster
+            function formatSure(gun) {
+                const yil = Math.floor(gun / 365);
+                const kalanGun = gun % 365;
+                const ay = Math.floor(kalanGun / 30);
+                const gunKalan = kalanGun % 30;
+                
+                let sonuc = "";
+                if (yil > 0) sonuc += `${yil} yıl `;
+                if (ay > 0) sonuc += `${ay} ay `;
+                if (gunKalan > 0) sonuc += `${gunKalan} gün`;
+                return sonuc.trim() || "0 gün";
+            }
+
+            // Sonuçları göster
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.classList.remove("hidden");
+
+            // Ceza özeti
+            let cezaOzeti = `Sanığa verilen ceza ${formatSure(toplamGun)} hapis cezasıdır.`;
+            document.getElementById("ceza_ozet").textContent = cezaOzeti;
+
+            // Koşullu salıverilme ve denetimli serbestlik
+            document.getElementById("kosullu_sali").textContent = `Koşullu Salıverilme Süresi: ${formatSure(kosulluSalivermeGun)}`;
+            document.getElementById("denetim_sure").textContent = `Denetimli Serbestlik Süresi: ${formatSure(denetimliSerbestlikGun)}`;
+            document.getElementById("toplam_yatari").textContent = `Toplam Yatarı: ${formatSure(kosulluSalivermeGun - denetimliSerbestlikGun)}`;
+
+            // Açık ve kapalı cezaevi süreleri
+            document.getElementById("acik_ceza").textContent = `Açık Cezaevinde Kalınacak Süre: ${formatSure(acikCezaeviGun)}`;
+            document.getElementById("kapali_ceza").textContent = `Kapalı Cezaevinde Kalınacak Süre: ${formatSure(kapaliCezaeviGun)}`;
+
+            // Açıklama metni
+            let aciklama = `Sanık ${formatSure(kosulluSalivermeGun - denetimliSerbestlikGun)} hapis cezasını ceza infaz kurumunda çektikten sonra denetimli serbestlikten yararlandırılarak serbest bırakılır.`;
+            
+            // 5275 Sayılı Kanun kontrolü
+            if (toplamGun > 365) { // 1 yıldan fazla cezalar için
+                aciklama += `\n\nNOT: Açık Ceza İnfaz Kurumuna Ayrılma Yönetmeliğinin 6. maddesi gereğince, cezaları yüksek güvenlikli kapalı kurumlar veya diğer kapalı kurumların yüksek güvenlikli bölümlerinde infaz edilenlerden toplam cezalarının üçte birini bu kurumlarda iyi halli olarak geçiren ve koşullu salıverilme tarihine üç yıl veya daha az süre kalanlar açık kurumlara ayrılabilir.`;
+            }
+
+            document.getElementById("aciklama").textContent = aciklama;
+
+        } catch (error) {
+            console.error("Hesaplama hatası:", error);
+            alert("Hesaplama sırasında bir hata oluştu. Lütfen tüm alanları kontrol ediniz.");
+        }
+    });
+</script>
+{% endblock %}
