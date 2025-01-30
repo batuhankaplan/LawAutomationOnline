@@ -61,7 +61,7 @@
                 <div class="form-group">
                     <label>Etkinlik Türü</label>
                     <div class="select-wrapper">
-                        <select id="eventType" required>
+                        <select id="eventType" name="event_type" required>
                             <option value="durusma">Duruşma</option>
                             <option value="e-durusma">E-Duruşma</option>
                             <option value="tahliye">Tahliye</option>
@@ -69,41 +69,59 @@
                             <option value="randevu">Randevu</option>
                             <option value="diger">Diğer</option>
                         </select>
-                        
                     </div>
                 </div>
+                <input type="hidden" id="selectedDate" name="date" required>
                 <div class="form-group">
                     <label>Saat</label>
                     <div class="input-wrapper">
-                        <input type="time" id="eventTime" required>
+                        <input type="time" id="eventTime" name="time" required>
                         <i class="material-icons">schedule</i>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Başlık</label>
                     <div class="input-wrapper">
-                        <input type="text" id="eventTitle" required placeholder="Etkinlik başlığı">
+                        <input type="text" id="eventTitle" name="title" required placeholder="Etkinlik başlığı">
                         <i class="material-icons">title</i>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Açıklama</label>
                     <div class="input-wrapper">
-                        <textarea id="eventDescription" rows="3" placeholder="Etkinlik detayları"></textarea>
+                        <textarea id="eventDescription" name="description" rows="3" placeholder="Etkinlik detayları"></textarea>
                         <i class="material-icons">description</i>
                     </div>
                 </div>
-                <input type="hidden" id="selectedDate">
+                <div class="form-group" id="assignedToGroup">
+                    <label>Atanan Kişi</label>
+                    <div class="select-wrapper">
+                        <select id="assignedTo" name="assigned_to" required>
+                            <option value="Av.Mustafa Kaplan">Av. Mustafa Kaplan</option>
+                            <option value="Av.Perize Kaplan">Av. Perize Kaplan</option>
+                            <option value="Av.Batuhan Kaplan">Av. Batuhan Kaplan</option>
+                            <option value="Av.Selvi Dertli">Av. Selvi Dertli</option>
+                            <option value="Neva Hanım">Neva Hanım</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" id="deadlineDateGroup">
+                    <label>Son Tarih</label>
+                    <div class="input-wrapper">
+                        <input type="date" id="deadlineDate" name="deadline_date">
+                        <i class="material-icons">event</i>
+                    </div>
+                </div>
+                <div class="form-group" id="isCompletedGroup">
+                    <label>
+                        <input type="checkbox" id="isCompleted" name="is_completed">
+                        Tamamlandı
+                    </label>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn secondary" id="cancelBtn">
-                    <i class="material-icons">close</i>
-                    İptal
-                </button>
-                <button type="submit" class="btn primary">
-                    <i class="material-icons">save</i>
-                    Kaydet
-                </button>
+                <button type="button" class="btn secondary" id="cancelBtn">İptal</button>
+                <button type="submit" class="btn primary">Kaydet</button>
             </div>
         </form>
     </div>
@@ -152,11 +170,12 @@
 <style>
 .page-container {
     padding: 1rem;
-    height: calc(100vh - 2rem);
+    min-height: auto;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     box-sizing: border-box;
+    margin-bottom: 0;
 }
 
 .calendar-wrapper {
@@ -164,13 +183,11 @@
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     width: 90%;
-    height: 90%;
     margin: 0 auto;
     padding: 1rem;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    min-height: 600px;
 }
 
 .calendar-container {
@@ -178,14 +195,13 @@
     display: flex;
     flex-direction: column;
     margin-top: 0.5rem;
-    overflow: auto;
-    min-height: 0;
+    margin-bottom: 0;
 }
 
 #calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(120px, 1fr));
-    grid-template-rows: repeat(6, minmax(100px, 1fr));
+    grid-template-rows: repeat(6, minmax(170px, 170px));
     gap: 1px;
     background: #e0e0e0;
     border: 1px solid #e0e0e0;
@@ -198,8 +214,9 @@
     padding: 0.5rem;
     display: flex;
     flex-direction: column;
-    min-height: 100px;
+    height: 170px;
     min-width: 120px;
+    box-sizing: border-box;
 }
 
 .weekdays {
@@ -324,11 +341,12 @@
 }
 
 .day-number {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #2c3e50;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
     flex-shrink: 0;
+    height: 20px;
 }
 
 .add-event-btn {
@@ -362,38 +380,36 @@
     flex: 1;
     overflow-y: auto;
     margin-top: 4px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
     padding-right: 4px;
+    max-height: calc(100% - 25px);
 }
 
-.event {
-    padding: 4px 8px;
+.calendar-event {
+    padding: 4px 6px;
+    margin-bottom: 4px;
     border-radius: 4px;
-    font-size: 0.85rem;
+    background: #f8f9fa;
+    border-left: 3px solid;
+    font-size: 0.8em;
+    cursor: pointer;
+    height: 45px;
+}
+
+.calendar-event .time-and-type {
+    font-weight: 500;
+    font-size: 0.85em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
-    box-sizing: border-box;
+    margin-bottom: 2px;
 }
 
-.event-item {
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.7rem;
+.calendar-event .assigned-to {
+    font-size: 0.8em;
+    color: #666;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: white;
-}
-
-.event-item:hover {
-    filter: brightness(1.1);
 }
 
 .event-durusma { background: #e74c3c; }
@@ -660,12 +676,12 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     font-weight: 500;
 }
 
-.event-type-badge.durusma { background: #e74c3c; }
-.event-type-badge.e-durusma { background: #FF9800; }
-.event-type-badge.tahliye { background: #3498db; }
-.event-type-badge.is { background: #2ecc71; }
+.event-type-badge.durusma { background: #dc3545; }
+.event-type-badge.e-durusma { background: #0d6efd; }
+.event-type-badge.tahliye { background: #198754; }
+.event-type-badge.is { background: #ffc107; }
 .event-type-badge.randevu { background: #9b59b6; }
-.event-type-badge.diger { background: #f1c40f; }
+.event-type-badge.diger { background: #6c757d; }
 
 .event-detail-content {
     padding: 10px 0;
@@ -738,7 +754,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     display: none;
 }
 
-/* Kaydırma çubuğu stilleri */
+/* Etkinlik listesi scrollbar stilleri */
 .event-list::-webkit-scrollbar {
     width: 4px;
 }
@@ -777,11 +793,14 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .holiday-name {
     font-size: 0.7rem;
     color: #e53935;
-    margin-top: 2px;
+    margin-top: 0;
+    margin-bottom: 4px;
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-shrink: 0;
+    height: 16px;
 }
 
 .holiday .day-number {
@@ -869,52 +888,113 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 }
 
 @media (max-height: 800px) {
-    .calendar-wrapper {
-        height: 95%;
-        padding: 0.75rem;
+    #calendar-grid {
+        grid-template-rows: repeat(6, minmax(170px, 170px));
     }
     
     .calendar-day {
-        min-height: 80px;
-    }
-    
-    #calendar-grid {
-        grid-template-rows: repeat(6, minmax(80px, 1fr));
+        height: 170px;
     }
 }
 
 @media (max-width: 1024px) {
-    .calendar-wrapper {
-        width: 95%;
-    }
-    
     #calendar-grid {
-        grid-template-columns: repeat(7, minmax(100px, 1fr));
+        grid-template-rows: repeat(6, minmax(170px, 170px));
     }
     
     .calendar-day {
+        height: 170px;
         min-width: 100px;
+    }
+}
+
+@media (max-width: 768px) {
+    #calendar-grid {
+        grid-template-rows: repeat(6, minmax(170px, 170px));
+    }
+    
+    .calendar-day {
+        height: 170px;
+        min-width: 90px;
     }
 }
 
 /* Scrollbar stilleri */
 .calendar-container::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    display: none;
 }
 
-.calendar-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
+.calendar-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.calendar-event {
+    padding: 6px;
+    margin-bottom: 4px;
     border-radius: 4px;
+    background: #f8f9fa;
+    border-left: 3px solid;
+    font-size: 0.8em;
+    cursor: pointer;
+    min-height: 40px;
 }
 
-.calendar-container::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
+.calendar-event .time-and-type {
+    font-weight: 500;
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.calendar-container::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+.calendar-event .assigned-to {
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.calendar-event.completed {
+    opacity: 0.7;
+    text-decoration: line-through;
+}
+
+.calendar-event[data-type="durusma"] { color: #dc3545; }
+.calendar-event[data-type="e-durusma"] { color: #0d6efd; }
+.calendar-event[data-type="tahliye"] { color: #198754; }
+.calendar-event[data-type="is"] { color: #ffc107; }
+.calendar-event[data-type="randevu"] { color: #9b59b6; }
+.calendar-event[data-type="diger"] { color: #6c757d; }
+
+.calendar-day.empty {
+    background: #f8f9fa;
+    border: none;
+    pointer-events: none;
+}
+
+.holiday {
+    background-color: #ffebee;
+}
+
+.holiday .holiday-name {
+    color: #e53935;
+    font-size: 0.7rem;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.adli-tatil {
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+.adli-tatil .holiday-name {
+    color: #4CAF50;
+    font-size: 0.7rem;
+    margin-top: 4px;
+    font-weight: 500;
 }
 </style>
 
@@ -928,6 +1008,16 @@ document.addEventListener('DOMContentLoaded', function() {
         'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
     ];
 
+    const eventTypes = {
+        'durusma': 'Duruşma',
+        'e-durusma': 'E-Duruşma',
+        'tahliye': 'Tahliye',
+        'is': 'Yapılacak İş',
+        'randevu': 'Randevu',
+        'diger': 'Diğer'
+    };
+
+    // Resmi tatiller ve özel günler
     const holidays = {
         '2024-01-01': 'Yılbaşı',
         '2024-04-10': 'Ramazan Bayramı',
@@ -958,14 +1048,32 @@ document.addEventListener('DOMContentLoaded', function() {
         '2025-06-10': 'Kurban Bayramı',
         '2025-07-15': 'Demokrasi ve Milli Birlik Günü',
         '2025-08-30': 'Zafer Bayramı',
-        '2025-10-29': 'Cumhuriyet Bayramı'
+        '2025-10-29': 'Cumhuriyet Bayramı',
+        '2026-01-01': 'Yılbaşı',
+        '2026-03-19': 'Ramazan Bayramı Arefesi',
+        '2026-03-20': 'Ramazan Bayramı',
+        '2026-03-21': 'Ramazan Bayramı',
+        '2026-03-22': 'Ramazan Bayramı',
+        '2026-04-23': 'Ulusal Egemenlik ve Çocuk Bayramı',
+        '2026-05-01': 'Emek ve Dayanışma Günü',
+        '2026-05-19': 'Atatürkü Anma, Gençlik ve Spor Bayramı',
+        '2026-05-26': 'Kurban Bayramı Arefesi',
+        '2026-05-27': 'Kurban Bayramı',
+        '2026-05-28': 'Kurban Bayramı',
+        '2026-05-29': 'Kurban Bayramı',
+        '2026-05-30': 'Kurban Bayramı',
+        '2026-07-15': 'Demokrasi ve Milli Birlik Günü',
+        '2026-08-30': 'Zafer Bayramı',
+        '2026-10-28': 'Cumhuriyet Bayramı Arefesi',
+        '2026-10-29': 'Cumhuriyet Bayramı'
     };
 
     function renderCalendar() {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         
-        document.getElementById('currentMonth').textContent = `${months[month]} ${year}`;
+        document.getElementById('currentMonth').textContent = months[month];
+        document.getElementById('currentYear').textContent = year;
         
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
@@ -977,15 +1085,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const calendar = document.getElementById('calendar-grid');
         calendar.innerHTML = '';
         
-        // Önceki ayın günleri
+        // Önceki ayın günlerini gösterme
         for (let i = 0; i < startDay; i++) {
-            calendar.appendChild(createDayElement(null, true));
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'calendar-day empty';
+            calendar.appendChild(emptyDiv);
         }
         
         // Bu ayın günleri
         for (let day = 1; day <= lastDay.getDate(); day++) {
             const date = new Date(year, month, day);
             calendar.appendChild(createDayElement(date));
+        }
+        
+        // Sonraki ayın günlerini gösterme
+        const totalCells = startDay + lastDay.getDate();
+        const remainingCells = Math.ceil(totalCells / 7) * 7 - totalCells;
+        for (let i = 0; i < remainingCells; i++) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'calendar-day empty';
+            calendar.appendChild(emptyDiv);
         }
     }
 
@@ -995,189 +1114,145 @@ document.addEventListener('DOMContentLoaded', function() {
         return (month === 6 && day >= 20) || month === 7; // Temmuz 20'den sonra veya tüm Ağustos ayı
     }
 
-    function createDayElement(date, isOtherMonth = false) {
+    function formatDateForAPI(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function createDayElement(date) {
         const div = document.createElement('div');
-        div.className = 'calendar-day' + (isOtherMonth ? ' other-month' : '');
+        div.className = 'calendar-day';
         
-        if (!isOtherMonth) {
-            const dayNumber = document.createElement('div');
-            dayNumber.className = 'day-number';
-            dayNumber.textContent = date.getDate();
-            div.appendChild(dayNumber);
-            
-            // Hafta sonu kontrolü
-            const dayOfWeek = date.getDay();
-            if (dayOfWeek === 0 || dayOfWeek === 6) {
-                div.classList.add('weekend');
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'day-number';
+        dayNumber.textContent = date.getDate();
+        div.appendChild(dayNumber);
+        
+        // Hafta sonu kontrolü
+        const dayOfWeek = date.getDay();
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+            div.classList.add('weekend');
+        }
+        
+        // Bugün kontrolü
+        if (date.toDateString() === new Date().toDateString()) {
+            div.classList.add('today');
+        }
+        
+        // Resmi tatil kontrolü - UTC dönüşümü olmadan
+        const dateStr = formatDateForAPI(date);
+        if (holidays[dateStr]) {
+            div.classList.add('holiday');
+            const holidayName = document.createElement('div');
+            holidayName.className = 'holiday-name';
+            holidayName.textContent = holidays[dateStr];
+            div.appendChild(holidayName);
+        }
+        
+        // Adli tatil kontrolü
+        if (isAdliTatil(date)) {
+            div.classList.add('adli-tatil');
+            if (!holidays[dateStr]) {
+                const adliTatilText = document.createElement('div');
+                adliTatilText.className = 'holiday-name';
+                adliTatilText.textContent = 'Adli Tatil';
+                div.appendChild(adliTatilText);
             }
+        }
+
+        // Etkinlikleri göster - UTC dönüşümü olmadan
+        const dayEvents = events.filter(e => e.date === dateStr);
+        if (dayEvents.length > 0) {
+            const eventList = document.createElement('div');
+            eventList.className = 'event-list';
             
-            // Resmi tatil kontrolü
-            const dateStr = date.toLocaleDateString('en-CA');
-            if (holidays[dateStr]) {
-                div.classList.add('holiday');
-                const holidayName = document.createElement('div');
-                holidayName.className = 'holiday-name';
-                holidayName.textContent = holidays[dateStr];
-                div.appendChild(holidayName);
-            }
+            dayEvents.sort((a, b) => a.time.localeCompare(b.time));
             
-            // Adli tatil kontrolü
-            if (isAdliTatil(date)) {
-                div.classList.add('adli-tatil');
-                if (!holidays[dateStr]) { // Eğer resmi tatil değilse adli tatil yazısını göster
-                    const adliTatilText = document.createElement('div');
-                    adliTatilText.className = 'holiday-name';
-                    adliTatilText.textContent = 'Adli Tatil';
-                    div.appendChild(adliTatilText);
-                }
-            }
-            
-            // Bugünün tarihi kontrolü
-            if (date.toDateString() === new Date().toDateString()) {
-                div.classList.add('today');
-            }
-            
-            // Etkinlikleri göster
-            const dayEvents = events.filter(e => e.date === dateStr);
-            
-            if (dayEvents.length > 0) {
-                const eventList = document.createElement('div');
-                eventList.className = 'event-list';
+            dayEvents.forEach(event => {
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'calendar-event';
+                eventDiv.setAttribute('data-type', event.event_type);
                 
-                dayEvents.forEach(event => {
-                    const eventItem = document.createElement('div');
-                    eventItem.className = `event-item event-${event.event_type}`;
-                    
-                    const eventContent = document.createElement('span');
-                    eventContent.className = 'event-title';
-                    eventContent.textContent = `${event.time} ${event.title}`;
-                    
-                    eventItem.onclick = (e) => {
-                        e.stopPropagation();
-                        showEventDetail(event);
-                    };
-                    
-                    eventItem.appendChild(eventContent);
-                    eventList.appendChild(eventItem);
+                const eventContent = document.createElement('div');
+                eventContent.className = 'event-content';
+                
+                const timeAndType = document.createElement('div');
+                timeAndType.className = 'time-and-type';
+                timeAndType.textContent = `${event.time} / ${eventTypes[event.event_type]}`;
+                
+                const assignedTo = document.createElement('div');
+                assignedTo.className = 'assigned-to';
+                assignedTo.textContent = event.assigned_to || '';
+                
+                eventContent.appendChild(timeAndType);
+                eventContent.appendChild(assignedTo);
+                eventDiv.appendChild(eventContent);
+                
+                if (event.is_completed) {
+                    eventDiv.classList.add('completed');
+                }
+                
+                eventDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showEventDetail(event);
                 });
                 
-                div.appendChild(eventList);
-            }
+                eventList.appendChild(eventDiv);
+            });
             
-            div.onclick = () => showModal(date);
+            div.appendChild(eventList);
         }
+        
+        div.addEventListener('click', () => showModal(date));
         
         return div;
     }
 
     function showModal(date) {
         const modal = document.getElementById('eventModal');
-        document.getElementById('selectedDate').value = date.toLocaleDateString('en-CA');
+        const form = document.getElementById('eventForm');
+        
+        // Formu sıfırla
+        form.reset();
+        form.removeAttribute('data-event-id');
+        
+        // Tarihi ayarla - UTC dönüşümü olmadan
+        document.getElementById('selectedDate').value = formatDateForAPI(date);
+        
+        // Varsayılan saat değerini ayarla
+        document.getElementById('eventTime').value = '09:00';
+        
+        // Form alanlarının görünürlüğünü kontrol et
+        toggleFormFields();
+        
         modal.style.display = 'flex';
     }
 
-    // Modal kapatma
-    document.querySelector('.close-btn').onclick = function() {
-        document.getElementById('eventModal').style.display = 'none';
-    }
-
-    document.getElementById('cancelBtn').onclick = function() {
-        document.getElementById('eventModal').style.display = 'none';
-    }
-
-    // Form gönderme
-    document.getElementById('eventForm').onsubmit = function(e) {
-        e.preventDefault();
-        
-        const eventData = {
-            title: document.getElementById('eventTitle').value,
-            date: document.getElementById('selectedDate').value,
-            time: document.getElementById('eventTime').value,
-            event_type: document.getElementById('eventType').value,
-            description: document.getElementById('eventDescription').value,
-            id: document.getElementById('eventForm').getAttribute('data-event-id') // Etkinlik ID'sini ekle
-        };
-
-        const endpoint = eventData.id ? `/update_event/${eventData.id}` : '/add_event';
-        const method = eventData.id ? 'PUT' : 'POST';
-
-        fetch(endpoint, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(eventData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            }
-        });
-    };
-
-    // Bugün butonu için geliştirilen fonksiyon
-    function updateTodayButton() {
-        const todayBtn = document.getElementById('todayBtn');
-        const today = new Date();
-        const isCurrentMonth = today.getMonth() === currentDate.getMonth() && 
-                              today.getFullYear() === currentDate.getFullYear();
-        
-        if (isCurrentMonth) {
-            todayBtn.classList.add('today-active');
-        } else {
-            todayBtn.classList.remove('today-active');
-        }
-    }
-
-    // Bugün butonu
-    document.getElementById('todayBtn').onclick = function() {
-        currentDate = new Date();
-        renderCalendar();
-        updateTodayButton();
-        
-        // Bugünün hücresine scroll
-        const today = document.querySelector('.calendar-day.today');
-        if (today) {
-            today.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    };
-
-    // Ay değiştirme fonksiyonlarını güncelle
-    document.getElementById('prevMonth').onclick = function() {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendar();
-        updateTodayButton();
-    };
-
-    document.getElementById('nextMonth').onclick = function() {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendar();
-        updateTodayButton();
-    };
-
-    // İlk yüklemede bugün butonunu güncelle
-    renderCalendar();
-    updateTodayButton();
-
-    // Yeni etkinlik butonu için event listener
-    document.getElementById('addEventBtn').onclick = function() {
+    // Modal kapatma fonksiyonunu güncelle
+    function closeModal() {
         const modal = document.getElementById('eventModal');
         const form = document.getElementById('eventForm');
         
-        // Form'u sıfırla
+        // Formu sıfırla
         form.reset();
-        document.getElementById('modalTitle').textContent = 'Yeni Etkinlik';
-        // Etkinlik ID'sini temizle
         form.removeAttribute('data-event-id');
         
-        const today = new Date();
-        document.getElementById('selectedDate').value = today.toLocaleDateString('en-CA');
+        // Form alanlarının görünürlüğünü sıfırla
+        document.getElementById('assignedToGroup').style.display = 'none';
+        document.getElementById('deadlineDateGroup').style.display = 'none';
+        document.getElementById('isCompletedGroup').style.display = 'none';
         
-        modal.style.display = 'flex';
-    };
+        // Modal'ı kapat
+        modal.style.display = 'none';
+    }
 
-    // Etkinlik düzenleme fonksiyonu
+    // Kapatma butonları için event listener'ları güncelle
+    document.querySelector('.close-btn').onclick = closeModal;
+    document.getElementById('cancelBtn').onclick = closeModal;
+
+    // Etkinlik düzenleme fonksiyonunu güncelle
     function editEvent(event) {
         const modal = document.getElementById('eventModal');
         const form = document.getElementById('eventForm');
@@ -1187,11 +1262,20 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('eventType').value = event.event_type;
         document.getElementById('eventTime').value = event.time;
         document.getElementById('eventTitle').value = event.title;
-        document.getElementById('eventDescription').value = event.description;
+        document.getElementById('eventDescription').value = event.description || '';
         
-        // Etkinlik ID'sini form'a ekle
+        if (event.assigned_to) {
+            document.getElementById('assignedTo').value = event.assigned_to;
+        }
+        if (event.deadline_date) {
+            document.getElementById('deadlineDate').value = event.deadline_date;
+        }
+        document.getElementById('isCompleted').checked = event.is_completed || false;
+        
+        // Form alanlarının görünürlüğünü kontrol et
+        toggleFormFields();
+        
         form.setAttribute('data-event-id', event.id);
-        
         modal.style.display = 'flex';
     }
 
@@ -1223,7 +1307,19 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('detailTitle').textContent = event.title;
         document.getElementById('detailDate').textContent = formatDate(event.date);
         document.getElementById('detailTime').textContent = event.time;
-        document.getElementById('detailDescription').textContent = event.description || 'Açıklama bulunmuyor';
+        
+        // Açıklama ve atanan kişi bilgilerini ekle
+        let description = event.description || '';
+        if (event.assigned_to) {
+            description = `Atanan Kişi: ${event.assigned_to}\n\n${description}`;
+        }
+        if (event.deadline_date) {
+            description = `Son Tarih: ${formatDate(event.deadline_date)}\n\n${description}`;
+        }
+        if (event.is_completed) {
+            description = `Durum: Tamamlandı\n\n${description}`;
+        }
+        document.getElementById('detailDescription').textContent = description || 'Açıklama bulunmuyor';
         
         // Düzenle ve Sil butonları için event listener'ları ekle
         document.getElementById('editDetailBtn').onclick = () => {
@@ -1245,25 +1341,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('closeDetailModal').onclick = function() {
         document.getElementById('eventDetailModal').style.display = 'none';
     };
-
-    // Modal kapatma işlemlerini güncelle
-    document.querySelector('.close-btn').onclick = function() {
-        const modal = document.getElementById('eventModal');
-        const form = document.getElementById('eventForm');
-        
-        form.reset();
-        form.removeAttribute('data-event-id');
-        modal.style.display = 'none';
-    }
-
-    document.getElementById('cancelBtn').onclick = function() {
-        const modal = document.getElementById('eventModal');
-        const form = document.getElementById('eventForm');
-        
-        form.reset();
-        form.removeAttribute('data-event-id');
-        modal.style.display = 'none';
-    }
 
     // Etkinlik türü adını döndüren yardımcı fonksiyon
     function getEventTypeName(type) {
@@ -1287,6 +1364,179 @@ document.addEventListener('DOMContentLoaded', function() {
             year: 'numeric'
         });
     }
+
+    // Etkinlik türüne göre form alanlarını göster/gizle
+    function toggleFormFields() {
+        const eventType = document.getElementById('eventType').value;
+        const assignedToGroup = document.getElementById('assignedToGroup');
+        const deadlineDateGroup = document.getElementById('deadlineDateGroup');
+        const isCompletedGroup = document.getElementById('isCompletedGroup');
+        
+        // Kişi atama alanını tüm etkinlik türlerinde göster
+        assignedToGroup.style.display = 'block';
+        document.getElementById('assignedTo').required = true;
+        
+        // Tamamlandı seçeneğini tüm etkinlik türlerinde göster
+        isCompletedGroup.style.display = 'block';
+        
+        // Son tarih alanını gizle
+        deadlineDateGroup.style.display = 'none';
+    }
+
+    // Event listener'ları ekle
+    document.getElementById('eventType').addEventListener('change', toggleFormFields);
+    
+    // Modal açıldığında da kontrol et
+    document.getElementById('addEventBtn').addEventListener('click', function() {
+        setTimeout(toggleFormFields, 100); // Modal açıldıktan sonra çalışması için küçük bir gecikme
+    });
+
+    // Etkinlik oluşturma fonksiyonunu güncelle
+    function createEventElement(event) {
+        const eventDiv = document.createElement('div');
+        eventDiv.className = 'calendar-event';
+        eventDiv.setAttribute('data-type', event.event_type);
+        eventDiv.setAttribute('data-id', event.id);
+        if (event.is_completed) {
+            eventDiv.classList.add('completed');
+        }
+        
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'event-time';
+        timeDiv.textContent = event.time;
+        
+        const typeDiv = document.createElement('div');
+        typeDiv.className = 'event-type';
+        typeDiv.textContent = eventTypes[event.event_type];
+        
+        eventDiv.appendChild(timeDiv);
+        eventDiv.appendChild(typeDiv);
+        
+        if (event.assigned_to) {
+            const assignedDiv = document.createElement('div');
+            assignedDiv.className = 'assigned-to';
+            assignedDiv.textContent = event.assigned_to;
+            eventDiv.appendChild(assignedDiv);
+        }
+        
+        eventDiv.addEventListener('click', () => showEventDetails(event));
+        
+        return eventDiv;
+    }
+
+    // Etkinlikleri sırala
+    function sortEvents(events) {
+        return events.sort((a, b) => {
+            return a.time.localeCompare(b.time);
+        });
+    }
+
+    // Takvim günü oluşturma fonksiyonunu güncelle
+    function createCalendarDay(date, events = []) {
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day';
+        
+        const dateHeader = document.createElement('div');
+        dateHeader.className = 'date-header';
+        dateHeader.textContent = date.getDate();
+        dayDiv.appendChild(dateHeader);
+        
+        const sortedEvents = sortEvents(events);
+        sortedEvents.forEach(event => {
+            dayDiv.appendChild(createEventElement(event));
+        });
+        
+        return dayDiv;
+    }
+
+    // Bugün butonu için geliştirilen fonksiyon
+    function updateTodayButton() {
+        const todayBtn = document.getElementById('todayBtn');
+        const today = new Date();
+        const isCurrentMonth = today.getMonth() === currentDate.getMonth() && 
+                             today.getFullYear() === currentDate.getFullYear();
+        
+        if (isCurrentMonth) {
+            todayBtn.classList.add('today-active');
+        } else {
+            todayBtn.classList.remove('today-active');
+        }
+    }
+
+    // Bugün butonu
+    document.getElementById('todayBtn').onclick = function() {
+        currentDate = new Date();
+        renderCalendar();
+        updateTodayButton();
+    };
+
+    // Ay değiştirme butonları
+    document.getElementById('prevMonth').onclick = function() {
+        const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+        currentDate = newDate;
+        renderCalendar();
+        updateTodayButton();
+    };
+
+    document.getElementById('nextMonth').onclick = function() {
+        const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+        currentDate = newDate;
+        renderCalendar();
+        updateTodayButton();
+    };
+
+    // İlk yüklemede takvimi ve bugün butonunu güncelle
+    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1); // Ayın ilk gününe ayarla
+    renderCalendar();
+    updateTodayButton();
+
+    // Form submit işlemi
+    document.getElementById('eventForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const form = this;
+        const eventId = form.getAttribute('data-event-id');
+        const submitButton = form.querySelector('button[type="submit"]');
+        
+        submitButton.disabled = true;
+        
+        try {
+            const formData = {
+                event_type: document.getElementById('eventType').value,
+                date: document.getElementById('selectedDate').value,
+                time: document.getElementById('eventTime').value,
+                title: document.getElementById('eventTitle').value,
+                description: document.getElementById('eventDescription').value,
+                assigned_to: document.getElementById('assignedTo').value,
+                deadline_date: document.getElementById('deadlineDate').value || null,
+                is_completed: document.getElementById('isCompleted').checked
+            };
+            
+            const url = eventId ? `/update_event/${eventId}` : '/add_event';
+            const method = eventId ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                closeModal();
+                location.reload();
+            } else {
+                alert('Etkinlik kaydedilirken bir hata oluştu: ' + (result.error || 'Bilinmeyen hata'));
+            }
+        } catch (error) {
+            alert('Bir hata oluştu: ' + error.message);
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
 });
 </script>
 {% endblock %} 

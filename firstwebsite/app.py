@@ -219,6 +219,9 @@ class CalendarEvent(db.Model):
     description = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     case_id = db.Column(db.Integer, db.ForeignKey('case_file.id'))
+    assigned_to = db.Column(db.String(100))  # Atanan kişi
+    deadline_date = db.Column(db.Date)  # Son gün tarihi
+    is_completed = db.Column(db.Boolean, default=False)  # Tamamlanma durumu
 
 # Adli tatil tarihlerini kontrol eden fonksiyon
 def is_adli_tatil(date):
@@ -238,7 +241,10 @@ def takvim():
         'date': event.date.strftime('%Y-%m-%d'),
         'time': event.time.strftime('%H:%M'),
         'event_type': event.event_type,
-        'description': event.description
+        'description': event.description,
+        'assigned_to': event.assigned_to,
+        'deadline_date': event.deadline_date.strftime('%Y-%m-%d') if event.deadline_date else None,
+        'is_completed': event.is_completed
     } for event in events]
     
     # Adli tatil tarihlerini ekle
@@ -620,52 +626,131 @@ def search():
 
 @app.route('/add_event', methods=['POST'])
 def add_event():
-    data = request.get_json()
-    
-    # Tarih ve saat bilgisini birleştir
-    date_time_str = f"{data['date']} {data['time']}"
-    date_time_obj = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M')
-    
-    new_event = CalendarEvent(
-        title=data['title'],
-        date=date_time_obj.date(),
-        time=date_time_obj.time(),
-        event_type=data['event_type'],
-        description=data['description'],
-        user_id=1
-    )
-    
-    db.session.add(new_event)
-    db.session.commit()
-    
-    return jsonify({
-        'success': True,
-        'id': new_event.id
-    })
+    try:
+        data = request.get_json()
+        
+        # Tarihleri UTC'ye çevirmeden işle
+        date_str = data['date']
+        time_str = data['time']
+        deadline_str = data.get('deadline_date')
+        
+        # Tarihleri doğrudan string'den date objesine çevir
+        event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        event_time = datetime.strptime(time_str, '%H:%M').time()
+        deadline_date = datetime.strptime(deadline_str, '%Y-%m-%d').date() if deadline_str else None
+        
+        event = CalendarEvent(
+            title=data['title'],
+            date=event_date,
+            time=event_time,
+            event_type=data['event_type'],
+            description=data.get('description'),
+            user_id=1,
+            assigned_to=data.get('assigned_to'),
+            deadline_date=deadline_date,
+            is_completed=data.get('is_completed', False)
+        )
+        
+        db.session.add(event)
+        
+        # Son gün etkinliği ekle
+        if deadline_date and deadline_date != event_date:
+            deadline_event = CalendarEvent(
+                title=f"SON GÜN: {event.title}",
+                date=deadline_date,
+                time=event_time,
+                event_type=event.event_type,
+                description=event.description,
+                user_id=event.user_id,
+                assigned_to=event.assigned_to,
+                is_completed=event.is_completed
+            )
+            db.session.add(deadline_event)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'id': event.id,
+            'title': event.title,
+            'date': event_date.strftime('%Y-%m-%d'),
+            'time': event_time.strftime('%H:%M'),
+            'event_type': event.event_type,
+            'description': event.description,
+            'assigned_to': event.assigned_to,
+            'deadline_date': deadline_date.strftime('%Y-%m-%d') if deadline_date else None,
+            'is_completed': event.is_completed
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
 
 @app.route('/update_event/<int:event_id>', methods=['PUT'])
 def update_event(event_id):
-    data = request.get_json()
-    event = CalendarEvent.query.get(event_id)
-    
-    if event:
-        event.title = data['title']
-        event.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
-        event.time = datetime.strptime(data['time'], '%H:%M').time()
-        event.event_type = data['event_type']
-        event.description = data['description']
+    try:
+        event = CalendarEvent.query.get_or_404(event_id)
+        data = request.get_json()
         
-        # Eğer etkinlik bir duruşma ise ve bir dosyaya bağlıysa
-        if event.case_id and event.event_type in ['durusma', 'e-durusma']:
-            case = CaseFile.query.get(event.case_id)
-            if case:
-                case.next_hearing = event.date
-                case.hearing_time = event.time.strftime('%H:%M')
+        # Tarihleri UTC'ye çevirmeden işle
+        date_str = data['date']
+        time_str = data['time']
+        deadline_str = data.get('deadline_date')
+        
+        # Tarihleri doğrudan string'den date objesine çevir
+        event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        event_time = datetime.strptime(time_str, '%H:%M').time()
+        deadline_date = datetime.strptime(deadline_str, '%Y-%m-%d').date() if deadline_str else None
+        
+        event.title = data['title']
+        event.date = event_date
+        event.time = event_time
+        event.event_type = data['event_type']
+        event.description = data.get('description')
+        event.assigned_to = data.get('assigned_to')
+        event.is_completed = data.get('is_completed', False)
+        
+        if deadline_date:
+            event.deadline_date = deadline_date
+            
+            # Eski son gün etkinliğini sil
+            old_deadline_event = CalendarEvent.query.filter_by(
+                title=f"SON GÜN: {event.title}",
+                event_type=event.event_type
+            ).first()
+            if old_deadline_event:
+                db.session.delete(old_deadline_event)
+            
+            # Yeni son gün etkinliği ekle
+            if deadline_date != event_date:
+                deadline_event = CalendarEvent(
+                    title=f"SON GÜN: {event.title}",
+                    date=deadline_date,
+                    time=event_time,
+                    event_type=event.event_type,
+                    description=event.description,
+                    user_id=event.user_id,
+                    assigned_to=event.assigned_to,
+                    is_completed=event.is_completed
+                )
+                db.session.add(deadline_event)
         
         db.session.commit()
-        return jsonify({'success': True})
-    
-    return jsonify({'success': False})
+        
+        return jsonify({
+            'id': event.id,
+            'title': event.title,
+            'date': event_date.strftime('%Y-%m-%d'),
+            'time': event_time.strftime('%H:%M'),
+            'event_type': event.event_type,
+            'description': event.description,
+            'assigned_to': event.assigned_to,
+            'deadline_date': deadline_date.strftime('%Y-%m-%d') if deadline_date else None,
+            'is_completed': event.is_completed
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
 
 @app.route('/delete_event/<int:event_id>', methods=['DELETE'])
 def delete_event(event_id):
