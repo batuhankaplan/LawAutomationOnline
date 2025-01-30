@@ -10,6 +10,7 @@ Ayrıca tüm sayfalarda görünür olacak şekilde (layout.html'de) sağ üstte 
 Kullanıcının ufak yuvarlak resim boxunun üstüne basınca seçenekler açılacak. Profil / Ayarlar / Çıkış gibi seçenekler olacak.
 8) Son işlemler gösterim tablosunda işlemi hangi kullancının yaptığı gösterilecek. (Bunun için kullanıcı giriş bilgilerinde kayıt olurken kullandığı isim kullanılacak.)
 9) İşçi görüşme tutanağı formu eklenebilir.
+10) Örnek dilekçe yükleme ve sorgulama sistemi eklenebilir.
 
 HATA VE BUGLAR:
 1) (mesela duyurulara bir duyuru ekliyorum, duyurular sayfasında "Duyuru eklendi" uyarısı gelmiyor). (image upload)
