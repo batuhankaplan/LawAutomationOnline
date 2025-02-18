@@ -14,6 +14,10 @@ from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
 import requests
 from uyap_integration import UYAPIntegration
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent
+import uuid
+from PIL import Image
 
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'your_secret_key'
@@ -24,10 +28,233 @@ app.config['MAIL_SERVER'] = 'smtp-mail.outlook.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'yzbatuhankaplan@outlook.com'
-app.config['MAIL_PASSWORD'] = 'your_mail_password'  # Mail şifrenizi buraya yazın
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)  # Migrate nesnesini oluştur
+app.config['MAIL_PASSWORD'] = 'your_mail_password'
+
+db.init_app(app)
+migrate = Migrate(app, db)
 mail = Mail(app)
+
+# Login manager setup
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Lütfen giriş yapın.'
+login_manager.login_message_category = 'info'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Auth routes
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('anasayfa'))
+        
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        user = User.query.filter_by(email=email).first()
+        if user and user.check_password(password):
+            login_user(user)
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('anasayfa'))
+        else:
+            flash('Geçersiz e-posta veya şifre.', 'error')
+    
+    return render_template('auth.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('anasayfa'))
+        
+    if request.method == 'POST':
+        email = request.form.get('email')
+        username = request.form.get('username')
+        password = request.form.get('password')
+        role = request.form.get('role')
+        gender = request.form.get('gender')
+        phone = request.form.get('phone')  # Telefon numarasını al
+        
+        # Doğum tarihini birleştir
+        try:
+            birth_day = int(request.form.get('birth_day'))
+            birth_month = int(request.form.get('birth_month'))
+            birth_year = int(request.form.get('birth_year'))
+            birthdate = datetime(birth_year, birth_month, birth_day).date()
+        except (ValueError, TypeError):
+            flash('Geçersiz doğum tarihi.', 'error')
+            return render_template('auth.html', show_register=True)
+        
+        if User.query.filter_by(email=email).first():
+            flash('Bu e-posta adresi zaten kayıtlı.', 'error')
+            return render_template('auth.html', show_register=True)
+            
+        if User.query.filter_by(username=username).first():
+            flash('Bu kullanıcı adı zaten kullanılıyor.', 'error')
+            return render_template('auth.html', show_register=True)
+        
+        user = User(
+            email=email,
+            username=username,
+            role=role,
+            gender=gender,
+            birthdate=birthdate,
+            phone=phone  # Telefon numarasını ekle
+        )
+        user.set_password(password)
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        flash('Kayıt başarılı! Şimdi giriş yapabilirsiniz.', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('auth.html', show_register=True)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+@app.route('/profile')
+@login_required
+def profile():
+    return render_template('profile.html')
+
+@app.route('/settings')
+@login_required
+def settings():
+    return render_template('settings.html')
+
+@app.route('/update_profile', methods=['GET', 'POST'])
+@login_required
+def update_profile():
+    if request.method == 'POST':
+        try:
+            user = User.query.get(current_user.id)
+            
+            # Profil resmi yükleme işlemi
+            if 'profile_image' in request.files:
+                file = request.files['profile_image']
+                if file and allowed_file(file.filename):
+                    try:
+                        # Eski profil resmini sil (varsayılan resim hariç)
+                        if user.profile_image and user.profile_image != 'images/pp.png':
+                            old_image_path = os.path.join(app.static_folder, user.profile_image)
+                            if os.path.exists(old_image_path):
+                                os.remove(old_image_path)
+                        
+                        # Yeni resmi kaydet
+                        filename = secure_filename(file.filename)
+                        unique_filename = f"images/profile_{user.id}_{int(time.time())}_{filename}"
+                        filepath = os.path.join(app.static_folder, unique_filename)
+                        
+                        # Resmi boyutlandır ve kaydet
+                        image = Image.open(file)
+                        image = image.convert('RGB')  # PNG'yi JPG'ye çevir
+                        
+                        # En-boy oranını koru ve 300x300 boyutuna getir
+                        output_size = (300, 300)
+                        image.thumbnail(output_size, Image.Resampling.LANCZOS)
+                        
+                        # Kare crop için merkezi al
+                        width, height = image.size
+                        left = (width - min(width, height))/2
+                        top = (height - min(width, height))/2
+                        right = (width + min(width, height))/2
+                        bottom = (height + min(width, height))/2
+                        image = image.crop((left, top, right, bottom))
+                        
+                        # Resmi kaydet
+                        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                        image.save(filepath, 'JPEG', quality=85)
+                        user.profile_image = unique_filename
+                    except Exception as e:
+                        return jsonify(success=False, message=f"Resim yükleme hatası: {str(e)}")
+
+            # Diğer profil bilgilerini güncelle
+            user.username = request.form.get('username')
+            user.email = request.form.get('email')
+            user.phone = request.form.get('phone')
+            user.role = request.form.get('meslek')
+            user.gender = request.form.get('cinsiyet')
+            
+            try:
+                birth_date = datetime.strptime(request.form.get('dogum_tarihi'), '%Y-%m-%d')
+                user.birthdate = birth_date
+            except ValueError:
+                return jsonify(success=False, message="Geçersiz doğum tarihi formatı")
+            
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Profil başarıyla güncellendi',
+                'profile_image': user.profile_image
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            return jsonify(success=False, message=f"Profil güncellenirken bir hata oluştu: {str(e)}")
+
+    return render_template('profile.html')
+
+@app.route('/change_password', methods=['POST'])
+@login_required
+def change_password():
+    try:
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        
+        if not current_user.check_password(current_password):
+            flash('Mevcut şifre yanlış!', 'error')
+            return redirect(url_for('settings'))
+        
+        current_user.set_password(new_password)
+        db.session.commit()
+        flash('Şifreniz başarıyla değiştirildi!', 'success')
+        
+    except Exception as e:
+        flash(f'Şifre değiştirme işlemi başarısız: {str(e)}', 'error')
+    
+    return redirect(url_for('settings'))
+
+@app.route('/delete_account', methods=['POST'])
+@login_required
+def delete_account():
+    try:
+        password = request.form.get('password')
+        if not current_user.check_password(password):
+            flash('Şifre yanlış!', 'error')
+            return redirect(url_for('settings'))
+        
+        user_id = current_user.id
+        logout_user()
+        User.query.filter_by(id=user_id).delete()
+        db.session.commit()
+        flash('Hesabınız başarıyla silindi!', 'success')
+        return redirect(url_for('login'))
+        
+    except Exception as e:
+        flash(f'Hesap silme işlemi başarısız: {str(e)}', 'error')
+        return redirect(url_for('settings'))
+
+@app.route('/enable_2fa', methods=['POST'])
+@login_required
+def enable_2fa():
+    # Bu fonksiyon şu an için sadece başarılı yanıt dönüyor
+    # İki faktörlü doğrulama için gerekli implementasyon daha sonra eklenebilir
+    return jsonify({'success': True})
+
+# Protect routes
+@app.before_request
+def check_user_auth():
+    if not current_user.is_authenticated and request.endpoint not in ['login', 'register', 'static']:
+        return redirect(url_for('login'))
 
 # Türkçe tarih için locale ayarı
 try:
@@ -54,20 +281,6 @@ def inject_datetime():
             'date': ''
         }
     return dict(current_time=current_time)
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(150), nullable=False)
-    role = db.Column(db.String(50), nullable=False, default='user')
-
-class ActivityLog(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    activity_type = db.Column(db.String(50), nullable=False)  # 'dosya_ekleme', 'masraf_ekleme', 'belge_yukleme', vs.
-    description = db.Column(db.String(250), nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    related_case_id = db.Column(db.Integer, db.ForeignKey('case_file.id'), nullable=True)
 
 def log_activity(activity_type, description, user_id, case_id=None):
     activity = ActivityLog(
@@ -141,96 +354,6 @@ def load_more_activities(offset):
     } for activity in activities]
     
     return jsonify(activities=activities_data)
-
-class Client(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    surname = db.Column(db.String(100), nullable=False)
-    tc = db.Column(db.String(11), nullable=False)
-    amount = db.Column(db.Float, nullable=False)
-    currency = db.Column(db.String(3), nullable=False)
-    installments = db.Column(db.Integer, nullable=False)
-    date = db.Column(db.String(10), nullable=False)
-    payments = db.relationship('Payment', backref='client', lazy=True)
-    status = db.Column(db.String(10), nullable=False, default='Ödenmedi')
-    description = db.Column(db.Text, nullable=True)  # Açıklama alanı eklendi
-
-class Payment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    amount = db.Column(db.Float, nullable=False)
-    date = db.Column(db.Date, nullable=False)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-class Document(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    case_id = db.Column(db.Integer, db.ForeignKey('case_file.id'), nullable=False)
-    document_type = db.Column(db.String(100), nullable=False)  # Belge türü
-    filename = db.Column(db.String(255), nullable=False)
-    filepath = db.Column(db.String(255), nullable=False)
-    upload_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-class Notification(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    message = db.Column(db.String(250), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    read = db.Column(db.Boolean, default=False)
-
-class Expense(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    case_id = db.Column(db.Integer, db.ForeignKey('case_file.id'), nullable=False)
-    expense_type = db.Column(db.String(100), nullable=False)  # Masraf türü
-    amount = db.Column(db.Float, nullable=False)  # Masraf miktarı
-    date = db.Column(db.Date, nullable=False)  # Masraf tarihi
-    is_paid = db.Column(db.Boolean, default=False)  # Ödeme durumu
-    description = db.Column(db.Text)  # Açıklama
-
-class CaseFile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    file_type = db.Column(db.String(50), nullable=False)
-    courthouse = db.Column(db.String(100), nullable=False)  # Adliye
-    department = db.Column(db.String(100), nullable=False)  # Birim
-    year = db.Column(db.Integer, nullable=False)
-    case_number = db.Column(db.String(50), nullable=False)
-    client_name = db.Column(db.String(150), nullable=False)
-    phone_number = db.Column(db.String(20))
-    status = db.Column(db.String(50), default='Aktif')
-    open_date = db.Column(db.Date)
-    next_hearing = db.Column(db.Date)
-    hearing_time = db.Column(db.String(5))  # HH:MM formatında
-    expenses = db.relationship('Expense', backref='case_file', lazy=True)
-    documents = db.relationship('Document', backref='case_file', lazy=True)
-    description = db.Column(db.Text)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-class Announcement(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    content = db.Column(db.String(250), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-class CalendarEvent(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    date = db.Column(db.Date, nullable=False)
-    time = db.Column(db.Time, nullable=False)
-    event_type = db.Column(db.String(50), nullable=False)
-    description = db.Column(db.Text)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    case_id = db.Column(db.Integer, db.ForeignKey('case_file.id'))
-    assigned_to = db.Column(db.String(100))  # Atanan kişi
-    deadline_date = db.Column(db.Date)  # Son gün tarihi
-    is_completed = db.Column(db.Boolean, default=False)  # Tamamlanma durumu
-
-# Adli tatil tarihlerini kontrol eden fonksiyon
-def is_adli_tatil(date):
-    # Adli tatil: 20 Temmuz - 31 Ağustos arası
-    if date.month == 7 and date.day >= 20:
-        return True
-    if date.month == 8:
-        return True
-    return False
 
 @app.route('/takvim')
 def takvim():
@@ -810,7 +933,8 @@ ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'udf', 'tiff',
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
 
 @app.route('/upload_document/<int:case_id>', methods=['POST'])
 def upload_document(case_id):
@@ -1277,6 +1401,48 @@ def uyap_sync():
         error_msg = f"Beklenmeyen hata: {str(e)}"
         print(error_msg)
         return jsonify(success=False, message=error_msg)
+
+@app.route('/update_theme_preference', methods=['POST'])
+@login_required
+def update_theme_preference():
+    try:
+        data = request.get_json()
+        theme = data.get('theme')
+        
+        if theme in ['light', 'dark']:
+            user = User.query.get(current_user.id)
+            user.theme_preference = theme
+            db.session.commit()
+            return jsonify(success=True)
+        
+        return jsonify(success=False, message="Geçersiz tema tercihi")
+    except Exception as e:
+        return jsonify(success=False, message=str(e))
+
+@app.route('/update_settings', methods=['POST'])
+@login_required
+def update_settings():
+    try:
+        data = request.get_json()
+        user = User.query.get(current_user.id)
+        
+        if 'fontSize' in data:
+            user.font_size = data['fontSize']
+            
+        if 'theme' in data:
+            user.theme_preference = data['theme']
+            
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Ayarlar başarıyla güncellendi'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
 
 if __name__ == '__main__':
     with app.app_context():

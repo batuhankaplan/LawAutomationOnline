@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap / Kayıt Ol - Kaplan Hukuk</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            overflow: hidden;
+            width: 1100px;
+            display: flex;
+            min-height: 700px;
+        }
+
+        .auth-left {
+            flex: 1.2;
+            padding: 50px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .auth-right {
+            flex: 1.5;
+            padding: 50px;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            box-sizing: border-box;
+        }
+
+        .logo-container {
+            margin-bottom: 30px;
+        }
+
+        .logo-container img {
+            max-width: 250px;
+            height: auto;
+        }
+
+        .welcome-text {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .welcome-text h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .welcome-text p {
+            color: #666;
+            line-height: 1.7;
+            font-size: 1.1rem;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 0 30px;
+            box-sizing: border-box;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .form-control, .form-select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            color: #2c3e50;
+            box-sizing: border-box;
+            height: 50px;
+        }
+
+        .form-control::placeholder {
+            color: #95a5a6;
+            opacity: 0.7;
+        }
+
+        .form-control:focus::placeholder {
+            opacity: 0;
+        }
+
+        .form-control:focus {
+            border-color: #1a1a2e;
+            box-shadow: 0 0 0 2px rgba(26,26,46,0.1);
+            outline: none;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: #1a1a2e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            height: 55px;
+        }
+
+        .btn-submit:hover {
+            background: #16213e;
+            transform: translateY(-1px);
+        }
+
+        .toggle-form {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+
+        .toggle-form a {
+            color: #1a1a2e;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .toggle-form a:hover {
+            text-decoration: underline;
+        }
+
+        .form-select:focus {
+            border-color: #1a1a2e;
+            box-shadow: 0 0 0 2px rgba(26,26,46,0.1);
+            outline: none;
+        }
+
+        .date-inputs {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .date-inputs select {
+            flex: 1;
+            height: 50px;
+            padding: 14px;
+            font-size: 15px;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .success-message {
+            color: #28a745;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .register-form {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .form-title {
+            text-align: center;
+            margin-bottom: 35px;
+            color: #2c3e50;
+            font-size: 28px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-left">
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kaplan Hukuk">
+            </div>
+            <div class="welcome-text">
+                <h1>Hoş Geldiniz</h1>
+                <p>Kaplan Hukuk Bürosu Otomasyon Sistemine hoş geldiniz. Lütfen giriş yapın veya yeni bir hesap oluşturun.</p>
+            </div>
+        </div>
+        <div class="auth-right">
+            <div class="form-container">
+                <!-- Giriş Formu -->
+                <form id="loginForm" class="{% if not show_register %}active{% endif %}" action="{{ url_for('login') }}" method="POST">
+                    <h2 class="form-title">Giriş Yap</h2>
+                    <div class="form-group">
+                        <label for="login-email">E-posta</label>
+                        <input type="email" id="login-email" name="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Şifre</label>
+                        <input type="password" id="login-password" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn-submit">Giriş Yap</button>
+                    <div class="toggle-form">
+                        Hesabınız yok mu? <a href="#" onclick="toggleForms()">Kayıt Ol</a>
+                    </div>
+                </form>
+
+                <!-- Kayıt Formu -->
+                <form id="registerForm" class="register-form" {% if not show_register %}style="display: none;"{% endif %} method="POST" action="{{ url_for('register') }}">
+                    <h2 class="form-title">Kayıt Ol</h2>
+                    <div class="form-group">
+                        <label for="username">Kullanıcı Adı</label>
+                        <input type="text" id="username" name="username" class="form-control" 
+                               placeholder="Lütfen meslek/ad/soyad formatında giriniz." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">E-posta</label>
+                        <input type="email" id="email" name="email" class="form-control" 
+                               placeholder="E-posta adresinizi giriniz" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Telefon Numarası</label>
+                        <input type="tel" id="phone" name="phone" pattern="[0-9]{10}" class="form-control" 
+                               placeholder="Başında 0 olmadan 10 haneli olarak giriniz" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-role">Meslek</label>
+                        <select id="register-role" name="role" class="form-select" required>
+                            <option value="">Seçiniz</option>
+                            <option value="Yönetici Avukat">Yönetici Avukat</option>
+                            <option value="Avukat">Avukat</option>
+                            <option value="Stajyer Avukat">Stajyer Avukat</option>
+                            <option value="Takip Elemanı">Takip Elemanı</option>
+                            <option value="Muhasebe">Muhasebe</option>
+                            <option value="Ulaşım">Ulaşım</option>
+                            <option value="Sekreter">Sekreter</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-gender">Cinsiyet</label>
+                        <select id="register-gender" name="gender" class="form-select" required>
+                            <option value="">Seçiniz</option>
+                            <option value="Erkek">Erkek</option>
+                            <option value="Kadın">Kadın</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Doğum Tarihi</label>
+                        <div class="date-inputs">
+                            <select name="birth_day" class="form-select" required>
+                                <option value="">Gün</option>
+                                {% for day in range(1, 32) %}
+                                <option value="{{ day }}">{{ day }}</option>
+                                {% endfor %}
+                            </select>
+                            <select name="birth_month" class="form-select" required>
+                                <option value="">Ay</option>
+                                {% for month in range(1, 13) %}
+                                <option value="{{ month }}">{{ month }}</option>
+                                {% endfor %}
+                            </select>
+                            <select name="birth_year" class="form-select" required>
+                                <option value="">Yıl</option>
+                                {% for year in range(2024, 1949, -1) %}
+                                <option value="{{ year }}">{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Şifre</label>
+                        <input type="password" id="register-password" name="password" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password-confirm">Şifre Tekrar</label>
+                        <input type="password" id="register-password-confirm" name="password_confirm" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn-submit">Kayıt Ol</button>
+                    <div class="toggle-form">
+                        Zaten hesabınız var mı? <a href="#" onclick="toggleForms()">Giriş Yap</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleForms() {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            
+            if (loginForm.classList.contains('active')) {
+                loginForm.classList.remove('active');
+                loginForm.style.display = 'none';
+                registerForm.classList.add('active');
+                registerForm.style.display = 'block';
+            } else {
+                registerForm.classList.remove('active');
+                registerForm.style.display = 'none';
+                loginForm.classList.add('active');
+                loginForm.style.display = 'block';
+            }
+        }
+
+        // Form doğrulama
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const password = document.getElementById('register-password').value;
+            const passwordConfirm = document.getElementById('register-password-confirm').value;
+
+            if (password !== passwordConfirm) {
+                e.preventDefault();
+                alert('Şifreler eşleşmiyor!');
+            }
+        });
+
+        {% if show_register %}
+            document.addEventListener('DOMContentLoaded', function() {
+                const loginForm = document.getElementById('loginForm');
+                const registerForm = document.getElementById('registerForm');
+                
+                loginForm.style.display = 'none';
+                loginForm.classList.remove('active');
+                registerForm.style.display = 'block';
+                registerForm.classList.add('active');
+            });
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    alert('{{ message }}');
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </script>
+</body>
+</html> 

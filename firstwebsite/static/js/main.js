@@ -79,8 +79,59 @@ function showDetails(caseId) {
     });
 }
 
-// Sayfa yüklendiğinde çalışacak kodlar
+// Profil menüsü
+function toggleProfileMenu() {
+    const dropdown = document.getElementById('profileDropdown');
+    dropdown.classList.toggle('active');
+}
+
+// Sayfa herhangi bir yerine tıklandığında profil menüsünü kapat
+document.addEventListener('click', function(e) {
+    const profileMenu = document.querySelector('.profile-menu');
+    const dropdown = document.getElementById('profileDropdown');
+    
+    if (!profileMenu.contains(e.target) && dropdown.classList.contains('active')) {
+        dropdown.classList.remove('active');
+    }
+});
+
+// Profil resmi önizleme fonksiyonu
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            $('#preview-image').attr('src', e.target.result);
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Profil formu gönderildiğinde
 $(document).ready(function() {
+    $('#profile-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        var formData = new FormData(this);
+        
+        $.ajax({
+            url: $(this).attr('action'),
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                // Profil resmini header'da da güncelle
+                if (response.profile_image) {
+                    $('.profile-image').attr('src', response.profile_image);
+                }
+                toastr.success('Profil başarıyla güncellendi');
+            },
+            error: function() {
+                toastr.error('Profil güncellenirken bir hata oluştu');
+            }
+        });
+    });
+
     // Bootstrap tooltip'lerini aktifleştir
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {

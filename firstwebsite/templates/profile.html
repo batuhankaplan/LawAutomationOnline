@@ -1,0 +1,441 @@
+{% extends "layout.html" %}
+
+{% block title %}Profil{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <h1>Profil Bilgileri</h1>
+        <p>Kişisel bilgilerinizi buradan güncelleyebilirsiniz</p>
+    </div>
+
+    <form id="profile-form" action="{{ url_for('update_profile') }}" method="POST" enctype="multipart/form-data">
+        <div class="profile-content">
+            <div class="profile-image-section">
+                <div class="profile-photo-container">
+                    <img id="preview-image" src="{{ url_for('static', filename=current_user.profile_image or 'images/pp.png') }}" alt="Profil">
+                    <div class="profile-image-overlay">
+                        <label for="profile_image" class="profile-upload-btn">
+                            <i class="fas fa-camera"></i>
+                            <span>Fotoğraf Değiştir</span>
+                        </label>
+                        <input type="file" id="profile_image" name="profile_image" accept="image/*" onchange="previewImage(this)" style="display: none;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-form-grid">
+                <div class="profile-form-group">
+                    <label for="username">Kullanıcı Adı</label>
+                    <input type="text" id="username" name="username" class="profile-form-control" value="{{ current_user.username }}" required>
+                </div>
+
+                <div class="profile-form-group">
+                    <label for="email">E-posta</label>
+                    <input type="email" id="email" name="email" class="profile-form-control" value="{{ current_user.email }}" required>
+                </div>
+
+                <div class="profile-form-group">
+                    <label for="phone">Telefon</label>
+                    <input type="tel" id="phone" name="phone" class="profile-form-control" value="{{ current_user.phone }}" pattern="[0-9]{10}" title="Lütfen 10 haneli telefon numaranızı başında 0 olmadan giriniz" required>
+                </div>
+
+                <div class="profile-form-group">
+                    <label for="dogum_tarihi">Doğum Tarihi</label>
+                    <input type="date" id="dogum_tarihi" name="dogum_tarihi" class="profile-form-control" value="{{ current_user.birthdate.strftime('%Y-%m-%d') }}" required>
+                </div>
+
+                <div class="profile-form-group">
+                    <label for="cinsiyet">Cinsiyet</label>
+                    <select id="cinsiyet" name="cinsiyet" class="profile-form-select" required>
+                        <option value="erkek" {% if current_user.gender == 'erkek' %}selected{% endif %}>Erkek</option>
+                        <option value="kadin" {% if current_user.gender == 'kadin' %}selected{% endif %}>Kadın</option>
+                    </select>
+                </div>
+
+                <div class="profile-form-group">
+                    <label for="meslek">Meslek</label>
+                    <select id="meslek" name="meslek" class="profile-form-select" required>
+                        <option value="Yönetici Avukat" {% if current_user.role == 'Yönetici Avukat' %}selected{% endif %}>Yönetici Avukat</option>
+                        <option value="Avukat" {% if current_user.role == 'Avukat' %}selected{% endif %}>Avukat</option>
+                        <option value="Stajyer Avukat" {% if current_user.role == 'Stajyer Avukat' %}selected{% endif %}>Stajyer Avukat</option>
+                        <option value="Takip Elemanı" {% if current_user.role == 'Takip Elemanı' %}selected{% endif %}>Takip Elemanı</option>
+                        <option value="Muhasebe" {% if current_user.role == 'Muhasebe' %}selected{% endif %}>Muhasebe</option>
+                        <option value="Ulaşım" {% if current_user.role == 'Ulaşım' %}selected{% endif %}>Ulaşım</option>
+                        <option value="Sekreter" {% if current_user.role == 'Sekreter' %}selected{% endif %}>Sekreter</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="profile-form-actions">
+                <a href="{{ url_for('settings') }}" class="profile-btn profile-btn-secondary">
+                    <i class="fas fa-times"></i>
+                    İptal
+                </a>
+                <button type="submit" class="profile-btn profile-btn-primary">
+                    <i class="fas fa-save"></i>
+                    Değişiklikleri Kaydet
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+.profile-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: var(--primary-color);
+    border-radius: 15px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, 
+        rgba(45,49,60, 0.95) 0%,
+        rgba(45,49,60, 0.95) 100%);
+    z-index: 1;
+}
+
+.profile-header h1, .profile-header p {
+    position: relative;
+    z-index: 2;
+}
+
+.profile-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.profile-header p {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    color: white;
+}
+
+.profile-content {
+    background: var(--bg-color);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+}
+
+.profile-image-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+}
+
+.profile-photo-container {
+    position: relative;
+    width: 400px !important;
+    height: 400px !important;
+    min-width: 400px !important;
+    min-height: 400px !important;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid var(--primary-color);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    background-color: #f8f9fa;
+}
+
+.profile-photo-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.profile-image-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 35%;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.5), transparent);
+    padding: 2rem;
+    text-align: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.profile-photo-container:hover .profile-image-overlay {
+    opacity: 1;
+}
+
+.profile-upload-btn {
+    color: white;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.profile-upload-btn:hover {
+    transform: translateY(-5px);
+}
+
+.profile-upload-btn i {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.profile-upload-btn span {
+    font-size: 1.2rem;
+    font-weight: 500;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.profile-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+}
+
+.profile-form-group {
+    position: relative;
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.profile-form-group:hover {
+    background: none;
+}
+
+.profile-form-group:has(.profile-form-control:focus),
+.profile-form-group:has(.profile-form-select:focus) {
+    background: none;
+    box-shadow: none;
+}
+
+.profile-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.profile-form-control,
+.profile-form-select {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    font-size: 0.9rem;
+    background: var(--bg-secondary);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+    height: auto;
+    line-height: 1.5;
+}
+
+.profile-form-control:focus,
+.profile-form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+    outline: none;
+}
+
+.profile-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--border-color);
+}
+
+.profile-btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.profile-btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.profile-btn-secondary {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.profile-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Dark mode styles */
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --text-color: #fff;
+    --text-secondary: #bbb;
+    --border-color: #404040;
+    --accent-color: #4a148c;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .profile-form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-container {
+        padding: 1rem;
+    }
+    
+    .profile-content {
+        padding: 1.5rem;
+    }
+    
+    .profile-photo-container {
+        width: 300px !important;
+        height: 300px !important;
+        min-width: 300px !important;
+        min-height: 300px !important;
+    }
+    
+    .profile-upload-btn i {
+        font-size: 2rem;
+    }
+    
+    .profile-upload-btn span {
+        font-size: 1rem;
+    }
+    
+    .profile-btn {
+        padding: 0.8rem 1.5rem;
+    }
+}
+</style>
+
+<script>
+let isSubmitting = false;
+
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+
+        if (file.size > maxSize) {
+            alert('Dosya boyutu çok büyük. Lütfen 5MB\'dan küçük bir dosya seçin.');
+            input.value = '';
+            return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+            alert('Lütfen geçerli bir resim dosyası seçin.');
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.getElementById('preview-image');
+            img.src = e.target.result;
+            img.style.opacity = '0';
+            setTimeout(() => {
+                img.style.opacity = '1';
+            }, 100);
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+document.getElementById('profile-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (isSubmitting) {
+        return;
+    }
+    
+    isSubmitting = true;
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Kaydediliyor...';
+    submitButton.disabled = true;
+    
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Sunucu yanıt vermedi');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            if (data.profile_image) {
+                const newImagePath = "{{ url_for('static', filename='') }}" + data.profile_image;
+                const timestamp = new Date().getTime();
+                
+                // Profil sayfasındaki büyük fotoğrafı güncelle
+                document.getElementById('preview-image').src = `${newImagePath}?t=${timestamp}`;
+                
+                // Header'daki küçük profil resmini güncelle (boyutunu değiştirmeden)
+                const headerProfileImage = document.querySelector('.profile-menu .profile-image');
+                if (headerProfileImage) {
+                    headerProfileImage.src = `${newImagePath}?t=${timestamp}`;
+                }
+            }
+            alert('Profil başarıyla güncellendi');
+        } else {
+            throw new Error(data.message || 'Profil güncellenirken bir hata oluştu');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert(error.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
+    })
+    .finally(() => {
+        isSubmitting = false;
+        submitButton.innerHTML = originalText;
+        submitButton.disabled = false;
+    });
+});
+</script>
+{% endblock %} 

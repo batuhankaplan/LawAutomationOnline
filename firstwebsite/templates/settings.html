@@ -1,0 +1,928 @@
+{% extends "layout.html" %}
+
+{% block title %}Ayarlar{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <div class="settings-header">
+        <h1>Hesap Ayarları</h1>
+        <p>Hesabınızla ilgili tüm ayarları buradan yönetebilirsiniz</p>
+    </div>
+
+    <div class="settings-content">
+        <!-- Güvenlik Ayarları -->
+        <div class="settings-section">
+            <div class="section-header">
+                <i class="fas fa-shield-alt"></i>
+                <h2>Güvenlik</h2>
+            </div>
+            <div class="section-content">
+                <div class="settings-item">
+                    <div class="item-content">
+                        <h3>Şifre Değiştirme</h3>
+                        <p>Hesap güvenliğiniz için şifrenizi düzenli olarak değiştirin</p>
+                    </div>
+                    <button class="password-change-btn" onclick="showPasswordModal()">
+                        Şifre Değiştir
+                    </button>
+                </div>
+
+                <div class="settings-item">
+                    <div class="item-content">
+                        <h3>İki Faktörlü Doğrulama (Yapım Aşamasında)</h3>
+                        <p>Hesabınızı SMS doğrulaması ile koruyun</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="twoFactorAuth">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bildirim Ayarları -->
+        <div class="settings-section">
+            <div class="section-header">
+                <i class="fas fa-bell"></i>
+                <h2>Bildirimler</h2>
+            </div>
+            <div class="section-content">
+                <div class="settings-item">
+                    <div class="item-content">
+                        <h3>E-posta Bildirimleri (Yapım Aşamasında)</h3>
+                        <p>Duruşma ve ödeme bildirimleri</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="emailNotifications" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
+                <div class="settings-item">
+                    <div class="item-content">
+                        <h3>Sistem Bildirimleri (Yapım Aşamasında)</h3>
+                        <p>Sistem güncellemeleri ve önemli duyurular</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="systemNotifications" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Görünüm Ayarları -->
+        <div class="settings-section">
+            <div class="section-header">
+                <i class="fas fa-paint-brush"></i>
+                <h2>Görünüm</h2>
+            </div>
+            <div class="section-content">
+                <div class="settings-item">
+                    <div class="item-content">
+                        <h3>Tema (Yapım Aşamasında)</h3>
+                        <p>Karanlık veya aydınlık tema seçin</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="darkMode">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
+                <div class="settings-item">
+                    <div class="item-content">
+                        <h3>Yazı Boyutu</h3>
+                        <p>İçerik yazı boyutunu ayarlayın</p>
+                    </div>
+                    <div class="font-size-controls">
+                        <button class="font-size-btn" data-size="small">A</button>
+                        <button class="font-size-btn active" data-size="medium">A</button>
+                        <button class="font-size-btn" data-size="large">A</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hesap Silme -->
+        <div class="settings-section danger">
+            <div class="section-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h2>Tehlikeli Bölge</h2>
+            </div>
+            <div class="section-content">
+                <div class="settings-item">
+                    <div class="item-content">
+                        <h3>Hesabı Sil</h3>
+                        <p class="warning-text">Bu işlem geri alınamaz. Tüm verileriniz silinecektir.</p>
+                    </div>
+                    <button class="delete-btn" onclick="showDeleteConfirmation()">
+                        <i class="fas fa-trash-alt"></i>
+                        Hesabı Sil
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Şifre Değiştirme Modal -->
+<div class="modal" id="passwordModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Şifre Değiştir</h2>
+            <button class="close-btn" onclick="closeModal('passwordModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="passwordForm" action="{{ url_for('change_password') }}" method="POST">
+            <div class="form-group">
+                <label>Mevcut Şifre</label>
+                <input type="password" name="current_password" required>
+            </div>
+            <div class="form-group">
+                <label>Yeni Şifre</label>
+                <input type="password" name="new_password" required>
+            </div>
+            <div class="form-group">
+                <label>Yeni Şifre Tekrar</label>
+                <input type="password" name="confirm_password" required>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" onclick="closeModal('passwordModal')">İptal</button>
+                <button type="submit" class="save-btn">Kaydet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Hesap Silme Modal -->
+<div class="modal" id="deleteConfirmModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Hesap Silme Onayı</h2>
+            <button class="close-btn" onclick="closeModal('deleteConfirmModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="deleteAccountForm" action="{{ url_for('delete_account') }}" method="POST">
+            <div class="form-group">
+                <label>Onay için şifrenizi girin</label>
+                <input type="password" name="password" required>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" onclick="closeModal('deleteConfirmModal')">İptal</button>
+                <button type="submit" class="delete-btn">Hesabı Sil</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.settings-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: var(--bg-color);
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+.settings-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgb(45,49,60);
+    border-radius: 15px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.settings-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, 
+        rgba(45,49,60, 0.95) 0%,
+        rgba(45,49,60, 0.95) 100%);
+    z-index: 1;
+}
+
+.settings-header h1, .settings-header p {
+    position: relative;
+    z-index: 2;
+}
+
+.settings-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.settings-header p {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    color: white;
+}
+
+.settings-content {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.settings-section {
+    background: var(--bg-secondary);
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+.settings-section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.section-header i {
+    font-size: 1.8rem;
+    margin-right: 1rem;
+    color: var(--primary-color);
+    background: var(--bg-hover);
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.8rem;
+    background: var(--bg-color);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+.settings-item:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.settings-item:last-child {
+    margin-bottom: 0;
+}
+
+.item-content {
+    flex: 1;
+}
+
+.item-content h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.item-content p {
+    margin: 0.5rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.form-actions {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-secondary {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 26px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border-color);
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.font-size-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.font-size-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.font-size-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.font-size-btn:hover {
+    border-color: var(--primary-color);
+}
+
+/* Dark mode styles */
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --bg-hover: #363636;
+    --text-color: #fff;
+    --text-secondary: #bbb;
+    --border-color: #404040;
+    --accent-color: #4a148c;
+}
+
+/* Modal styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--bg-color);
+    border-radius: 15px;
+    padding: 2.5rem;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    border: none;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: rgb(45,49,60);
+    font-weight: 600;
+}
+
+.modal .form-group {
+    margin-bottom: 1.5rem;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.modal .form-group label {
+    display: block;
+    margin-bottom: 0.8rem;
+    color: rgb(45,49,60);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.modal .form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.modal .form-group input:focus {
+    border-color: rgb(45,49,60);
+    box-shadow: 0 0 0 3px rgba(45,49,60, 0.1);
+    outline: none;
+    background: white;
+}
+
+.modal .form-group input::placeholder {
+    color: #adb5bd;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.modal .cancel-btn {
+    padding: 10px 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    color: rgb(45,49,60);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal .cancel-btn:hover {
+    background: #f8f9fa;
+    border-color: rgb(45,49,60);
+}
+
+.modal .save-btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    background: rgb(45,49,60);
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal .save-btn:hover {
+    background: rgba(45,49,60, 0.9);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: rgb(45,49,60);
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+}
+
+.close-btn:hover {
+    opacity: 1;
+    transform: rotate(90deg);
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+    .settings-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .settings-container {
+        padding: 1rem;
+        margin: 1rem;
+    }
+    
+    .settings-header {
+        padding: 1.5rem;
+    }
+    
+    .settings-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .settings-section {
+        padding: 1.5rem;
+    }
+}
+
+/* Buton stilleri */
+.action-btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.action-btn i {
+    font-size: 1.2rem;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    background: var(--hover-color);
+}
+
+.delete-btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #dc3545;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.delete-btn i {
+    font-size: 1.2rem;
+}
+
+.delete-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    background: #c82333;
+}
+
+/* Ayar öğeleri stilleri */
+.settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.8rem;
+    background: var(--bg-color);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+.settings-item:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.settings-item:last-child {
+    margin-bottom: 0;
+}
+
+.item-content h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.item-content p {
+    margin: 0.5rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Dark mode styles */
+[data-theme="dark"] .action-btn {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] .action-btn:hover {
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .settings-item {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .settings-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Değişken tanımlamaları */
+:root {
+    --primary-color: #1a1a2e;
+    --accent-color: #4a148c;
+    --hover-color: #16213e;
+    --bg-color: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-hover: #f0f0f0;
+    --text-color: #2c3e50;
+    --text-secondary: #666;
+    --border-color: #dee2e6;
+}
+
+/* Şifre değiştir butonu için özel stil */
+.password-change-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgb(45,49,60);
+    color: white;
+    display: inline-block;
+}
+
+.password-change-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    background: rgba(45,49,60, 0.9);
+}
+</style>
+
+<!-- Kaydet ve İptal butonları -->
+<div class="form-actions">
+    <a href="{{ url_for('anasayfa') }}" class="btn btn-secondary">
+        <i class="fas fa-times"></i>
+        İptal
+    </a>
+    <button type="button" class="btn btn-primary" onclick="saveSettings()">
+        <i class="fas fa-save"></i>
+        Değişiklikleri Kaydet
+    </button>
+</div>
+
+<script>
+// Modal fonksiyonları
+function showPasswordModal() {
+    document.getElementById('passwordModal').style.display = 'flex';
+}
+
+function showDeleteConfirmation() {
+    document.getElementById('deleteConfirmModal').style.display = 'flex';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Tema değiştirme fonksiyonu
+function toggleTheme(isDark) {
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    document.body.style.backgroundColor = isDark ? '#1a1a1a' : '#f8f9fa';
+    document.body.style.color = isDark ? '#fff' : '#212529';
+    
+    // Tema tercihini kaydet
+    localStorage.setItem('darkMode', isDark);
+    
+    fetch('/update_theme_preference', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            theme: isDark ? 'dark' : 'light'
+        })
+    });
+}
+
+// Tema toggle event listener
+document.getElementById('darkMode').addEventListener('change', function() {
+    toggleTheme(this.checked);
+});
+
+// Yazı boyutu
+document.querySelectorAll('.font-size-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Diğer butonlardan active class'ı kaldır
+        document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
+        // Tıklanan butona active class ekle
+        this.classList.add('active');
+        
+        const size = this.dataset.size;
+        
+        // HTML root elementinden eski font-size class'ını kaldır
+        document.documentElement.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');
+        // Yeni font-size class'ını ekle
+        document.documentElement.classList.add(`font-size-${size}`);
+        
+        // Tercihi localStorage'a kaydet
+        localStorage.setItem('fontSize', size);
+        
+        // Sunucuya kaydet
+        fetch('/update_settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                fontSize: size
+            })
+        });
+    });
+});
+
+// Sayfa yüklendiğinde font boyutunu ayarla
+document.addEventListener('DOMContentLoaded', function() {
+    // Font size ayarını localStorage'dan al
+    const fontSize = localStorage.getItem('fontSize') || 'medium';
+    
+    // Butonları güncelle
+    document.querySelectorAll('.font-size-btn').forEach(btn => {
+        if (btn.dataset.size === fontSize) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    // HTML root elementinden eski font-size class'ını kaldır
+    document.documentElement.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');
+    // Yeni font-size class'ını ekle
+    document.documentElement.classList.add(`font-size-${fontSize}`);
+});
+
+// İki faktörlü doğrulama
+document.getElementById('twoFactorAuth').addEventListener('change', function() {
+    if (this.checked) {
+        fetch('/enable_2fa', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                this.checked = false;
+                alert(data.message || 'İki faktörlü doğrulama aktifleştirilemedi.');
+            }
+        })
+        .catch(error => {
+            this.checked = false;
+            alert('Bir hata oluştu.');
+        });
+    }
+});
+
+// Modal dışına tıklandığında kapatma
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// Form doğrulama
+document.getElementById('passwordForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const newPassword = this.querySelector('input[name="new_password"]').value;
+    const confirmPassword = this.querySelector('input[name="confirm_password"]').value;
+    
+    if (newPassword !== confirmPassword) {
+        alert('Şifreler eşleşmiyor!');
+        return;
+    }
+    
+    this.submit();
+});
+
+// Ayarları kaydetme fonksiyonu
+function saveSettings() {
+    // Tüm ayarları topla
+    const settings = {
+        theme: document.getElementById('darkMode').checked ? 'dark' : 'light',
+        fontSize: document.querySelector('.font-size-btn.active').dataset.size,
+        emailNotifications: document.getElementById('emailNotifications').checked,
+        systemNotifications: document.getElementById('systemNotifications').checked,
+        twoFactorAuth: document.getElementById('twoFactorAuth').checked
+    };
+    
+    // Ayarları kaydet
+    fetch('/update_settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Başarılı bildirim göster
+            alert('Ayarlar başarıyla kaydedildi!');
+        } else {
+            // Hata bildirim göster
+            alert('Ayarlar kaydedilirken bir hata oluştu!');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Bir hata oluştu!');
+    });
+}
+</script>
+{% endblock %} 
