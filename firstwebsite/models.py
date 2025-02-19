@@ -183,3 +183,89 @@ class CalendarEvent(db.Model):
     assigned_to = db.Column(db.String(100))  # Atanan kişi
     deadline_date = db.Column(db.Date)  # Son gün tarihi
     is_completed = db.Column(db.Boolean, default=False)  # Tamamlanma durumu
+
+class WorkerInterview(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    # Madde 1: Kişisel Bilgiler
+    fullName = db.Column(db.String(100), nullable=False)
+    tcNo = db.Column(db.String(11), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    address = db.Column(db.Text, nullable=False)
+    
+    # Madde 2: İşe Giriş Bilgileri
+    startDate = db.Column(db.Date, nullable=False)
+    insuranceDate = db.Column(db.Date, nullable=False)
+    
+    # Madde 3: İşten Ayrılma Bilgileri
+    endDate = db.Column(db.Date, nullable=False)
+    endReason = db.Column(db.Text, nullable=False)
+    
+    # Madde 4: İşyeri Bilgileri
+    companyName = db.Column(db.String(100), nullable=False)
+    businessType = db.Column(db.String(100), nullable=False)
+    companyAddress = db.Column(db.Text, nullable=False)
+    
+    # Madde 5: Görev Bilgileri
+    position = db.Column(db.String(100), nullable=False)
+    
+    # Madde 6: Çalışma Düzeni
+    workHours = db.Column(db.String(100), nullable=False)
+    overtime = db.Column(db.Text)
+    
+    # Madde 7: Ücret ve Yardımlar
+    salary = db.Column(db.Float, nullable=False)
+    transportation = db.Column(db.Float)
+    food = db.Column(db.Float)
+    benefits = db.Column(db.Text)
+    
+    # Madde 8: Tatil Bilgileri
+    weeklyHoliday = db.Column(db.String(50), nullable=False)
+    holidays = db.Column(db.Text)
+    
+    # Madde 9: İzin ve Alacak Bilgileri
+    annualLeave = db.Column(db.Text)
+    unpaidSalary = db.Column(db.Text)
+    
+    # Madde 10: Tanıklar
+    witness1 = db.Column(db.String(100))
+    witness2 = db.Column(db.String(100))
+    witness3 = db.Column(db.String(100))
+    witness4 = db.Column(db.String(100))
+    
+    # Ek Bilgiler
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'fullName': self.fullName,
+            'tcNo': self.tcNo,
+            'phone': self.phone,
+            'address': self.address,
+            'startDate': self.startDate.strftime('%Y-%m-%d'),
+            'insuranceDate': self.insuranceDate.strftime('%Y-%m-%d'),
+            'endDate': self.endDate.strftime('%Y-%m-%d'),
+            'endReason': self.endReason,
+            'companyName': self.companyName,
+            'businessType': self.businessType,
+            'companyAddress': self.companyAddress,
+            'position': self.position,
+            'workHours': self.workHours,
+            'overtime': self.overtime,
+            'salary': self.salary,
+            'transportation': self.transportation,
+            'food': self.food,
+            'benefits': self.benefits,
+            'weeklyHoliday': self.weeklyHoliday,
+            'holidays': self.holidays,
+            'annualLeave': self.annualLeave,
+            'unpaidSalary': self.unpaidSalary,
+            'witness1': self.witness1,
+            'witness2': self.witness2,
+            'witness3': self.witness3,
+            'witness4': self.witness4,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+        }

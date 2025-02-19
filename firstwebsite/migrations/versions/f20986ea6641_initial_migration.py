@@ -1,8 +1,8 @@
-"""initial migration
+"""Initial migration
 
-Revision ID: d6cec6fb83cd
+Revision ID: f20986ea6641
 Revises: 
-Create Date: 2025-02-12 14:23:16.061134
+Create Date: 2025-02-19 15:32:16.577179
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'd6cec6fb83cd'
+revision = 'f20986ea6641'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -35,6 +35,8 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('email', sa.String(length=120), nullable=False),
     sa.Column('username', sa.String(length=80), nullable=False),
+    sa.Column('first_name', sa.String(length=50), nullable=False),
+    sa.Column('last_name', sa.String(length=50), nullable=False),
     sa.Column('phone', sa.String(length=10), nullable=False),
     sa.Column('password_hash', sa.String(length=128), nullable=True),
     sa.Column('role', sa.String(length=50), nullable=True),
@@ -42,10 +44,16 @@ def upgrade():
     sa.Column('birthdate', sa.Date(), nullable=True),
     sa.Column('profile_image', sa.String(length=200), nullable=True),
     sa.Column('theme_preference', sa.String(length=10), nullable=True),
+    sa.Column('font_size', sa.String(length=10), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('is_admin', sa.Boolean(), nullable=True),
+    sa.Column('is_approved', sa.Boolean(), nullable=True),
+    sa.Column('approval_date', sa.DateTime(), nullable=True),
+    sa.Column('approved_by', sa.Integer(), nullable=True),
+    sa.Column('permissions', sa.JSON(), nullable=True),
+    sa.ForeignKeyConstraint(['approved_by'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email'),
-    sa.UniqueConstraint('phone'),
     sa.UniqueConstraint('username')
     )
     op.create_table('announcement',
@@ -92,14 +100,37 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('activity_log',
+    op.create_table('worker_interview',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('activity_type', sa.String(length=50), nullable=False),
-    sa.Column('description', sa.String(length=250), nullable=False),
-    sa.Column('timestamp', sa.DateTime(), nullable=False),
+    sa.Column('fullName', sa.String(length=100), nullable=False),
+    sa.Column('tcNo', sa.String(length=11), nullable=False),
+    sa.Column('phone', sa.String(length=20), nullable=False),
+    sa.Column('address', sa.Text(), nullable=False),
+    sa.Column('startDate', sa.Date(), nullable=False),
+    sa.Column('insuranceDate', sa.Date(), nullable=False),
+    sa.Column('endDate', sa.Date(), nullable=False),
+    sa.Column('endReason', sa.Text(), nullable=False),
+    sa.Column('companyName', sa.String(length=100), nullable=False),
+    sa.Column('businessType', sa.String(length=100), nullable=False),
+    sa.Column('companyAddress', sa.Text(), nullable=False),
+    sa.Column('position', sa.String(length=100), nullable=False),
+    sa.Column('workHours', sa.String(length=100), nullable=False),
+    sa.Column('overtime', sa.Text(), nullable=True),
+    sa.Column('salary', sa.Float(), nullable=False),
+    sa.Column('transportation', sa.Float(), nullable=True),
+    sa.Column('food', sa.Float(), nullable=True),
+    sa.Column('benefits', sa.Text(), nullable=True),
+    sa.Column('weeklyHoliday', sa.String(length=50), nullable=False),
+    sa.Column('holidays', sa.Text(), nullable=True),
+    sa.Column('annualLeave', sa.Text(), nullable=True),
+    sa.Column('unpaidSalary', sa.Text(), nullable=True),
+    sa.Column('witness1', sa.String(length=100), nullable=True),
+    sa.Column('witness2', sa.String(length=100), nullable=True),
+    sa.Column('witness3', sa.String(length=100), nullable=True),
+    sa.Column('witness4', sa.String(length=100), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('related_case_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['related_case_id'], ['case_file.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -142,15 +173,34 @@ def upgrade():
     sa.ForeignKeyConstraint(['case_id'], ['case_file.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('activity_log',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('activity_type', sa.String(length=50), nullable=False),
+    sa.Column('description', sa.String(length=250), nullable=False),
+    sa.Column('details', sa.JSON(), nullable=True),
+    sa.Column('timestamp', sa.DateTime(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('related_case_id', sa.Integer(), nullable=True),
+    sa.Column('related_announcement_id', sa.Integer(), nullable=True),
+    sa.Column('related_event_id', sa.Integer(), nullable=True),
+    sa.Column('related_payment_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['related_announcement_id'], ['announcement.id'], ),
+    sa.ForeignKeyConstraint(['related_case_id'], ['case_file.id'], ),
+    sa.ForeignKeyConstraint(['related_event_id'], ['calendar_event.id'], ),
+    sa.ForeignKeyConstraint(['related_payment_id'], ['client.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     # ### end Alembic commands ###
 
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_table('activity_log')
     op.drop_table('expense')
     op.drop_table('document')
     op.drop_table('calendar_event')
-    op.drop_table('activity_log')
+    op.drop_table('worker_interview')
     op.drop_table('payment')
     op.drop_table('notification')
     op.drop_table('case_file')

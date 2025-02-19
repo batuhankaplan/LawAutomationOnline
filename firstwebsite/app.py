@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory
+from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
@@ -14,10 +14,15 @@ from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
 import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from firstwebsite.models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent
+from firstwebsite.models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview
 import uuid
 from PIL import Image
 from functools import wraps
+from io import BytesIO
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 
 def permission_required(permission):
     def decorator(f):
@@ -32,7 +37,7 @@ def permission_required(permission):
 
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['MAIL_SERVER'] = 'smtp-mail.outlook.com'
@@ -1764,6 +1769,248 @@ def duyuru_sil(duyuru_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/isci_gorusme')
+@login_required
+def isci_gorusme():
+    return render_template('isci_gorusme.html')
+
+@app.route('/save_worker_interview', methods=['POST'])
+@login_required
+def save_worker_interview():
+    try:
+        data = request.get_json()
+        
+        # Tarihleri datetime.date formatına çevir
+        start_date = datetime.strptime(data.get('startDate'), '%Y-%m-%d').date()
+        insurance_date = datetime.strptime(data.get('insuranceDate'), '%Y-%m-%d').date()
+        end_date = datetime.strptime(data.get('endDate'), '%Y-%m-%d').date()
+        
+        # Yeni görüşme kaydı oluştur
+        interview = WorkerInterview(
+            fullName=data.get('fullName'),
+            tcNo=data.get('tcNo'),
+            phone=data.get('phone'),
+            address=data.get('address'),
+            startDate=start_date,
+            insuranceDate=insurance_date,
+            endDate=end_date,
+            endReason=data.get('endReason'),
+            companyName=data.get('companyName'),
+            businessType=data.get('businessType'),
+            companyAddress=data.get('companyAddress'),
+            position=data.get('position'),
+            workHours=data.get('workHours'),
+            overtime=data.get('overtime'),
+            salary=float(data.get('salary', 0)),
+            transportation=float(data.get('transportation', 0)) if data.get('transportation') else None,
+            food=float(data.get('food', 0)) if data.get('food') else None,
+            benefits=data.get('benefits'),
+            weeklyHoliday=data.get('weeklyHoliday'),
+            holidays=data.get('holidays'),
+            annualLeave=data.get('annualLeave'),
+            unpaidSalary=data.get('unpaidSalary'),
+            witness1=data.get('witness1'),
+            witness2=data.get('witness2'),
+            witness3=data.get('witness3'),
+            witness4=data.get('witness4'),
+            user_id=current_user.id
+        )
+        
+        db.session.add(interview)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Form başarıyla kaydedildi.'})
+        
+    except Exception as e:
+        print(f"Hata: {str(e)}")  # Hatayı konsola yazdır
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Form kaydedilirken bir hata oluştu: {str(e)}'})
+
+@app.route('/get_worker_interviews')
+@login_required
+def get_worker_interviews():
+    try:
+        interviews = WorkerInterview.query.filter_by(user_id=current_user.id).order_by(WorkerInterview.created_at.desc()).all()
+        return jsonify({
+            'success': True,
+            'forms': [interview.to_dict() for interview in interviews]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/get_worker_interview/<int:interview_id>')
+@login_required
+def get_worker_interview(interview_id):
+    try:
+        interview = WorkerInterview.query.get_or_404(interview_id)
+        if interview.user_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Yetkisiz erişim'}), 403
+            
+        return jsonify({
+            'success': True,
+            'form': interview.to_dict()
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/delete_worker_interview/<int:interview_id>', methods=['DELETE'])
+@login_required
+def delete_worker_interview(interview_id):
+    try:
+        interview = WorkerInterview.query.get_or_404(interview_id)
+        if interview.user_id != current_user.id:
+            return jsonify({'success': False, 'error': 'Yetkisiz erişim'}), 403
+            
+        db.session.delete(interview)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/generate_worker_interview_pdf', methods=['POST'])
+@login_required
+def generate_worker_interview_pdf():
+    try:
+        data = request.get_json()
+        
+        # PDF oluşturmak için reportlab kullan
+        buffer = BytesIO()
+        
+        # PDF dokümanını oluştur
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=30,
+            leftMargin=30,
+            topMargin=30,
+            bottomMargin=30
+        )
+        
+        # Stil tanımlamaları
+        styles = getSampleStyleSheet()
+        styles.add(ParagraphStyle(
+            name='CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=14,
+            alignment=1,
+            spaceAfter=20
+        ))
+        
+        styles.add(ParagraphStyle(
+            name='SectionTitle',
+            parent=styles['Heading2'],
+            fontSize=12,
+            spaceAfter=10
+        ))
+        
+        styles.add(ParagraphStyle(
+            name='FieldLabel',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor=colors.black,
+            spaceAfter=5
+        ))
+        
+        styles.add(ParagraphStyle(
+            name='FieldValue',
+            parent=styles['Normal'],
+            fontSize=10,
+            leftIndent=20,
+            spaceAfter=10
+        ))
+        
+        # İçerik listesi
+        elements = []
+        
+        # Başlık
+        elements.append(Paragraph('İŞÇİ GÖRÜŞME TUTANAĞI', styles['CustomTitle']))
+        
+        # Form verilerini ekle
+        sections = [
+            ('1. KİŞİSEL BİLGİLER', [
+                ('İsim Soyisim', data.get('fullName')),
+                ('T.C. Kimlik No', data.get('tcNo')),
+                ('Telefon', data.get('phone')),
+                ('Adres', data.get('address'))
+            ]),
+            ('2. İŞE GİRİŞ BİLGİLERİ', [
+                ('İşe Giriş Tarihi', data.get('startDate')),
+                ('Sigorta Başlangıç Tarihi', data.get('insuranceDate'))
+            ]),
+            ('3. İŞTEN AYRILMA BİLGİLERİ', [
+                ('İşten Ayrılma Tarihi', data.get('endDate')),
+                ('Ayrılma Sebebi', data.get('endReason'))
+            ]),
+            ('4. İŞYERİ BİLGİLERİ', [
+                ('İşyeri Adı/Unvanı', data.get('companyName')),
+                ('Faaliyet Konusu', data.get('businessType')),
+                ('İşyeri Adresi', data.get('companyAddress'))
+            ]),
+            ('5. GÖREV BİLGİLERİ', [
+                ('Görev/Pozisyon', data.get('position'))
+            ]),
+            ('6. ÇALIŞMA DÜZEN', [
+                ('Çalışma Saatleri', data.get('workHours')),
+                ('Fazla Mesai Bilgisi', data.get('overtime'))
+            ]),
+            ('7. ÜCRET VE YARDIMLAR', [
+                ('Ücret', data.get('salary')),
+                ('Yol Ücreti', data.get('transportation')),
+                ('Yemek Ücreti', data.get('food')),
+                ('Sosyal Yardımlar', data.get('benefits'))
+            ]),
+            ('8. TATİL BİLGİLERİ', [
+                ('Hafta Tatili', data.get('weeklyHoliday')),
+                ('Dini/Resmi Bayram Tatilleri', data.get('holidays'))
+            ]),
+            ('9. İZİN VE ALACAK BİLGİLERİ', [
+                ('Yıllık Ücretli İzin Alacağı', data.get('annualLeave')),
+                ('Maaş Alacağı', data.get('unpaidSalary'))
+            ]),
+            ('10. TANIKLAR', [
+                ('1. Tanık', data.get('witness1')),
+                ('2. Tanık', data.get('witness2')),
+                ('3. Tanık', data.get('witness3')),
+                ('4. Tanık', data.get('witness4'))
+            ])
+        ]
+        
+        # Her bölümü ekle
+        for section_title, fields in sections:
+            elements.append(Paragraph(section_title, styles['SectionTitle']))
+            
+            for field_label, field_value in fields:
+                if field_value:  # Boş olmayan alanları ekle
+                    elements.append(Paragraph(f'<b>{field_label}:</b>', styles['FieldLabel']))
+                    elements.append(Paragraph(str(field_value), styles['FieldValue']))
+            
+            elements.append(Spacer(1, 10))
+        
+        # İmza bölümü
+        elements.append(Spacer(1, 30))
+        elements.append(Paragraph('OKUDUM', styles['CustomTitle']))
+        elements.append(Paragraph('BEYANLARIM DOĞRULTUSUNDA HAZIRLANMIŞTIR', styles['CustomTitle']))
+        elements.append(Spacer(1, 50))
+        elements.append(Paragraph('İMZA', styles['CustomTitle']))
+        
+        # PDF oluştur
+        doc.build(elements)
+        
+        # PDF'i response olarak gönder
+        buffer.seek(0)
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f'isci_gorusme_{datetime.now().strftime("%Y%m%d")}.pdf',
+            mimetype='application/pdf'
+        )
+        
+    except Exception as e:
+        print(f"PDF oluşturma hatası: {str(e)}")  # Hatayı konsola yazdır
+        return jsonify({'success': False, 'message': f'PDF oluşturulurken bir hata oluştu: {str(e)}'}), 500
 
 if __name__ == '__main__':
     with app.app_context():

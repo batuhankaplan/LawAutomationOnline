@@ -7,7 +7,7 @@ YAPILACAKLAR:
 6) İş atama sistemi. #YAPILDI
 7) Kullanıcı sistemi geliştirilecek. Kullanıcı giriş sayfası için bootstrap kullanılacak. Kullanıcıların yaptıkları işlemlerin loglanması lazım. 
 Ayrıca tüm sayfalarda görünür olacak şekilde (layout.html'de) sağ üstte tarih ve saat bilgisin sağ tarafında kullanıcı ismi ve kullanıcının yuvarlak bir resim boxu olmalı.
-Kullanıcının ufak yuvarlak resim boxunun üstüne basınca seçenekler açılacak. Profil / Ayarlar / Çıkış gibi seçenekler olacak. #YAPILDI
+Kullanıcının ufak yuvarlak resim boxunun üstüne basınca seçenekler açılacak. Profil / Ayarlar / Çıkış gibi seçenekler olacak. #YAPILDI (fakat hala kullanıcı yetkileri tam senkron değil)
 8) Son işlemler gösterim tablosunda işlemi hangi kullancının yaptığı gösterilecek. (Bunun için kullanıcı giriş bilgilerinde kayıt olurken kullandığı isim kullanılacak.)
 9) İşçi görüşme tutanağı formu eklenebilir.
 10) Örnek dilekçe yükleme ve sorgulama sistemi eklenebilir.

@@ -502,6 +502,9 @@
                 </li>
                 {% endif %}
                 
+                <!-- İşçi Görüşme Formu -->
+                <li><a href="{{ url_for('isci_gorusme') }}"><i class="material-icons">description</i>İşçi Görüşme Formu</a></li>
+                
                 {% if current_user.has_permission('duyuru_goruntule') %}
                 <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
                 {% endif %}
