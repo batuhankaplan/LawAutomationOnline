@@ -2,15 +2,17 @@ YAPILACAKLAR:
 1) Takvimdeki etkinlik seçeneklerine e-duruşma seçeneği de eklenecek. #YAPIlLDI
 2) Ödeme silme butonu yok. #YAPILDI
 3) (Ödemelere açıklama ekleme yok) #YAPILDI
-4) Ceza infaz hesaplama.
+4) Ceza infaz hesaplama. #YAPILDI
 5) Son gün uyarısı.
-6) İş atama sistemi.
+6) İş atama sistemi. #YAPILDI
 7) Kullanıcı sistemi geliştirilecek. Kullanıcı giriş sayfası için bootstrap kullanılacak. Kullanıcıların yaptıkları işlemlerin loglanması lazım. 
 Ayrıca tüm sayfalarda görünür olacak şekilde (layout.html'de) sağ üstte tarih ve saat bilgisin sağ tarafında kullanıcı ismi ve kullanıcının yuvarlak bir resim boxu olmalı.
-Kullanıcının ufak yuvarlak resim boxunun üstüne basınca seçenekler açılacak. Profil / Ayarlar / Çıkış gibi seçenekler olacak.
+Kullanıcının ufak yuvarlak resim boxunun üstüne basınca seçenekler açılacak. Profil / Ayarlar / Çıkış gibi seçenekler olacak. #YAPILDI
 8) Son işlemler gösterim tablosunda işlemi hangi kullancının yaptığı gösterilecek. (Bunun için kullanıcı giriş bilgilerinde kayıt olurken kullandığı isim kullanılacak.)
 9) İşçi görüşme tutanağı formu eklenebilir.
 10) Örnek dilekçe yükleme ve sorgulama sistemi eklenebilir.
+11) Ücret tarifeleri sisteme yüklenecek. (TBB asgari tarife, İst Barosu tavsiye niteliğindeki tarife, Bizim ihtar dilekçe danışma ücreti vs tarifemiz)
+12) Ödemeler ile ilgili istatislik bilgileri, yıllık aylık, günlük ödeme istatistikleri, dosya türüne göre ortalama alınan ödemeler, dosya türlerine göre toplam alınan ödemeler, ödeme tarihlerine göre(yıllık aylık günlük) grafik gösterimi,
 
 HATA VE BUGLAR:
 1) (mesela duyurulara bir duyuru ekliyorum, duyurular sayfasında "Duyuru eklendi" uyarısı gelmiyor). (image upload)

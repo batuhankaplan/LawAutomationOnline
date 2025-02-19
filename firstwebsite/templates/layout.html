@@ -389,6 +389,49 @@
         height: 100%;
         object-fit: cover;
     }
+
+    /* Yetkisiz menü öğeleri için stiller */
+    .nav-links a.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        position: relative;
+    }
+
+    .nav-links a.disabled:hover {
+        background: none;
+    }
+
+    .nav-links a.disabled::after {
+        content: 'Bu işlem için yetkiniz yok';
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(220, 53, 69, 0.9);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        margin-left: 10px;
+        z-index: 1000;
+    }
+
+    .nav-links a.disabled:hover::after {
+        opacity: 1;
+    }
+
+    .submenu li a.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .submenu li a.disabled:hover {
+        background: none;
+    }
     </style>
 </head>
 
@@ -401,9 +444,13 @@
             </div>
             <ul class="nav-links">
                 <li><a href="{{ url_for('anasayfa') }}"><i class="material-icons">home</i>Ana Sayfa</a></li>
+                
+                {% if current_user.has_permission('takvim_goruntule') %}
                 <li><a href="{{ url_for('takvim') }}"><i class="material-icons">calendar_today</i>Takvim</a></li>
+                {% endif %}
                 
                 <!-- Dosyalarım menüsü -->
+                {% if current_user.has_permission('dosya_sorgula') or current_user.has_permission('dosya_ekle') %}
                 <li class="has-submenu">
                     <a href="#" class="menu-trigger">
                         <div class="menu-left">
@@ -413,12 +460,20 @@
                         <i class="material-icons menu-arrow">chevron_right</i>
                     </a>
                     <ul class="submenu">
+                        {% if current_user.has_permission('dosya_sorgula') %}
                         <li><a href="{{ url_for('dosya_sorgula') }}"><i class="material-icons">search</i>Dosya Sorgula</a></li>
+                        {% endif %}
+                        {% if current_user.has_permission('dosya_ekle') %}
                         <li><a href="{{ url_for('dosya_ekle') }}"><i class="material-icons">add</i>Dosya Ekle</a></li>
+                        {% endif %}
                     </ul>
                 </li>
+                {% endif %}
                 
                 <!-- Hesaplamalar menüsü -->
+                {% if current_user.has_permission('faiz_hesaplama') or current_user.has_permission('harc_hesaplama') or 
+                   current_user.has_permission('isci_hesaplama') or current_user.has_permission('vekalet_hesaplama') or 
+                   current_user.has_permission('ceza_infaz_hesaplama') %}
                 <li class="has-submenu">
                     <a href="#" class="menu-trigger">
                         <div class="menu-left">
@@ -428,17 +483,33 @@
                         <i class="material-icons menu-arrow">chevron_right</i>
                     </a>
                     <ul class="submenu">
+                        {% if current_user.has_permission('faiz_hesaplama') %}
                         <li><a href="{{ url_for('hesaplamalar', type='faiz') }}"><i class="material-icons">trending_up</i>Faiz Hesaplama</a></li>
+                        {% endif %}
+                        {% if current_user.has_permission('harc_hesaplama') %}
                         <li><a href="{{ url_for('hesaplamalar', type='harc') }}"><i class="material-icons">account_balance</i>Harç Hesaplama</a></li>
+                        {% endif %}
+                        {% if current_user.has_permission('isci_hesaplama') %}
                         <li><a href="{{ url_for('hesaplamalar', type='isci') }}"><i class="material-icons">work</i>İşçi Alacağı Hesaplama</a></li>
+                        {% endif %}
+                        {% if current_user.has_permission('vekalet_hesaplama') %}
                         <li><a href="{{ url_for('hesaplamalar', type='vekalet') }}"><i class="material-icons">payments</i>Vekalet Ücreti Hesaplama</a></li>
+                        {% endif %}
+                        {% if current_user.has_permission('ceza_infaz_hesaplama') %}
                         <li><a href="{{ url_for('hesaplamalar', type='ceza_infaz') }}"><i class="material-icons">gavel</i>Ceza İnfaz Hesaplama</a></li>
+                        {% endif %}
                     </ul>
                 </li>
+                {% endif %}
                 
+                {% if current_user.has_permission('duyuru_goruntule') %}
                 <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
+                {% endif %}
                 
+                {% if current_user.has_permission('odeme_goruntule') %}
                 <li><a href="{{ url_for('odemeler') }}"><i class="material-icons">payment</i>Ödemeler</a></li>
+                {% endif %}
+                
                 <li><a href="{{ url_for('iletisim') }}"><i class="material-icons">contact_mail</i>İletişim</a></li>
             </ul>
         </nav>
@@ -479,6 +550,12 @@
                                     <i class="material-icons">settings</i>
                                     <span>Ayarlar</span>
                                 </a>
+                                {% if current_user.is_admin %}
+                                <a href="{{ url_for('admin_panel') }}" class="dropdown-item">
+                                    <i class="material-icons">admin_panel_settings</i>
+                                    <span>Yönetici Paneli</span>
+                                </a>
+                                {% endif %}
                                 <div class="dropdown-divider"></div>
                                 <a href="{{ url_for('logout') }}" class="dropdown-item">
                                     <i class="material-icons">exit_to_app</i>

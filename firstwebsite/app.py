@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session
+from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
@@ -13,11 +13,22 @@ import tempfile
 from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
 import requests
-from uyap_integration import UYAPIntegration
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent
+from firstwebsite.models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent
 import uuid
 from PIL import Image
+from functools import wraps
+
+def permission_required(permission):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.has_permission(permission):
+                flash('Bu işlem için yetkiniz bulunmamaktadır.', 'error')
+                return redirect(url_for('anasayfa'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = 'your_secret_key'
@@ -57,6 +68,33 @@ def login():
         
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
+            if not user.is_approved and not user.is_admin:
+                flash('Hesabınız henüz onaylanmamış.', 'warning')
+                return render_template('auth.html')
+            
+            # Admin kullanıcısı için varsayılan yetkileri ayarla
+            if user.is_admin and not user.permissions:
+                user.permissions = {
+                    'takvim_goruntule': True,
+                    'etkinlik_goruntule': True,
+                    'etkinlik_ekle': True,
+                    'etkinlik_duzenle': True,
+                    'etkinlik_sil': True,
+                    'duyuru_goruntule': True,
+                    'duyuru_ekle': True,
+                    'duyuru_duzenle': True,
+                    'duyuru_sil': True,
+                    'odeme_goruntule': True,
+                    'odeme_ekle': True,
+                    'odeme_duzenle': True,
+                    'odeme_sil': True,
+                    'dosya_sorgula': True,
+                    'dosya_ekle': True,
+                    'dosya_duzenle': True,
+                    'dosya_sil': True
+                }
+                db.session.commit()
+                
             login_user(user)
             next_page = request.args.get('next')
             return redirect(next_page or url_for('anasayfa'))
@@ -73,12 +111,13 @@ def register():
     if request.method == 'POST':
         email = request.form.get('email')
         username = request.form.get('username')
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
         password = request.form.get('password')
         role = request.form.get('role')
-        gender = request.form.get('gender')
-        phone = request.form.get('phone')  # Telefon numarasını al
+        gender = request.form.get('gender').lower()
+        phone = request.form.get('phone')
         
-        # Doğum tarihini birleştir
         try:
             birth_day = int(request.form.get('birth_day'))
             birth_month = int(request.form.get('birth_month'))
@@ -99,17 +138,21 @@ def register():
         user = User(
             email=email,
             username=username,
+            first_name=first_name,
+            last_name=last_name,
             role=role,
             gender=gender,
             birthdate=birthdate,
-            phone=phone  # Telefon numarasını ekle
+            phone=phone,
+            is_admin=False,
+            is_approved=False
         )
         user.set_password(password)
         
         db.session.add(user)
         db.session.commit()
         
-        flash('Kayıt başarılı! Şimdi giriş yapabilirsiniz.', 'success')
+        flash('Kayıt başarılı! Hesabınız yönetici onayı bekliyor.', 'info')
         return redirect(url_for('login'))
     
     return render_template('auth.html', show_register=True)
@@ -178,16 +221,20 @@ def update_profile():
 
             # Diğer profil bilgilerini güncelle
             user.username = request.form.get('username')
+            user.first_name = request.form.get('first_name')
+            user.last_name = request.form.get('last_name')
             user.email = request.form.get('email')
             user.phone = request.form.get('phone')
             user.role = request.form.get('meslek')
             user.gender = request.form.get('cinsiyet')
             
-            try:
-                birth_date = datetime.strptime(request.form.get('dogum_tarihi'), '%Y-%m-%d')
-                user.birthdate = birth_date
-            except ValueError:
-                return jsonify(success=False, message="Geçersiz doğum tarihi formatı")
+            # Doğum tarihi kontrolü ve dönüşümü
+            birth_date = request.form.get('birth_date')
+            if birth_date:
+                try:
+                    user.birthdate = datetime.strptime(birth_date, '%Y-%m-%d').date()
+                except ValueError:
+                    return jsonify(success=False, message="Geçersiz doğum tarihi formatı")
             
             db.session.commit()
             
@@ -250,6 +297,16 @@ def enable_2fa():
     # İki faktörlü doğrulama için gerekli implementasyon daha sonra eklenebilir
     return jsonify({'success': True})
 
+# Admin paneli için decorator
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            flash('Bu sayfaya erişim yetkiniz yok.', 'error')
+            return redirect(url_for('anasayfa'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # Protect routes
 @app.before_request
 def check_user_auth():
@@ -283,14 +340,16 @@ def inject_datetime():
     return dict(current_time=current_time)
 
 def log_activity(activity_type, description, user_id, case_id=None):
-    activity = ActivityLog(
-        activity_type=activity_type,
-        description=description,
-        user_id=user_id,
-        related_case_id=case_id
-    )
-    db.session.add(activity)
-    db.session.commit()
+    user = User.query.get(user_id)
+    if user:
+        activity = ActivityLog(
+            activity_type=activity_type,
+            description=description.format(user_name=user.get_full_name()),
+            user_id=user_id,
+            related_case_id=case_id
+        )
+        db.session.add(activity)
+        db.session.commit()
 
 @app.route('/')
 def anasayfa():
@@ -330,13 +389,26 @@ def anasayfa():
     .order_by(db.func.count(CaseFile.id).desc())\
     .limit(4).all()
     
+    # Her aktivite için kullanıcı bilgisini ve detayları ekle
+    activities_with_details = []
+    for activity in recent_activities:
+        user = User.query.get(activity.user_id)
+        activity_data = {
+            'type': activity.activity_type,
+            'description': activity.description,
+            'timestamp': activity.timestamp,
+            'user': user.get_full_name() if user else 'Bilinmeyen Kullanıcı',
+            'details': activity.details
+        }
+        activities_with_details.append(activity_data)
+    
     return render_template('anasayfa.html', 
                          announcements=announcements,
                          hukuk_count=hukuk_count,
                          ceza_count=ceza_count,
                          icra_count=icra_count,
                          total_active_cases=total_active_cases,
-                         recent_activities=recent_activities,
+                         recent_activities=activities_with_details,
                          total_activities=total_activities,
                          upcoming_hearings=upcoming_hearings,
                          total_hearings=total_hearings,
@@ -347,16 +419,31 @@ def anasayfa():
 def load_more_activities(offset):
     activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).offset(offset).limit(5).all()
     
-    activities_data = [{
-        'type': activity.activity_type,
-        'description': activity.description,
-        'timestamp': activity.timestamp.strftime('%d.%m.%Y %H:%M')
-    } for activity in activities]
+    activities_data = []
+    for activity in activities:
+        user = User.query.get(activity.user_id)
+        activity_data = {
+            'type': activity.activity_type,
+            'description': activity.description,
+            'timestamp': activity.timestamp.strftime('%d.%m.%Y %H:%M'),
+            'user': user.get_full_name() if user else 'Bilinmeyen Kullanıcı',
+            'details': activity.details,
+            'profile_image': url_for('static', filename=user.profile_image) if user and user.profile_image else url_for('static', filename='images/pp.png')
+        }
+        activities_data.append(activity_data)
     
     return jsonify(activities=activities_data)
 
 @app.route('/takvim')
+@login_required
+@permission_required('takvim_goruntule')
 def takvim():
+    # Debug mesajları
+    print(f"Kullanıcı admin mi: {current_user.is_admin}")
+    print(f"Kullanıcı yetkileri: {current_user.permissions}")
+    print(f"Takvim görüntüleme yetkisi: {current_user.has_permission('takvim_goruntule')}")
+    
+    # Tüm etkinlikleri getir
     events = CalendarEvent.query.all()
     events_data = [{
         'id': event.id,
@@ -382,9 +469,18 @@ def takvim():
             'year': year
         })
     
+    # Kullanıcının yetkilerini template'e gönder
+    user_permissions = {
+        'can_add': current_user.has_permission('etkinlik_ekle'),
+        'can_edit': current_user.has_permission('etkinlik_duzenle'),
+        'can_delete': current_user.has_permission('etkinlik_sil'),
+        'can_view': current_user.has_permission('etkinlik_goruntule')
+    }
+    
     return render_template('takvim.html', 
                          events=events_data,
-                         adli_tatil_data=adli_tatil_data)
+                         adli_tatil_data=adli_tatil_data,
+                         user_permissions=user_permissions)
 
 @app.route('/dosyalarim')
 def dosyalarim():
@@ -410,19 +506,51 @@ def dosyalarim():
                          selected_status=status)
 
 @app.route('/duyurular', methods=['GET', 'POST'])
+@login_required
+@permission_required('duyuru_goruntule')
 def duyurular():
     if request.method == 'POST':
+        if not current_user.has_permission('duyuru_ekle'):
+            flash('Duyuru ekleme yetkiniz yok.', 'error')
+            return redirect(url_for('duyurular'))
+            
         title = request.form['title']
         content = request.form['content']
-        new_announcement = Announcement(title=title, content=content, user_id=1)  # user_id=1 olarak sabitlenmiştir
+        new_announcement = Announcement(title=title, content=content, user_id=current_user.id)
         db.session.add(new_announcement)
+        
+        # Log kaydı
+        log = ActivityLog(
+            activity_type='duyuru_ekleme',
+            description=f'Yeni duyuru eklendi',
+            details={
+                'baslik': title,
+                'icerik': content[:50] + '...' if len(content) > 50 else content
+            },
+            user_id=current_user.id,
+            related_announcement_id=new_announcement.id
+        )
+        db.session.add(log)
         db.session.commit()
+        
+        flash('Duyuru başarıyla eklendi.', 'success')
+        return redirect(url_for('duyurular'))
+    
     announcements = Announcement.query.all()
     return render_template('duyurular.html', announcements=announcements)
 
 @app.route('/odemeler', methods=['GET', 'POST'])
+@login_required
 def odemeler():
+    if not current_user.has_permission('odeme_goruntule'):
+        flash('Ödeme görüntüleme yetkiniz bulunmamaktadır.', 'error')
+        return redirect(url_for('anasayfa'))
+        
     if request.method == 'POST':
+        if not current_user.has_permission('odeme_ekle'):
+            flash('Ödeme ekleme yetkiniz bulunmamaktadır.', 'error')
+            return redirect(url_for('odemeler'))
+            
         name = request.form['name']
         surname = request.form['surname']
         tc = request.form['tc']
@@ -433,18 +561,39 @@ def odemeler():
         
         new_client = Client(name=name, surname=surname, tc=tc, amount=amount, currency=currency, installments=installments, date=date)
         db.session.add(new_client)
+        
+        # Log kaydı
+        log = ActivityLog(
+            activity_type='odeme_ekleme',
+            description=f'Yeni ödeme eklendi: {name} {surname}',
+            details={
+                'musteri': f'{name} {surname}',
+                'tc': tc,
+                'tutar': f'{amount} {currency}',
+                'taksit': installments,
+                'tarih': date
+            },
+            user_id=current_user.id,
+            related_payment_id=new_client.id
+        )
+        db.session.add(log)
         db.session.commit()
         
-        return redirect(url_for('odemeler'))
+        return jsonify({'success': True})
     
     clients = Client.query.all()
     return render_template('odemeler.html', clients=clients)
 
 @app.route('/update_client/<int:client_id>', methods=['POST'])
+@login_required
 def update_client(client_id):
+    if not current_user.has_permission('odeme_duzenle'):
+        return jsonify({'success': False, 'error': 'Ödeme düzenleme yetkiniz bulunmamaktadır.'}), 403
+        
     data = request.get_json()
     client = Client.query.get(client_id)
     if client:
+        old_status = client.status
         client.name = data['name']
         client.surname = data['surname']
         client.tc = data['tc']
@@ -453,7 +602,23 @@ def update_client(client_id):
         client.installments = data['installments']
         client.date = data['date']
         client.status = data['status']
-        client.description = data.get('description', '')  # Açıklama alanını güncelle
+        client.description = data.get('description', '')
+
+        # Ödeme durumu değiştiyse log kaydı ekle
+        if old_status != data['status']:
+            log = ActivityLog(
+                activity_type='odeme_guncelleme',
+                description=f'Ödeme durumu güncellendi: {client.name} {client.surname}',
+                details={
+                    'musteri': f'{client.name} {client.surname}',
+                    'eski_durum': old_status,
+                    'yeni_durum': data['status'],
+                    'tutar': f'{client.amount} {client.currency}'
+                },
+                user_id=current_user.id,
+                related_payment_id=client.id
+            )
+            db.session.add(log)
         
         try:
             db.session.commit()
@@ -464,8 +629,12 @@ def update_client(client_id):
     
     return jsonify({'success': False, 'error': 'Müşteri bulunamadı'})
 
-@app.route('/delete_client/<int:client_id>', methods=['DELETE'])  # POST yerine DELETE metodu
+@app.route('/delete_client/<int:client_id>', methods=['DELETE'])
+@login_required
 def delete_client(client_id):
+    if not current_user.has_permission('odeme_sil'):
+        return jsonify({'success': False, 'error': 'Ödeme silme yetkiniz bulunmamaktadır.'}), 403
+        
     try:
         client = Client.query.get(client_id)
         if client:
@@ -480,7 +649,7 @@ def delete_client(client_id):
             log_activity(
                 'delete',
                 f'Ödeme silindi: {client.name} {client.surname}',
-                1  # TODO: Gerçek kullanıcı ID'sini kullan
+                current_user.id
             )
             
             return jsonify({'success': True})
@@ -528,6 +697,8 @@ def bildirimler():
     return render_template('bildirimler.html', notifications=notifications)
 
 @app.route('/dosya_sorgula', methods=['GET', 'POST'])
+@login_required
+@permission_required('dosya_sorgula')
 def dosya_sorgula():
     if request.method == 'POST':
         # Form verilerini al
@@ -567,6 +738,8 @@ def dosya_sorgula():
                          case_files=case_files)
 
 @app.route('/dosya_ekle', methods=['GET', 'POST'])
+@login_required
+@permission_required('dosya_ekle')
 def dosya_ekle():
     if request.method == 'POST':
         try:
@@ -587,7 +760,7 @@ def dosya_ekle():
                 phone_number=data.get('phone-number', ''),
                 status='Aktif',
                 open_date=datetime.strptime(data['open-date'], '%Y-%m-%d').date(),
-                user_id=1
+                user_id=current_user.id
             )
             
             db.session.add(new_case_file)
@@ -597,7 +770,7 @@ def dosya_ekle():
             log_activity(
                 activity_type='dosya_ekleme',
                 description=f"Yeni dosya eklendi: {data['client-name']} - {data['case-number']}",
-                user_id=1,
+                user_id=current_user.id,
                 case_id=new_case_file.id
             )
             
@@ -748,7 +921,11 @@ def search():
     return jsonify(results)
 
 @app.route('/add_event', methods=['POST'])
+@login_required
 def add_event():
+    if not current_user.has_permission('etkinlik_ekle'):
+        return jsonify({'error': 'Takvime etkinlik ekleme yetkiniz bulunmamaktadır.'}), 403
+        
     try:
         data = request.get_json()
         
@@ -768,13 +945,30 @@ def add_event():
             time=event_time,
             event_type=data['event_type'],
             description=data.get('description'),
-            user_id=1,
+            user_id=current_user.id,
             assigned_to=data.get('assigned_to'),
             deadline_date=deadline_date,
             is_completed=data.get('is_completed', False)
         )
         
         db.session.add(event)
+        
+        # Log kaydı
+        log = ActivityLog(
+            activity_type='etkinlik_ekleme',
+            description=f'Yeni etkinlik eklendi: {data["title"]}',
+            details={
+                'baslik': data['title'],
+                'tarih': date_str,
+                'saat': time_str,
+                'tur': data['event_type'],
+                'aciklama': data.get('description', ''),
+                'son_tarih': deadline_str
+            },
+            user_id=current_user.id,
+            related_event_id=event.id
+        )
+        db.session.add(log)
         
         # Son gün etkinliği ekle
         if deadline_date and deadline_date != event_date:
@@ -809,10 +1003,17 @@ def add_event():
         return jsonify({'error': str(e)}), 400
 
 @app.route('/update_event/<int:event_id>', methods=['PUT'])
+@login_required
+@permission_required('etkinlik_duzenle')
 def update_event(event_id):
     try:
         event = CalendarEvent.query.get_or_404(event_id)
         data = request.get_json()
+        
+        # Eski değerleri kaydet
+        old_title = event.title
+        old_date = event.date
+        old_time = event.time
         
         # Tarihleri UTC'ye çevirmeden işle
         date_str = data['date']
@@ -832,12 +1033,32 @@ def update_event(event_id):
         event.assigned_to = data.get('assigned_to')
         event.is_completed = data.get('is_completed', False)
         
+        # Log kaydı
+        log = ActivityLog(
+            activity_type='etkinlik_duzenleme',
+            description=f'Etkinlik düzenlendi: {old_title}',
+            details={
+                'eski_baslik': old_title,
+                'yeni_baslik': event.title,
+                'eski_tarih': old_date.strftime('%Y-%m-%d'),
+                'yeni_tarih': event_date.strftime('%Y-%m-%d'),
+                'eski_saat': old_time.strftime('%H:%M'),
+                'yeni_saat': event_time.strftime('%H:%M'),
+                'tur': data['event_type'],
+                'aciklama': data.get('description', ''),
+                'son_tarih': deadline_str
+            },
+            user_id=current_user.id,
+            related_event_id=event.id
+        )
+        db.session.add(log)
+        
         if deadline_date:
             event.deadline_date = deadline_date
             
             # Eski son gün etkinliğini sil
             old_deadline_event = CalendarEvent.query.filter_by(
-                title=f"SON GÜN: {event.title}",
+                title=f"SON GÜN: {old_title}",
                 event_type=event.event_type
             ).first()
             if old_deadline_event:
@@ -876,13 +1097,34 @@ def update_event(event_id):
         return jsonify({'error': str(e)}), 400
 
 @app.route('/delete_event/<int:event_id>', methods=['DELETE'])
+@login_required
+@permission_required('etkinlik_sil')
 def delete_event(event_id):
-    event = CalendarEvent.query.get(event_id)
-    if event:
+    try:
+        event = CalendarEvent.query.get_or_404(event_id)
+        
+        # Log kaydı
+        log = ActivityLog(
+            activity_type='etkinlik_silme',
+            description=f'Etkinlik silindi: {event.title}',
+            details={
+                'baslik': event.title,
+                'tarih': event.date.strftime('%Y-%m-%d'),
+                'saat': event.time.strftime('%H:%M'),
+                'tur': event.event_type,
+                'aciklama': event.description
+            },
+            user_id=current_user.id
+        )
+        
         db.session.delete(event)
+        db.session.add(log)
         db.session.commit()
+        
         return jsonify({'success': True})
-    return jsonify({'success': False})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/add_expense/<int:case_id>', methods=['POST'])
 def add_expense(case_id):
@@ -1013,6 +1255,8 @@ def download_document(document_id):
     )
 
 @app.route('/delete_document/<int:document_id>', methods=['POST'])
+@login_required
+@permission_required('dosya_sil')
 def delete_document(document_id):
     try:
         document = Document.query.get_or_404(document_id)
@@ -1283,7 +1527,7 @@ def get_current_rates():
             'reeskont': float(soup.find('reeskont').text),
             'avans': float(soup.find('avans').text),
             'temerrut': float(soup.find('temerrut').text),
-            'yasal': 9.0,  # Yasal faiz oranı
+            'yasal': 24.0,  # Yasal faiz oranı
             'mevduat': 45.0  # En yüksek mevduat faizi
         }
         return rates
@@ -1293,7 +1537,7 @@ def get_current_rates():
             'reeskont': 13.75,
             'avans': 14.75,
             'temerrut': 19.0,
-            'yasal': 9.0,
+            'yasal': 24.0,
             'mevduat': 45.0
         }
 
@@ -1314,93 +1558,6 @@ def hesaplamalar(type):
 @app.route("/isci-alacagi-hesaplama")
 def isci_alacagi_hesaplama():
     return render_template("isci_alacagi_hesaplama.html")
-
-@app.route('/uyap_sync', methods=['POST'])
-def uyap_sync():
-    try:
-        print("UYAP senkronizasyonu başlatılıyor...")
-        uyap = UYAPIntegration()
-        
-        # UYAP'a giriş yap
-        print("UYAP'a giriş yapılıyor...")
-        if not uyap.login():
-            error_msg = "UYAP girişi başarısız oldu. Lütfen e-imza ile giriş yaptığınızdan emin olun."
-            print(error_msg)
-            return jsonify(success=False, message=error_msg)
-        
-        print("UYAP'a giriş başarılı, dosyalar çekiliyor...")
-        # Dosyaları çek
-        cases = uyap.get_case_files()
-        
-        if not cases:
-            error_msg = "Hiç dosya bulunamadı. Bu durum şunlardan kaynaklanabilir:\n" + \
-                       "1. Menü öğeleri bulunamadı\n" + \
-                       "2. Dosya türü veya yargı birimi seçilemedi\n" + \
-                       "3. Sorgulama sonucu döndürülemedi"
-            print(error_msg)
-            return jsonify(success=False, message=error_msg)
-        
-        print(f"{len(cases)} adet dosya bulundu, veritabanına kaydediliyor...")
-        # Her dosya için veritabanına kaydet
-        saved_count = 0
-        for case in cases:
-            try:
-                # Dosya detaylarını çek
-                details = uyap.get_case_details(case['dosya_no'])
-                
-                # Mevcut dosyayı kontrol et
-                existing_case = CaseFile.query.filter_by(
-                    case_number=case['dosya_no']
-                ).first()
-                
-                if existing_case:
-                    print(f"Mevcut dosya güncelleniyor: {case['dosya_no']}")
-                    # Mevcut dosyayı güncelle
-                    existing_case.courthouse = case['mahkeme']
-                    existing_case.status = case['durum']
-                    if details:
-                        existing_case.next_hearing = details.get('durusma_tarihi')
-                        existing_case.hearing_time = details.get('durusma_saati')  # Güncellenen hearing_time alanı
-                        existing_case.description = details.get('son_islem')
-                    saved_count += 1
-                else:
-                    print(f"Yeni dosya ekleniyor: {case['dosya_no']}")
-                    # Yeni dosya oluştur
-                    new_case = CaseFile(
-                        file_type=case['dosya_turu'].lower(),
-                        courthouse=case['mahkeme'],
-                        department=case['yargi_birimi'],
-                        year=int(case['dosya_no'].split('/')[0]) if '/' in case['dosya_no'] else datetime.now().year,
-                        case_number=case['dosya_no'],
-                        client_name=case['taraflar'].split('/')[-1].strip(),
-                        phone_number=case.get('phone_number', ''),
-                        status=case['durum'],
-                        description=case.get('son_islem', ''),
-                        hearing_time=case.get('durusma_saati', ''),  # Güncellenen hearing_time alanı
-                        user_id=1  # Aktif kullanıcı ID'si
-                    )
-                    db.session.add(new_case)
-                    saved_count += 1
-            except Exception as e:
-                print(f"Dosya kaydedilirken hata: {str(e)}")
-                continue
-        
-        try:
-            db.session.commit()
-            print(f"Veritabanına {saved_count} dosya kaydedildi.")
-        except Exception as e:
-            db.session.rollback()
-            error_msg = f"Veritabanı kayıt hatası: {str(e)}"
-            print(error_msg)
-            return jsonify(success=False, message=error_msg)
-        
-        uyap.close()
-        return jsonify(success=True, message=f"{saved_count} dosya senkronize edildi")
-        
-    except Exception as e:
-        error_msg = f"Beklenmeyen hata: {str(e)}"
-        print(error_msg)
-        return jsonify(success=False, message=error_msg)
 
 @app.route('/update_theme_preference', methods=['POST'])
 @login_required
@@ -1444,11 +1601,220 @@ def update_settings():
             'message': str(e)
         }), 500
 
+@app.route('/admin_panel')
+@login_required
+@admin_required
+def admin_panel():
+    # Onay bekleyen kullanıcıları al
+    pending_users = User.query.filter_by(is_approved=False).order_by(User.created_at.desc()).all()
+    
+    # Onaylanmış kullanıcıları al
+    approved_users = User.query.filter_by(is_approved=True).order_by(User.approval_date.desc()).all()
+    
+    return render_template('admin_panel.html', 
+                         pending_users=pending_users,
+                         approved_users=approved_users)
+
+@app.route('/admin/approve_user/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def approve_user(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        user.is_approved = True
+        user.approval_date = datetime.now()
+        user.approved_by = current_user.id
+        db.session.commit()
+        return jsonify(success=True)
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, message=str(e))
+
+@app.route('/admin/reject_user/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def reject_user(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify(success=True)
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, message=str(e))
+
+@app.route('/admin/toggle_user_status/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def toggle_user_status(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        user.is_approved = not user.is_approved
+        
+        if not user.is_approved:
+            user.approval_date = None
+            user.approved_by = None
+        else:
+            user.approval_date = datetime.now()
+            user.approved_by = current_user.id
+            
+        db.session.commit()
+        return jsonify(success=True)
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, message=str(e))
+
+@app.route('/admin/get_user_permissions/<int:user_id>')
+@login_required
+@admin_required
+def get_user_permissions(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        return jsonify({
+            'success': True,
+            'permissions': user.permissions or {}
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
+
+@app.route('/admin/update_user_permissions/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def update_user_permissions(user_id):
+    try:
+        user = User.query.get_or_404(user_id)
+        data = request.get_json()
+        
+        # Yetkileri güncelle
+        user.permissions = data.get('permissions', {})
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Kullanıcı yetkileri güncellendi'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
+
+@app.route('/duyuru_duzenle/<int:duyuru_id>', methods=['POST'])
+@login_required
+@permission_required('duyuru_duzenle')
+def duyuru_duzenle(duyuru_id):
+    try:
+        data = request.get_json()
+        duyuru = Announcement.query.get_or_404(duyuru_id)
+        
+        old_title = duyuru.title
+        old_content = duyuru.content
+        
+        duyuru.title = data['title']
+        duyuru.content = data['content']
+        
+        # Log kaydı
+        log = ActivityLog(
+            activity_type='duyuru_duzenleme',
+            description=f'Duyuru düzenlendi: {old_title}',
+            details={
+                'eski_baslik': old_title,
+                'yeni_baslik': duyuru.title,
+                'eski_icerik': old_content,
+                'yeni_icerik': duyuru.content
+            },
+            user_id=current_user.id,
+            related_announcement_id=duyuru.id
+        )
+        db.session.add(log)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/duyuru_sil/<int:duyuru_id>', methods=['POST'])
+@login_required
+@permission_required('duyuru_sil')
+def duyuru_sil(duyuru_id):
+    try:
+        duyuru = Announcement.query.get_or_404(duyuru_id)
+        
+        # Log kaydı
+        log = ActivityLog(
+            activity_type='duyuru_silme',
+            description=f'Duyuru silindi: {duyuru.title}',
+            details={
+                'baslik': duyuru.title,
+                'icerik': duyuru.content
+            },
+            user_id=current_user.id
+        )
+        
+        db.session.delete(duyuru)
+        db.session.add(log)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
 if __name__ == '__main__':
     with app.app_context():
         # Mevcut veritabanını sil
         db.drop_all()
         # Yeni şema ile veritabanını oluştur
         db.create_all()
+        
+        # Admin kullanıcısını oluştur
+        admin_user = User.query.filter_by(email='admin@kaplanhukuk.com').first()
+        if not admin_user:
+            admin_user = User(
+                email='admin@kaplanhukuk.com',
+                username='admin',
+                first_name='Admin',
+                last_name='Kullanıcısı',
+                role='Yönetici Avukat',
+                gender='erkek',
+                phone='5555555555',
+                birthdate=datetime(1990, 1, 1).date(),
+                is_admin=True,
+                is_approved=True,
+                approval_date=datetime.now(),
+                permissions={
+                    'takvim_goruntule': True,
+                    'etkinlik_ekle': True,
+                    'etkinlik_duzenle': True,
+                    'etkinlik_sil': True,
+                    'etkinlik_goruntule': True,
+                    'duyuru_goruntule': True,
+                    'duyuru_ekle': True,
+                    'duyuru_duzenle': True,
+                    'duyuru_sil': True,
+                    'odeme_goruntule': True,
+                    'odeme_ekle': True,
+                    'odeme_duzenle': True,
+                    'odeme_sil': True,
+                    'dosya_sorgula': True,
+                    'dosya_ekle': True,
+                    'dosya_duzenle': True,
+                    'dosya_sil': True,
+                    'faiz_hesaplama': True,
+                    'harc_hesaplama': True,
+                    'isci_hesaplama': True,
+                    'vekalet_hesaplama': True,
+                    'ceza_infaz_hesaplama': True
+                }
+            )
+            admin_user.set_password('Pemus3458')
+            db.session.add(admin_user)
+            db.session.commit()
+            print("Admin kullanıcısı oluşturuldu!")
     
     app.run(debug=True)

@@ -25,45 +25,55 @@
             </div>
 
             <div class="profile-form-grid">
-                <div class="profile-form-group">
-                    <label for="username">Kullanıcı Adı</label>
-                    <input type="text" id="username" name="username" class="profile-form-control" value="{{ current_user.username }}" required>
+                <div class="form-row">
+                    <div class="profile-form-group">
+                        <label for="username">Kullanıcı Adı</label>
+                        <input type="text" id="username" name="username" class="profile-form-control" value="{{ current_user.username }}" required>
+                    </div>
+
+                    <div class="profile-form-group">
+                        <label for="email">E-posta</label>
+                        <input type="email" id="email" name="email" class="profile-form-control" value="{{ current_user.email }}" required>
+                    </div>
                 </div>
 
-                <div class="profile-form-group">
-                    <label for="email">E-posta</label>
-                    <input type="email" id="email" name="email" class="profile-form-control" value="{{ current_user.email }}" required>
+                <div class="form-row">
+                    <div class="profile-form-group">
+                        <label for="first_name">İsim</label>
+                        <input type="text" id="first_name" name="first_name" class="profile-form-control" value="{{ current_user.first_name }}" required>
+                    </div>
+
+                    <div class="profile-form-group">
+                        <label for="last_name">Soyisim</label>
+                        <input type="text" id="last_name" name="last_name" class="profile-form-control" value="{{ current_user.last_name }}" required>
+                    </div>
                 </div>
 
-                <div class="profile-form-group">
-                    <label for="phone">Telefon</label>
-                    <input type="tel" id="phone" name="phone" class="profile-form-control" value="{{ current_user.phone }}" pattern="[0-9]{10}" title="Lütfen 10 haneli telefon numaranızı başında 0 olmadan giriniz" required>
+                <div class="form-row">
+                    <div class="profile-form-group">
+                        <label for="phone">Telefon Numarası</label>
+                        <input type="tel" class="profile-form-control" id="phone" name="phone" value="{{ current_user.phone }}" pattern="[0-9]{10}" title="Lütfen 10 haneli telefon numaranızı başında 0 olmadan giriniz" required>
+                    </div>
+
+                    <div class="profile-form-group">
+                        <label for="birth_date">Doğum Tarihi</label>
+                        <input type="date" class="profile-form-control" id="birth_date" name="birth_date" value="{{ current_user.birthdate.strftime('%Y-%m-%d') if current_user.birthdate else '' }}" required>
+                    </div>
                 </div>
 
-                <div class="profile-form-group">
-                    <label for="dogum_tarihi">Doğum Tarihi</label>
-                    <input type="date" id="dogum_tarihi" name="dogum_tarihi" class="profile-form-control" value="{{ current_user.birthdate.strftime('%Y-%m-%d') }}" required>
-                </div>
-
-                <div class="profile-form-group">
-                    <label for="cinsiyet">Cinsiyet</label>
-                    <select id="cinsiyet" name="cinsiyet" class="profile-form-select" required>
-                        <option value="erkek" {% if current_user.gender == 'erkek' %}selected{% endif %}>Erkek</option>
-                        <option value="kadin" {% if current_user.gender == 'kadin' %}selected{% endif %}>Kadın</option>
-                    </select>
-                </div>
-
-                <div class="profile-form-group">
-                    <label for="meslek">Meslek</label>
-                    <select id="meslek" name="meslek" class="profile-form-select" required>
-                        <option value="Yönetici Avukat" {% if current_user.role == 'Yönetici Avukat' %}selected{% endif %}>Yönetici Avukat</option>
-                        <option value="Avukat" {% if current_user.role == 'Avukat' %}selected{% endif %}>Avukat</option>
-                        <option value="Stajyer Avukat" {% if current_user.role == 'Stajyer Avukat' %}selected{% endif %}>Stajyer Avukat</option>
-                        <option value="Takip Elemanı" {% if current_user.role == 'Takip Elemanı' %}selected{% endif %}>Takip Elemanı</option>
-                        <option value="Muhasebe" {% if current_user.role == 'Muhasebe' %}selected{% endif %}>Muhasebe</option>
-                        <option value="Ulaşım" {% if current_user.role == 'Ulaşım' %}selected{% endif %}>Ulaşım</option>
-                        <option value="Sekreter" {% if current_user.role == 'Sekreter' %}selected{% endif %}>Sekreter</option>
-                    </select>
+                <div class="form-row">
+                    <div class="profile-form-group">
+                        <label for="gender">Cinsiyet</label>
+                        <select class="profile-form-control" id="gender" name="cinsiyet" required>
+                            <option value="">Seçiniz</option>
+                            <option value="erkek" {% if current_user.gender == 'erkek' %}selected{% endif %}>Erkek</option>
+                            <option value="kadin" {% if current_user.gender == 'kadin' %}selected{% endif %}>Kadın</option>
+                        </select>
+                    </div>
+                    <div class="profile-form-group">
+                        <label for="profession">Meslek</label>
+                        <input type="text" class="profile-form-control" id="profession" name="meslek" value="{{ current_user.role }}" required>
+                    </div>
                 </div>
             </div>
 
@@ -155,13 +165,24 @@
     border: 4px solid var(--primary-color);
     box-shadow: 0 8px 24px rgba(0,0,0,0.15);
     background-color: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .profile-photo-container img {
-    width: 100%;
-    height: 100%;
+    width: 400px !important;
+    height: 400px !important;
     object-fit: cover;
+    object-position: center;
     border-radius: 50%;
+    display: block;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
 .profile-image-overlay {
@@ -211,11 +232,17 @@
     text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
-.profile-form-grid {
+.form-row {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
-    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.profile-form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
     background: rgba(0, 0, 0, 0.02);
     border-radius: 12px;
     padding: 1.5rem 2rem;
@@ -346,6 +373,37 @@
     .profile-btn {
         padding: 0.8rem 1.5rem;
     }
+}
+
+/* Profil menüsündeki küçük profil resmi için de aynı düzeltmeleri yapalım */
+.profile-image-container {
+    width: 35px !important;
+    height: 35px !important;
+    min-width: 35px !important;
+    min-height: 35px !important;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--border-color);
+    padding: 0;
+    margin: 0;
+    position: relative;
+}
+
+.profile-image {
+    width: 35px !important;
+    height: 35px !important;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 </style>
 

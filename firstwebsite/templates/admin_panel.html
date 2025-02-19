@@ -1,0 +1,877 @@
+{% extends "layout.html" %}
+
+{% block title %}Yönetici Paneli{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1>Yönetici Paneli</h1>
+        <p>Kullanıcı yönetimi ve sistem ayarları</p>
+    </div>
+
+    <div class="admin-content">
+        <!-- Onay Bekleyen Kullanıcılar -->
+        <div class="admin-section">
+            <div class="section-header">
+                <i class="material-icons">person_add</i>
+                <h2>Onay Bekleyen Kullanıcılar</h2>
+            </div>
+            <div class="section-content">
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Kullanıcı Adı</th>
+                                <th>E-posta</th>
+                                <th>Meslek</th>
+                                <th>Kayıt Tarihi</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in pending_users %}
+                            <tr>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.role }}</td>
+                                <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td class="actions">
+                                    <button onclick="approveUser({{ user.id }})" class="approve-btn">
+                                        <i class="material-icons">check</i>
+                                        Onayla
+                                    </button>
+                                    <button onclick="rejectUser({{ user.id }})" class="reject-btn">
+                                        <i class="material-icons">close</i>
+                                        Reddet
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onaylanmış Kullanıcılar -->
+        <div class="admin-section">
+            <div class="section-header">
+                <i class="material-icons">people</i>
+                <h2>Onaylanmış Kullanıcılar</h2>
+            </div>
+            <div class="section-content">
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Kullanıcı Adı</th>
+                                <th>E-posta</th>
+                                <th>Meslek</th>
+                                <th>Onay Tarihi</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in approved_users %}
+                            <tr>
+                                <td>{{ user.username }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.role }}</td>
+                                <td>{{ user.approval_date.strftime('%d.%m.%Y %H:%M') if user.approval_date else '-' }}</td>
+                                <td class="actions">
+                                    <button onclick="editUser({{ user.id }})" class="edit-btn">
+                                        <i class="material-icons">edit</i>
+                                        Düzenle
+                                    </button>
+                                    <button onclick="toggleUserStatus({{ user.id }})" class="status-btn">
+                                        <i class="material-icons">block</i>
+                                        Engelle
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kullanıcı Düzenleme Modal -->
+<div class="modal" id="editUserModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Kullanıcı Yetkilerini Düzenle</h2>
+            <button class="close-btn" onclick="closeModal('editUserModal')">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="editUserForm">
+                <input type="hidden" id="editUserId" name="user_id">
+                
+                <div class="permissions-container">
+                    <!-- Dosya İşlemleri -->
+                    <div class="permission-section">
+                        <div class="section-header">
+                            <i class="material-icons">folder</i>
+                            <h3>Dosya İşlemleri</h3>
+                        </div>
+                        <div class="permission-group">
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="dosya_ekle">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Dosya Ekleme</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="dosya_sorgula">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Dosya Sorgulama</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="dosya_duzenle">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Dosya Düzenleme</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="dosya_sil">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Dosya Silme</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Takvim İşlemleri -->
+                    <div class="permission-section">
+                        <div class="section-header">
+                            <i class="material-icons">calendar_today</i>
+                            <h3>Takvim İşlemleri</h3>
+                        </div>
+                        <div class="permission-group">
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="takvim_goruntule">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Takvimi Görüntüleme</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="etkinlik_ekle">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Etkinlik Ekleme</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="etkinlik_duzenle">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Etkinlik Düzenleme</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="etkinlik_sil">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Etkinlik Silme</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Ödeme İşlemleri -->
+                    <div class="permission-section">
+                        <div class="section-header">
+                            <i class="material-icons">payment</i>
+                            <h3>Ödeme İşlemleri</h3>
+                        </div>
+                        <div class="permission-group">
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="odeme_goruntule">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Ödemeleri Görüntüleme</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="odeme_ekle">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Ödeme Ekleme</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="odeme_duzenle">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Ödeme Düzenleme</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="odeme_sil">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Ödeme Silme</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Duyuru İşlemleri -->
+                    <div class="permission-section">
+                        <div class="section-header">
+                            <i class="material-icons">notifications</i>
+                            <h3>Duyuru İşlemleri</h3>
+                        </div>
+                        <div class="permission-group">
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="duyuru_goruntule">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Duyuruları Görüntüleme</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="duyuru_ekle">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Duyuru Ekleme</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="duyuru_duzenle">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Duyuru Düzenleme</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="duyuru_sil">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Duyuru Silme</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Hesaplama Araçları -->
+                    <div class="permission-section">
+                        <div class="section-header">
+                            <i class="material-icons">calculate</i>
+                            <h3>Hesaplama Araçları</h3>
+                        </div>
+                        <div class="permission-group">
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="faiz_hesaplama">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Faiz Hesaplama</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="harc_hesaplama">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Harç Hesaplama</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="isci_hesaplama">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">İşçi Alacağı Hesaplama</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="vekalet_hesaplama">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Vekalet Ücreti Hesaplama</span>
+                            </label>
+                            <label class="permission-switch">
+                                <input type="checkbox" name="permissions" value="ceza_infaz_hesaplama">
+                                <span class="switch-slider"></span>
+                                <span class="switch-label">Ceza İnfaz Hesaplama</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeModal('editUserModal')">
+                        <i class="material-icons">close</i>
+                        İptal
+                    </button>
+                    <button type="submit" class="save-btn">
+                        <i class="material-icons">save</i>
+                        <span class="loading-spinner"></span>
+                        Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.admin-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgb(45,49,60);
+    border-radius: 15px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+
+.admin-header p {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    color: white;
+}
+
+.admin-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.admin-section {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.section-header i {
+    font-size: 24px;
+    margin-right: 1rem;
+    color: rgb(45,49,60);
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: rgb(45,49,60);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.admin-table th {
+    background: #f8f9fa;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: rgb(45,49,60);
+}
+
+.admin-table td {
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.actions button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.approve-btn {
+    background: #28a745;
+    color: white;
+}
+
+.reject-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.edit-btn {
+    background: rgb(45,49,60);
+    color: white;
+}
+
+.status-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.actions button i {
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 1rem;
+    }
+    
+    .actions {
+        flex-direction: column;
+    }
+    
+    .admin-table {
+        display: block;
+        overflow-x: auto;
+    }
+}
+
+/* Modal stilleri güncellendi */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 1;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: rgb(45,49,60);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.permissions-container {
+    display: grid;
+    gap: 2rem;
+}
+
+.permission-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.permission-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.section-header i {
+    font-size: 24px;
+    color: rgb(45,49,60);
+    background: white;
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: rgb(45,49,60);
+}
+
+.permission-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+/* Modern switch tasarımı */
+.permission-switch {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.permission-switch:hover {
+    background: #f0f0f0;
+}
+
+.switch-slider {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background: #ccc;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.switch-slider:before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+    left: 2px;
+    transition: all 0.3s ease;
+}
+
+.permission-switch input:checked + .switch-slider {
+    background: rgb(45,49,60);
+}
+
+.permission-switch input:checked + .switch-slider:before {
+    transform: translateX(20px);
+}
+
+.permission-switch input {
+    display: none;
+}
+
+.switch-label {
+    font-size: 0.9rem;
+    color: rgb(45,49,60);
+    flex: 1;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.save-btn, .cancel-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.save-btn {
+    background: rgb(45,49,60);
+    color: white;
+}
+
+.cancel-btn {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.save-btn:hover, .cancel-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.save-btn:hover {
+    background: rgba(45,49,60, 0.9);
+}
+
+.cancel-btn:hover {
+    background: #dee2e6;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid rgb(45,49,60);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Başarılı/Hata mesajları için toast */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.9rem;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.toast.success {
+    background: #28a745;
+}
+
+.toast.error {
+    background: #dc3545;
+}
+
+.toast.show {
+    opacity: 1;
+}
+</style>
+
+<script>
+function approveUser(userId) {
+    if (confirm('Bu kullanıcıyı onaylamak istediğinize emin misiniz?')) {
+        fetch('/admin/approve_user/' + userId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Bir hata oluştu');
+            }
+        });
+    }
+}
+
+function rejectUser(userId) {
+    if (confirm('Bu kullanıcıyı reddetmek istediğinize emin misiniz?')) {
+        fetch('/admin/reject_user/' + userId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Bir hata oluştu');
+            }
+        });
+    }
+}
+
+function editUser(userId) {
+    // Modalı aç
+    const modal = document.getElementById('editUserModal');
+    modal.style.display = 'flex';
+    
+    // User ID'yi form'a ekle
+    document.getElementById('editUserId').value = userId;
+    
+    // Save butonundaki spinner'ı göster
+    const saveBtn = modal.querySelector('.save-btn');
+    const spinner = saveBtn.querySelector('.loading-spinner');
+    if (spinner) {
+        spinner.style.display = 'inline-block';
+    }
+    
+    // Mevcut yetkileri getir
+    fetch(`/admin/get_user_permissions/${userId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Tüm checkbox'ları sıfırla
+                document.querySelectorAll('input[name="permissions"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                
+                // Mevcut yetkileri işaretle
+                const permissions = data.permissions;
+                for (const [key, value] of Object.entries(permissions)) {
+                    const checkbox = document.querySelector(`input[value="${key}"]`);
+                    if (checkbox) {
+                        checkbox.checked = value;
+                    }
+                }
+            } else {
+                showToast('Yetkiler yüklenirken bir hata oluştu', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Yetkiler yüklenirken bir hata oluştu', 'error');
+        })
+        .finally(() => {
+            // Loading spinner'ı gizle
+            if (spinner) {
+                spinner.style.display = 'none';
+            }
+        });
+}
+
+// Form gönderme
+document.getElementById('editUserForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const userId = document.getElementById('editUserId').value;
+    const permissions = {};
+    const saveBtn = this.querySelector('.save-btn');
+    const spinner = saveBtn.querySelector('.loading-spinner');
+    
+    // Save butonunu devre dışı bırak ve loading göster
+    saveBtn.disabled = true;
+    if (spinner) {
+        spinner.style.display = 'inline-block';
+    }
+    
+    // Tüm checkbox'ların durumunu topla
+    document.querySelectorAll('input[name="permissions"]').forEach(checkbox => {
+        permissions[checkbox.value] = checkbox.checked;
+    });
+    
+    // Sunucuya gönder
+    fetch(`/admin/update_user_permissions/${userId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ permissions })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Kullanıcı yetkileri başarıyla güncellendi', 'success');
+            closeModal('editUserModal');
+            // Sayfayı yenile
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showToast(data.message || 'Bir hata oluştu', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Bir hata oluştu', 'error');
+    })
+    .finally(() => {
+        // Save butonunu tekrar aktif et ve loading'i gizle
+        saveBtn.disabled = false;
+        if (spinner) {
+            spinner.style.display = 'none';
+        }
+    });
+});
+
+function showToast(message, type) {
+    // Varsa eski toast'u kaldır
+    const existingToast = document.querySelector('.toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // Yeni toast oluştur
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <i class="material-icons">${type === 'success' ? 'check_circle' : 'error'}</i>
+        <span>${message}</span>
+    `;
+    
+    // Toast'u ekle
+    document.body.appendChild(toast);
+    
+    // Animasyon için setTimeout
+    setTimeout(() => toast.classList.add('show'), 100);
+    
+    // 3 saniye sonra kaldır
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Sayfa dışına tıklandığında modalı kapat
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+function toggleUserStatus(userId) {
+    if (confirm('Bu kullanıcının durumunu değiştirmek istediğinize emin misiniz?')) {
+        fetch('/admin/toggle_user_status/' + userId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Bir hata oluştu');
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 

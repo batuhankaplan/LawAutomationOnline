@@ -32,21 +32,39 @@
                 {% for activity in recent_activities %}
                 <div class="activity-item">
                     <div class="activity-icon">
-                        {% if activity.activity_type == 'dosya_ekleme' %}
-                            <i class="material-icons">folder_add</i>
-                        {% elif activity.activity_type == 'masraf_ekleme' %}
-                            <i class="material-icons">payments</i>
-                        {% elif activity.activity_type == 'belge_yukleme' %}
-                            <i class="material-icons">upload_file</i>
-                        {% elif activity.activity_type == 'durusma_ekleme' %}
-                            <i class="material-icons">event</i>
-                        {% else %}
-                            <i class="material-icons">edit</i>
-                        {% endif %}
+                        <img src="{{ url_for('static', filename='images/pp.png') }}" alt="Profil">
                     </div>
-                    <div class="activity-details">
-                        <div class="activity-description">{{ activity.description }}</div>
-                        <div class="activity-time">{{ activity.timestamp.strftime('%d.%m.%Y %H:%M') }}</div>
+                    <div class="activity-content">
+                        <div class="activity-header">
+                            <p class="activity-text">{{ activity.description }}</p>
+                            {% if activity.details %}
+                            <div class="activity-details">
+                                {% if activity.type == 'dosya_ekleme' %}
+                                    <span class="detail-item"><i class="material-icons">folder</i> {{ activity.details.dosya_turu }}</span>
+                                    <span class="detail-item"><i class="material-icons">gavel</i> {{ activity.details.mahkeme }}</span>
+                                {% elif activity.type == 'etkinlik_ekleme' %}
+                                    <span class="detail-item"><i class="material-icons">event</i> {{ activity.details.tarih }}</span>
+                                    <span class="detail-item"><i class="material-icons">schedule</i> {{ activity.details.saat }}</span>
+                                {% elif activity.type == 'duyuru_ekleme' %}
+                                    <span class="detail-item"><i class="material-icons">title</i> {{ activity.details.baslik }}</span>
+                                {% elif activity.type == 'odeme_ekleme' %}
+                                    <span class="detail-item"><i class="material-icons">person</i> {{ activity.details.musteri }}</span>
+                                    <span class="detail-item"><i class="material-icons">payment</i> {{ activity.details.tutar }}</span>
+                                    <span class="detail-item"><i class="material-icons">repeat</i> {{ activity.details.taksit }} Taksit</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="activity-meta">
+                            <div class="activity-user">
+                                <i class="material-icons">person</i>
+                                <span>İşlemi Yapan: {{ activity.user }}</span>
+                            </div>
+                            <div class="activity-time">
+                                <i class="material-icons">access_time</i>
+                                <span>{{ activity.timestamp.strftime('%d.%m.%Y %H:%M') }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 {% else %}
@@ -297,25 +315,96 @@
 
 .activity-item {
     display: flex;
-    gap: 12px;
-    padding: 10px;
+    gap: 15px;
+    padding: 15px;
     border-bottom: 1px solid #eee;
+    background: #fff;
+    transition: background-color 0.2s ease;
 }
 
-.activity-icon i {
-    font-size: 20px;
+.activity-item:hover {
+    background: #f8f9fa;
+}
+
+.activity-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #f1f3f5;
+}
+
+.activity-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.activity-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.activity-header {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.activity-text {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #2c3e50;
+    line-height: 1.4;
+}
+
+.activity-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    color: #666;
+    background: #f1f3f5;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.detail-item i {
+    font-size: 16px;
     color: var(--primary-color);
 }
 
-.activity-description {
-    font-size: 0.85rem;
-    color: #2c3e50;
+.activity-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 5px;
 }
 
-.activity-time {
-    font-size: 0.75rem;
+.activity-user, .activity-time {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
     color: #666;
-    margin-top: 3px;
+}
+
+.activity-user i, .activity-time i {
+    font-size: 16px;
+    color: var(--primary-color);
 }
 
 /* Dosya İstatistikleri */
@@ -791,6 +880,35 @@ document.addEventListener('DOMContentLoaded', function() {
     let isLoading = false;
     let allActivities = [];
 
+    function formatActivityDetails(activity) {
+        let detailsHtml = '';
+        if (activity.details) {
+            if (activity.type === 'dosya_ekleme') {
+                detailsHtml = `
+                    <span class="detail-item"><i class="material-icons">folder</i> ${activity.details.dosya_turu}</span>
+                    <span class="detail-item"><i class="material-icons">gavel</i> ${activity.details.mahkeme}</span>
+                `;
+            } else if (activity.type === 'etkinlik_ekleme' || activity.type === 'etkinlik_duzenleme') {
+                detailsHtml = `
+                    <span class="detail-item"><i class="material-icons">event</i> ${activity.details.tarih}</span>
+                    <span class="detail-item"><i class="material-icons">schedule</i> ${activity.details.saat}</span>
+                    <span class="detail-item"><i class="material-icons">label</i> ${activity.details.tur}</span>
+                `;
+            } else if (activity.type === 'duyuru_ekleme') {
+                detailsHtml = `
+                    <span class="detail-item"><i class="material-icons">title</i> ${activity.details.baslik}</span>
+                `;
+            } else if (activity.type === 'odeme_ekleme') {
+                detailsHtml = `
+                    <span class="detail-item"><i class="material-icons">person</i> ${activity.details.musteri}</span>
+                    <span class="detail-item"><i class="material-icons">payment</i> ${activity.details.tutar}</span>
+                    <span class="detail-item"><i class="material-icons">repeat</i> ${activity.details.taksit} Taksit</span>
+                `;
+            }
+        }
+        return detailsHtml;
+    }
+
     if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', function() {
             if (isLoading) return;
@@ -799,34 +917,47 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.classList.add('loading');
             isLoading = true;
 
-            // Tüm kayıtları getir
             fetch(`/load_more_activities/${offset}`)
                 .then(response => response.json())
                 .then(data => {
                     allActivities = data.activities;
                     
-                    // Tüm aktiviteleri göster
                     data.activities.forEach(activity => {
                         const activityHtml = `
                             <div class="activity-item">
                                 <div class="activity-icon">
-                                    <i class="material-icons">${getActivityIcon(activity.type)}</i>
+                                    <img src="{{ url_for('static', filename='images/pp.png') }}" alt="Profil">
                                 </div>
-                                <div class="activity-details">
-                                    <div class="activity-description">${activity.description}</div>
-                                    <div class="activity-time">${activity.timestamp}</div>
+                                <div class="activity-content">
+                                    <div class="activity-header">
+                                        <p class="activity-text">${activity.description}</p>
+                                        <div class="activity-details">
+                                            ${formatActivityDetails(activity)}
+                                        </div>
+                                    </div>
+                                    <div class="activity-meta">
+                                        <div class="activity-user">
+                                            <i class="material-icons">person</i>
+                                            <span>İşlemi Yapan: ${activity.user if activity and activity.user else 'Bilinmeyen Kullanıcı'}</span>
+                                        </div>
+                                        <div class="activity-time">
+                                            <i class="material-icons">access_time</i>
+                                            <span>${activity.timestamp}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         `;
                         activitiesList.insertAdjacentHTML('beforeend', activityHtml);
                     });
-
-                    // Daha fazla göster butonunu gizle, daha az göster butonunu göster
+                    
                     loadMoreBtn.style.display = 'none';
                     loadLessBtn.style.display = 'block';
                     activitiesList.classList.add('expanded');
                 })
-                .catch(error => console.error('Error:', error))
+                .catch(error => {
+                    console.error('Error:', error);
+                })
                 .finally(() => {
                     btn.classList.remove('loading');
                     isLoading = false;
@@ -836,30 +967,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (loadLessBtn) {
         loadLessBtn.addEventListener('click', function() {
-            // İlk 5 kayıt dışındaki tüm kayıtları kaldır
             const items = activitiesList.querySelectorAll('.activity-item');
             for (let i = items.length - 1; i >= 5; i--) {
                 items[i].remove();
             }
-
-            // Butonları değiştir
+            
             loadLessBtn.style.display = 'none';
             loadMoreBtn.style.display = 'block';
             activitiesList.classList.remove('expanded');
-
-            // Scroll'u en üste al
             activitiesList.scrollTop = 0;
         });
-    }
-
-    function getActivityIcon(type) {
-        switch(type) {
-            case 'dosya_ekleme': return 'folder_add';
-            case 'masraf_ekleme': return 'payments';
-            case 'belge_yukleme': return 'upload_file';
-            case 'durusma_ekleme': return 'event';
-            default: return 'edit';
-        }
     }
 });
 </script>
