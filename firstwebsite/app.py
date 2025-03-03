@@ -14,7 +14,7 @@ from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
 import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from firstwebsite.models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview
+from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi
 import uuid
 from PIL import Image
 from functools import wraps
@@ -22,7 +22,7 @@ from io import BytesIO
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
 def permission_required(permission):
     def decorator(f):
@@ -934,6 +934,8 @@ def add_event():
     try:
         data = request.get_json()
         
+        app.logger.info(f"Etkinlik ekleme isteği alındı: {data}")
+        
         # Tarihleri UTC'ye çevirmeden işle
         date_str = data['date']
         time_str = data['time']
@@ -942,16 +944,24 @@ def add_event():
         # Tarihleri doğrudan string'den date objesine çevir
         event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         event_time = datetime.strptime(time_str, '%H:%M').time()
-        deadline_date = datetime.strptime(deadline_str, '%Y-%m-%d').date() if deadline_str else None
+        
+        # deadline_date kontrolü - eğer varsa çevir, yoksa None olarak bırak
+        deadline_date = None
+        if deadline_str:
+            try:
+                deadline_date = datetime.strptime(deadline_str, '%Y-%m-%d').date()
+            except ValueError as e:
+                app.logger.error(f"deadline_date çevirme hatası: {e}")
+                # Hata durumunda deadline_date None olarak kalır
         
         event = CalendarEvent(
             title=data['title'],
             date=event_date,
             time=event_time,
             event_type=data['event_type'],
-            description=data.get('description'),
+            description=data.get('description', ''),
             user_id=current_user.id,
-            assigned_to=data.get('assigned_to'),
+            assigned_to=data.get('assigned_to', ''),
             deadline_date=deadline_date,
             is_completed=data.get('is_completed', False)
         )
@@ -959,17 +969,21 @@ def add_event():
         db.session.add(event)
         
         # Log kaydı
+        log_details = {
+            'baslik': data['title'],
+            'tarih': date_str,
+            'saat': time_str,
+            'tur': data['event_type'],
+            'aciklama': data.get('description', ''),
+        }
+        
+        if deadline_str:
+            log_details['son_tarih'] = deadline_str
+        
         log = ActivityLog(
             activity_type='etkinlik_ekleme',
             description=f'Yeni etkinlik eklendi: {data["title"]}',
-            details={
-                'baslik': data['title'],
-                'tarih': date_str,
-                'saat': time_str,
-                'tur': data['event_type'],
-                'aciklama': data.get('description', ''),
-                'son_tarih': deadline_str
-            },
+            details=log_details,
             user_id=current_user.id,
             related_event_id=event.id
         )
@@ -990,8 +1004,9 @@ def add_event():
             db.session.add(deadline_event)
         
         db.session.commit()
+        app.logger.info(f"Etkinlik başarıyla eklendi: {event.id}")
         
-        return jsonify({
+        response_data = {
             'id': event.id,
             'title': event.title,
             'date': event_date.strftime('%Y-%m-%d'),
@@ -999,12 +1014,17 @@ def add_event():
             'event_type': event.event_type,
             'description': event.description,
             'assigned_to': event.assigned_to,
-            'deadline_date': deadline_date.strftime('%Y-%m-%d') if deadline_date else None,
             'is_completed': event.is_completed
-        }), 200
+        }
+        
+        if deadline_date:
+            response_data['deadline_date'] = deadline_date.strftime('%Y-%m-%d')
+        
+        return jsonify(response_data), 200
         
     except Exception as e:
         db.session.rollback()
+        app.logger.error(f"Etkinlik ekleme hatası: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 400
 
 @app.route('/update_event/<int:event_id>', methods=['PUT'])
@@ -1014,6 +1034,8 @@ def update_event(event_id):
     try:
         event = CalendarEvent.query.get_or_404(event_id)
         data = request.get_json()
+        
+        app.logger.info(f"Etkinlik güncelleme isteği alındı: {event_id}, Veri: {data}")
         
         # Eski değerleri kaydet
         old_title = event.title
@@ -1028,36 +1050,49 @@ def update_event(event_id):
         # Tarihleri doğrudan string'den date objesine çevir
         event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         event_time = datetime.strptime(time_str, '%H:%M').time()
-        deadline_date = datetime.strptime(deadline_str, '%Y-%m-%d').date() if deadline_str else None
+        
+        # deadline_date kontrolü - eğer varsa çevir, yoksa None olarak bırak
+        deadline_date = None
+        if deadline_str:
+            try:
+                deadline_date = datetime.strptime(deadline_str, '%Y-%m-%d').date()
+            except ValueError as e:
+                app.logger.error(f"deadline_date çevirme hatası: {e}")
+                # Hata durumunda deadline_date None olarak kalır
         
         event.title = data['title']
         event.date = event_date
         event.time = event_time
         event.event_type = data['event_type']
-        event.description = data.get('description')
-        event.assigned_to = data.get('assigned_to')
+        event.description = data.get('description', '')
+        event.assigned_to = data.get('assigned_to', '')
         event.is_completed = data.get('is_completed', False)
         
         # Log kaydı
+        log_details = {
+            'eski_baslik': old_title,
+            'yeni_baslik': event.title,
+            'eski_tarih': old_date.strftime('%Y-%m-%d'),
+            'yeni_tarih': event_date.strftime('%Y-%m-%d'),
+            'eski_saat': old_time.strftime('%H:%M'),
+            'yeni_saat': event_time.strftime('%H:%M'),
+            'tur': data['event_type'],
+            'aciklama': data.get('description', ''),
+        }
+        
+        if deadline_str:
+            log_details['son_tarih'] = deadline_str
+        
         log = ActivityLog(
             activity_type='etkinlik_duzenleme',
             description=f'Etkinlik düzenlendi: {old_title}',
-            details={
-                'eski_baslik': old_title,
-                'yeni_baslik': event.title,
-                'eski_tarih': old_date.strftime('%Y-%m-%d'),
-                'yeni_tarih': event_date.strftime('%Y-%m-%d'),
-                'eski_saat': old_time.strftime('%H:%M'),
-                'yeni_saat': event_time.strftime('%H:%M'),
-                'tur': data['event_type'],
-                'aciklama': data.get('description', ''),
-                'son_tarih': deadline_str
-            },
+            details=log_details,
             user_id=current_user.id,
             related_event_id=event.id
         )
         db.session.add(log)
         
+        # Deadline işlemleri
         if deadline_date:
             event.deadline_date = deadline_date
             
@@ -1084,8 +1119,9 @@ def update_event(event_id):
                 db.session.add(deadline_event)
         
         db.session.commit()
+        app.logger.info(f"Etkinlik başarıyla güncellendi: {event.id}")
         
-        return jsonify({
+        response_data = {
             'id': event.id,
             'title': event.title,
             'date': event_date.strftime('%Y-%m-%d'),
@@ -1093,12 +1129,17 @@ def update_event(event_id):
             'event_type': event.event_type,
             'description': event.description,
             'assigned_to': event.assigned_to,
-            'deadline_date': deadline_date.strftime('%Y-%m-%d') if deadline_date else None,
             'is_completed': event.is_completed
-        }), 200
+        }
+        
+        if deadline_date:
+            response_data['deadline_date'] = deadline_date.strftime('%Y-%m-%d')
+        
+        return jsonify(response_data), 200
         
     except Exception as e:
         db.session.rollback()
+        app.logger.error(f"Etkinlik güncelleme hatası: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 400
 
 @app.route('/delete_event/<int:event_id>', methods=['DELETE'])
@@ -1883,10 +1924,10 @@ def generate_worker_interview_pdf():
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            rightMargin=30,
-            leftMargin=30,
-            topMargin=30,
-            bottomMargin=30
+            rightMargin=15,
+            leftMargin=15,
+            topMargin=15,
+            bottomMargin=15
         )
         
         # Stil tanımlamaları
@@ -1894,32 +1935,34 @@ def generate_worker_interview_pdf():
         styles.add(ParagraphStyle(
             name='CustomTitle',
             parent=styles['Heading1'],
-            fontSize=14,
+            fontSize=12,
             alignment=1,
-            spaceAfter=20
+            spaceAfter=6
         ))
         
         styles.add(ParagraphStyle(
             name='SectionTitle',
             parent=styles['Heading2'],
-            fontSize=12,
-            spaceAfter=10
+            fontSize=9,
+            spaceAfter=4,
+            backColor=colors.lightgrey,
+            borderPadding=3
         ))
         
         styles.add(ParagraphStyle(
             name='FieldLabel',
             parent=styles['Normal'],
-            fontSize=10,
+            fontSize=8,
             textColor=colors.black,
-            spaceAfter=5
+            spaceAfter=1
         ))
         
         styles.add(ParagraphStyle(
             name='FieldValue',
             parent=styles['Normal'],
-            fontSize=10,
-            leftIndent=20,
-            spaceAfter=10
+            fontSize=8,
+            leftIndent=5,
+            spaceAfter=3
         ))
         
         # İçerik listesi
@@ -1982,18 +2025,49 @@ def generate_worker_interview_pdf():
         for section_title, fields in sections:
             elements.append(Paragraph(section_title, styles['SectionTitle']))
             
-            for field_label, field_value in fields:
-                if field_value:  # Boş olmayan alanları ekle
-                    elements.append(Paragraph(f'<b>{field_label}:</b>', styles['FieldLabel']))
-                    elements.append(Paragraph(str(field_value), styles['FieldValue']))
+            # İki sütunlu tablo oluştur
+            data_rows = []
+            for i in range(0, len(fields), 2):
+                row = []
+                # İlk sütun
+                label1, value1 = fields[i]
+                cell1 = []
+                cell1.append(Paragraph(f'<b>{label1}:</b>', styles['FieldLabel']))
+                if value1:
+                    cell1.append(Paragraph(str(value1), styles['FieldValue']))
+                row.append(cell1)
+                
+                # İkinci sütun (eğer varsa)
+                if i + 1 < len(fields):
+                    label2, value2 = fields[i + 1]
+                    cell2 = []
+                    cell2.append(Paragraph(f'<b>{label2}:</b>', styles['FieldLabel']))
+                    if value2:
+                        cell2.append(Paragraph(str(value2), styles['FieldValue']))
+                    row.append(cell2)
+                else:
+                    row.append([])  # Boş hücre
+                
+                data_rows.append(row)
             
-            elements.append(Spacer(1, 10))
+            # Tablo oluştur
+            if data_rows:
+                table = Table(data_rows, colWidths=[doc.width/2-6, doc.width/2-6])
+                table.setStyle(TableStyle([
+                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                    ('TOPPADDING', (0, 0), (-1, -1), 1),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                ]))
+                elements.append(table)
+            
+            elements.append(Spacer(1, 3))
         
         # İmza bölümü
-        elements.append(Spacer(1, 30))
+        elements.append(Spacer(1, 10))
+        elements.append(Paragraph('11. ONAY', styles['SectionTitle']))
         elements.append(Paragraph('OKUDUM', styles['CustomTitle']))
         elements.append(Paragraph('BEYANLARIM DOĞRULTUSUNDA HAZIRLANMIŞTIR', styles['CustomTitle']))
-        elements.append(Spacer(1, 50))
+        elements.append(Spacer(1, 20))
         elements.append(Paragraph('İMZA', styles['CustomTitle']))
         
         # PDF oluştur
@@ -2011,6 +2085,118 @@ def generate_worker_interview_pdf():
     except Exception as e:
         print(f"PDF oluşturma hatası: {str(e)}")  # Hatayı konsola yazdır
         return jsonify({'success': False, 'message': f'PDF oluşturulurken bir hata oluştu: {str(e)}'}), 500
+
+@app.route('/save_isci_gorusme', methods=['POST'])
+@login_required
+def save_isci_gorusme():
+    try:
+        form_data = request.form.to_dict()
+        
+        # Tanık durumunu kontrol et
+        witness_option = form_data.get('witnessOption', 'no')
+        
+        # Tarih alanlarını kontrol et ve dönüştür
+        date_fields = ['startDate', 'endDate', 'insuranceDate']
+        for field in date_fields:
+            if field in form_data and form_data[field]:
+                try:
+                    form_data[field] = datetime.strptime(form_data[field], '%Y-%m-%d').date()
+                except ValueError:
+                    return jsonify({'success': False, 'error': f'Geçersiz tarih formatı: {field}'})
+        
+        # Form ID'si varsa güncelle, yoksa yeni kayıt oluştur
+        form_id = form_data.get('id')
+        if form_id:
+            form = IsciGorusmeTutanagi.query.get(int(form_id))
+            if not form:
+                return jsonify({'success': False, 'error': 'Form bulunamadı'})
+        else:
+            form = IsciGorusmeTutanagi()
+            form.user_id = current_user.id
+        
+        # Form verilerini modele aktar
+        for key, value in form_data.items():
+            if key != 'id' and hasattr(form, key):
+                setattr(form, key, value)
+        
+        # Tanık seçeneği "yok" ise boş liste olarak ayarla
+        if witness_option == 'no':
+            form.witnesses = []
+        
+        # Veritabanına kaydet
+        db.session.add(form)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# Kaydedilmiş formları getirme
+@app.route('/get_isci_gorusme_forms')
+@login_required
+def get_isci_gorusme_forms():
+    try:
+        forms = IsciGorusmeTutanagi.query.filter_by(user_id=current_user.id).order_by(IsciGorusmeTutanagi.created_at.desc()).all()
+        forms_data = []
+        
+        for form in forms:
+            forms_data.append({
+                'id': form.id,
+                'name': form.name or 'İsimsiz Form',
+                'date': form.created_at.strftime('%d.%m.%Y')
+            })
+        
+        return jsonify({'success': True, 'forms': forms_data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# Belirli bir formu getirme
+@app.route('/get_isci_gorusme_form/<int:form_id>')
+@login_required
+def get_isci_gorusme_form(form_id):
+    try:
+        form = IsciGorusmeTutanagi.query.get(form_id)
+        if not form:
+            return jsonify({'success': False, 'error': 'Form bulunamadı'})
+        
+        # Kullanıcı kontrolü
+        if form.user_id != current_user.id and not current_user.is_admin:
+            return jsonify({'success': False, 'error': 'Bu forma erişim izniniz yok'})
+        
+        form_data = form.to_dict()
+        
+        # Tanıkları ekle
+        for i, witness in enumerate(form.witnesses, 1):
+            form_data[f'witness{i}'] = witness
+        
+        return jsonify({'success': True, 'form': form_data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# Form silme
+@app.route('/delete_isci_gorusme_form/<int:form_id>', methods=['DELETE'])
+@login_required
+def delete_isci_gorusme_form(form_id):
+    try:
+        form = IsciGorusmeTutanagi.query.get(form_id)
+        if not form:
+            return jsonify({'success': False, 'error': 'Form bulunamadı'})
+        
+        # Kullanıcı kontrolü
+        if form.user_id != current_user.id and not current_user.is_admin:
+            return jsonify({'success': False, 'error': 'Bu formu silme izniniz yok'})
+        
+        db.session.delete(form)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/worker_interview')
+@login_required
+def worker_interview():
+    return render_template('worker_interview.html')
 
 if __name__ == '__main__':
     with app.app_context():

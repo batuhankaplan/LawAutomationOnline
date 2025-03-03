@@ -1,223 +1,13 @@
 {% extends "layout.html" %}
 
-{% block title %}İşçi Görüşme Formu{% endblock %}
+{% block title %}İşçi Görüşme Tutanağı{% endblock %}
 
 {% block content %}
-<div class="page-container">
-    <!-- Sol taraf - Kayıtlı Formlar -->
-    <div class="saved-forms-section">
-        <div class="section-header">
-            <h2><i class="material-icons">folder</i> Kayıtlı Formlar</h2>
-            <button class="new-form-btn" onclick="showNewForm()">
-                <i class="material-icons">add</i>
-                Yeni Form
-            </button>
-        </div>
-        <div class="forms-list" id="formsList">
-            <!-- Kayıtlı formlar buraya dinamik olarak eklenecek -->
-        </div>
-    </div>
-
-    <!-- Sağ taraf - Form -->
-    <div class="form-section">
-        <form id="workerInterviewForm" class="interview-form">
-            <div class="form-header">
-                <h1>İŞÇİ GÖRÜŞME TUTANAĞI</h1>
-                <div class="form-actions">
-                    <button type="button" class="action-btn save-btn" onclick="saveForm()">
-                        <i class="material-icons">save</i>
-                        Kaydet
-                    </button>
-                    <button type="button" class="action-btn print-btn" onclick="printForm()">
-                        <i class="material-icons">print</i>
-                        Yazdır
-                    </button>
-                    <button type="button" class="action-btn download-btn" onclick="downloadPDF()">
-                        <i class="material-icons">download</i>
-                        PDF İndir
-                    </button>
-                </div>
-            </div>
-
-            <!-- Madde 1 -->
-            <div class="form-group">
-                <h3>MADDE 1: KİŞİSEL BİLGİLER</h3>
-                <div class="input-grid">
-                    <div class="input-item">
-                        <label for="fullName">İsim Soyisim</label>
-                        <input type="text" id="fullName" name="fullName" required>
-                    </div>
-                    <div class="input-item">
-                        <label for="tcNo">T.C. Kimlik No</label>
-                        <input type="text" id="tcNo" name="tcNo" maxlength="11" required>
-                    </div>
-                    <div class="input-item">
-                        <label for="phone">Telefon</label>
-                        <input type="tel" id="phone" name="phone" required>
-                    </div>
-                    <div class="input-item full-width">
-                        <label for="address">Adres</label>
-                        <textarea id="address" name="address" required></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Madde 2 -->
-            <div class="form-group">
-                <h3>MADDE 2: İŞE GİRİŞ BİLGİLERİ</h3>
-                <div class="input-grid">
-                    <div class="input-item">
-                        <label for="startDate">İşe Giriş Tarihi</label>
-                        <input type="date" id="startDate" name="startDate" required>
-                    </div>
-                    <div class="input-item">
-                        <label for="insuranceDate">Sigorta Başlangıç Tarihi</label>
-                        <input type="date" id="insuranceDate" name="insuranceDate" required>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Madde 3 -->
-            <div class="form-group">
-                <h3>MADDE 3: İŞTEN AYRILMA BİLGİLERİ</h3>
-                <div class="input-grid">
-                    <div class="input-item">
-                        <label for="endDate">İşten Ayrılma Tarihi</label>
-                        <input type="date" id="endDate" name="endDate" required>
-                    </div>
-                    <div class="input-item full-width">
-                        <label for="endReason">Ayrılma Sebebi</label>
-                        <textarea id="endReason" name="endReason" required></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Madde 4 -->
-            <div class="form-group">
-                <h3>MADDE 4: İŞYERİ BİLGİLERİ</h3>
-                <div class="input-grid">
-                    <div class="input-item">
-                        <label for="companyName">İşyeri Adı/Unvanı</label>
-                        <input type="text" id="companyName" name="companyName" required>
-                    </div>
-                    <div class="input-item">
-                        <label for="businessType">Faaliyet Konusu</label>
-                        <input type="text" id="businessType" name="businessType" required>
-                    </div>
-                    <div class="input-item full-width">
-                        <label for="companyAddress">İşyeri Adresi</label>
-                        <textarea id="companyAddress" name="companyAddress" required></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Madde 5 -->
-            <div class="form-group">
-                <h3>MADDE 5: GÖREV BİLGİLERİ</h3>
-                <div class="input-grid">
-                    <div class="input-item">
-                        <label for="position">Görev/Pozisyon</label>
-                        <input type="text" id="position" name="position" required>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Madde 6 -->
-            <div class="form-group">
-                <h3>MADDE 6: ÇALIŞMA DÜZEN</h3>
-                <div class="input-grid">
-                    <div class="input-item">
-                        <label for="workHours">Çalışma Saatleri</label>
-                        <input type="text" id="workHours" name="workHours" required>
-                    </div>
-                    <div class="input-item">
-                        <label for="overtime">Fazla Mesai Bilgisi</label>
-                        <textarea id="overtime" name="overtime"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Madde 7 -->
-            <div class="form-group">
-                <h3>MADDE 7: ÜCRET VE YARDIMLAR</h3>
-                <div class="input-grid">
-                    <div class="input-item">
-                        <label for="salary">Ücret</label>
-                        <input type="number" id="salary" name="salary" required>
-                    </div>
-                    <div class="input-item">
-                        <label for="transportation">Yol Ücreti</label>
-                        <input type="number" id="transportation" name="transportation">
-                    </div>
-                    <div class="input-item">
-                        <label for="food">Yemek Ücreti</label>
-                        <input type="number" id="food" name="food">
-                    </div>
-                    <div class="input-item">
-                        <label for="benefits">Sosyal Yardımlar</label>
-                        <textarea id="benefits" name="benefits"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Madde 8 -->
-            <div class="form-group">
-                <h3>MADDE 8: TATİL BİLGİLERİ</h3>
-                <div class="input-grid">
-                    <div class="input-item">
-                        <label for="weeklyHoliday">Hafta Tatili</label>
-                        <input type="text" id="weeklyHoliday" name="weeklyHoliday" required>
-                    </div>
-                    <div class="input-item">
-                        <label for="holidays">Dini/Resmi Bayram Tatilleri</label>
-                        <textarea id="holidays" name="holidays"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Madde 9 -->
-            <div class="form-group">
-                <h3>MADDE 9: İZİN VE ALACAK BİLGİLERİ</h3>
-                <div class="input-grid">
-                    <div class="input-item">
-                        <label for="annualLeave">Yıllık Ücretli İzin Alacağı</label>
-                        <textarea id="annualLeave" name="annualLeave"></textarea>
-                    </div>
-                    <div class="input-item">
-                        <label for="unpaidSalary">Maaş Alacağı</label>
-                        <textarea id="unpaidSalary" name="unpaidSalary"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Madde 10 -->
-            <div class="form-group">
-                <h3>MADDE 10: TANIKLAR</h3>
-                <div class="witness-container" id="witnessContainer">
-                    <div class="witness-row">
-                        <div class="witness-input">
-                            <label for="witness1">Tanık</label>
-                            <input type="text" id="witness1" name="witness1">
-                        </div>
-                        <button type="button" class="add-witness-btn" onclick="addWitness()">
-                            <i class="material-icons">add</i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- İmza Bölümü -->
-            <div class="signature-section">
-                <div class="signature-text">
-                    <p>OKUDUM</p>
-                    <p>BEYANLARIM DOĞRULTUSUNDA HAZIRLANMIŞTIR</p>
-                    <p class="signature-line">İMZA</p>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<!-- HTML2PDF Kütüphanesi -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- Özel Stiller -->
 <style>
 .page-container {
     display: flex;
@@ -277,6 +67,64 @@
     gap: 1rem;
 }
 
+.saved-form-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.saved-form-item:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+}
+
+.form-info h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #2c3e50;
+}
+
+.form-info p {
+    margin: 0.3rem 0 0;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.edit-btn, .delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.edit-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.delete-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.edit-btn:hover, .delete-btn:hover {
+    transform: translateY(-2px);
+}
+
 /* Sağ Bölüm - Form */
 .form-section {
     flex: 3;
@@ -287,14 +135,15 @@
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    position: relative;
 }
 
 .form-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem;
     border-bottom: 2px solid #eee;
 }
 
@@ -302,11 +151,15 @@
     font-size: 1.5rem;
     color: #2c3e50;
     margin: 0;
+    width: 100%;
+    text-align: center;
 }
 
-.form-actions {
+.bottom-form-actions {
     display: flex;
-    gap: 1rem;
+    gap: 0.8rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
 }
 
 .action-btn {
@@ -336,10 +189,6 @@
     color: white;
 }
 
-.download-btn:hover {
-    background: #45a049;
-}
-
 .action-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -347,31 +196,31 @@
 
 /* Form Grupları */
 .form-group {
-    margin-bottom: 2rem;
-    padding: 1.5rem;
+    margin-bottom: 0.8rem;
+    padding: 0.8rem;
     background: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #eee;
 }
 
 .form-group h3 {
-    font-size: 1.2rem;
+    font-size: 0.9rem;
     color: #2c3e50;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #eee;
+    margin: 0 0 0.8rem 0;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid #eee;
 }
 
 .input-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+    gap: 0.8rem;
 }
 
 .input-item {
     display: flex;
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 0.4rem;
 }
 
 .input-item.full-width {
@@ -379,17 +228,17 @@
 }
 
 .input-item label {
-    font-size: 1rem;
+    font-size: 0.85rem;
     color: #495057;
     font-weight: 500;
 }
 
 .input-item input,
 .input-item textarea {
-    padding: 1rem;
+    padding: 0.6rem;
     border: 1px solid #dee2e6;
     border-radius: 6px;
-    font-size: 1rem;
+    font-size: 0.85rem;
     transition: all 0.3s ease;
 }
 
@@ -401,15 +250,15 @@
 }
 
 .input-item textarea {
-    min-height: 100px;
+    min-height: 50px;
     resize: vertical;
 }
 
 /* İmza Bölümü */
 .signature-section {
-    margin-top: 3rem;
-    text-align: right;
-    padding-right: 2rem;
+    margin-top: 0;
+    padding: 0.8rem;
+    text-align: center;
 }
 
 .signature-text {
@@ -418,14 +267,17 @@
 }
 
 .signature-text p {
-    margin: 0.5rem 0;
+    margin: 0.2rem 0;
     font-weight: 500;
     color: #2c3e50;
+    font-size: 0.85rem;
 }
 
 .signature-line {
-    margin-top: 4rem !important;
+    margin-top: 1.5rem !important;
     position: relative;
+    border-top: 1px solid #dee2e6;
+    padding-top: 0.4rem;
 }
 
 /* Responsive Tasarım */
@@ -446,7 +298,7 @@
 @media print {
     @page {
         size: A4;
-        margin: 1cm;
+        margin: 0.2cm;
     }
 
     body * {
@@ -462,55 +314,149 @@
         left: 0;
         top: 0;
         width: 100%;
-        padding: 1cm !important;
+        padding: 0.2cm !important;
         margin: 0 !important;
         background: none !important;
         box-shadow: none !important;
+        page-break-after: avoid !important;
     }
 
-    .form-actions, .add-witness-btn, .remove-witness-btn {
+    .form-header h1 {
+        font-size: 10pt !important;
+        margin-bottom: 0.1cm !important;
+        text-align: center !important;
+        border-bottom: none !important;
+    }
+
+    .form-header {
+        border-bottom: none !important;
+        margin-bottom: 0.1cm !important;
+        padding-bottom: 0 !important;
+    }
+
+    .bottom-form-actions {
         display: none !important;
     }
 
-    input, textarea {
-        border: none !important;
-        padding: 0 !important;
-        font-size: 11pt !important;
-        color: black !important;
+    .form-group {
+        margin-bottom: 0.05cm !important;
+        padding: 0.05cm !important;
         background: none !important;
+        border: none !important;
+        page-break-inside: avoid !important;
     }
 
-    input[type="text"], input[type="tel"], input[type="date"], textarea {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
+    .form-group h3 {
+        font-size: 8pt !important;
+        margin-bottom: 0.03cm !important;
+        padding-bottom: 0.02cm !important;
+        border-bottom: 0.5pt solid #ddd !important;
+    }
+
+    input, textarea, select {
+        border: none !important;
+        padding: 0 !important;
+        font-size: 7pt !important;
+        color: black !important;
+        background: none !important;
+        height: auto !important;
     }
 
     .input-item {
-        margin-bottom: 0.5cm !important;
+        margin-bottom: 0.03cm !important;
     }
 
     .input-item label {
         display: block !important;
         font-weight: bold !important;
         color: black !important;
-        margin-bottom: 0.2cm !important;
+        margin-bottom: 0.02cm !important;
+        font-size: 7pt !important;
     }
 
-    /* Boş alanları göster */
-    .input-item:has(input:placeholder-shown),
-    .input-item:has(textarea:placeholder-shown) {
-        display: block !important;
+    textarea {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: 0.2cm !important;
+        overflow: hidden !important;
     }
 
     .signature-section {
-        margin-top: 2cm !important;
-        text-align: right !important;
+        margin-top: 0.05cm !important;
+        text-align: center !important;
+        background: none !important;
+        border: none !important;
+        padding: 0 !important;
     }
 
     .signature-text p {
-        margin: 0.2cm 0 !important;
-        font-size: 11pt !important;
+        margin: 0.02cm 0 !important;
+        font-size: 7pt !important;
         color: black !important;
+    }
+
+    .signature-line {
+        margin-top: 0.1cm !important;
+        border-top: 0.5pt solid #000 !important;
+        width: 3cm !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    /* Maddeleri yan yana yerleştir */
+    .form-container {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.03cm !important;
+    }
+    
+    /* Bazı maddeleri tam genişlikte göster */
+    .form-group.full-width {
+        grid-column: 1 / -1 !important;
+    }
+    
+    /* İmza bölümünün sayfa sonuna sarkmasını engelle */
+    .signature-section {
+        page-break-before: avoid !important;
+        page-break-inside: avoid !important;
+    }
+    
+    /* Alacak bilgileri için özel grid */
+    .alacak-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 0.03cm !important;
+    }
+    
+    /* Radio butonları için özel stil */
+    .radio-group {
+        font-size: 6pt !important;
+    }
+    
+    .radio-group label {
+        margin-right: 0.05cm !important;
+    }
+    
+    /* Tanık bölümü için özel stil */
+    .witness-group {
+        margin-bottom: 0.03cm !important;
+        padding-bottom: 0.03cm !important;
+    }
+    
+    .witness-option-container {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.05cm !important;
+    }
+    
+    /* Tanık alanlarını optimize et */
+    .witness-container {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.05cm !important;
+    }
+
+    .witness-row {
+        display: block !important;
     }
 }
 
@@ -518,20 +464,20 @@
 .witness-container {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.6rem;
 }
 
 .witness-row {
     display: flex;
     align-items: flex-end;
-    gap: 1rem;
+    gap: 0.6rem;
 }
 
 .witness-input {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 
 .add-witness-btn {
@@ -539,8 +485,8 @@
     color: white;
     border: none;
     border-radius: 6px;
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -558,8 +504,8 @@
     color: white;
     border: none;
     border-radius: 6px;
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -571,200 +517,573 @@
     background: #c82333;
     transform: translateY(-2px);
 }
+
+/* Form gruplarını yan yana göstermek için */
+.form-container {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Alacak bilgileri için özel grid */
+.alacak-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 768px) {
+    .alacak-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 </style>
 
+<div class="page-container">
+    <!-- Sol Bölüm - Kayıtlı Formlar -->
+    <div class="saved-forms-section">
+        <div class="section-header">
+            <h2><i class="fas fa-file-alt"></i> Kayıtlı Formlar</h2>
+            <button class="new-form-btn" onclick="createNewForm()">
+                <i class="fas fa-plus"></i> Yeni
+            </button>
+        </div>
+        <div class="forms-list" id="formsList">
+            <!-- Kayıtlı formlar buraya yüklenecek -->
+            <p class="no-forms">Yükleniyor...</p>
+        </div>
+    </div>
+
+    <!-- Sağ Bölüm - Form -->
+    <div class="form-section" id="formSection">
+        <div class="form-header">
+            <h1>İŞÇİ GÖRÜŞME TUTANAĞI</h1>
+        </div>
+        
+        <div class="form-container">
+            <!-- İşçi Bilgileri ve İş Bilgileri yan yana -->
+            <div class="form-group">
+                <h3>İşçi Bilgileri</h3>
+                <div class="input-grid">
+                    <div class="input-item">
+                        <label for="name">Adı Soyadı</label>
+                        <input type="text" id="name" name="name">
+                    </div>
+                    <div class="input-item">
+                        <label for="tcNo">TC Kimlik No</label>
+                        <input type="text" id="tcNo" name="tcNo">
+                    </div>
+                    <div class="input-item">
+                        <label for="address">Adres</label>
+                        <textarea id="address" name="address"></textarea>
+                    </div>
+                    <div class="input-item">
+                        <label for="phone">Telefon</label>
+                        <input type="text" id="phone" name="phone">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <h3>İş Bilgileri</h3>
+                <div class="input-grid">
+                    <div class="input-item">
+                        <label for="startDate">İşe Başlama Tarihi</label>
+                        <input type="date" id="startDate" name="startDate">
+                    </div>
+                    <div class="input-item">
+                        <label for="endDate">İşten Ayrılma Tarihi</label>
+                        <input type="date" id="endDate" name="endDate">
+                    </div>
+                    <div class="input-item">
+                        <label for="position">Pozisyon</label>
+                        <input type="text" id="position" name="position">
+                    </div>
+                    <div class="input-item">
+                        <label for="department">Departman</label>
+                        <input type="text" id="department" name="department">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sigorta Bilgileri ve Çalışma Koşulları yan yana -->
+            <div class="form-group">
+                <h3>Sigorta Bilgileri</h3>
+                <div class="input-grid">
+                    <div class="input-item">
+                        <label for="insuranceStatus">Sigorta Durumu</label>
+                        <input type="text" id="insuranceStatus" name="insuranceStatus">
+                    </div>
+                    <div class="input-item">
+                        <label for="insuranceDate">Sigorta Başlangıç Tarihi</label>
+                        <input type="date" id="insuranceDate" name="insuranceDate">
+                    </div>
+                    <div class="input-item">
+                        <label for="insuranceNo">SGK Sicil No</label>
+                        <input type="text" id="insuranceNo" name="insuranceNo">
+                    </div>
+                    <div class="input-item">
+                        <label for="salary">Ücret</label>
+                        <input type="text" id="salary" name="salary">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <h3>Çalışma Koşulları</h3>
+                <div class="input-grid">
+                    <div class="input-item">
+                        <label for="workingHours">Çalışma Saatleri</label>
+                        <input type="text" id="workingHours" name="workingHours">
+                    </div>
+                    <div class="input-item">
+                        <label for="overtime">Fazla Mesai</label>
+                        <input type="text" id="overtime" name="overtime">
+                    </div>
+                    <div class="input-item">
+                        <label for="weeklyHoliday">Haftalık İzin Günü</label>
+                        <input type="text" id="weeklyHoliday" name="weeklyHoliday">
+                    </div>
+                    <div class="input-item">
+                        <label for="annualLeave">Yıllık İzin Kullanımı</label>
+                        <input type="text" id="annualLeave" name="annualLeave">
+                    </div>
+                </div>
+            </div>
+
+            <!-- İşten Ayrılma Nedeni ve Alacak Bilgileri yan yana -->
+            <div class="form-group">
+                <h3>İşten Ayrılma Nedeni</h3>
+                <div class="input-grid">
+                    <div class="input-item full-width">
+                        <label for="terminationReason">Ayrılma Nedeni</label>
+                        <textarea id="terminationReason" name="terminationReason"></textarea>
+                    </div>
+                    <div class="input-item">
+                        <label for="terminationType">Ayrılma Şekli</label>
+                        <input type="text" id="terminationType" name="terminationType">
+                    </div>
+                    <div class="input-item">
+                        <label for="noticeCompliance">İhbar Süresi Uygulaması</label>
+                        <input type="text" id="noticeCompliance" name="noticeCompliance">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alacak Bilgileri -->
+            <div class="form-group">
+                <h3>Alacak Bilgileri</h3>
+                <div class="input-grid alacak-grid">
+                    <div class="input-item">
+                        <label for="severancePay">Kıdem Tazminatı</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="severancePayOption" value="no" checked> Yok</label>
+                            <label><input type="radio" name="severancePayOption" value="yes"> Var</label>
+                        </div>
+                    </div>
+                    <div class="input-item">
+                        <label for="noticePay">İhbar Tazminatı</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="noticePayOption" value="no" checked> Yok</label>
+                            <label><input type="radio" name="noticePayOption" value="yes"> Var</label>
+                        </div>
+                    </div>
+                    <div class="input-item">
+                        <label for="unpaidWages">Ödenmemiş Ücretler</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="unpaidWagesOption" value="no" checked> Yok</label>
+                            <label><input type="radio" name="unpaidWagesOption" value="yes"> Var</label>
+                        </div>
+                    </div>
+                    <div class="input-item">
+                        <label for="overtimePay">Fazla Mesai Ücreti</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="overtimePayOption" value="no" checked> Yok</label>
+                            <label><input type="radio" name="overtimePayOption" value="yes"> Var</label>
+                        </div>
+                    </div>
+                    <div class="input-item">
+                        <label for="annualLeavePay">Yıllık İzin Ücreti</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="annualLeavePayOption" value="no" checked> Yok</label>
+                            <label><input type="radio" name="annualLeavePayOption" value="yes"> Var</label>
+                        </div>
+                    </div>
+                    <div class="input-item">
+                        <label for="ubgtPay">UBGT Ücreti</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="ubgtPayOption" value="no" checked> Yok</label>
+                            <label><input type="radio" name="ubgtPayOption" value="yes"> Var</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tanıklar ve İmza Bölümü tam genişlikte -->
+            <div class="form-group full-width witness-group">
+                <h3>Tanıklar</h3>
+                <div class="witness-option-container">
+                    <div class="input-item">
+                        <label>Tanık Durumu:</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="witnessOption" value="no" checked> Yok</label>
+                            <label><input type="radio" name="witnessOption" value="yes"> Var</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group full-width signature-section">
+                <div class="signature-text">
+                    <p>İşbu tutanak beyanlarım doğrultusunda hazırlanmıştır.</p>
+                    <p>Tarih: <span id="currentDate"></span></p>
+                    <div class="signature-line"></div>
+                    <p>İmza</p>
+                </div>
+            </div>
+            
+            <!-- Butonlar - Formun altına taşındı -->
+            <div class="bottom-form-actions">
+                <button class="action-btn save-btn" onclick="saveForm()">
+                    <i class="fas fa-save"></i> Kaydet
+                </button>
+                <button class="action-btn print-btn" onclick="printForm()">
+                    <i class="fas fa-print"></i> Yazdır
+                </button>
+                <button class="action-btn download-btn" onclick="downloadPDF()">
+                    <i class="fas fa-download"></i> PDF İndir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-// Form kaydetme fonksiyonu
-function saveForm() {
-    const formData = new FormData(document.getElementById('workerInterviewForm'));
-    const data = Object.fromEntries(formData.entries());
-    
-    fetch('/save_worker_interview', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Form başarıyla kaydedildi!');
-            loadSavedForms();
-        } else {
-            alert('Form kaydedilirken bir hata oluştu!');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Bir hata oluştu!');
+    // Sayfa yüklendiğinde çalışacak fonksiyonlar
+    document.addEventListener('DOMContentLoaded', function() {
+        // Bugünün tarihini imza bölümüne ekle
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('tr-TR');
+        document.getElementById('currentDate').textContent = formattedDate;
+        
+        // Kaydedilmiş formları yükle
+        loadSavedForms();
     });
-}
 
-// Yazdırma fonksiyonu
-function printForm() {
-    // Yazdırma öncesi form verilerinin dolu olduğundan emin olun
-    const form = document.getElementById('workerInterviewForm');
-    const requiredFields = form.querySelectorAll('[required]');
-    let isValid = true;
-    
-    requiredFields.forEach(field => {
-        if (!field.value) {
-            isValid = false;
-            field.style.borderColor = 'red';
+    // Form kaydetme fonksiyonu
+    function saveForm() {
+        const formData = new FormData();
+        const inputs = document.querySelectorAll('input:not([type=radio]), textarea, select');
+        let hasRequiredFields = true;
+        let requiredFields = ['name', 'tcNo']; // Zorunlu alanlar
+        
+        // Zorunlu alanları kontrol et
+        requiredFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (field && field.value.trim() === '') {
+                hasRequiredFields = false;
+                field.style.borderColor = 'red';
+            } else if (field) {
+                field.style.borderColor = '#dee2e6';
+            }
+        });
+        
+        if (!hasRequiredFields) {
+            alert('Lütfen zorunlu alanları doldurun (Adı Soyadı, TC Kimlik No)');
+            return;
         }
-    });
-    
-    if (!isValid) {
-        alert('Lütfen tüm zorunlu alanları doldurun.');
-        return;
+        
+        // Form verilerini topla
+        inputs.forEach(input => {
+            let value = input.value.trim();
+            
+            // Tarih alanları için format kontrolü
+            if (input.type === 'date' && value) {
+                const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+                if (!dateRegex.test(value)) {
+                    input.style.borderColor = 'red';
+                    alert('Lütfen geçerli bir tarih formatı girin (YYYY-MM-DD)');
+                    input.focus();
+                    throw new Error('Geçersiz tarih formatı');
+                }
+            }
+            
+            // Boş değerleri boş string olarak gönder (null yerine)
+            formData.append(input.name, value);
+        });
+        
+        // Radio butonları için değer ekle
+        const radioOptions = [
+            'witnessOption',
+            'severancePayOption', 
+            'noticePayOption', 
+            'unpaidWagesOption', 
+            'overtimePayOption', 
+            'annualLeavePayOption', 
+            'ubgtPayOption'
+        ];
+        
+        radioOptions.forEach(option => {
+            const selectedOption = document.querySelector(`input[name="${option}"]:checked`);
+            if (selectedOption) {
+                formData.append(option, selectedOption.value);
+            }
+        });
+        
+        // Form verilerini sunucuya gönder
+        fetch('/save_isci_gorusme', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Sunucu hatası: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Form başarıyla kaydedildi!');
+                loadSavedForms(); // Kaydedilen formları yeniden yükle
+            } else {
+                alert('Form kaydedilirken bir hata oluştu: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Form kaydedilirken bir hata oluştu: ' + error.message);
+        });
     }
-    
-    window.print();
-}
 
-// Yeni form gösterme fonksiyonu
-function showNewForm() {
-    document.getElementById('workerInterviewForm').reset();
-    // Form ID'sini temizle
-    document.getElementById('workerInterviewForm').removeAttribute('data-form-id');
-}
-
-// Kayıtlı formları yükleme fonksiyonu
-function loadSavedForms() {
-    fetch('/get_worker_interviews')
+    // Kaydedilmiş formları yükleme fonksiyonu
+    function loadSavedForms() {
+        fetch('/get_isci_gorusme_forms')
         .then(response => response.json())
         .then(data => {
             const formsList = document.getElementById('formsList');
             formsList.innerHTML = '';
             
-            data.forms.forEach(form => {
-                const formItem = document.createElement('div');
-                formItem.className = 'saved-form-item';
-                formItem.innerHTML = `
-                    <div class="form-info">
-                        <h3>${form.fullName}</h3>
-                        <p>${new Date(form.startDate).toLocaleDateString('tr-TR')}</p>
-                    </div>
-                    <div class="form-actions">
-                        <button onclick="editForm(${form.id})" class="edit-btn">
-                            <i class="material-icons">edit</i>
-                        </button>
-                        <button onclick="deleteForm(${form.id})" class="delete-btn">
-                            <i class="material-icons">delete</i>
-                        </button>
-                    </div>
-                `;
-                formsList.appendChild(formItem);
-            });
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Formlar yüklenirken bir hata oluştu!');
-        });
-}
-
-// Form düzenleme fonksiyonu
-function editForm(formId) {
-    fetch(`/get_worker_interview/${formId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const form = document.getElementById('workerInterviewForm');
-                form.setAttribute('data-form-id', formId);
-                
-                // Form alanlarını doldur
-                Object.keys(data.form).forEach(key => {
-                    const input = form.querySelector(`[name="${key}"]`);
-                    if (input) {
-                        input.value = data.form[key];
-                    }
+            if (data.forms && data.forms.length > 0) {
+                data.forms.forEach(form => {
+                    const formItem = document.createElement('div');
+                    formItem.className = 'saved-form-item';
+                    formItem.innerHTML = `
+                        <div class="form-info">
+                            <h3>${form.name || 'İsimsiz Form'}</h3>
+                            <p>${form.date || 'Tarih yok'}</p>
+                        </div>
+                        <div class="form-actions">
+                            <button class="edit-btn" onclick="editForm(${form.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-btn" onclick="deleteForm(${form.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    formsList.appendChild(formItem);
                 });
             } else {
-                alert('Form yüklenirken bir hata oluştu!');
+                formsList.innerHTML = '<p class="no-forms">Kaydedilmiş form bulunamadı.</p>';
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Bir hata oluştu!');
+            console.error('Formlar yüklenirken hata oluştu:', error);
         });
-}
+    }
 
-// Form silme fonksiyonu
-function deleteForm(formId) {
-    if (confirm('Bu formu silmek istediğinize emin misiniz?')) {
-        fetch(`/delete_worker_interview/${formId}`, {
-            method: 'DELETE'
-        })
+    // Form düzenleme fonksiyonu
+    function editForm(formId) {
+        fetch(`/get_isci_gorusme_form/${formId}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Form başarıyla silindi!');
-                loadSavedForms();
+                const form = data.form;
+                
+                // Form alanlarını doldur
+                for (const key in form) {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        // null değerleri boş string olarak ayarla
+                        element.value = form[key] !== null ? form[key] : '';
+                    }
+                }
+                
+                // Radio butonları için değerleri ayarla
+                const radioOptions = [
+                    'witnessOption',
+                    'severancePayOption', 
+                    'noticePayOption', 
+                    'unpaidWagesOption', 
+                    'overtimePayOption', 
+                    'annualLeavePayOption', 
+                    'ubgtPayOption'
+                ];
+                
+                radioOptions.forEach(option => {
+                    if (form[option]) {
+                        const radioButton = document.querySelector(`input[name="${option}"][value="${form[option]}"]`);
+                        if (radioButton) {
+                            radioButton.checked = true;
+                        }
+                    }
+                });
+                
+                alert('Form başarıyla yüklendi!');
             } else {
-                alert('Form silinirken bir hata oluştu!');
+                alert('Form yüklenirken bir hata oluştu: ' + data.error);
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Bir hata oluştu!');
+            alert('Form yüklenirken bir hata oluştu: ' + error.message);
         });
     }
-}
 
-// Sayfa yüklendiğinde kayıtlı formları yükle
-document.addEventListener('DOMContentLoaded', loadSavedForms);
+    // Form silme fonksiyonu
+    function deleteForm(formId) {
+        if (confirm('Bu formu silmek istediğinizden emin misiniz?')) {
+            fetch(`/delete_isci_gorusme_form/${formId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Form başarıyla silindi!');
+                    loadSavedForms(); // Kaydedilen formları yeniden yükle
+                } else {
+                    alert('Form silinirken bir hata oluştu: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Form silinirken bir hata oluştu: ' + error.message);
+            });
+        }
+    }
 
-// PDF indirme fonksiyonu
-function downloadPDF() {
-    const formData = new FormData(document.getElementById('workerInterviewForm'));
-    const data = Object.fromEntries(formData.entries());
-    
-    fetch('/generate_worker_interview_pdf', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.blob())
-    .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `isci_gorusme_${new Date().toISOString().split('T')[0]}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('PDF oluşturulurken bir hata oluştu!');
-    });
-}
+    // Yeni form oluşturma fonksiyonu
+    function createNewForm() {
+        // Tüm form alanlarını temizle
+        const inputs = document.querySelectorAll('input:not([type=radio]), textarea, select');
+        inputs.forEach(input => {
+            input.value = '';
+        });
+        
+        // Tanık var/yok seçeneğini "Yok" olarak ayarla
+        document.querySelector('input[name="witnessOption"][value="no"]').checked = true;
+        
+        // Bugünün tarihini imza bölümüne ekle
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('tr-TR');
+        document.getElementById('currentDate').textContent = formattedDate;
+    }
 
-let witnessCount = 1;
+    // Form yazdırma fonksiyonu
+    function printForm() {
+        window.print();
+    }
 
-function addWitness() {
-    witnessCount++;
-    const container = document.getElementById('witnessContainer');
-    const newRow = document.createElement('div');
-    newRow.className = 'witness-row';
-    newRow.innerHTML = `
-        <div class="witness-input">
-            <label for="witness${witnessCount}">Tanık</label>
-            <input type="text" id="witness${witnessCount}" name="witness${witnessCount}">
-        </div>
-        <button type="button" class="remove-witness-btn" onclick="removeWitness(this)">
-            <i class="material-icons">remove</i>
-        </button>
-    `;
-    container.appendChild(newRow);
-}
-
-function removeWitness(button) {
-    button.closest('.witness-row').remove();
-}
+    // PDF indirme fonksiyonu
+    function downloadPDF() {
+        // Yazdırma öncesi hazırlık
+        const originalContent = document.body.innerHTML;
+        const printSection = document.getElementById('formSection').cloneNode(true);
+        
+        // Geçici bir div oluştur
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        tempDiv.style.top = '-9999px';
+        tempDiv.appendChild(printSection);
+        document.body.appendChild(tempDiv);
+        
+        // Form içindeki tüm input, textarea ve select elementlerini span'a çevir
+        const formElements = printSection.querySelectorAll('input, textarea, select');
+        formElements.forEach(element => {
+            let value = '';
+            
+            if (element.type === 'radio' || element.type === 'checkbox') {
+                if (element.checked) {
+                    value = element.value === 'yes' ? 'Var' : 'Yok';
+                } else {
+                    return; // İşaretlenmemiş radio butonlarını atla
+                }
+            } else {
+                value = element.value || '';
+            }
+            
+            const span = document.createElement('span');
+            span.textContent = value;
+            span.style.fontWeight = 'normal';
+            span.style.fontSize = '8pt';
+            
+            // Radio butonları için özel işlem
+            if (element.type === 'radio') {
+                const parentLabel = element.closest('label');
+                if (parentLabel && element.checked) {
+                    parentLabel.parentNode.replaceChild(span, parentLabel);
+                }
+                return;
+            }
+            
+            // Diğer form elemanları için
+            if (element.parentNode) {
+                element.parentNode.replaceChild(span, element);
+            }
+        });
+        
+        // Butonları gizle
+        const buttons = printSection.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.style.display = 'none';
+        });
+        
+        // Radio gruplarını temizle
+        const radioGroups = printSection.querySelectorAll('.radio-group');
+        radioGroups.forEach(group => {
+            const parentItem = group.closest('.input-item');
+            const label = parentItem.querySelector('label');
+            const labelText = label ? label.textContent : '';
+            
+            // Radio butonlarının değerini al
+            let value = '';
+            const checkedRadio = group.querySelector('input[type="radio"]:checked');
+            if (checkedRadio) {
+                value = checkedRadio.value === 'yes' ? 'Var' : 'Yok';
+            }
+            
+            // Yeni içerik oluştur
+            const newContent = document.createElement('div');
+            newContent.innerHTML = `<strong>${labelText}</strong>: ${value}`;
+            newContent.style.fontSize = '8pt';
+            
+            // Eski içeriği değiştir
+            parentItem.innerHTML = '';
+            parentItem.appendChild(newContent);
+        });
+        
+        // PDF oluşturma için özel ayarlar
+        const opt = {
+            margin: [5, 5, 5, 5],
+            filename: 'isci_gorusme_tutanagi.pdf',
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { 
+                scale: 2,
+                useCORS: true,
+                letterRendering: true,
+                allowTaint: true,
+                scrollX: 0,
+                scrollY: 0
+            },
+            jsPDF: { 
+                unit: 'mm', 
+                format: 'a4', 
+                orientation: 'portrait',
+                compress: true
+            },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+        
+        // HTML2PDF kütüphanesini kullanarak PDF oluştur
+        html2pdf().from(printSection).set(opt).save().then(() => {
+            // İşlem tamamlandıktan sonra geçici div'i kaldır
+            document.body.removeChild(tempDiv);
+        });
+    }
 </script>
 {% endblock %} 

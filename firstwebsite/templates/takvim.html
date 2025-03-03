@@ -1447,6 +1447,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('eventModal');
         const form = document.getElementById('eventForm');
         
+        console.log('Düzenlenen etkinlik:', event);
+        
         document.getElementById('modalTitle').textContent = 'Etkinlik Düzenle';
         document.getElementById('selectedDate').value = event.date;
         document.getElementById('eventType').value = event.event_type;
@@ -1690,15 +1692,34 @@ document.addEventListener('DOMContentLoaded', function() {
             const url = eventId ? `/update_event/${eventId}` : '/add_event';
             const method = eventId ? 'PUT' : 'POST';
             
+            console.log('Gönderilen veri:', JSON.stringify(formData));
+            console.log('İstek URL:', url);
+            console.log('İstek metodu:', method);
+            
             const response = await fetch(url, {
                 method: method,
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(formData)
             });
             
-            const result = await response.json();
+            console.log('Yanıt durumu:', response.status);
+            
+            // Yanıtı text olarak al
+            const responseText = await response.text();
+            console.log('Yanıt metni:', responseText);
+            
+            // Eğer yanıt JSON formatında ise parse et
+            let result;
+            try {
+                result = JSON.parse(responseText);
+                console.log('Yanıt JSON:', result);
+            } catch (jsonError) {
+                console.error('JSON parse hatası:', jsonError);
+                throw new Error(`Sunucudan geçersiz yanıt alındı: ${responseText.substring(0, 100)}...`);
+            }
             
             if (response.ok) {
                 closeModal();
@@ -1707,6 +1728,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Etkinlik kaydedilirken bir hata oluştu: ' + (result.error || 'Bilinmeyen hata'));
             }
         } catch (error) {
+            console.error('Hata detayı:', error);
             alert('Bir hata oluştu: ' + error.message);
         } finally {
             submitButton.disabled = false;

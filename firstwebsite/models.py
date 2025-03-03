@@ -267,5 +267,79 @@ class WorkerInterview(db.Model):
             'witness3': self.witness3,
             'witness4': self.witness4,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+            'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'user_id': self.user_id
         }
+
+class IsciGorusmeTutanagi(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # İşçi Bilgileri
+    name = db.Column(db.String(100))
+    tcNo = db.Column(db.String(11))
+    address = db.Column(db.Text)
+    phone = db.Column(db.String(20))
+    
+    # İş Bilgileri
+    startDate = db.Column(db.Date)
+    endDate = db.Column(db.Date)
+    position = db.Column(db.String(100))
+    department = db.Column(db.String(100))
+    
+    # Sigorta Bilgileri
+    insuranceStatus = db.Column(db.String(50))
+    insuranceDate = db.Column(db.Date)
+    insuranceNo = db.Column(db.String(20))
+    salary = db.Column(db.String(50))
+    
+    # Çalışma Koşulları
+    workingHours = db.Column(db.String(100))
+    overtime = db.Column(db.String(100))
+    weeklyHoliday = db.Column(db.String(50))
+    annualLeave = db.Column(db.String(100))
+    
+    # İşten Ayrılma Nedeni
+    terminationReason = db.Column(db.Text)
+    terminationType = db.Column(db.String(50))
+    noticeCompliance = db.Column(db.String(50))
+    
+    # Alacak Bilgileri
+    severancePay = db.Column(db.String(50))
+    noticePay = db.Column(db.String(50))
+    unpaidWages = db.Column(db.String(50))
+    overtimePay = db.Column(db.String(50))
+    annualLeavePay = db.Column(db.String(50))
+    ubgtPay = db.Column(db.String(50))
+    
+    # Alacak Bilgileri Var/Yok Seçenekleri
+    severancePayOption = db.Column(db.String(10), default='no')
+    noticePayOption = db.Column(db.String(10), default='no')
+    unpaidWagesOption = db.Column(db.String(10), default='no')
+    overtimePayOption = db.Column(db.String(10), default='no')
+    annualLeavePayOption = db.Column(db.String(10), default='no')
+    ubgtPayOption = db.Column(db.String(10), default='no')
+    
+    # Beyanlar
+    workerStatement = db.Column(db.Text)
+    employerStatement = db.Column(db.Text)
+    
+    # Tanık Var/Yok Seçeneği
+    witnessOption = db.Column(db.String(10), default='no')
+    
+    # Tanıklar (dinamik sayıda tanık için JSON formatında saklayacağız)
+    witnesses = db.Column(db.JSON, default=list)
+    
+    # Ek Bilgiler
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    
+    def to_dict(self):
+        result = {}
+        for column in self.__table__.columns:
+            value = getattr(self, column.name)
+            if isinstance(value, datetime):
+                result[column.name] = value.strftime('%Y-%m-%d')
+            else:
+                result[column.name] = value
+        return result

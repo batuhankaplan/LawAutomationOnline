@@ -1,0 +1,1 @@
+# Bu dosya firstwebsite dizinini bir Python paketi olarak tanımlar 
