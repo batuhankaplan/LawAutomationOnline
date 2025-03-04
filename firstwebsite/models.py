@@ -42,8 +42,8 @@ class User(UserMixin, db.Model):
             'duyuru_duzenle': ['duyuru_goruntule'],
             'duyuru_sil': ['duyuru_goruntule'],
             'etkinlik_ekle': ['takvim_goruntule'],
-            'etkinlik_duzenle': ['takvim_goruntule', 'etkinlik_goruntule'],
-            'etkinlik_sil': ['takvim_goruntule', 'etkinlik_goruntule'],
+            'etkinlik_duzenle': ['takvim_goruntule'],
+            'etkinlik_sil': ['takvim_goruntule'],
             'odeme_ekle': ['odeme_goruntule'],
             'odeme_duzenle': ['odeme_goruntule'],
             'odeme_sil': ['odeme_goruntule'],
@@ -52,13 +52,18 @@ class User(UserMixin, db.Model):
             'dosya_sil': ['dosya_sorgula']
         }
         
+        # Doğrudan yetkiyi kontrol et
+        if self.permissions and permission in self.permissions and self.permissions[permission]:
+            return True
+            
         # İstenen yetkiyi veya bağımlı olduğu yetkileri kontrol et
         if permission in permission_dependencies:
+            # Eğer bağımlı yetkilerden biri varsa, bu yetkiyi de ver
             for required_permission in permission_dependencies[permission]:
-                if not self.permissions.get(required_permission, False):
-                    return False
+                if self.permissions and required_permission in self.permissions and self.permissions[required_permission]:
+                    return True
                     
-        return self.permissions.get(permission, False)
+        return False
 
     def get_title(self):
         """Kullanıcının rolüne göre ünvanını döndürür"""

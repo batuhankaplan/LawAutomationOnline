@@ -74,7 +74,7 @@ def login():
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
             if not user.is_approved and not user.is_admin:
-                flash('Hesabınız henüz onaylanmamış.', 'warning')
+                flash('Hesabınız henüz onaylanmamış. Lütfen yönetici onayını bekleyin.', 'warning')
                 return render_template('auth.html')
             
             # Admin kullanıcısı için varsayılan yetkileri ayarla
@@ -315,7 +315,18 @@ def admin_required(f):
 # Protect routes
 @app.before_request
 def check_user_auth():
-    if not current_user.is_authenticated and request.endpoint not in ['login', 'register', 'static']:
+    # Giriş gerektirmeyen sayfalar
+    public_endpoints = ['login', 'register', 'static']
+    
+    # Kullanıcı giriş yapmış ama onaylanmamış ise
+    if current_user.is_authenticated and not current_user.is_approved and not current_user.is_admin:
+        if request.endpoint not in ['logout']:
+            flash('Hesabınız henüz onaylanmamış. Lütfen yönetici onayını bekleyin.', 'warning')
+            logout_user()
+            return redirect(url_for('login'))
+    
+    # Kullanıcı giriş yapmamış ve korumalı bir sayfaya erişmeye çalışıyorsa
+    if not current_user.is_authenticated and request.endpoint not in public_endpoints:
         return redirect(url_for('login'))
 
 # Türkçe tarih için locale ayarı
@@ -358,6 +369,16 @@ def log_activity(activity_type, description, user_id, case_id=None):
 
 @app.route('/')
 def anasayfa():
+    # Kullanıcı giriş yapmamışsa login sayfasına yönlendir
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    
+    # Kullanıcı giriş yapmış ama onaylanmamışsa
+    if not current_user.is_approved and not current_user.is_admin:
+        flash('Hesabınız henüz onaylanmamış. Lütfen yönetici onayını bekleyin.', 'warning')
+        logout_user()
+        return redirect(url_for('login'))
+    
     # Duyuruları al
     announcements = Announcement.query.all()
     
@@ -1027,13 +1048,21 @@ def add_event():
         app.logger.error(f"Etkinlik ekleme hatası: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 400
 
-@app.route('/update_event/<int:event_id>', methods=['PUT'])
+@app.route('/update_event/<int:event_id>', methods=['PUT', 'POST'])
 @login_required
 @permission_required('etkinlik_duzenle')
 def update_event(event_id):
     try:
         event = CalendarEvent.query.get_or_404(event_id)
-        data = request.get_json()
+        
+        # JSON verisini güvenli bir şekilde al
+        try:
+            data = request.get_json()
+            if not data:
+                return jsonify({'error': 'Geçersiz JSON verisi'}), 400
+        except Exception as json_error:
+            app.logger.error(f"JSON işleme hatası: {str(json_error)}")
+            return jsonify({'error': 'Geçersiz JSON formatı'}), 400
         
         app.logger.info(f"Etkinlik güncelleme isteği alındı: {event_id}, Veri: {data}")
         
@@ -1043,13 +1072,20 @@ def update_event(event_id):
         old_time = event.time
         
         # Tarihleri UTC'ye çevirmeden işle
-        date_str = data['date']
-        time_str = data['time']
+        date_str = data.get('date')
+        time_str = data.get('time')
         deadline_str = data.get('deadline_date')
         
+        if not date_str or not time_str:
+            return jsonify({'error': 'Tarih ve saat alanları zorunludur'}), 400
+        
         # Tarihleri doğrudan string'den date objesine çevir
-        event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        event_time = datetime.strptime(time_str, '%H:%M').time()
+        try:
+            event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            event_time = datetime.strptime(time_str, '%H:%M').time()
+        except ValueError as e:
+            app.logger.error(f"Tarih/saat çevirme hatası: {e}")
+            return jsonify({'error': 'Geçersiz tarih veya saat formatı'}), 400
         
         # deadline_date kontrolü - eğer varsa çevir, yoksa None olarak bırak
         deadline_date = None
@@ -1060,10 +1096,11 @@ def update_event(event_id):
                 app.logger.error(f"deadline_date çevirme hatası: {e}")
                 # Hata durumunda deadline_date None olarak kalır
         
-        event.title = data['title']
+        # Verileri güncelle
+        event.title = data.get('title', '')
         event.date = event_date
         event.time = event_time
-        event.event_type = data['event_type']
+        event.event_type = data.get('event_type', '')
         event.description = data.get('description', '')
         event.assigned_to = data.get('assigned_to', '')
         event.is_completed = data.get('is_completed', False)
@@ -1076,7 +1113,7 @@ def update_event(event_id):
             'yeni_tarih': event_date.strftime('%Y-%m-%d'),
             'eski_saat': old_time.strftime('%H:%M'),
             'yeni_saat': event_time.strftime('%H:%M'),
-            'tur': data['event_type'],
+            'tur': data.get('event_type', ''),
             'aciklama': data.get('description', ''),
         }
         
@@ -1142,7 +1179,7 @@ def update_event(event_id):
         app.logger.error(f"Etkinlik güncelleme hatası: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 400
 
-@app.route('/delete_event/<int:event_id>', methods=['DELETE'])
+@app.route('/delete_event/<int:event_id>', methods=['DELETE', 'POST'])
 @login_required
 @permission_required('etkinlik_sil')
 def delete_event(event_id):
@@ -1163,13 +1200,14 @@ def delete_event(event_id):
             user_id=current_user.id
         )
         
-        db.session.delete(event)
         db.session.add(log)
+        db.session.delete(event)
         db.session.commit()
         
-        return jsonify({'success': True})
+        return jsonify({'success': True, 'message': 'Etkinlik başarıyla silindi'})
     except Exception as e:
         db.session.rollback()
+        app.logger.error(f"Etkinlik silme hatası: {str(e)}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/add_expense/<int:case_id>', methods=['POST'])
@@ -2119,8 +2157,34 @@ def save_isci_gorusme():
             if key != 'id' and hasattr(form, key):
                 setattr(form, key, value)
         
-        # Tanık seçeneği "yok" ise boş liste olarak ayarla
-        if witness_option == 'no':
+        # Tanık bilgilerini işle
+        if witness_option == 'yes':
+            # Tanık sayısını al
+            witness_count = int(form_data.get('witnessCount', 0))
+            witnesses = []
+            
+            # Tanıkları ekle
+            for i in range(1, witness_count + 1):
+                witness_name_key = f'witness{i}Name'
+                witness_info_key = f'witness{i}Info'
+                
+                if witness_name_key in form_data:
+                    witness_name = form_data.get(witness_name_key, '').strip()
+                    witness_info = form_data.get(witness_info_key, '').strip()
+                    
+                    if witness_name:  # Sadece adı dolu olan tanıkları ekle
+                        witnesses.append({
+                            'name': witness_name,
+                            'info': witness_info
+                        })
+            
+            # Tanık bilgilerini JSON olarak kaydet
+            form.witnesses = {
+                'count': len(witnesses),
+                'witnesses': witnesses
+            }
+        else:
+            # Tanık seçeneği "yok" ise boş liste olarak ayarla
             form.witnesses = []
         
         # Veritabanına kaydet

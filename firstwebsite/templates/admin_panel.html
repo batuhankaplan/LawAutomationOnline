@@ -112,13 +112,24 @@
                 <input type="hidden" id="editUserId" name="user_id">
                 
                 <div class="permissions-container">
+                    <div class="global-actions">
+                        <button type="button" class="select-all-global-btn" onclick="selectAllGlobalPermissions()">
+                            <i class="material-icons">done_all</i>
+                            Tüm Yetkileri Seç
+                        </button>
+                    </div>
+                    
                     <!-- Dosya İşlemleri -->
                     <div class="permission-section">
                         <div class="section-header">
                             <i class="material-icons">folder</i>
                             <h3>Dosya İşlemleri</h3>
+                            <button type="button" class="select-all-btn" onclick="selectAllPermissions('dosya')">
+                                <i class="material-icons">select_all</i>
+                                Tümünü Seç
+                            </button>
                         </div>
-                        <div class="permission-group">
+                        <div class="permission-group" id="dosya-permissions">
                             <label class="permission-switch">
                                 <input type="checkbox" name="permissions" value="dosya_ekle">
                                 <span class="switch-slider"></span>
@@ -147,8 +158,12 @@
                         <div class="section-header">
                             <i class="material-icons">calendar_today</i>
                             <h3>Takvim İşlemleri</h3>
+                            <button type="button" class="select-all-btn" onclick="selectAllPermissions('takvim')">
+                                <i class="material-icons">select_all</i>
+                                Tümünü Seç
+                            </button>
                         </div>
-                        <div class="permission-group">
+                        <div class="permission-group" id="takvim-permissions">
                             <label class="permission-switch">
                                 <input type="checkbox" name="permissions" value="takvim_goruntule">
                                 <span class="switch-slider"></span>
@@ -177,8 +192,12 @@
                         <div class="section-header">
                             <i class="material-icons">payment</i>
                             <h3>Ödeme İşlemleri</h3>
+                            <button type="button" class="select-all-btn" onclick="selectAllPermissions('odeme')">
+                                <i class="material-icons">select_all</i>
+                                Tümünü Seç
+                            </button>
                         </div>
-                        <div class="permission-group">
+                        <div class="permission-group" id="odeme-permissions">
                             <label class="permission-switch">
                                 <input type="checkbox" name="permissions" value="odeme_goruntule">
                                 <span class="switch-slider"></span>
@@ -207,8 +226,12 @@
                         <div class="section-header">
                             <i class="material-icons">notifications</i>
                             <h3>Duyuru İşlemleri</h3>
+                            <button type="button" class="select-all-btn" onclick="selectAllPermissions('duyuru')">
+                                <i class="material-icons">select_all</i>
+                                Tümünü Seç
+                            </button>
                         </div>
-                        <div class="permission-group">
+                        <div class="permission-group" id="duyuru-permissions">
                             <label class="permission-switch">
                                 <input type="checkbox" name="permissions" value="duyuru_goruntule">
                                 <span class="switch-slider"></span>
@@ -237,8 +260,12 @@
                         <div class="section-header">
                             <i class="material-icons">calculate</i>
                             <h3>Hesaplama Araçları</h3>
+                            <button type="button" class="select-all-btn" onclick="selectAllPermissions('hesaplama')">
+                                <i class="material-icons">select_all</i>
+                                Tümünü Seç
+                            </button>
                         </div>
-                        <div class="permission-group">
+                        <div class="permission-group" id="hesaplama-permissions">
                             <label class="permission-switch">
                                 <input type="checkbox" name="permissions" value="faiz_hesaplama">
                                 <span class="switch-slider"></span>
@@ -330,21 +357,52 @@
 .section-header {
     display: flex;
     align-items: center;
+    gap: 1rem;
     margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
 }
 
 .section-header i {
     font-size: 24px;
-    margin-right: 1rem;
     color: rgb(45,49,60);
+    background: white;
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.section-header h2 {
+.section-header h3 {
     margin: 0;
     font-size: 1.2rem;
     color: rgb(45,49,60);
+    flex: 1;
+}
+
+.select-all-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgb(45,49,60);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.select-all-btn:hover {
+    background: rgb(60,65,75);
+}
+
+.select-all-btn i {
+    font-size: 18px;
+    color: white;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
 }
 
 .admin-table {
@@ -494,30 +552,6 @@
 .permission-section:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.section-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #dee2e6;
-}
-
-.section-header i {
-    font-size: 24px;
-    color: rgb(45,49,60);
-    background: white;
-    padding: 8px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.section-header h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: rgb(45,49,60);
 }
 
 .permission-group {
@@ -671,6 +705,37 @@
 
 .toast.show {
     opacity: 1;
+}
+
+.global-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.5rem;
+}
+
+.select-all-global-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.select-all-global-btn:hover {
+    background: #218838;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.select-all-global-btn i {
+    font-size: 20px;
 }
 </style>
 
@@ -872,6 +937,26 @@ function toggleUserStatus(userId) {
             }
         });
     }
+}
+
+function selectAllPermissions(section) {
+    const permissions = document.getElementById(`${section}-permissions`);
+    const switches = permissions.querySelectorAll('.permission-switch');
+    
+    switches.forEach(switchElement => {
+        const checkbox = switchElement.querySelector('input[type="checkbox"]');
+        checkbox.checked = true;
+    });
+}
+
+function selectAllGlobalPermissions() {
+    // Tüm checkbox'ları seç
+    document.querySelectorAll('input[name="permissions"]').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    
+    // Başarılı mesajı göster
+    showToast('Tüm yetkiler seçildi', 'success');
 }
 </script>
 {% endblock %} 

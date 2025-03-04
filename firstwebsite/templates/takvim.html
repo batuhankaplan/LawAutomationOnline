@@ -1472,13 +1472,19 @@ document.addEventListener('DOMContentLoaded', function() {
     function deleteEvent(eventId) {
         if (confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) {
             fetch(`/delete_event/${eventId}`, {
-                method: 'DELETE'
+                method: 'POST'
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     location.reload();
+                } else {
+                    alert('Etkinlik silinirken bir hata oluştu: ' + (data.error || 'Bilinmeyen hata'));
                 }
+            })
+            .catch(error => {
+                console.error('Silme hatası:', error);
+                alert('Etkinlik silinirken bir hata oluştu: ' + error.message);
             });
         }
     }
@@ -1690,7 +1696,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             
             const url = eventId ? `/update_event/${eventId}` : '/add_event';
-            const method = eventId ? 'PUT' : 'POST';
+            const method = eventId ? 'POST' : 'POST';
             
             console.log('Gönderilen veri:', JSON.stringify(formData));
             console.log('İstek URL:', url);

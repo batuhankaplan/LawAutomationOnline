@@ -7,6 +7,10 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <!-- HTML2PDF Kütüphanesi -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- jsPDF Kütüphanesi -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- html2canvas Kütüphanesi -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <!-- Özel Stiller -->
 <style>
 .page-container {
@@ -298,165 +302,182 @@
 @media print {
     @page {
         size: A4;
-        margin: 0.2cm;
+        margin: 1cm;
     }
-
+    
     body * {
         visibility: hidden;
     }
-
-    .form-section, .form-section * {
+    
+    #formSection, #formSection * {
         visibility: visible;
     }
-
-    .form-section {
+    
+    #formSection {
         position: absolute;
         left: 0;
         top: 0;
         width: 100%;
-        padding: 0.2cm !important;
+        padding: 0 !important;
         margin: 0 !important;
-        background: none !important;
+        background: white !important;
         box-shadow: none !important;
-        page-break-after: avoid !important;
+        font-family: Arial, sans-serif;
     }
-
+    
     .form-header h1 {
-        font-size: 10pt !important;
-        margin-bottom: 0.1cm !important;
-        text-align: center !important;
-        border-bottom: none !important;
+        font-size: 14pt;
+        margin-bottom: 0.3cm;
+        text-align: center;
+        border-bottom: 1pt solid #000;
+        padding-bottom: 0.2cm;
+        font-weight: bold;
     }
-
+    
     .form-header {
-        border-bottom: none !important;
-        margin-bottom: 0.1cm !important;
-        padding-bottom: 0 !important;
+        margin-bottom: 0.3cm;
+        border-bottom: none;
     }
-
-    .bottom-form-actions {
+    
+    .form-group {
+        margin-bottom: 0.2cm;
+        padding: 0.2cm;
+        background: none;
+        border: 0.5pt solid #333;
+        border-radius: 2pt;
+        page-break-inside: avoid;
+    }
+    
+    .form-group h3 {
+        font-size: 10pt;
+        margin-bottom: 0.1cm;
+        padding-bottom: 0.05cm;
+        border-bottom: 0.5pt solid #333;
+        font-weight: bold;
+    }
+    
+    .input-item {
+        margin-bottom: 0.1cm;
+    }
+    
+    .input-item label {
+        display: block;
+        font-weight: bold;
+        color: black;
+        margin-bottom: 0.05cm;
+        font-size: 9pt;
+    }
+    
+    input, select, textarea {
+        font-size: 9pt;
+        line-height: 1.2;
+        border: none;
+        background: none;
+        color: black;
+        padding: 0.1cm;
+    }
+    
+    textarea {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    
+    /* İşten ayrılma nedeni için özel stil */
+    #terminationReason {
+        font-size: 9pt;
+        line-height: 1.2;
+        min-height: 0.8cm;
+        padding: 0.1cm;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    
+    .form-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.2cm;
+    }
+    
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .alacak-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.1cm;
+    }
+    
+    .signature-section {
+        margin-top: 0.2cm;
+        text-align: center;
+        background: none;
+        border: none;
+        padding: 0;
+    }
+    
+    .signature-text p {
+        margin: 0.05cm 0;
+        font-size: 9pt;
+        color: black;
+    }
+    
+    .signature-line {
+        margin-top: 0.2cm;
+        border-top: 1pt solid #000;
+        width: 4cm;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .input-grid {
+        gap: 0.1cm;
+    }
+    
+    .bottom-form-actions, button, .btn {
         display: none !important;
     }
-
-    .form-group {
-        margin-bottom: 0.05cm !important;
-        padding: 0.05cm !important;
-        background: none !important;
-        border: none !important;
-        page-break-inside: avoid !important;
-    }
-
-    .form-group h3 {
-        font-size: 8pt !important;
-        margin-bottom: 0.03cm !important;
-        padding-bottom: 0.02cm !important;
-        border-bottom: 0.5pt solid #ddd !important;
-    }
-
-    input, textarea, select {
-        border: none !important;
-        padding: 0 !important;
-        font-size: 7pt !important;
-        color: black !important;
-        background: none !important;
-        height: auto !important;
-    }
-
-    .input-item {
-        margin-bottom: 0.03cm !important;
-    }
-
-    .input-item label {
-        display: block !important;
-        font-weight: bold !important;
-        color: black !important;
-        margin-bottom: 0.02cm !important;
-        font-size: 7pt !important;
-    }
-
-    textarea {
-        height: auto !important;
-        min-height: 0 !important;
-        max-height: 0.2cm !important;
-        overflow: hidden !important;
-    }
-
-    .signature-section {
-        margin-top: 0.05cm !important;
-        text-align: center !important;
-        background: none !important;
-        border: none !important;
-        padding: 0 !important;
-    }
-
-    .signature-text p {
-        margin: 0.02cm 0 !important;
-        font-size: 7pt !important;
-        color: black !important;
-    }
-
-    .signature-line {
-        margin-top: 0.1cm !important;
-        border-top: 0.5pt solid #000 !important;
-        width: 3cm !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-    }
-
-    /* Maddeleri yan yana yerleştir */
-    .form-container {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 0.03cm !important;
-    }
     
-    /* Bazı maddeleri tam genişlikte göster */
-    .form-group.full-width {
-        grid-column: 1 / -1 !important;
-    }
-    
-    /* İmza bölümünün sayfa sonuna sarkmasını engelle */
-    .signature-section {
+    /* Tanıklar bölümü için özel stil */
+    .witness-group {
+        margin-top: 0.2cm;
+        margin-bottom: 0.2cm;
+        padding: 0.2cm;
         page-break-before: avoid !important;
         page-break-inside: avoid !important;
     }
     
-    /* Alacak bilgileri için özel grid */
-    .alacak-grid {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 0.03cm !important;
+    /* Tanık alanlarını optimize et */
+    .witness-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.1cm;
+    }
+    
+    /* Tanık bölümünü gizle eğer tanık yoksa */
+    .witness-fields-hidden {
+        display: none !important;
+    }
+    
+    /* İşten ayrılma nedeni bölümü için özel stil */
+    .form-group:has(#terminationReason) {
+        padding: 0.1cm;
+        height: auto !important;
+        overflow: visible !important;
+        page-break-inside: avoid !important;
     }
     
     /* Radio butonları için özel stil */
     .radio-group {
-        font-size: 6pt !important;
+        font-size: 9pt;
     }
     
     .radio-group label {
-        margin-right: 0.05cm !important;
-    }
-    
-    /* Tanık bölümü için özel stil */
-    .witness-group {
-        margin-bottom: 0.03cm !important;
-        padding-bottom: 0.03cm !important;
-    }
-    
-    .witness-option-container {
-        display: flex !important;
-        align-items: center !important;
-        gap: 0.05cm !important;
-    }
-    
-    /* Tanık alanlarını optimize et */
-    .witness-container {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 0.05cm !important;
-    }
-
-    .witness-row {
-        display: block !important;
+        margin-right: 0.05cm;
     }
 }
 
@@ -648,27 +669,18 @@
                 </div>
             </div>
 
-            <!-- İşten Ayrılma Nedeni ve Alacak Bilgileri yan yana -->
-            <div class="form-group">
-                <h3>İşten Ayrılma Nedeni</h3>
+            <!-- İşten Ayrılma Nedeni bölümünü sadeleştir -->
+            <div class="form-group full-width">
+                <h3>İşten Ayrılma Nedeni/Şekli</h3>
                 <div class="input-grid">
                     <div class="input-item full-width">
-                        <label for="terminationReason">Ayrılma Nedeni</label>
-                        <textarea id="terminationReason" name="terminationReason"></textarea>
-                    </div>
-                    <div class="input-item">
-                        <label for="terminationType">Ayrılma Şekli</label>
-                        <input type="text" id="terminationType" name="terminationType">
-                    </div>
-                    <div class="input-item">
-                        <label for="noticeCompliance">İhbar Süresi Uygulaması</label>
-                        <input type="text" id="noticeCompliance" name="noticeCompliance">
+                        <textarea id="terminationReason" name="terminationReason" placeholder="İşten ayrılma nedeni, şekli ve ihbar süresi uygulaması hakkında bilgiler..."></textarea>
                     </div>
                 </div>
             </div>
 
             <!-- Alacak Bilgileri -->
-            <div class="form-group">
+            <div class="form-group full-width">
                 <h3>Alacak Bilgileri</h3>
                 <div class="input-grid alacak-grid">
                     <div class="input-item">
@@ -723,10 +735,23 @@
                     <div class="input-item">
                         <label>Tanık Durumu:</label>
                         <div class="radio-group">
-                            <label><input type="radio" name="witnessOption" value="no" checked> Yok</label>
-                            <label><input type="radio" name="witnessOption" value="yes"> Var</label>
+                            <label><input type="radio" name="witnessOption" value="no" checked onclick="toggleWitnessOptions()"> Yok</label>
+                            <label><input type="radio" name="witnessOption" value="yes" onclick="toggleWitnessOptions()"> Var</label>
                         </div>
                     </div>
+                    <div id="witnessCountContainer" style="display: none; margin-left: 20px;">
+                        <label for="witnessCount">Tanık Sayısı:</label>
+                        <select id="witnessCount" name="witnessCount" onchange="generateWitnessFields()">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="witnessFieldsContainer" class="witness-container" style="display: none; margin-top: 10px;">
+                    <!-- Tanık alanları buraya dinamik olarak eklenecek -->
                 </div>
             </div>
 
@@ -741,13 +766,13 @@
             
             <!-- Butonlar - Formun altına taşındı -->
             <div class="bottom-form-actions">
-                <button class="action-btn save-btn" onclick="saveForm()">
+                <button class="action-btn save-btn" id="saveButton">
                     <i class="fas fa-save"></i> Kaydet
                 </button>
-                <button class="action-btn print-btn" onclick="printForm()">
+                <button class="action-btn print-btn" id="printButton">
                     <i class="fas fa-print"></i> Yazdır
                 </button>
-                <button class="action-btn download-btn" onclick="downloadPDF()">
+                <button class="action-btn download-btn" id="downloadButton">
                     <i class="fas fa-download"></i> PDF İndir
                 </button>
             </div>
@@ -759,13 +784,29 @@
     // Sayfa yüklendiğinde çalışacak fonksiyonlar
     document.addEventListener('DOMContentLoaded', function() {
         // Bugünün tarihini imza bölümüne ekle
-        const today = new Date();
-        const formattedDate = today.toLocaleDateString('tr-TR');
-        document.getElementById('currentDate').textContent = formattedDate;
+        updateCurrentDate();
         
         // Kaydedilmiş formları yükle
         loadSavedForms();
+        
+        // Tanık bölümünü başlangıçta gizle
+        toggleWitnessOptions();
+        
+        // Butonlara olay dinleyicileri ekle
+        document.getElementById('saveButton').addEventListener('click', saveForm);
+        document.getElementById('printButton').addEventListener('click', printForm);
+        document.getElementById('downloadButton').addEventListener('click', downloadPDF);
     });
+
+    // Bugünün tarihini güncelleme fonksiyonu
+    function updateCurrentDate() {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        const formattedDate = `${day}.${month}.${year}`;
+        document.getElementById('currentDate').textContent = formattedDate;
+    }
 
     // Form kaydetme fonksiyonu
     function saveForm() {
@@ -925,6 +966,41 @@
                     }
                 });
                 
+                // Tanık bilgilerini yükle
+                if (form.witnesses && typeof form.witnesses === 'object') {
+                    const witnesses = form.witnesses;
+                    
+                    // Tanık var/yok seçeneğini ayarla
+                    if (witnesses.count > 0) {
+                        document.querySelector('input[name="witnessOption"][value="yes"]').checked = true;
+                        
+                        // Tanık sayısını ayarla
+                        const witnessCountSelect = document.getElementById('witnessCount');
+                        if (witnessCountSelect) {
+                            witnessCountSelect.value = witnesses.count;
+                        }
+                        
+                        // Tanık alanlarını oluştur
+                        toggleWitnessOptions();
+                        
+                        // Tanık bilgilerini doldur
+                        if (witnesses.witnesses && Array.isArray(witnesses.witnesses)) {
+                            witnesses.witnesses.forEach((witness, index) => {
+                                const nameField = document.getElementById(`witness${index+1}Name`);
+                                const infoField = document.getElementById(`witness${index+1}Info`);
+                                
+                                if (nameField && witness.name) {
+                                    nameField.value = witness.name;
+                                }
+                                
+                                if (infoField && witness.info) {
+                                    infoField.value = witness.info;
+                                }
+                            });
+                        }
+                    }
+                }
+                
                 alert('Form başarıyla yüklendi!');
             } else {
                 alert('Form yüklenirken bir hata oluştu: ' + data.error);
@@ -968,122 +1044,151 @@
         document.querySelector('input[name="witnessOption"][value="no"]').checked = true;
         
         // Bugünün tarihini imza bölümüne ekle
-        const today = new Date();
-        const formattedDate = today.toLocaleDateString('tr-TR');
-        document.getElementById('currentDate').textContent = formattedDate;
+        updateCurrentDate();
     }
 
     // Form yazdırma fonksiyonu
     function printForm() {
+        // Yazdırma öncesi tanık bölümünü kontrol et
+        const witnessOption = document.querySelector('input[name="witnessOption"]:checked').value;
+        const witnessFieldsContainer = document.getElementById('witnessFieldsContainer');
+        
+        // Tanık yoksa tanık alanlarını geçici olarak gizle
+        if (witnessOption === 'no') {
+            if (witnessFieldsContainer) witnessFieldsContainer.classList.add('witness-fields-hidden');
+        }
+        
+        // Yazdır
         window.print();
+        
+        // Yazdırma sonrası sınıfları geri al
+        if (witnessOption === 'no') {
+            if (witnessFieldsContainer) witnessFieldsContainer.classList.remove('witness-fields-hidden');
+        }
     }
 
-    // PDF indirme fonksiyonu
+    // Tanık bölümü için JavaScript fonksiyonları
+    function toggleWitnessOptions() {
+        const witnessOption = document.querySelector('input[name="witnessOption"]:checked').value;
+        const witnessCountContainer = document.getElementById('witnessCountContainer');
+        const witnessFieldsContainer = document.getElementById('witnessFieldsContainer');
+        
+        if (witnessOption === 'yes') {
+            witnessCountContainer.style.display = 'block';
+            witnessFieldsContainer.style.display = 'block';
+            generateWitnessFields(); // Tanık alanlarını oluştur
+        } else {
+            witnessCountContainer.style.display = 'none';
+            witnessFieldsContainer.style.display = 'none';
+        }
+    }
+
+    function generateWitnessFields() {
+        const witnessCount = parseInt(document.getElementById('witnessCount').value);
+        const container = document.getElementById('witnessFieldsContainer');
+        
+        // Mevcut alanları temizle
+        container.innerHTML = '';
+        
+        // Seçilen sayıda tanık alanı oluştur
+        for (let i = 1; i <= witnessCount; i++) {
+            const witnessField = document.createElement('div');
+            witnessField.className = 'form-group';
+            witnessField.innerHTML = `
+                <h3>Tanık ${i} Bilgileri</h3>
+                <div class="input-grid">
+                    <div class="input-item">
+                        <label for="witness${i}Name">Adı Soyadı:</label>
+                        <input type="text" id="witness${i}Name" name="witness${i}Name" placeholder="Tanık adı soyadı">
+                    </div>
+                    <div class="input-item">
+                        <label for="witness${i}Info">Tanık Bilgileri:</label>
+                        <textarea id="witness${i}Info" name="witness${i}Info" placeholder="Tanık hakkında bilgiler"></textarea>
+                    </div>
+                </div>
+            `;
+            container.appendChild(witnessField);
+        }
+    }
+
+    // PDF indirme fonksiyonu - tamamen yeniden düzenlenmiş
     function downloadPDF() {
-        // Yazdırma öncesi hazırlık
-        const originalContent = document.body.innerHTML;
-        const printSection = document.getElementById('formSection').cloneNode(true);
-        
-        // Geçici bir div oluştur
-        const tempDiv = document.createElement('div');
-        tempDiv.style.position = 'absolute';
-        tempDiv.style.left = '-9999px';
-        tempDiv.style.top = '-9999px';
-        tempDiv.appendChild(printSection);
-        document.body.appendChild(tempDiv);
-        
-        // Form içindeki tüm input, textarea ve select elementlerini span'a çevir
-        const formElements = printSection.querySelectorAll('input, textarea, select');
-        formElements.forEach(element => {
-            let value = '';
+        try {
+            // Form içeriğini kopyala
+            const formSection = document.getElementById('formSection');
+            const formContent = formSection.cloneNode(true);
             
-            if (element.type === 'radio' || element.type === 'checkbox') {
-                if (element.checked) {
-                    value = element.value === 'yes' ? 'Var' : 'Yok';
-                } else {
-                    return; // İşaretlenmemiş radio butonlarını atla
+            // Geçici bir div oluştur ve gizle
+            const tempDiv = document.createElement('div');
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '-9999px';
+            document.body.appendChild(tempDiv);
+            
+            // Form içeriğini geçici div'e ekle
+            tempDiv.appendChild(formContent);
+            
+            // Butonları gizle
+            const buttons = tempDiv.querySelectorAll('button, .bottom-form-actions');
+            buttons.forEach(button => {
+                button.style.display = 'none';
+            });
+            
+            // Input alanlarını span'a çevir
+            const inputs = tempDiv.querySelectorAll('input:not([type=radio]), textarea');
+            inputs.forEach(input => {
+                const span = document.createElement('span');
+                span.textContent = input.value || '';
+                span.style.fontFamily = 'Arial, sans-serif';
+                span.style.fontSize = '9pt';
+                input.parentNode.replaceChild(span, input);
+            });
+            
+            // Radio butonları için seçili olanı göster
+            const radioGroups = tempDiv.querySelectorAll('.radio-group');
+            radioGroups.forEach(group => {
+                const selectedRadio = group.querySelector('input[type=radio]:checked');
+                if (selectedRadio) {
+                    const span = document.createElement('span');
+                    span.textContent = selectedRadio.value === 'yes' ? 'Var' : 'Yok';
+                    span.style.fontFamily = 'Arial, sans-serif';
+                    span.style.fontSize = '9pt';
+                    group.parentNode.replaceChild(span, group);
                 }
-            } else {
-                value = element.value || '';
-            }
+            });
             
-            const span = document.createElement('span');
-            span.textContent = value;
-            span.style.fontWeight = 'normal';
-            span.style.fontSize = '8pt';
+            // PDF oluştur
+            const opt = {
+                margin: 10,
+                filename: 'isci_gorusme_tutanagi.pdf',
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    logging: true,
+                    letterRendering: true
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait',
+                    compress: true
+                },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
             
-            // Radio butonları için özel işlem
-            if (element.type === 'radio') {
-                const parentLabel = element.closest('label');
-                if (parentLabel && element.checked) {
-                    parentLabel.parentNode.replaceChild(span, parentLabel);
-                }
-                return;
-            }
-            
-            // Diğer form elemanları için
-            if (element.parentNode) {
-                element.parentNode.replaceChild(span, element);
-            }
-        });
-        
-        // Butonları gizle
-        const buttons = printSection.querySelectorAll('button');
-        buttons.forEach(button => {
-            button.style.display = 'none';
-        });
-        
-        // Radio gruplarını temizle
-        const radioGroups = printSection.querySelectorAll('.radio-group');
-        radioGroups.forEach(group => {
-            const parentItem = group.closest('.input-item');
-            const label = parentItem.querySelector('label');
-            const labelText = label ? label.textContent : '';
-            
-            // Radio butonlarının değerini al
-            let value = '';
-            const checkedRadio = group.querySelector('input[type="radio"]:checked');
-            if (checkedRadio) {
-                value = checkedRadio.value === 'yes' ? 'Var' : 'Yok';
-            }
-            
-            // Yeni içerik oluştur
-            const newContent = document.createElement('div');
-            newContent.innerHTML = `<strong>${labelText}</strong>: ${value}`;
-            newContent.style.fontSize = '8pt';
-            
-            // Eski içeriği değiştir
-            parentItem.innerHTML = '';
-            parentItem.appendChild(newContent);
-        });
-        
-        // PDF oluşturma için özel ayarlar
-        const opt = {
-            margin: [5, 5, 5, 5],
-            filename: 'isci_gorusme_tutanagi.pdf',
-            image: { type: 'jpeg', quality: 1 },
-            html2canvas: { 
-                scale: 2,
-                useCORS: true,
-                letterRendering: true,
-                allowTaint: true,
-                scrollX: 0,
-                scrollY: 0
-            },
-            jsPDF: { 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: 'portrait',
-                compress: true
-            },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-        
-        // HTML2PDF kütüphanesini kullanarak PDF oluştur
-        html2pdf().from(printSection).set(opt).save().then(() => {
-            // İşlem tamamlandıktan sonra geçici div'i kaldır
-            document.body.removeChild(tempDiv);
-        });
+            // PDF oluştur ve indir
+            html2pdf().from(tempDiv).set(opt).save().then(() => {
+                // İşlem tamamlandığında geçici div'i kaldır
+                document.body.removeChild(tempDiv);
+            }).catch(error => {
+                console.error('PDF oluşturma hatası:', error);
+                alert('PDF oluşturulurken bir hata oluştu: ' + error.message);
+            });
+        } catch (error) {
+            console.error('PDF oluşturma hatası:', error);
+            alert('PDF oluşturulurken bir hata oluştu: ' + error.message);
+        }
     }
 </script>
 {% endblock %} 
