@@ -8,7 +8,7 @@
     </div>
 
     <div class="form-container">
-        <form method="POST">
+        <form method="POST" id="paymentForm" onsubmit="savePayment(event)">
             <div class="input-group">
                 <label for="name">Ad</label>
                 <input type="text" id="name" name="name" required>
@@ -581,6 +581,33 @@
                       alert('Silme işlemi sırasında bir hata oluştu: ' + error.message);
                   });
             }
+        }
+
+        // Yeni ödeme kaydetme fonksiyonu
+        function savePayment(event) {
+            event.preventDefault(); // Formun normal gönderimini engelle
+            
+            const formData = new FormData(document.getElementById('paymentForm'));
+            
+            fetch('/odemeler', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Ödeme başarıyla kaydedildi!');
+                    // Formu temizle
+                    document.getElementById('paymentForm').reset();
+                    // Sayfayı yenile - yeni ödemeyi tabloda görmek için
+                    window.location.reload();
+                } else {
+                    alert('Ödeme kaydedilirken bir hata oluştu: ' + (data.message || 'Bilinmeyen bir hata'));
+                }
+            })
+            .catch(error => {
+                alert('Ödeme kaydedilirken bir hata oluştu: ' + error.message);
+            });
         }
     </script>
 {% endblock %}

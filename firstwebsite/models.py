@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+import json
 
 db = SQLAlchemy()
 
@@ -286,14 +287,14 @@ class IsciGorusmeTutanagi(db.Model):
     phone = db.Column(db.String(20))
     
     # İş Bilgileri
-    startDate = db.Column(db.Date)
-    endDate = db.Column(db.Date)
+    startDate = db.Column(db.String(10))  # GG.AA.YYYY formatında
+    endDate = db.Column(db.String(10))    # GG.AA.YYYY formatında
     position = db.Column(db.String(100))
     department = db.Column(db.String(100))
     
     # Sigorta Bilgileri
     insuranceStatus = db.Column(db.String(50))
-    insuranceDate = db.Column(db.Date)
+    insuranceDate = db.Column(db.String(10))  # GG.AA.YYYY formatında
     insuranceNo = db.Column(db.String(20))
     salary = db.Column(db.String(50))
     
@@ -332,7 +333,7 @@ class IsciGorusmeTutanagi(db.Model):
     witnessOption = db.Column(db.String(10), default='no')
     
     # Tanıklar (dinamik sayıda tanık için JSON formatında saklayacağız)
-    witnesses = db.Column(db.JSON, default=list)
+    witnesses = db.Column(db.Text)  # JSON string olarak saklayacağız
     
     # Ek Bilgiler
     created_at = db.Column(db.DateTime, default=datetime.now)
@@ -344,7 +345,15 @@ class IsciGorusmeTutanagi(db.Model):
         for column in self.__table__.columns:
             value = getattr(self, column.name)
             if isinstance(value, datetime):
-                result[column.name] = value.strftime('%Y-%m-%d')
+                result[column.name] = value.strftime('%d.%m.%Y')
             else:
                 result[column.name] = value
+                
+            # witnesses alanını JSON'dan dict'e çevir
+            if column.name == 'witnesses' and value:
+                try:
+                    result[column.name] = json.loads(value)
+                except:
+                    pass
+                    
         return result

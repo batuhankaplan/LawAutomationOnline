@@ -23,6 +23,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+import re
 
 def permission_required(permission):
     def decorator(f):
@@ -2133,14 +2134,18 @@ def save_isci_gorusme():
         # Tanık durumunu kontrol et
         witness_option = form_data.get('witnessOption', 'no')
         
-        # Tarih alanlarını kontrol et ve dönüştür
+        # Tarih alanlarını kontrol et - formatı değiştirmeden olduğu gibi kaydet
         date_fields = ['startDate', 'endDate', 'insuranceDate']
         for field in date_fields:
             if field in form_data and form_data[field]:
-                try:
-                    form_data[field] = datetime.strptime(form_data[field], '%Y-%m-%d').date()
-                except ValueError:
-                    return jsonify({'success': False, 'error': f'Geçersiz tarih formatı: {field}'})
+                # Tarih formatını kontrol et (GG.AA.YYYY)
+                date_str = form_data[field]
+                date_regex = r'^\d{2}\.\d{2}\.\d{4}$'
+                if not re.match(date_regex, date_str):
+                    return jsonify({'success': False, 'error': f'Geçersiz tarih formatı: {field}. Lütfen GG.AA.YYYY formatında girin.'})
+            else:
+                # Tarih alanı boş ise hata döndür
+                return jsonify({'success': False, 'error': f'{field} alanı boş olamaz'})
         
         # Form ID'si varsa güncelle, yoksa yeni kayıt oluştur
         form_id = form_data.get('id')
@@ -2155,7 +2160,12 @@ def save_isci_gorusme():
         # Form verilerini modele aktar
         for key, value in form_data.items():
             if key != 'id' and hasattr(form, key):
-                setattr(form, key, value)
+                # Tarih alanlarını string olarak sakla
+                if key in date_fields:
+                    # Tarih alanlarını string olarak bırak, dönüştürme yapma
+                    setattr(form, key, value)
+                else:
+                    setattr(form, key, value)
         
         # Tanık bilgilerini işle
         if witness_option == 'yes':
@@ -2179,13 +2189,13 @@ def save_isci_gorusme():
                         })
             
             # Tanık bilgilerini JSON olarak kaydet
-            form.witnesses = {
+            form.witnesses = json.dumps({
                 'count': len(witnesses),
                 'witnesses': witnesses
-            }
+            })
         else:
             # Tanık seçeneği "yok" ise boş liste olarak ayarla
-            form.witnesses = []
+            form.witnesses = json.dumps({'count': 0, 'witnesses': []})
         
         # Veritabanına kaydet
         db.session.add(form)
@@ -2193,6 +2203,7 @@ def save_isci_gorusme():
         
         return jsonify({'success': True})
     except Exception as e:
+        print(f"Form kaydetme hatası: {str(e)}")
         return jsonify({'success': False, 'error': str(e)})
 
 # Kaydedilmiş formları getirme

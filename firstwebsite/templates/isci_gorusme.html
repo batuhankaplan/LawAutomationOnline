@@ -302,7 +302,7 @@
 @media print {
     @page {
         size: A4;
-        margin: 1cm;
+        margin: 0.5cm;
     }
     
     body * {
@@ -326,22 +326,22 @@
     }
     
     .form-header h1 {
-        font-size: 14pt;
-        margin-bottom: 0.3cm;
+        font-size: 12pt;
+        margin-bottom: 0.2cm;
         text-align: center;
         border-bottom: 1pt solid #000;
-        padding-bottom: 0.2cm;
+        padding-bottom: 0.1cm;
         font-weight: bold;
     }
     
     .form-header {
-        margin-bottom: 0.3cm;
+        margin-bottom: 0.2cm;
         border-bottom: none;
     }
     
     .form-group {
-        margin-bottom: 0.2cm;
-        padding: 0.2cm;
+        margin-bottom: 0.1cm;
+        padding: 0.1cm;
         background: none;
         border: 0.5pt solid #333;
         border-radius: 2pt;
@@ -349,15 +349,15 @@
     }
     
     .form-group h3 {
-        font-size: 10pt;
-        margin-bottom: 0.1cm;
+        font-size: 8pt;
+        margin-bottom: 0.05cm;
         padding-bottom: 0.05cm;
         border-bottom: 0.5pt solid #333;
         font-weight: bold;
     }
     
     .input-item {
-        margin-bottom: 0.1cm;
+        margin-bottom: 0.05cm;
     }
     
     .input-item label {
@@ -365,16 +365,16 @@
         font-weight: bold;
         color: black;
         margin-bottom: 0.05cm;
-        font-size: 9pt;
+        font-size: 7pt;
     }
     
     input, select, textarea {
-        font-size: 9pt;
+        font-size: 7pt;
         line-height: 1.2;
         border: none;
         background: none;
         color: black;
-        padding: 0.1cm;
+        padding: 0.05cm;
     }
     
     textarea {
@@ -386,10 +386,10 @@
     
     /* İşten ayrılma nedeni için özel stil */
     #terminationReason {
-        font-size: 9pt;
+        font-size: 7pt;
         line-height: 1.2;
-        min-height: 0.8cm;
-        padding: 0.1cm;
+        min-height: 0.5cm;
+        padding: 0.05cm;
         white-space: pre-wrap;
         word-wrap: break-word;
         height: auto !important;
@@ -399,7 +399,7 @@
     .form-container {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 0.2cm;
+        gap: 0.1cm;
     }
     
     .form-group.full-width {
@@ -409,11 +409,11 @@
     .alacak-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 0.1cm;
+        gap: 0.05cm;
     }
     
     .signature-section {
-        margin-top: 0.2cm;
+        margin-top: 0.1cm;
         text-align: center;
         background: none;
         border: none;
@@ -422,20 +422,20 @@
     
     .signature-text p {
         margin: 0.05cm 0;
-        font-size: 9pt;
+        font-size: 7pt;
         color: black;
     }
     
     .signature-line {
-        margin-top: 0.2cm;
+        margin-top: 0.1cm;
         border-top: 1pt solid #000;
-        width: 4cm;
+        width: 3cm;
         margin-left: auto;
         margin-right: auto;
     }
     
     .input-grid {
-        gap: 0.1cm;
+        gap: 0.05cm;
     }
     
     .bottom-form-actions, button, .btn {
@@ -444,9 +444,9 @@
     
     /* Tanıklar bölümü için özel stil */
     .witness-group {
-        margin-top: 0.2cm;
-        margin-bottom: 0.2cm;
-        padding: 0.2cm;
+        margin-top: 0.1cm;
+        margin-bottom: 0.1cm;
+        padding: 0.1cm;
         page-break-before: avoid !important;
         page-break-inside: avoid !important;
     }
@@ -455,7 +455,7 @@
     .witness-container {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 0.1cm;
+        gap: 0.05cm;
     }
     
     /* Tanık bölümünü gizle eğer tanık yoksa */
@@ -473,7 +473,7 @@
     
     /* Radio butonları için özel stil */
     .radio-group {
-        font-size: 9pt;
+        font-size: 7pt;
     }
     
     .radio-group label {
@@ -555,6 +555,176 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* PDF için özel stil sınıfı */
+.pdf-mode {
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 5mm !important;
+    background-color: white !important;
+    box-shadow: none !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 9pt !important;
+}
+
+.pdf-mode .form-header h1 {
+    font-size: 14pt !important;
+    text-align: center !important;
+    margin-bottom: 5pt !important;
+    padding-bottom: 3pt !important;
+    border-bottom: 1pt solid #000 !important;
+    font-weight: bold !important;
+}
+
+.pdf-mode .form-group {
+    margin-bottom: 5pt !important;
+    padding: 4pt !important;
+    border: 1pt solid #333 !important;
+    page-break-inside: avoid !important;
+}
+
+.pdf-mode .form-group h3 {
+    font-size: 9pt !important;
+    margin-bottom: 4pt !important;
+    padding-bottom: 2pt !important;
+    border-bottom: 1pt solid #333 !important;
+    font-weight: bold !important;
+}
+
+.pdf-mode .input-item label {
+    font-weight: bold !important;
+    font-size: 8pt !important;
+    display: block !important;
+    margin-bottom: 2pt !important;
+}
+
+.pdf-mode .input-item input,
+.pdf-mode .input-item textarea,
+.pdf-mode .input-item select {
+    border: 1px solid #333 !important;
+    padding: 2px !important;
+    font-size: 8pt !important;
+    min-height: 12pt !important;
+}
+
+.pdf-mode .input-item textarea {
+    min-height: 20pt !important;
+    max-height: 40pt !important;
+}
+
+.pdf-mode .signature-section {
+    margin-top: 5pt !important;
+    text-align: center !important;
+    page-break-inside: avoid !important;
+}
+
+.pdf-mode .signature-text p {
+    margin: 2pt 0 !important;
+    font-size: 8pt !important;
+}
+
+.pdf-mode .signature-line {
+    margin: 5pt auto !important;
+    width: 100pt !important;
+    border-top: 1pt solid #000 !important;
+}
+
+.pdf-mode .input-grid {
+    gap: 3pt !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+}
+
+.pdf-mode .alacak-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+}
+
+.pdf-mode .bottom-form-actions {
+    display: none !important;
+}
+
+.pdf-mode .form-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 5pt !important;
+}
+
+.pdf-mode .witness-group {
+    margin-bottom: 3pt !important;
+}
+
+.pdf-mode .witness-option-container {
+    margin-bottom: 3pt !important;
+}
+
+.pdf-mode #terminationReason {
+    min-height: 20pt !important;
+    max-height: 40pt !important;
+}
+
+/* Yükleme göstergesi için stil */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid rgb(45,49,60);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-text {
+    color: white;
+    font-size: 16px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Radio butonları için yeni stil */
+.radio-group {
+    display: flex;
+    gap: 10px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.radio-group input[type="radio"] {
+    margin-right: 5px;
+}
+
+/* Tarih alanları için stil */
+input[type="text"][name$="Date"] {
+    font-family: monospace;
+    letter-spacing: 1px;
+}
 </style>
 
 <div class="page-container">
@@ -607,11 +777,11 @@
                 <div class="input-grid">
                     <div class="input-item">
                         <label for="startDate">İşe Başlama Tarihi</label>
-                        <input type="date" id="startDate" name="startDate">
+                        <input type="text" id="startDate" name="startDate" placeholder="GG.AA.YYYY" maxlength="10" onkeypress="return isDateInputChar(event)" onblur="formatDateInput(this)">
                     </div>
                     <div class="input-item">
                         <label for="endDate">İşten Ayrılma Tarihi</label>
-                        <input type="date" id="endDate" name="endDate">
+                        <input type="text" id="endDate" name="endDate" placeholder="GG.AA.YYYY" maxlength="10" onkeypress="return isDateInputChar(event)" onblur="formatDateInput(this)">
                     </div>
                     <div class="input-item">
                         <label for="position">Pozisyon</label>
@@ -634,7 +804,7 @@
                     </div>
                     <div class="input-item">
                         <label for="insuranceDate">Sigorta Başlangıç Tarihi</label>
-                        <input type="date" id="insuranceDate" name="insuranceDate">
+                        <input type="text" id="insuranceDate" name="insuranceDate" placeholder="GG.AA.YYYY" maxlength="10" onkeypress="return isDateInputChar(event)" onblur="formatDateInput(this)">
                     </div>
                     <div class="input-item">
                         <label for="insuranceNo">SGK Sicil No</label>
@@ -778,6 +948,14 @@
             </div>
         </div>
     </div>
+    
+    <!-- Yükleme Göstergesi -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">PDF oluşturuluyor, lütfen bekleyin...</div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -797,6 +975,50 @@
         document.getElementById('printButton').addEventListener('click', printForm);
         document.getElementById('downloadButton').addEventListener('click', downloadPDF);
     });
+
+    // Tarih alanları için karakter kontrolü
+    function isDateInputChar(event) {
+        const charCode = (event.which) ? event.which : event.keyCode;
+        // Sadece rakamlar (0-9), nokta (.) ve slash (/) karakterlerine izin ver
+        if ((charCode >= 48 && charCode <= 57) || charCode === 46 || charCode === 47) {
+            return true;
+        }
+        return false;
+    }
+
+    // Tarih formatını düzenleme
+    function formatDateInput(input) {
+        let value = input.value.trim();
+        
+        // Boş ise işlem yapma
+        if (!value) return;
+        
+        // Sadece rakamları al
+        const numbers = value.replace(/[^\d]/g, '');
+        
+        // 8 rakam varsa (GGAAYYYY) formatına çevir
+        if (numbers.length === 8) {
+            const day = numbers.substring(0, 2);
+            const month = numbers.substring(2, 4);
+            const year = numbers.substring(4, 8);
+            
+            // Geçerli tarih kontrolü
+            const isValidDate = (day > 0 && day <= 31) && (month > 0 && month <= 12);
+            
+            if (isValidDate) {
+                input.value = `${day}.${month}.${year}`;
+            } else {
+                alert('Lütfen geçerli bir tarih girin (GG.AA.YYYY)');
+                input.value = '';
+            }
+        } else {
+            // Eksik veya fazla rakam varsa uyarı ver
+            if (value !== '') {
+                alert('Lütfen tarihi GG.AA.YYYY formatında girin');
+                input.value = '';
+            }
+        }
+    }
 
     // Bugünün tarihini güncelleme fonksiyonu
     function updateCurrentDate() {
@@ -831,22 +1053,52 @@
             return;
         }
         
+        // Düzenlenen form ID'sini kontrol et ve ekle
+        const formId = document.getElementById('formId');
+        if (formId && formId.value) {
+            formData.append('id', formId.value);
+        }
+        
+        // Tarih alanlarını kontrol et
+        const dateFields = ['startDate', 'endDate', 'insuranceDate'];
+        let dateError = false;
+        let errorField = '';
+        
+        dateFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (field) {
+                let value = field.value.trim();
+                
+                if (value === '') {
+                    field.style.borderColor = 'red';
+                    dateError = true;
+                    errorField = fieldName === 'startDate' ? 'İşe Başlama Tarihi' : 
+                                fieldName === 'endDate' ? 'İşten Ayrılma Tarihi' : 
+                                'Sigorta Başlangıç Tarihi';
+                } else {
+                    // Tarih formatı kontrolü (GG.AA.YYYY)
+                    const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
+                    if (!dateRegex.test(value)) {
+                        field.style.borderColor = 'red';
+                        dateError = true;
+                        errorField = fieldName === 'startDate' ? 'İşe Başlama Tarihi' : 
+                                    fieldName === 'endDate' ? 'İşten Ayrılma Tarihi' : 
+                                    'Sigorta Başlangıç Tarihi';
+                    } else {
+                        field.style.borderColor = '#dee2e6';
+                    }
+                }
+            }
+        });
+        
+        if (dateError) {
+            alert(`Lütfen ${errorField} alanını GG.AA.YYYY formatında doldurun.`);
+            return;
+        }
+        
         // Form verilerini topla
         inputs.forEach(input => {
             let value = input.value.trim();
-            
-            // Tarih alanları için format kontrolü
-            if (input.type === 'date' && value) {
-                const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-                if (!dateRegex.test(value)) {
-                    input.style.borderColor = 'red';
-                    alert('Lütfen geçerli bir tarih formatı girin (YYYY-MM-DD)');
-                    input.focus();
-                    throw new Error('Geçersiz tarih formatı');
-                }
-            }
-            
-            // Boş değerleri boş string olarak gönder (null yerine)
             formData.append(input.name, value);
         });
         
@@ -868,6 +1120,13 @@
             }
         });
         
+        // Yükleme göstergesini göster
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'flex';
+            document.querySelector('.loading-text').textContent = 'Form kaydediliyor, lütfen bekleyin...';
+        }
+        
         // Form verilerini sunucuya gönder
         fetch('/save_isci_gorusme', {
             method: 'POST',
@@ -880,6 +1139,11 @@
             return response.json();
         })
         .then(data => {
+            // Yükleme göstergesini gizle
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
+            
             if (data.success) {
                 alert('Form başarıyla kaydedildi!');
                 loadSavedForms(); // Kaydedilen formları yeniden yükle
@@ -888,6 +1152,11 @@
             }
         })
         .catch(error => {
+            // Yükleme göstergesini gizle
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
+            
             alert('Form kaydedilirken bir hata oluştu: ' + error.message);
         });
     }
@@ -937,14 +1206,68 @@
             if (data.success) {
                 const form = data.form;
                 
+                // Form ID'sini gizli bir input olarak ekle
+                let formIdInput = document.getElementById('formId');
+                if (!formIdInput) {
+                    formIdInput = document.createElement('input');
+                    formIdInput.type = 'hidden';
+                    formIdInput.id = 'formId';
+                    document.getElementById('formSection').appendChild(formIdInput);
+                }
+                formIdInput.value = formId;
+                
                 // Form alanlarını doldur
                 for (const key in form) {
                     const element = document.getElementById(key);
                     if (element) {
                         // null değerleri boş string olarak ayarla
-                        element.value = form[key] !== null ? form[key] : '';
+                        if (form[key] !== null) {
+                            // Tarih alanları için özel işlem
+                            if (key.endsWith('Date') && form[key]) {
+                                let dateValue = form[key];
+                                
+                                // Eğer tarih YYYY-MM-DD formatındaysa DD.MM.YYYY formatına çevir
+                                if (dateValue.includes('-')) {
+                                    const parts = dateValue.split('-');
+                                    if (parts.length === 3) {
+                                        dateValue = `${parts[2]}.${parts[1]}.${parts[0]}`;
+                                    }
+                                }
+                                
+                                element.value = dateValue;
+                                console.log(`Tarih alanı ${key} için değer: ${dateValue}`);
+                            } else {
+                                element.value = form[key];
+                            }
+                        } else {
+                            element.value = '';
+                        }
                     }
                 }
+                
+                // Tarih alanlarını daha güvenilir şekilde işle
+                const dateFields = ['startDate', 'endDate', 'insuranceDate'];
+                dateFields.forEach(fieldName => {
+                    const dateField = document.getElementById(fieldName);
+                    if (dateField && form[fieldName]) {
+                        let dateValue = form[fieldName];
+                        
+                        // Eğer tarih YYYY-MM-DD formatındaysa DD.MM.YYYY formatına çevir
+                        if (dateValue.includes('-')) {
+                            const parts = dateValue.split('-');
+                            if (parts.length === 3) {
+                                dateValue = `${parts[2]}.${parts[1]}.${parts[0]}`;
+                                console.log(`Tarih formatı dönüştürüldü: ${form[fieldName]} -> ${dateValue}`);
+                            }
+                        }
+                        
+                        // Tarih değerini doğrudan ayarla
+                        dateField.value = dateValue;
+                        console.log(`Tarih alanı ${fieldName} için değer ayarlandı: ${dateValue}`);
+                    } else if (dateField) {
+                        console.log(`Tarih alanı ${fieldName} için değer bulunamadı veya boş`);
+                    }
+                });
                 
                 // Radio butonları için değerleri ayarla
                 const radioOptions = [
@@ -962,6 +1285,18 @@
                         const radioButton = document.querySelector(`input[name="${option}"][value="${form[option]}"]`);
                         if (radioButton) {
                             radioButton.checked = true;
+                        } else {
+                            // Eğer belirtilen değerde bir radio buton yoksa, varsayılan olarak "no" seçeneğini işaretle
+                            const defaultRadio = document.querySelector(`input[name="${option}"][value="no"]`);
+                            if (defaultRadio) {
+                                defaultRadio.checked = true;
+                            }
+                        }
+                    } else {
+                        // Eğer form[option] değeri yoksa, varsayılan olarak "no" seçeneğini işaretle
+                        const defaultRadio = document.querySelector(`input[name="${option}"][value="no"]`);
+                        if (defaultRadio) {
+                            defaultRadio.checked = true;
                         }
                     }
                 });
@@ -998,7 +1333,22 @@
                                 }
                             });
                         }
+                    } else {
+                        // Tanık yoksa, "Yok" seçeneğini işaretle
+                        document.querySelector('input[name="witnessOption"][value="no"]').checked = true;
+                        toggleWitnessOptions();
                     }
+                } else {
+                    // Tanık bilgisi yoksa, "Yok" seçeneğini işaretle
+                    document.querySelector('input[name="witnessOption"][value="no"]').checked = true;
+                    toggleWitnessOptions();
+                }
+                
+                // Bugünün tarihini imza bölümüne ekle (eğer form.date varsa onu kullan)
+                if (form.date) {
+                    document.getElementById('currentDate').textContent = form.date;
+                } else {
+                    updateCurrentDate();
                 }
                 
                 alert('Form başarıyla yüklendi!');
@@ -1067,6 +1417,244 @@
         }
     }
 
+    // PDF indirme fonksiyonu
+    function downloadPDF() {
+        // Yükleme göstergesini göster
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        loadingOverlay.style.display = 'flex';
+        
+        // Form içeriğini al
+        const formElement = document.getElementById('formSection');
+        
+        // Butonları geçici olarak gizle
+        const buttonsContainer = document.querySelector('.bottom-form-actions');
+        const originalButtonsDisplay = buttonsContainer.style.display;
+        buttonsContainer.style.display = 'none';
+        
+        // Tanık bölümünü kontrol et
+        const witnessOption = document.querySelector('input[name="witnessOption"]:checked').value;
+        const witnessFieldsContainer = document.getElementById('witnessFieldsContainer');
+        const witnessCountContainer = document.getElementById('witnessCountContainer');
+        
+        // Tanık yoksa tanık alanlarını geçici olarak gizle
+        if (witnessOption === 'no') {
+            if (witnessFieldsContainer) witnessFieldsContainer.style.display = 'none';
+            if (witnessCountContainer) witnessCountContainer.style.display = 'none';
+        } else {
+            // Tanık varsa, tanık sayısı dropdown menüsünü PDF için gizle
+            if (witnessCountContainer) {
+                witnessCountContainer.style.display = 'none';
+            }
+        }
+        
+        // Form elemanlarının orijinal değerlerini saklayacak dizi
+        const originalStyles = [];
+        
+        try {
+            // Form elemanlarını PDF için hazırla
+            prepareFormForPDF(formElement, originalStyles);
+            
+            // jsPDF ve html2canvas kullanarak PDF oluştur
+            const { jsPDF } = window.jspdf;
+            
+            // A4 boyutunda PDF oluştur (210mm x 297mm)
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            
+            // html2canvas ile formu resme dönüştür
+            html2canvas(formElement, {
+                scale: 3, // Daha yüksek çözünürlük için
+                useCORS: true,
+                logging: false,
+                letterRendering: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                // Form elemanlarının içeriğini yakalamak için
+                onclone: function(clonedDoc) {
+                    const clonedForm = clonedDoc.getElementById('formSection');
+                    
+                    // Tanık sayısı dropdown menüsünü tamamen gizle
+                    const witnessCountContainer = clonedForm.querySelector('#witnessCountContainer');
+                    if (witnessCountContainer) {
+                        witnessCountContainer.style.display = 'none';
+                    }
+                    
+                    // Alacak Bilgileri bölümünü düzenle
+                    const alacakGrid = clonedForm.querySelector('.alacak-grid');
+                    if (alacakGrid) {
+                        // Tüm başlıkları temizle ve yeniden ekle
+                        const inputItems = alacakGrid.querySelectorAll('.input-item');
+                        inputItems.forEach(item => {
+                            // Orijinal label'ı koru
+                            const originalLabel = item.querySelector('label');
+                            
+                            // Radio grup içindeki başlıkları temizle
+                            const radioGroup = item.querySelector('.radio-group');
+                            if (radioGroup) {
+                                const existingTitles = radioGroup.querySelectorAll('.radio-title');
+                                existingTitles.forEach(title => title.remove());
+                                
+                                // Radio butonları düzenle
+                                const labels = radioGroup.querySelectorAll('label');
+                                const checkedRadio = radioGroup.querySelector('input[type="radio"]:checked');
+                                
+                                if (checkedRadio) {
+                                    const checkedValue = checkedRadio.value;
+                                    
+                                    // Tüm etiketleri göster
+                                    labels.forEach(label => {
+                                        const radio = label.querySelector('input[type="radio"]');
+                                        if (radio) {
+                                            // Radio butonları gizle, sadece metni göster
+                                            radio.style.display = 'none';
+                                            
+                                            // Seçili olan etiketi vurgula
+                                            if (radio.checked) {
+                                                label.style.fontWeight = 'bold';
+                                                label.style.backgroundColor = '#f0f0f0';
+                                                label.style.border = '1px solid #000';
+                                            } else {
+                                                label.style.fontWeight = 'normal';
+                                                label.style.backgroundColor = 'transparent';
+                                                label.style.border = 'none';
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    }
+                    
+                    // Tanık durumu bölümünü düzenle
+                    const witnessGroup = clonedForm.querySelector('.witness-group');
+                    if (witnessGroup) {
+                        const witnessOptionContainer = witnessGroup.querySelector('.witness-option-container');
+                        if (witnessOptionContainer) {
+                            const radioGroup = witnessOptionContainer.querySelector('.radio-group');
+                            if (radioGroup) {
+                                // Radio butonları düzenle
+                                const labels = radioGroup.querySelectorAll('label');
+                                const checkedRadio = radioGroup.querySelector('input[type="radio"]:checked');
+                                
+                                if (checkedRadio) {
+                                    // Tüm etiketleri göster
+                                    labels.forEach(label => {
+                                        const radio = label.querySelector('input[type="radio"]');
+                                        if (radio) {
+                                            // Radio butonları gizle, sadece metni göster
+                                            radio.style.display = 'none';
+                                            
+                                            // Seçili olan etiketi vurgula
+                                            if (radio.checked) {
+                                                label.style.fontWeight = 'bold';
+                                                label.style.backgroundColor = '#f0f0f0';
+                                                label.style.border = '1px solid #000';
+                                            } else {
+                                                label.style.fontWeight = 'normal';
+                                                label.style.backgroundColor = 'transparent';
+                                                label.style.border = 'none';
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Input ve textarea elemanlarını düzenle
+                    const formInputs = clonedForm.querySelectorAll('input[type="text"], textarea');
+                    formInputs.forEach(input => {
+                        // Input değerini görünür hale getir
+                        if (input.value) {
+                            // Input elemanının label'ını bul
+                            let labelText = "";
+                            const parentItem = input.closest('.input-item');
+                            if (parentItem) {
+                                const label = parentItem.querySelector('label');
+                                if (label) {
+                                    labelText = label.textContent;
+                                }
+                            }
+                            
+                            // Input elemanının üzerine değerini içeren bir div ekle
+                            const valueDiv = clonedDoc.createElement('div');
+                            valueDiv.innerHTML = `<strong>${labelText}</strong><br>${input.value}`;
+                            valueDiv.style.position = 'absolute';
+                            valueDiv.style.top = '0';
+                            valueDiv.style.left = '0';
+                            valueDiv.style.width = '100%';
+                            valueDiv.style.height = '100%';
+                            valueDiv.style.backgroundColor = '#fff';
+                            valueDiv.style.color = '#000';
+                            valueDiv.style.padding = '4px';
+                            valueDiv.style.boxSizing = 'border-box';
+                            valueDiv.style.border = '1px solid #333';
+                            valueDiv.style.borderRadius = '4px';
+                            valueDiv.style.fontSize = '10pt';
+                            valueDiv.style.fontFamily = 'Arial, sans-serif';
+                            valueDiv.style.zIndex = '999';
+                            valueDiv.style.lineHeight = '1.3';
+                            valueDiv.style.overflow = 'hidden';
+                            
+                            // İşten ayrılma nedeni için özel ayarlar
+                            if (input.id === 'terminationReason') {
+                                const textLength = input.value.length;
+                                // Metin uzunluğuna göre daha makul bir yükseklik hesaplama
+                                const minHeight = 40; // Minimum yükseklik azaltıldı
+                                const maxHeight = 120; // Maksimum yükseklik sınırlandırıldı
+                                
+                                // Her 100 karakter için yaklaşık 20px yükseklik
+                                const calculatedHeight = Math.min(maxHeight, minHeight + Math.floor(textLength / 100) * 20);
+                                
+                                valueDiv.style.height = calculatedHeight + 'px';
+                                valueDiv.style.overflowY = 'auto';
+                                
+                                // Parent elementi de genişlet ama sınırlı tut
+                                const parentItem = input.closest('.input-item');
+                                if (parentItem) {
+                                    parentItem.style.height = (calculatedHeight + 10) + 'px';
+                                }
+                                
+                                // Form grubunu da genişlet ama sınırlı tut
+                                const formGroup = input.closest('.form-group');
+                                if (formGroup) {
+                                    formGroup.style.height = (calculatedHeight + 40) + 'px';
+                                }
+                            }
+                            
+                            // Label kısmını kalın ve farklı renkte göster
+                            valueDiv.querySelector('strong').style.color = '#333';
+                            valueDiv.querySelector('strong').style.fontSize = '8pt';
+                            valueDiv.querySelector('strong').style.display = 'block';
+                            valueDiv.querySelector('strong').style.marginBottom = '2px';
+                            valueDiv.querySelector('strong').style.borderBottom = '1px dotted #ccc';
+                            valueDiv.querySelector('strong').style.paddingBottom = '2px';
+                            
+                            // Input elemanının parent'ına ekle
+                            input.parentNode.style.position = 'relative';
+                            input.parentNode.appendChild(valueDiv);
+                            
+                            // Orijinal input'u gizle
+                            input.style.opacity = '0';
+                        }
+                    });
+                }
+            });
+            
+            // jsPDF ile PDF oluştur
+            html2canvas(formElement).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 10, 10, 200, 280);
+                pdf.save('İşçi Görüşme Tutanağı.pdf');
+            });
+        } catch (error) {
+            console.error('PDF oluşturulurken hata oluştu:', error);
+        } finally {
+            // Butonları geri al
+            buttonsContainer.style.display = originalButtonsDisplay;
+            loadingOverlay.style.display = 'none';
+        }
+    }
+
     // Tanık bölümü için JavaScript fonksiyonları
     function toggleWitnessOptions() {
         const witnessOption = document.querySelector('input[name="witnessOption"]:checked').value;
@@ -1108,86 +1696,6 @@
                 </div>
             `;
             container.appendChild(witnessField);
-        }
-    }
-
-    // PDF indirme fonksiyonu - tamamen yeniden düzenlenmiş
-    function downloadPDF() {
-        try {
-            // Form içeriğini kopyala
-            const formSection = document.getElementById('formSection');
-            const formContent = formSection.cloneNode(true);
-            
-            // Geçici bir div oluştur ve gizle
-            const tempDiv = document.createElement('div');
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.left = '-9999px';
-            tempDiv.style.top = '-9999px';
-            document.body.appendChild(tempDiv);
-            
-            // Form içeriğini geçici div'e ekle
-            tempDiv.appendChild(formContent);
-            
-            // Butonları gizle
-            const buttons = tempDiv.querySelectorAll('button, .bottom-form-actions');
-            buttons.forEach(button => {
-                button.style.display = 'none';
-            });
-            
-            // Input alanlarını span'a çevir
-            const inputs = tempDiv.querySelectorAll('input:not([type=radio]), textarea');
-            inputs.forEach(input => {
-                const span = document.createElement('span');
-                span.textContent = input.value || '';
-                span.style.fontFamily = 'Arial, sans-serif';
-                span.style.fontSize = '9pt';
-                input.parentNode.replaceChild(span, input);
-            });
-            
-            // Radio butonları için seçili olanı göster
-            const radioGroups = tempDiv.querySelectorAll('.radio-group');
-            radioGroups.forEach(group => {
-                const selectedRadio = group.querySelector('input[type=radio]:checked');
-                if (selectedRadio) {
-                    const span = document.createElement('span');
-                    span.textContent = selectedRadio.value === 'yes' ? 'Var' : 'Yok';
-                    span.style.fontFamily = 'Arial, sans-serif';
-                    span.style.fontSize = '9pt';
-                    group.parentNode.replaceChild(span, group);
-                }
-            });
-            
-            // PDF oluştur
-            const opt = {
-                margin: 10,
-                filename: 'isci_gorusme_tutanagi.pdf',
-                image: { type: 'jpeg', quality: 1 },
-                html2canvas: { 
-                    scale: 2,
-                    useCORS: true,
-                    logging: true,
-                    letterRendering: true
-                },
-                jsPDF: { 
-                    unit: 'mm', 
-                    format: 'a4', 
-                    orientation: 'portrait',
-                    compress: true
-                },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-            };
-            
-            // PDF oluştur ve indir
-            html2pdf().from(tempDiv).set(opt).save().then(() => {
-                // İşlem tamamlandığında geçici div'i kaldır
-                document.body.removeChild(tempDiv);
-            }).catch(error => {
-                console.error('PDF oluşturma hatası:', error);
-                alert('PDF oluşturulurken bir hata oluştu: ' + error.message);
-            });
-        } catch (error) {
-            console.error('PDF oluşturma hatası:', error);
-            alert('PDF oluşturulurken bir hata oluştu: ' + error.message);
         }
     }
 </script>
