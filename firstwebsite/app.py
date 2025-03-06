@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file
+from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
@@ -24,6 +24,11 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 import re
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from html import escape  # HTML escape için bu modülü kullanacağız
+from fpdf import FPDF
+from xhtml2pdf import pisa
 
 def permission_required(permission):
     def decorator(f):
@@ -1953,177 +1958,8 @@ def delete_worker_interview(interview_id):
 @app.route('/generate_worker_interview_pdf', methods=['POST'])
 @login_required
 def generate_worker_interview_pdf():
-    try:
-        data = request.get_json()
-        
-        # PDF oluşturmak için reportlab kullan
-        buffer = BytesIO()
-        
-        # PDF dokümanını oluştur
-        doc = SimpleDocTemplate(
-            buffer,
-            pagesize=A4,
-            rightMargin=15,
-            leftMargin=15,
-            topMargin=15,
-            bottomMargin=15
-        )
-        
-        # Stil tanımlamaları
-        styles = getSampleStyleSheet()
-        styles.add(ParagraphStyle(
-            name='CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=12,
-            alignment=1,
-            spaceAfter=6
-        ))
-        
-        styles.add(ParagraphStyle(
-            name='SectionTitle',
-            parent=styles['Heading2'],
-            fontSize=9,
-            spaceAfter=4,
-            backColor=colors.lightgrey,
-            borderPadding=3
-        ))
-        
-        styles.add(ParagraphStyle(
-            name='FieldLabel',
-            parent=styles['Normal'],
-            fontSize=8,
-            textColor=colors.black,
-            spaceAfter=1
-        ))
-        
-        styles.add(ParagraphStyle(
-            name='FieldValue',
-            parent=styles['Normal'],
-            fontSize=8,
-            leftIndent=5,
-            spaceAfter=3
-        ))
-        
-        # İçerik listesi
-        elements = []
-        
-        # Başlık
-        elements.append(Paragraph('İŞÇİ GÖRÜŞME TUTANAĞI', styles['CustomTitle']))
-        
-        # Form verilerini ekle
-        sections = [
-            ('1. KİŞİSEL BİLGİLER', [
-                ('İsim Soyisim', data.get('fullName')),
-                ('T.C. Kimlik No', data.get('tcNo')),
-                ('Telefon', data.get('phone')),
-                ('Adres', data.get('address'))
-            ]),
-            ('2. İŞE GİRİŞ BİLGİLERİ', [
-                ('İşe Giriş Tarihi', data.get('startDate')),
-                ('Sigorta Başlangıç Tarihi', data.get('insuranceDate'))
-            ]),
-            ('3. İŞTEN AYRILMA BİLGİLERİ', [
-                ('İşten Ayrılma Tarihi', data.get('endDate')),
-                ('Ayrılma Sebebi', data.get('endReason'))
-            ]),
-            ('4. İŞYERİ BİLGİLERİ', [
-                ('İşyeri Adı/Unvanı', data.get('companyName')),
-                ('Faaliyet Konusu', data.get('businessType')),
-                ('İşyeri Adresi', data.get('companyAddress'))
-            ]),
-            ('5. GÖREV BİLGİLERİ', [
-                ('Görev/Pozisyon', data.get('position'))
-            ]),
-            ('6. ÇALIŞMA DÜZEN', [
-                ('Çalışma Saatleri', data.get('workHours')),
-                ('Fazla Mesai Bilgisi', data.get('overtime'))
-            ]),
-            ('7. ÜCRET VE YARDIMLAR', [
-                ('Ücret', data.get('salary')),
-                ('Yol Ücreti', data.get('transportation')),
-                ('Yemek Ücreti', data.get('food')),
-                ('Sosyal Yardımlar', data.get('benefits'))
-            ]),
-            ('8. TATİL BİLGİLERİ', [
-                ('Hafta Tatili', data.get('weeklyHoliday')),
-                ('Dini/Resmi Bayram Tatilleri', data.get('holidays'))
-            ]),
-            ('9. İZİN VE ALACAK BİLGİLERİ', [
-                ('Yıllık Ücretli İzin Alacağı', data.get('annualLeave')),
-                ('Maaş Alacağı', data.get('unpaidSalary'))
-            ]),
-            ('10. TANIKLAR', [
-                ('1. Tanık', data.get('witness1')),
-                ('2. Tanık', data.get('witness2')),
-                ('3. Tanık', data.get('witness3')),
-                ('4. Tanık', data.get('witness4'))
-            ])
-        ]
-        
-        # Her bölümü ekle
-        for section_title, fields in sections:
-            elements.append(Paragraph(section_title, styles['SectionTitle']))
-            
-            # İki sütunlu tablo oluştur
-            data_rows = []
-            for i in range(0, len(fields), 2):
-                row = []
-                # İlk sütun
-                label1, value1 = fields[i]
-                cell1 = []
-                cell1.append(Paragraph(f'<b>{label1}:</b>', styles['FieldLabel']))
-                if value1:
-                    cell1.append(Paragraph(str(value1), styles['FieldValue']))
-                row.append(cell1)
-                
-                # İkinci sütun (eğer varsa)
-                if i + 1 < len(fields):
-                    label2, value2 = fields[i + 1]
-                    cell2 = []
-                    cell2.append(Paragraph(f'<b>{label2}:</b>', styles['FieldLabel']))
-                    if value2:
-                        cell2.append(Paragraph(str(value2), styles['FieldValue']))
-                    row.append(cell2)
-                else:
-                    row.append([])  # Boş hücre
-                
-                data_rows.append(row)
-            
-            # Tablo oluştur
-            if data_rows:
-                table = Table(data_rows, colWidths=[doc.width/2-6, doc.width/2-6])
-                table.setStyle(TableStyle([
-                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                    ('TOPPADDING', (0, 0), (-1, -1), 1),
-                    ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
-                ]))
-                elements.append(table)
-            
-            elements.append(Spacer(1, 3))
-        
-        # İmza bölümü
-        elements.append(Spacer(1, 10))
-        elements.append(Paragraph('11. ONAY', styles['SectionTitle']))
-        elements.append(Paragraph('OKUDUM', styles['CustomTitle']))
-        elements.append(Paragraph('BEYANLARIM DOĞRULTUSUNDA HAZIRLANMIŞTIR', styles['CustomTitle']))
-        elements.append(Spacer(1, 20))
-        elements.append(Paragraph('İMZA', styles['CustomTitle']))
-        
-        # PDF oluştur
-        doc.build(elements)
-        
-        # PDF'i response olarak gönder
-        buffer.seek(0)
-        return send_file(
-            buffer,
-            as_attachment=True,
-            download_name=f'isci_gorusme_{datetime.now().strftime("%Y%m%d")}.pdf',
-            mimetype='application/pdf'
-        )
-        
-    except Exception as e:
-        print(f"PDF oluşturma hatası: {str(e)}")  # Hatayı konsola yazdır
-        return jsonify({'success': False, 'message': f'PDF oluşturulurken bir hata oluştu: {str(e)}'}), 500
+    # Bu fonksiyon artık kullanılmıyor, PDF oluşturma işlemi tamamen client-side yapılacak
+    return jsonify({'success': True, 'message': 'PDF oluşturma işlemi artık client-side yapılıyor'})
 
 @app.route('/save_isci_gorusme', methods=['POST'])
 @login_required
