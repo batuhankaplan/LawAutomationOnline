@@ -1971,14 +1971,16 @@ def save_isci_gorusme():
         witness_option = form_data.get('witnessOption', 'no')
         
         # Tarih alanlarını kontrol et - formatı değiştirmeden olduğu gibi kaydet
-        date_fields = ['startDate', 'endDate', 'insuranceDate']
+        date_fields = ['startDate', 'endDate']
         for field in date_fields:
             if field in form_data and form_data[field]:
-                # Tarih formatını kontrol et (GG.AA.YYYY)
+                # Tarih formatını kontrol et (GG.AA.YYYY veya GG.AA.YYYY/GG.AA.YYYY)
                 date_str = form_data[field]
-                date_regex = r'^\d{2}\.\d{2}\.\d{4}$'
-                if not re.match(date_regex, date_str):
-                    return jsonify({'success': False, 'error': f'Geçersiz tarih formatı: {field}. Lütfen GG.AA.YYYY formatında girin.'})
+                single_date_regex = r'^\d{2}\.\d{2}\.\d{4}$'
+                dual_date_regex = r'^\d{2}\.\d{2}\.\d{4}/\d{2}\.\d{2}\.\d{4}$'
+                
+                if not (re.match(single_date_regex, date_str) or re.match(dual_date_regex, date_str)):
+                    return jsonify({'success': False, 'error': f'Geçersiz tarih formatı: {field}. Lütfen GG.AA.YYYY veya GG.AA.YYYY/GG.AA.YYYY formatında girin.'})
             else:
                 # Tarih alanı boş ise hata döndür
                 return jsonify({'success': False, 'error': f'{field} alanı boş olamaz'})

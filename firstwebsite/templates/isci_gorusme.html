@@ -210,7 +210,7 @@
 .form-group h3 {
     font-size: 0.9rem;
     color: #2c3e50;
-    margin: 0 0 0.8rem 0;
+    margin: 0 0 0.4rem 0;
     padding-bottom: 0.4rem;
     border-bottom: 1px solid #eee;
 }
@@ -224,7 +224,7 @@
 .input-item {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.2rem;
 }
 
 .input-item.full-width {
@@ -260,7 +260,7 @@
 }
 
 /* Adres ve işten ayrılma nedeni için özel stiller */
-#address, #terminationReason {
+#address, #terminationReason, #insuranceDate {
     min-height: 60px;
     height: auto;
     white-space: pre-wrap;
@@ -649,15 +649,9 @@
     overflow: visible !important;
 }
 
-.pdf-mode #address {
-    min-height: 40pt !important;
-    height: auto !important;
-    white-space: pre-wrap !important;
-    word-wrap: break-word !important;
-    overflow: visible !important;
-}
-
-.pdf-mode #terminationReason {
+.pdf-mode #address, 
+.pdf-mode #terminationReason,
+.pdf-mode #insuranceDate {
     min-height: 40pt !important;
     height: auto !important;
     white-space: pre-wrap !important;
@@ -842,22 +836,24 @@ input[type="text"][name$="Date"] {
             <!-- İşçi Bilgileri ve İş Bilgileri yan yana -->
             <div class="form-group">
                 <h3>İşçi Bilgileri</h3>
-                <div class="input-grid">
-                    <div class="input-item">
-                        <label for="name">Adı Soyadı</label>
-                        <input type="text" id="name" name="name">
-                    </div>
-                    <div class="input-item">
-                        <label for="tcNo">TC Kimlik No</label>
-                        <input type="text" id="tcNo" name="tcNo">
+                <div class="input-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="input-item" style="display: flex; flex-direction: column; gap: 0.1rem;">
+                        <div class="input-item" style="margin-bottom: 0.1rem;">
+                            <label for="name">Adı Soyadı</label>
+                            <input type="text" id="name" name="name">
+                        </div>
+                        <div class="input-item" style="margin-bottom: 0.1rem;">
+                            <label for="tcNo">TC Kimlik No</label>
+                            <input type="text" id="tcNo" name="tcNo">
+                        </div>
+                        <div class="input-item">
+                            <label for="phone">Telefon</label>
+                            <input type="text" id="phone" name="phone">
+                        </div>
                     </div>
                     <div class="input-item">
                         <label for="address">Adres</label>
-                        <textarea id="address" name="address"></textarea>
-                    </div>
-                    <div class="input-item">
-                        <label for="phone">Telefon</label>
-                        <input type="text" id="phone" name="phone">
+                        <textarea id="address" name="address" style="height: calc(100% - 24px);"></textarea>
                     </div>
                 </div>
             </div>
@@ -866,19 +862,19 @@ input[type="text"][name$="Date"] {
                 <h3>İş Bilgileri</h3>
                 <div class="input-grid">
                     <div class="input-item">
-                        <label for="startDate">İşe Başlama Tarihi</label>
-                        <input type="text" id="startDate" name="startDate" placeholder="GG.AA.YYYY" maxlength="10" onkeypress="return isDateInputChar(event)" onblur="formatDateInput(this)">
+                        <label for="startDate">İşe Başlama Tarihi / SGK Giriş Tarihi</label>
+                        <input type="text" id="startDate" name="startDate" placeholder="GG.AA.YYYY/GG.AA.YYYY" maxlength="21" onkeypress="return isDateInputChar(event)" onblur="formatDateInput(this)">
                     </div>
                     <div class="input-item">
-                        <label for="endDate">İşten Ayrılma Tarihi</label>
-                        <input type="text" id="endDate" name="endDate" placeholder="GG.AA.YYYY" maxlength="10" onkeypress="return isDateInputChar(event)" onblur="formatDateInput(this)">
+                        <label for="endDate">İşten Ayrılma Tarihi / SGK Çıkış Tarihi</label>
+                        <input type="text" id="endDate" name="endDate" placeholder="GG.AA.YYYY/GG.AA.YYYY" maxlength="21" onkeypress="return isDateInputChar(event)" onblur="formatDateInput(this)">
                     </div>
                     <div class="input-item">
                         <label for="position">Pozisyon</label>
                         <input type="text" id="position" name="position">
                     </div>
                     <div class="input-item">
-                        <label for="department">Departman</label>
+                        <label for="department">Ücret</label>
                         <input type="text" id="department" name="department">
                     </div>
                 </div>
@@ -886,23 +882,25 @@ input[type="text"][name$="Date"] {
 
             <!-- Sigorta Bilgileri ve Çalışma Koşulları yan yana -->
             <div class="form-group">
-                <h3>Sigorta Bilgileri</h3>
-                <div class="input-grid">
-                    <div class="input-item">
-                        <label for="insuranceStatus">Sigorta Durumu</label>
-                        <input type="text" id="insuranceStatus" name="insuranceStatus">
+                <h3>Şirket Bilgileri</h3>
+                <div class="input-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="input-item" style="display: flex; flex-direction: column; gap: 0.1rem;">
+                        <div class="input-item" style="margin-bottom: 0.1rem;">
+                            <label for="insuranceStatus">Şirket İsmi</label>
+                            <input type="text" id="insuranceStatus" name="insuranceStatus">
+                        </div>
+                        <div class="input-item" style="margin-bottom: 0.1rem;">
+                            <label for="salary">İşyeri Faaliyeti/Konusu</label>
+                            <input type="text" id="salary" name="salary">
+                        </div>
+                        <div class="input-item">
+                            <label for="insuranceNo">Mersis/Vergi/Ticaret Sicil No</label>
+                            <input type="text" id="insuranceNo" name="insuranceNo">
+                        </div>
                     </div>
                     <div class="input-item">
-                        <label for="insuranceDate">Sigorta Başlangıç Tarihi</label>
-                        <input type="text" id="insuranceDate" name="insuranceDate" placeholder="GG.AA.YYYY" maxlength="10" onkeypress="return isDateInputChar(event)" onblur="formatDateInput(this)">
-                    </div>
-                    <div class="input-item">
-                        <label for="insuranceNo">SGK Sicil No</label>
-                        <input type="text" id="insuranceNo" name="insuranceNo">
-                    </div>
-                    <div class="input-item">
-                        <label for="salary">Ücret</label>
-                        <input type="text" id="salary" name="salary">
+                        <label for="insuranceDate">Şirket Adresi</label>
+                        <textarea id="insuranceDate" name="insuranceDate" style="height: calc(100% - 24px);"></textarea>
                     </div>
                 </div>
             </div>
@@ -1093,6 +1091,50 @@ input[type="text"][name$="Date"] {
         // Boş ise işlem yapma
         if (!value) return;
         
+        // Eğer / karakteri varsa, iki tarih formatı olarak işle
+        if (value.includes('/')) {
+            const dates = value.split('/');
+            if (dates.length === 2) {
+                const formattedDates = [];
+                
+                for (let i = 0; i < dates.length; i++) {
+                    const dateValue = dates[i].trim();
+                    // Sadece rakamları al
+                    const numbers = dateValue.replace(/[^\d]/g, '');
+                    
+                    // 8 rakam varsa (GGAAYYYY) formatına çevir
+                    if (numbers.length === 8) {
+                        const day = numbers.substring(0, 2);
+                        const month = numbers.substring(2, 4);
+                        const year = numbers.substring(4, 8);
+                        
+                        // Geçerli tarih kontrolü
+                        const isValidDate = (day > 0 && day <= 31) && (month > 0 && month <= 12);
+                        
+                        if (isValidDate) {
+                            formattedDates.push(`${day}.${month}.${year}`);
+                        } else {
+                            alert(`Lütfen geçerli bir tarih girin (GG.AA.YYYY) - Hatalı tarih: ${dateValue}`);
+                            input.value = '';
+                            return;
+                        }
+                    } else {
+                        // Eksik veya fazla rakam varsa uyarı ver
+                        if (dateValue !== '') {
+                            alert(`Lütfen tarihi GG.AA.YYYY formatında girin - Hatalı tarih: ${dateValue}`);
+                            input.value = '';
+                            return;
+                        }
+                    }
+                }
+                
+                // İki tarihi birleştir
+                input.value = formattedDates.join('/');
+                return;
+            }
+        }
+        
+        // Tek tarih formatı için eski işlemi yap
         // Sadece rakamları al
         const numbers = value.replace(/[^\d]/g, '');
         
@@ -1160,7 +1202,7 @@ input[type="text"][name$="Date"] {
         }
         
         // Tarih alanlarını kontrol et
-        const dateFields = ['startDate', 'endDate', 'insuranceDate'];
+        const dateFields = ['startDate', 'endDate'];
         let dateError = false;
         let errorField = '';
         
@@ -1173,33 +1215,75 @@ input[type="text"][name$="Date"] {
                     field.style.borderColor = 'red';
                     dateError = true;
                     errorField = fieldName === 'startDate' ? 'İşe Başlama Tarihi' : 
-                                fieldName === 'endDate' ? 'İşten Ayrılma Tarihi' : 
-                                'Sigorta Başlangıç Tarihi';
+                                fieldName === 'endDate' ? 'İşten Ayrılma Tarihi' : '';
                 } else {
-                    // Tarih formatı kontrolü (GG.AA.YYYY)
-                    const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
-                    if (!dateRegex.test(value)) {
-                        field.style.borderColor = 'red';
-                        dateError = true;
-                        errorField = fieldName === 'startDate' ? 'İşe Başlama Tarihi' : 
-                                    fieldName === 'endDate' ? 'İşten Ayrılma Tarihi' : 
-                                    'Sigorta Başlangıç Tarihi';
+                    // Tarih formatı kontrolü (GG.AA.YYYY veya GG.AA.YYYY/GG.AA.YYYY)
+                    if (value.includes('/')) {
+                        // İki tarih formatı kontrolü
+                        const dates = value.split('/');
+                        if (dates.length === 2) {
+                            let isValid = true;
+                            dates.forEach(date => {
+                                const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
+                                if (!dateRegex.test(date.trim())) {
+                                    isValid = false;
+                                }
+                            });
+                            
+                            if (!isValid) {
+                                field.style.borderColor = 'red';
+                                dateError = true;
+                                errorField = fieldName === 'startDate' ? 'İşe Başlama Tarihi' : 
+                                            fieldName === 'endDate' ? 'İşten Ayrılma Tarihi' : '';
+                            } else {
+                                field.style.borderColor = '#dee2e6';
+                            }
+                        } else {
+                            field.style.borderColor = 'red';
+                            dateError = true;
+                            errorField = fieldName === 'startDate' ? 'İşe Başlama Tarihi' : 
+                                        fieldName === 'endDate' ? 'İşten Ayrılma Tarihi' : '';
+                        }
                     } else {
-                        field.style.borderColor = '#dee2e6';
+                        // Tek tarih formatı kontrolü
+                        const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
+                        if (!dateRegex.test(value)) {
+                            field.style.borderColor = 'red';
+                            dateError = true;
+                            errorField = fieldName === 'startDate' ? 'İşe Başlama Tarihi' : 
+                                        fieldName === 'endDate' ? 'İşten Ayrılma Tarihi' : '';
+                        } else {
+                            field.style.borderColor = '#dee2e6';
+                        }
                     }
                 }
             }
         });
         
         if (dateError) {
-            alert(`Lütfen ${errorField} alanını GG.AA.YYYY formatında doldurun.`);
+            alert(`Lütfen ${errorField} alanını GG.AA.YYYY veya GG.AA.YYYY/GG.AA.YYYY formatında doldurun.`);
             return;
         }
         
         // Form verilerini topla
         inputs.forEach(input => {
             let value = input.value.trim();
-            formData.append(input.name, value);
+            
+            // Tarih alanları için özel işlem
+            if (input.id === 'startDate' || input.id === 'endDate') {
+                // Tarih formatını sunucu tarafında işlenebilecek şekilde düzenle
+                // Eğer / içeriyorsa, iki tarih var demektir
+                if (value.includes('/')) {
+                    // Değeri olduğu gibi gönder, sunucu tarafında işlenecek
+                    formData.append(input.name, value);
+                } else {
+                    // Tek tarih formatı, olduğu gibi gönder
+                    formData.append(input.name, value);
+                }
+            } else {
+                // Diğer alanlar için normal işlem
+                formData.append(input.name, value);
+            }
         });
         
         // Radio butonları için değer ekle
@@ -1335,7 +1419,6 @@ input[type="text"][name$="Date"] {
                                 }
                                 
                                 element.value = dateValue;
-                                console.log(`Tarih alanı ${key} için değer: ${dateValue}`);
                             } else {
                                 element.value = form[key];
                             }
@@ -1345,11 +1428,29 @@ input[type="text"][name$="Date"] {
                     }
                 }
                 
+                // Eski alan isimlerini yeni alan isimlerine eşleştir
+                const fieldMappings = {
+                    'insuranceStatus': 'companyName',
+                    'insuranceDate': 'companyAddress',
+                    'insuranceNo': 'companyRegNo',
+                    'salary': 'companyActivity'
+                };
+                
+                // Eski alanlardan yeni alanlara veri aktar
+                for (const oldField in fieldMappings) {
+                    const newField = fieldMappings[oldField];
+                    const newElement = document.getElementById(newField);
+                    
+                    if (form[oldField] !== undefined && form[oldField] !== null && newElement) {
+                        newElement.value = form[oldField];
+                    }
+                }
+                
                 // Textarea'ların yüksekliğini otomatik ayarla
                 setTimeout(autoResizeTextareas, 100);
                 
                 // Tarih alanlarını daha güvenilir şekilde işle
-                const dateFields = ['startDate', 'endDate', 'insuranceDate'];
+                const dateFields = ['startDate', 'endDate'];
                 dateFields.forEach(fieldName => {
                     const dateField = document.getElementById(fieldName);
                     if (dateField && form[fieldName]) {
@@ -1360,15 +1461,11 @@ input[type="text"][name$="Date"] {
                             const parts = dateValue.split('-');
                             if (parts.length === 3) {
                                 dateValue = `${parts[2]}.${parts[1]}.${parts[0]}`;
-                                console.log(`Tarih formatı dönüştürüldü: ${form[fieldName]} -> ${dateValue}`);
                             }
                         }
                         
                         // Tarih değerini doğrudan ayarla
                         dateField.value = dateValue;
-                        console.log(`Tarih alanı ${fieldName} için değer ayarlandı: ${dateValue}`);
-                    } else if (dateField) {
-                        console.log(`Tarih alanı ${fieldName} için değer bulunamadı veya boş`);
                     }
                 });
                 
@@ -1552,10 +1649,12 @@ input[type="text"][name$="Date"] {
             // Adres ve işten ayrılma nedeni için özel işlem - textarea yerine div kullan
             const addressTextarea = document.getElementById('address');
             const terminationReasonTextarea = document.getElementById('terminationReason');
+            const companyAddressTextarea = document.getElementById('insuranceDate');
             
-            // Adres ve işten ayrılma nedeni için içeriği kaydet
+            // Adres, şirket adresi ve işten ayrılma nedeni için içeriği kaydet
             let addressContent = '';
             let terminationContent = '';
+            let companyAddressContent = '';
             
             if (addressTextarea) {
                 addressContent = addressTextarea.value;
@@ -1580,6 +1679,31 @@ input[type="text"][name$="Date"] {
                 
                 // Div'i ekle
                 addressParent.appendChild(addressDiv);
+            }
+            
+            if (companyAddressTextarea) {
+                companyAddressContent = companyAddressTextarea.value;
+                
+                // Textarea'yı geçici olarak gizle ve yerine div ekle
+                const companyAddressParent = companyAddressTextarea.parentElement;
+                companyAddressTextarea.style.display = 'none';
+                
+                // Div oluştur ve içeriği ekle
+                const companyAddressDiv = document.createElement('div');
+                companyAddressDiv.id = 'companyAddressDiv';
+                companyAddressDiv.className = 'pdf-content-div';
+                
+                // İçeriği satır satır ekle
+                const lines = companyAddressContent.split('\n');
+                lines.forEach((line, index) => {
+                    if (index > 0) {
+                        companyAddressDiv.appendChild(document.createElement('br'));
+                    }
+                    companyAddressDiv.appendChild(document.createTextNode(line));
+                });
+                
+                // Div'i ekle
+                companyAddressParent.appendChild(companyAddressDiv);
             }
             
             if (terminationReasonTextarea) {
@@ -1632,17 +1756,15 @@ input[type="text"][name$="Date"] {
                     putOnlyUsedFonts: true,
                     floatPrecision: 16
                 },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                pagebreak: { mode: ['css', 'legacy'] } // 'avoid-all' kaldırıldı, sayfa kırılımlarının doğru işlenmesi için
             };
             
             // PDF oluştur ve indir
             html2pdf().from(element).set(opt).toPdf().get('pdf').then((pdf) => {
                 // İkinci boş sayfayı kontrol et ve kaldır
                 if (pdf.internal.getNumberOfPages() > 1) {
-                    // Son sayfayı kontrol et, eğer boşsa kaldır
-                    for (let i = pdf.internal.getNumberOfPages(); i > 1; i--) {
-                        pdf.deletePage(i);
-                    }
+                    // Artık ikinci sayfayı silmiyoruz, tüm sayfaları koruyoruz
+                    console.log(`PDF ${pdf.internal.getNumberOfPages()} sayfa içeriyor.`);
                 }
                 
                 // PDF'i indir
@@ -1669,6 +1791,14 @@ input[type="text"][name$="Date"] {
                     addressTextarea.style.display = '';
                 }
                 
+                if (companyAddressTextarea) {
+                    const companyAddressDiv = document.getElementById('companyAddressDiv');
+                    if (companyAddressDiv) {
+                        companyAddressDiv.remove();
+                    }
+                    companyAddressTextarea.style.display = '';
+                }
+                
                 if (terminationReasonTextarea) {
                     const terminationDiv = document.getElementById('terminationDiv');
                     if (terminationDiv) {
@@ -1689,6 +1819,7 @@ input[type="text"][name$="Date"] {
             // Hata durumunda da div'leri kaldır ve textarea'ları geri göster
             const addressTextarea = document.getElementById('address');
             const terminationReasonTextarea = document.getElementById('terminationReason');
+            const companyAddressTextarea = document.getElementById('insuranceDate');
             
             if (addressTextarea) {
                 const addressDiv = document.getElementById('addressDiv');
@@ -1696,6 +1827,14 @@ input[type="text"][name$="Date"] {
                     addressDiv.remove();
                 }
                 addressTextarea.style.display = '';
+            }
+            
+            if (companyAddressTextarea) {
+                const companyAddressDiv = document.getElementById('companyAddressDiv');
+                if (companyAddressDiv) {
+                    companyAddressDiv.remove();
+                }
+                companyAddressTextarea.style.display = '';
             }
             
             if (terminationReasonTextarea) {
@@ -1775,7 +1914,7 @@ input[type="text"][name$="Date"] {
         const scrollHeight = textarea.scrollHeight;
         
         // Adres ve işten ayrılma nedeni için minimum yükseklik ayarla
-        if (textarea.id === 'address' || textarea.id === 'terminationReason') {
+        if (textarea.id === 'address' || textarea.id === 'terminationReason' || textarea.id === 'insuranceDate') {
             // Sadece gerçek içerik varsa büyüt, boşluk tuşuna basınca büyütme
             const content = textarea.value.trim();
             if (content.length > 0) {
