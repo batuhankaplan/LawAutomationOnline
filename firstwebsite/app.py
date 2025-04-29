@@ -1,13 +1,12 @@
 from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from datetime import datetime
+from datetime import datetime, timedelta, date, time
 import json
-from datetime import datetime, timedelta
 import os
 from werkzeug.utils import secure_filename
 import locale
-import time
+import time as pytime
 import subprocess
 import tempfile
 from flask_mail import Mail, Message
@@ -42,8 +41,9 @@ def permission_required(permission):
     return decorator
 
 app = Flask(__name__, static_url_path='/static')
+basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['MAIL_SERVER'] = 'smtp-mail.outlook.com'
@@ -204,7 +204,7 @@ def update_profile():
                         
                         # Yeni resmi kaydet
                         filename = secure_filename(file.filename)
-                        unique_filename = f"images/profile_{user.id}_{int(time.time())}_{filename}"
+                        unique_filename = f"images/profile_{user.id}_{int(pytime.time())}_{filename}"
                         filepath = os.path.join(app.static_folder, unique_filename)
                         
                         # Resmi boyutlandır ve kaydet
@@ -398,28 +398,42 @@ def anasayfa():
     # Toplam aktivite sayısını al
     total_activities = ActivityLog.query.count()
     
-    # Yaklaşan duruşmaları al (sadece ilk 3)
-    upcoming_hearings = CalendarEvent.query.filter(
+    # Yaklaşan duruşmaları al - hem dosyalardan hem de takvimden (sadece ilk 3)
+    # Önce dosyalardan
+    case_hearings = CalendarEvent.query.filter(
         CalendarEvent.date >= datetime.now().date(),
-        CalendarEvent.event_type == 'durusma'
-    ).order_by(CalendarEvent.date, CalendarEvent.time).limit(3).all()
+        CalendarEvent.event_type == 'durusma',
+        CalendarEvent.case_id.isnot(None)
+    ).order_by(CalendarEvent.date, CalendarEvent.time).all()
+    
+    # Sonra takvimden eklenen duruşmaları al
+    calendar_hearings = CalendarEvent.query.filter(
+        CalendarEvent.date >= datetime.now().date(),
+        CalendarEvent.event_type.in_(['durusma', 'e-durusma']),
+        CalendarEvent.case_id.is_(None), # Dosyadan otomatik eklenenler değil
+        CalendarEvent.file_type.isnot(None) # Dosya bilgileri girilmiş olanlar
+    ).order_by(CalendarEvent.date, CalendarEvent.time).all()
+    
+    # Tüm duruşmaları birleştir ve sırala
+    all_hearings = case_hearings + calendar_hearings
+    all_hearings.sort(key=lambda x: (x.date, x.time))
+    upcoming_hearings = all_hearings[:3]  # İlk 3 duruşma
     
     # Toplam duruşma sayısını al
-    total_hearings = CalendarEvent.query.filter(
-        CalendarEvent.date >= datetime.now().date(),
-        CalendarEvent.event_type == 'durusma'
-    ).count()
+    total_hearings = len(all_hearings)
     
     # Toplam aktif dosya sayısını hesapla
     total_active_cases = CaseFile.query.filter_by(status='Aktif').count()
     
     # Adliye istatistiklerini al (en çok dosyası olan ilk 4 adliye)
+    # Sadece dosyalardan adliye bilgisi
     courthouse_stats = db.session.query(
         CaseFile.courthouse,
         db.func.count(CaseFile.id).label('total_cases')
-    ).group_by(CaseFile.courthouse)\
-    .order_by(db.func.count(CaseFile.id).desc())\
-    .limit(4).all()
+    ).group_by(CaseFile.courthouse).order_by(db.func.count(CaseFile.id).desc()).limit(4).all()
+    
+    # İstatistikleri dictionary formatına çevir
+    courthouse_stats = [{"courthouse": k, "total_cases": v} for k, v in courthouse_stats]
     
     # Her aktivite için kullanıcı bilgisini ve detayları ekle
     activities_with_details = []
@@ -477,17 +491,29 @@ def takvim():
     
     # Tüm etkinlikleri getir
     events = CalendarEvent.query.all()
-    events_data = [{
-        'id': event.id,
-        'title': event.title,
-        'date': event.date.strftime('%Y-%m-%d'),
-        'time': event.time.strftime('%H:%M'),
-        'event_type': event.event_type,
-        'description': event.description,
-        'assigned_to': event.assigned_to,
-        'deadline_date': event.deadline_date.strftime('%Y-%m-%d') if event.deadline_date else None,
-        'is_completed': event.is_completed
-    } for event in events]
+    events_data = []
+    
+    for event in events:
+        event_data = {
+            'id': event.id,
+            'title': event.title,
+            'date': event.date.strftime('%Y-%m-%d'),
+            'time': event.time.strftime('%H:%M'),
+            'event_type': event.event_type,
+            'description': event.description,
+            'assigned_to': event.assigned_to,
+            'file_type': event.file_type,
+            'courthouse': event.courthouse,
+            'department': event.department,
+            'deadline_date': event.deadline_date.strftime('%Y-%m-%d') if event.deadline_date else None,
+            'is_completed': event.is_completed
+        }
+        events_data.append(event_data)
+    
+    # Debug için dosya türü, adliye ve departman verilerini kontrol et
+    for event_data in events_data:
+        if event_data['event_type'] in ['durusma', 'e-durusma']:
+            print(f"Etkinlik {event_data['id']} - Dosya Türü: {event_data['file_type']}, Adliye: {event_data['courthouse']}, Departman: {event_data['department']}")
     
     # Adli tatil tarihlerini ekle
     current_year = datetime.now().year
@@ -981,16 +1007,44 @@ def add_event():
                 app.logger.error(f"deadline_date çevirme hatası: {e}")
                 # Hata durumunda deadline_date None olarak kalır
         
+        # Duruşma bilgilerini kontrol et
+        event_type = data['event_type']
+        file_type = None
+        courthouse = None
+        department = None
+        
+        if event_type in ['durusma', 'e-durusma']:
+            file_type = data.get('file_type')
+            courthouse = data.get('courthouse')
+            department = data.get('department')
+            
+            # Duruşma bilgileri eksikse hata döndür
+            if not file_type or not courthouse or not department:
+                return jsonify({'error': 'Duruşma/E-Duruşma için dosya türü, adliye ve birim bilgileri gereklidir.'}), 400
+        
+            # Kullanıcı tarafından girilen açıklama varsa onu kullan
+            user_description = data.get('description', '')
+            if user_description:
+                description = user_description
+            else:
+                # Kullanıcı açıklama girmemişse, dosya bilgilerini içeren standart açıklama oluştur
+                description = f"Dosya Türü: {file_type}\nAdliye: {courthouse}\nBirim: {department}"
+        else:
+            description = data.get('description', '')
+        
         event = CalendarEvent(
             title=data['title'],
             date=event_date,
             time=event_time,
             event_type=data['event_type'],
-            description=data.get('description', ''),
+            description=description,
             user_id=current_user.id,
             assigned_to=data.get('assigned_to', ''),
             deadline_date=deadline_date,
-            is_completed=data.get('is_completed', False)
+            is_completed=data.get('is_completed', False),
+            file_type=file_type,
+            courthouse=courthouse,
+            department=department
         )
         
         db.session.add(event)
@@ -1001,8 +1055,15 @@ def add_event():
             'tarih': date_str,
             'saat': time_str,
             'tur': data['event_type'],
-            'aciklama': data.get('description', ''),
+            'aciklama': description,
         }
+        
+        if file_type:
+            log_details['dosya_turu'] = file_type
+        if courthouse:
+            log_details['adliye'] = courthouse
+        if department:
+            log_details['birim'] = department
         
         if deadline_str:
             log_details['son_tarih'] = deadline_str
@@ -1023,10 +1084,13 @@ def add_event():
                 date=deadline_date,
                 time=event_time,
                 event_type=event.event_type,
-                description=event.description,
+                description=description,
                 user_id=event.user_id,
                 assigned_to=event.assigned_to,
-                is_completed=event.is_completed
+                is_completed=event.is_completed,
+                file_type=file_type,
+                courthouse=courthouse,
+                department=department
             )
             db.session.add(deadline_event)
         
@@ -1039,9 +1103,12 @@ def add_event():
             'date': event_date.strftime('%Y-%m-%d'),
             'time': event_time.strftime('%H:%M'),
             'event_type': event.event_type,
-            'description': event.description,
+            'description': description,
             'assigned_to': event.assigned_to,
-            'is_completed': event.is_completed
+            'is_completed': event.is_completed,
+            'file_type': file_type,
+            'courthouse': courthouse,
+            'department': department
         }
         
         if deadline_date:
@@ -1054,136 +1121,200 @@ def add_event():
         app.logger.error(f"Etkinlik ekleme hatası: {str(e)}", exc_info=True)
         return jsonify({'error': str(e)}), 400
 
-@app.route('/update_event/<int:event_id>', methods=['PUT', 'POST'])
+@app.route('/update_event', methods=['POST'])
 @login_required
-@permission_required('etkinlik_duzenle')
-def update_event(event_id):
+def update_event():
+    app.logger.info(f"/update_event çağrıldı. Kullanıcı: {current_user.email}")
+    if not current_user.has_permission('etkinlik_duzenle'):
+        app.logger.warning(f"Yetkisiz güncelleme denemesi: Kullanıcı {current_user.email}, Yetki: etkinlik_duzenle")
+        return jsonify({"error": "Bu işlem için yetkiniz bulunmamaktadır."}), 403
+        
     try:
-        event = CalendarEvent.query.get_or_404(event_id)
+        data = request.get_json()
+        app.logger.info(f"Etkinlik güncelleme isteği alındı (ID: {data.get('id')}): {data}")
         
-        # JSON verisini güvenli bir şekilde al
-        try:
-            data = request.get_json()
-            if not data:
-                return jsonify({'error': 'Geçersiz JSON verisi'}), 400
-        except Exception as json_error:
-            app.logger.error(f"JSON işleme hatası: {str(json_error)}")
-            return jsonify({'error': 'Geçersiz JSON formatı'}), 400
-        
-        app.logger.info(f"Etkinlik güncelleme isteği alındı: {event_id}, Veri: {data}")
-        
-        # Eski değerleri kaydet
-        old_title = event.title
-        old_date = event.date
-        old_time = event.time
-        
-        # Tarihleri UTC'ye çevirmeden işle
-        date_str = data.get('date')
-        time_str = data.get('time')
-        deadline_str = data.get('deadline_date')
-        
-        if not date_str or not time_str:
-            return jsonify({'error': 'Tarih ve saat alanları zorunludur'}), 400
-        
-        # Tarihleri doğrudan string'den date objesine çevir
-        try:
-            event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            event_time = datetime.strptime(time_str, '%H:%M').time()
-        except ValueError as e:
-            app.logger.error(f"Tarih/saat çevirme hatası: {e}")
-            return jsonify({'error': 'Geçersiz tarih veya saat formatı'}), 400
-        
-        # deadline_date kontrolü - eğer varsa çevir, yoksa None olarak bırak
-        deadline_date = None
-        if deadline_str:
-            try:
-                deadline_date = datetime.strptime(deadline_str, '%Y-%m-%d').date()
-            except ValueError as e:
-                app.logger.error(f"deadline_date çevirme hatası: {e}")
-                # Hata durumunda deadline_date None olarak kalır
-        
-        # Verileri güncelle
-        event.title = data.get('title', '')
-        event.date = event_date
-        event.time = event_time
-        event.event_type = data.get('event_type', '')
-        event.description = data.get('description', '')
-        event.assigned_to = data.get('assigned_to', '')
-        event.is_completed = data.get('is_completed', False)
-        
-        # Log kaydı
-        log_details = {
-            'eski_baslik': old_title,
-            'yeni_baslik': event.title,
-            'eski_tarih': old_date.strftime('%Y-%m-%d'),
-            'yeni_tarih': event_date.strftime('%Y-%m-%d'),
-            'eski_saat': old_time.strftime('%H:%M'),
-            'yeni_saat': event_time.strftime('%H:%M'),
-            'tur': data.get('event_type', ''),
-            'aciklama': data.get('description', ''),
-        }
-        
-        if deadline_str:
-            log_details['son_tarih'] = deadline_str
-        
-        log = ActivityLog(
-            activity_type='etkinlik_duzenleme',
-            description=f'Etkinlik düzenlendi: {old_title}',
-            details=log_details,
-            user_id=current_user.id,
-            related_event_id=event.id
-        )
-        db.session.add(log)
-        
-        # Deadline işlemleri
-        if deadline_date:
-            event.deadline_date = deadline_date
+        # ID kontrolü
+        if 'id' not in data:
+            app.logger.error("Etkinlik güncelleme hatası: ID eksik.")
+            return jsonify({"error": "Etkinlik ID'si belirtilmemiş."}), 400
             
-            # Eski son gün etkinliğini sil
-            old_deadline_event = CalendarEvent.query.filter_by(
-                title=f"SON GÜN: {old_title}",
-                event_type=event.event_type
-            ).first()
-            if old_deadline_event:
-                db.session.delete(old_deadline_event)
+        event_id = data['id']
+        event = CalendarEvent.query.get(event_id)
+        
+        if not event:
+            app.logger.error(f"Etkinlik güncelleme hatası: Etkinlik bulunamadı (ID: {event_id})")
+            return jsonify({"error": "Etkinlik bulunamadı."}), 404
             
-            # Yeni son gün etkinliği ekle
-            if deadline_date != event_date:
-                deadline_event = CalendarEvent(
-                    title=f"SON GÜN: {event.title}",
-                    date=deadline_date,
-                    time=event_time,
-                    event_type=event.event_type,
-                    description=event.description,
-                    user_id=event.user_id,
-                    assigned_to=event.assigned_to,
-                    is_completed=event.is_completed
-                )
-                db.session.add(deadline_event)
-        
-        db.session.commit()
-        app.logger.info(f"Etkinlik başarıyla güncellendi: {event.id}")
-        
-        response_data = {
-            'id': event.id,
+        # Eğer başkası eklemiş ve kullanıcı süper admin değilse düzenleme yapılamaz
+        if event.user_id != current_user.id and not current_user.is_admin:
+            app.logger.warning(f"Yetkisiz güncelleme denemesi: Kullanıcı {current_user.email} başkasının etkinliğini (ID: {event_id}) düzenlemeye çalıştı.")
+            return jsonify({"error": "Başkasının eklediği etkinliği düzenleyemezsiniz."}), 403
+            
+        # Önceki değerleri kaydet (log için)
+        old_values = {
             'title': event.title,
-            'date': event_date.strftime('%Y-%m-%d'),
-            'time': event_time.strftime('%H:%M'),
+            'date': event.date.strftime('%Y-%m-%d') if event.date else None,
+            'time': event.time.strftime('%H:%M') if event.time else None,
             'event_type': event.event_type,
             'description': event.description,
             'assigned_to': event.assigned_to,
-            'is_completed': event.is_completed
+            'is_completed': event.is_completed,
+            'file_type': event.file_type,
+            'courthouse': event.courthouse,
+            'department': event.department
         }
         
-        if deadline_date:
-            response_data['deadline_date'] = deadline_date.strftime('%Y-%m-%d')
+        # Tarihi ve zamanı güncelle - farklı formatları kontrol et
+        if 'date' in data and 'time' in data:
+            # Yeni format: ayrı date ve time alanları
+            try:
+                event_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+                event_time = datetime.strptime(data['time'], '%H:%M').time()
+                
+                event.date = event_date
+                event.time = event_time
+            except ValueError as e:
+                app.logger.error(f"Tarih/zaman ayrıştırma hatası: {e}")
+                return jsonify({"error": f"Tarih/zaman formatı hatalı: {e}"}), 400
+        elif 'start' in data:
+            # Eski format: start alanı (ISO formatında string)
+            try:
+                if isinstance(data['start'], str):
+                    start_datetime = datetime.strptime(data['start'], '%Y-%m-%dT%H:%M:%S')
+                    event.date = start_datetime.date()
+                    event.time = start_datetime.time()
+                else:
+                    return jsonify({"error": "start alanı geçerli bir ISO datetime string değil"}), 400
+            except ValueError as e:
+                app.logger.error(f"start alanı ayrıştırma hatası: {e}")
+                return jsonify({"error": f"start alanı formatı hatalı: {e}"}), 400
         
-        return jsonify(response_data), 200
+        # Diğer alanları güncelle
+        if 'title' in data:
+            event.title = data['title']
+            
+        if 'event_type' in data:
+            event.event_type = data['event_type']
+            
+        if 'description' in data:
+            event.description = data['description']
+            
+        if 'assigned_to' in data:
+            event.assigned_to = data['assigned_to'] or None
+            
+        if 'is_completed' in data:
+            event.is_completed = data.get('is_completed', False)
         
+        # Duruşma bilgilerini güncelle
+        if event.event_type in ['durusma', 'e-durusma']:
+            if 'file_type' in data:
+                event.file_type = data['file_type']
+                
+            if 'courthouse' in data:
+                event.courthouse = data['courthouse']
+                
+            if 'department' in data:
+                event.department = data['department']
+                
+            # Eğer duruşma bilgileri eksikse ve gerekli bir alanda da varsa
+            required_fields = ['file_type', 'courthouse', 'department']
+            missing_fields = []
+            
+            for field in required_fields:
+                if getattr(event, field) is None:
+                    # Veri içinde varsa al
+                    if field in data and data[field]:
+                        setattr(event, field, data[field])
+                    else:
+                        missing_fields.append(field)
+            
+            if missing_fields:
+                app.logger.warning(f"Duruşma için eksik alanlar: {missing_fields}")
+                
+            # Kullanıcı tarafından girilen açıklama varsa onu kullan, yoksa standart oluştur
+            if not event.description or (data.get('description') and data['description'] != event.description):
+                if data.get('description'):
+                    event.description = data['description']
+                else:
+                    # Dosya bilgilerini içeren standart açıklama oluştur
+                    event.description = f"Dosya Türü: {event.file_type or '-'}\nAdliye: {event.courthouse or '-'}\nBirim: {event.department or '-'}"
+        else:
+            # Duruşma değilse bu alanları temizle
+            event.file_type = None
+            event.courthouse = None
+            event.department = None
+        
+        # Değişiklikleri kaydet
+        db.session.commit()
+        
+        # Değişiklikleri loglama
+        changes = []
+        for key, old_value in old_values.items():
+            new_value = getattr(event, key)
+
+            # Doğrudan değerleri karşılaştır
+            if old_value != new_value:
+                # Log için değerleri formatla (varsayılan olarak string)
+                formatted_log_old = str(old_value) if old_value is not None else "None"
+                formatted_log_new = str(new_value) if new_value is not None else "None"
+
+                # new_value formatlama (eğer tarih/saat tipi ise)
+                if new_value is not None:
+                    if isinstance(new_value, datetime):
+                        formatted_log_new = new_value.strftime('%Y-%m-%d %H:%M:%S')
+                    elif isinstance(new_value, date):
+                        formatted_log_new = new_value.strftime('%Y-%m-%d')
+                    elif isinstance(new_value, time):
+                        formatted_log_new = new_value.strftime('%H:%M')
+
+                # old_value formatlama (eğer tarih/saat tipi ise)
+                if old_value is not None:
+                    if isinstance(old_value, datetime):
+                        formatted_log_old = old_value.strftime('%Y-%m-%d %H:%M:%S')
+                    elif isinstance(old_value, date):
+                        formatted_log_old = old_value.strftime('%Y-%m-%d')
+                    elif isinstance(old_value, time):
+                        formatted_log_old = old_value.strftime('%H:%M')
+
+                changes.append(f"{key}: {formatted_log_old} -> {formatted_log_new}")
+        
+        if changes:
+            log = ActivityLog(
+                activity_type='etkinlik_duzenleme',
+                description=f'Etkinlik düzenlendi: {event.title}',
+                details={
+                    'etkinlik_id': event.id,
+                    'degisiklikler': changes
+                },
+                user_id=current_user.id,
+                related_event_id=event.id
+            )
+            db.session.add(log)
+            db.session.commit()
+        
+        app.logger.info(f"Etkinlik (ID: {event_id}) başarıyla güncellendi. Değişiklikler: {changes}")
+        return jsonify({
+            "success": True,
+            "message": "Etkinlik başarıyla güncellendi",
+            "event": {
+                "id": event.id,
+                "title": event.title,
+                "date": event.date.strftime('%Y-%m-%d') if event.date else None,
+                "time": event.time.strftime('%H:%M') if event.time else None,
+                "event_type": event.event_type,
+                "description": event.description,
+                "assigned_to": event.assigned_to,
+                "is_completed": event.is_completed,
+                "file_type": event.file_type,
+                "courthouse": event.courthouse,
+                "department": event.department
+            }
+        }), 200
     except Exception as e:
         db.session.rollback()
-        app.logger.error(f"Etkinlik güncelleme hatası: {str(e)}", exc_info=True)
-        return jsonify({'error': str(e)}), 400
+        app.logger.error(f"Etkinlik güncelleme hatası (ID: {data.get('id')}): {str(e)}", exc_info=True)
+        # ÖNEMLİ: Hata durumunda HTML yerine JSON döndürdüğümüzden emin olalım.
+        return jsonify({"error": f"Sunucu hatası: {str(e)}"}), 500
 
 @app.route('/delete_event/<int:event_id>', methods=['DELETE', 'POST'])
 @login_required
@@ -1215,6 +1346,31 @@ def delete_event(event_id):
         db.session.rollback()
         app.logger.error(f"Etkinlik silme hatası: {str(e)}", exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/get_event_details/<int:event_id>')
+@login_required
+def get_event_details(event_id):
+    try:
+        event = CalendarEvent.query.get_or_404(event_id)
+        
+        event_data = {
+            "id": event.id,
+            "title": event.title,
+            "date": event.date.strftime('%Y-%m-%d') if event.date else None,
+            "time": event.time.strftime('%H:%M') if event.time else None,
+            "event_type": event.event_type,
+            "description": event.description,
+            "assigned_to": event.assigned_to,
+            "is_completed": event.is_completed,
+            "file_type": event.file_type,
+            "courthouse": event.courthouse,
+            "department": event.department
+        }
+        
+        return jsonify(event_data)
+    except Exception as e:
+        app.logger.error(f"Etkinlik detayları getirme hatası: {str(e)}", exc_info=True)
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/add_expense/<int:case_id>', methods=['POST'])
 def add_expense(case_id):
@@ -1289,7 +1445,7 @@ def upload_document(case_id):
             display_name = custom_name if custom_name else original_filename.rsplit('.', 1)[0]
             
             # Benzersiz dosya adı oluştur
-            unique_filename = f"{case_id}_{int(time.time())}_{original_filename}"
+            unique_filename = f"{case_id}_{int(pytime.time())}_{original_filename}"
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
             
             os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -1489,11 +1645,22 @@ def sync_hearing_to_calendar():
         event_date = datetime.strptime(hearing_date, '%Y-%m-%d').date()
         event_time = datetime.strptime(hearing_time, '%H:%M').time()
         
+        # Daha detaylı duruşma başlığı
+        event_title = f"Duruşma - {case_file.client_name} ({case_file.case_number})"
+        
+        # Zengin açıklama
+        event_description = f"Dosya Türü: {case_file.file_type}\nAdliye: {case_file.courthouse}\nBirim: {case_file.department}"
+        
         if existing_event:
             existing_event.date = event_date
             existing_event.time = event_time
-            existing_event.title = f"Duruşma - {case_file.client_name} ({case_file.case_number})"
-            existing_event.description = f"Dosya Türü: {case_file.file_type}\nAdliye: {case_file.courthouse}\nBirim: {case_file.department}"
+            existing_event.title = event_title
+            existing_event.description = event_description
+            # Adliye ve birim bilgilerini de ayrı alanlar olarak kaydet
+            existing_event.courthouse = case_file.courthouse
+            existing_event.department = case_file.department
+            existing_event.file_type = case_file.file_type
+            
             log_activity(
                 activity_type='durusma_guncelleme',
                 description=f"Duruşma güncellendi: {case_file.client_name} - {event_date.strftime('%d.%m.%Y')} {event_time.strftime('%H:%M')}",
@@ -1502,13 +1669,16 @@ def sync_hearing_to_calendar():
             )
         else:
             new_event = CalendarEvent(
-                title=f"Duruşma - {case_file.client_name} ({case_file.case_number})",
+                title=event_title,
                 date=event_date,
                 time=event_time,
                 event_type='durusma',
-                description=f"Dosya Türü: {case_file.file_type}\nAdliye: {case_file.courthouse}\nBirim: {case_file.department}",
+                description=event_description,
                 user_id=1,
-                case_id=case_id
+                case_id=case_id,
+                courthouse=case_file.courthouse,
+                department=case_file.department,
+                file_type=case_file.file_type
             )
             db.session.add(new_event)
             log_activity(

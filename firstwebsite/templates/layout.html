@@ -542,6 +542,18 @@
                                 <div class="profile-image-container">
                                     <img src="{{ url_for('static', filename=current_user.profile_image or 'images/pp.png') }}" alt="Profil" class="profile-image">
                                 </div>
+                                {% set unvan = '' %}
+                                {% if current_user.role == 'Yönetici Avukat' %}
+                                    {% set unvan = 'Av.' %}
+                                {% elif current_user.role == 'Avukat' %}
+                                    {% set unvan = 'Av.' %}
+                                {% elif current_user.role == 'Stajyer Avukat' %}
+                                    {% set unvan = 'Stj. Av.' %}
+                                {% endif %}
+                                <div style="display: flex; flex-direction: column; margin-right: 5px;">
+                                    <span style="font-weight: 600; font-size: 0.9rem; line-height: 1.2;">{{ unvan }} {{ current_user.first_name }} {{ current_user.last_name }}</span>
+                                    <span style="font-size: 0.8rem; color: #666; line-height: 1.2;">{{ current_user.role }}</span>
+                                </div>
                                 <i class="material-icons">arrow_drop_down</i>
                             </div>
                             <div class="profile-dropdown" id="profileDropdown">

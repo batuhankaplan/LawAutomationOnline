@@ -9,10 +9,11 @@ YAPILACAKLAR:
 Ayrıca tüm sayfalarda görünür olacak şekilde (layout.html'de) sağ üstte tarih ve saat bilgisin sağ tarafında kullanıcı ismi ve kullanıcının yuvarlak bir resim boxu olmalı.
 Kullanıcının ufak yuvarlak resim boxunun üstüne basınca seçenekler açılacak. Profil / Ayarlar / Çıkış gibi seçenekler olacak. #YAPILDI (fakat hala kullanıcı yetkileri tam senkron değil)
 8) Son işlemler gösterim tablosunda işlemi hangi kullancının yaptığı gösterilecek. (Bunun için kullanıcı giriş bilgilerinde kayıt olurken kullandığı isim kullanılacak.)
-9) İşçi görüşme tutanağı formu eklenebilir.
-10) Örnek dilekçe yükleme ve sorgulama sistemi eklenebilir.
-11) Ücret tarifeleri sisteme yüklenecek. (TBB asgari tarife, İst Barosu tavsiye niteliğindeki tarife, Bizim ihtar dilekçe danışma ücreti vs tarifemiz)
-12) Ödemeler ile ilgili istatislik bilgileri, yıllık aylık, günlük ödeme istatistikleri, dosya türüne göre ortalama alınan ödemeler, dosya türlerine göre toplam alınan ödemeler, ödeme tarihlerine göre(yıllık aylık günlük) grafik gösterimi,
+9) İşçi görüşme tutanağı formu eklenebilir. #YAPILDI
+10) Dosya ekleme sayfasında telefon numarası eklemeden de dosya eklenebilsin. Yani telefon numarası girmek zorunlu olmasın.
+11) Örnek dilekçe yükleme ve sorgulama sistemi eklenebilir.
+12) Ücret tarifeleri sisteme yüklenecek. (TBB asgari tarife, İst Barosu tavsiye niteliğindeki tarife, Bizim ihtar dilekçe danışma ücreti vs tarifemiz)
+13) Ödemeler ile ilgili istatislik bilgileri, yıllık aylık, günlük ödeme istatistikleri, dosya türüne göre ortalama alınan ödemeler, dosya türlerine göre toplam alınan ödemeler, ödeme tarihlerine göre(yıllık aylık günlük) grafik gösterimi,
 
 HATA VE BUGLAR:
 1) (mesela duyurulara bir duyuru ekliyorum, duyurular sayfasında "Duyuru eklendi" uyarısı gelmiyor). (image upload)
@@ -25,3 +26,11 @@ HATA VE BUGLAR:
 8) Search boxtan arama yapıp ilgili dosyanın detayları ekranı açıldıktan sonra o ekranı kapatsakta dosya sorgula ekranında arama yapınca otomatik o son dosya detayları ekranı açılıyor.
 9) Search boxta kayıtlı ödeme ismiyle birini arayıp tıklatınca hatalı sayfaya atıyor. Hata: Not Found
 The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. (url:http://127.0.0.1:5000/musteri_detay/1) (Ödemeler ekranında bir detay sayfası ekleyelim search boxta aratınca da otomatik ödeme detaylarına atsın)
+
+EK: Dosya eklemede yapılacak düzenlemeler:
+1) Dosya ekleme sayfasına Dosya Türü seçiminden hemen sonra Şehir seçimi gelsin. 81 il burada listelensin. İstanbul dışındaki diğer illerin adliyeleri de buraya eklensin: 
+
+2) Telefon numarası girmek zorunlu olmasın. Telefon numarası girilmeden de dosya eklenebilsin.
+3) Dosya Türü olarak ARABULUCULUK eklenmesini istiyorum. Arabuluculuk seçeneğini tıkladığımızda Adliye ve Birim seçenekleri seçilemez hale gelsin mesela böyle gri olsunlar tıklanamaz olsunlar ve onları girmeden de dosya ekleyebileyim.
+4) Aynı zamanda Dosya Türü olarak AİHM veya AYM seçersem de yine Adliye ve Birim seçenekleri seçilemez hale gelsin gri bir renkle tıklanamaz hale gelsin ve bunları yazmadan da dosya eklenebilir olsun.
+5) Savcılık seçeneğini seçtiğimizde ise Adliye seçimi kalsın fakat Birim seçeneği de daha önce söylediğim gibi seçilemez tıklanamaz hale gelsin.

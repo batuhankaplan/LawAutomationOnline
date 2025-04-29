@@ -147,15 +147,27 @@
             <div class="hearings-list">
                 {% for hearing in upcoming_hearings %}
                 <div class="hearing-item">
-                    <div class="hearing-date">
-                        <i class="material-icons">event</i>
-                        {{ hearing.date.strftime('%d.%m.%Y') }}
+                    <div class="hearing-date-time">
+                        <div class="date-time-inner">
+                            <div class="hearing-date">
+                                <i class="material-icons">event</i>
+                                {{ hearing.date.strftime('%d.%m.%Y') }}
+                            </div>
+                            <div class="hearing-time">
+                                <i class="material-icons">schedule</i>
+                                {{ hearing.time.strftime('%H:%M') }}
+                            </div>
+                        </div>
                     </div>
-                    <div class="hearing-time">
-                        <i class="material-icons">schedule</i>
-                        {{ hearing.time.strftime('%H:%M') }}
+                    <div class="hearing-details">
+                        <div class="hearing-title">{{ hearing.title }}</div>
+                        {% if hearing.courthouse %}
+                        <div class="hearing-location">
+                            <i class="material-icons">location_on</i>
+                            {{ hearing.courthouse.split(' ')[0] }} - {{ hearing.department }}
+                        </div>
+                        {% endif %}
                     </div>
-                    <div class="hearing-details">{{ hearing.title }}</div>
                 </div>
                 {% else %}
                 <div class="no-data">Yaklaşan duruşma bulunmuyor.</div>
@@ -470,23 +482,70 @@
 .hearing-item {
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 10px;
+    gap: 12px;
+    padding: 12px 10px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
     border-bottom: 1px solid #eee;
+}
+
+.hearing-item:last-child {
+    border-bottom: none;
+}
+
+.hearing-item:hover {
+    background-color: #f5f9ff;
+}
+
+.hearing-date-time {
+    min-width: 140px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 8px 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.date-time-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .hearing-date, .hearing-time {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     font-size: 0.85rem;
-    color: #666;
+    color: #555;
+}
+
+.hearing-date i, .hearing-time i {
+    font-size: 16px;
+    color: var(--primary-color);
 }
 
 .hearing-details {
-    font-size: 0.85rem;
-    color: #2c3e50;
     flex: 1;
+}
+
+.hearing-title {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 5px;
+    font-size: 0.95rem;
+}
+
+.hearing-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.hearing-location i {
+    font-size: 16px;
+    color: #888;
 }
 
 .no-data {

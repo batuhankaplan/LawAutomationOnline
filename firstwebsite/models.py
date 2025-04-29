@@ -189,6 +189,10 @@ class CalendarEvent(db.Model):
     assigned_to = db.Column(db.String(100))  # Atanan kişi
     deadline_date = db.Column(db.Date)  # Son gün tarihi
     is_completed = db.Column(db.Boolean, default=False)  # Tamamlanma durumu
+    # Duruşma bilgileri için ek alanlar
+    file_type = db.Column(db.String(50))  # Dosya türü (Hukuk, Ceza, İcra)
+    courthouse = db.Column(db.String(100))  # Adliye 
+    department = db.Column(db.String(100))  # Mahkeme/Birim
 
 class WorkerInterview(db.Model):
     id = db.Column(db.Integer, primary_key=True)

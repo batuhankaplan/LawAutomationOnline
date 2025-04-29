@@ -30,15 +30,38 @@
 
             <div class="input-group">
                 <label for="courthouse">Adliye</label>
-                <select id="courthouse" name="courthouse">
+                <select id="courthouse" name="courthouse" class="form-control" required>
                     <option value="">Seçiniz</option>
+                    <option value="İstanbul Anadolu Adliyesi (Kartal)">İstanbul Anadolu Adliyesi (Kartal)</option>
+                    <option value="İstanbul Adliyesi (Çağlayan)">İstanbul Adliyesi (Çağlayan)</option>
+                    <option value="Bakırköy Adliyesi">Bakırköy Adliyesi</option>
+                    <option value="Büyükçekmece Adliyesi">Büyükçekmece Adliyesi</option>
+                    <option value="Gaziosmanpaşa Adliyesi">Gaziosmanpaşa Adliyesi</option>
+                    <option value="Küçükçekmece Adliyesi">Küçükçekmece Adliyesi</option>
+                    <option value="Silivri Adliyesi">Silivri Adliyesi</option>
+                    <option value="Çatalca Adliyesi">Çatalca Adliyesi</option>
+                    <option value="Üsküdar Adliyesi">Üsküdar Adliyesi</option>
+                    <option value="Adalar Adliyesi">Adalar Adliyesi</option>
+                    <option value="Sarıyer Adliyesi">Sarıyer Adliyesi</option>
                 </select>
             </div>
 
             <div class="input-group">
                 <label for="department">Birim</label>
-                <select id="department" name="department">
+                <select id="department" name="department" class="form-control" required>
                     <option value="">Seçiniz</option>
+                    <option value="Asliye Hukuk Mahkemesi">Asliye Hukuk Mahkemesi</option>
+                    <option value="Sulh Hukuk Mahkemesi">Sulh Hukuk Mahkemesi</option>
+                    <option value="İş Mahkemesi">İş Mahkemesi</option>
+                    <option value="Aile Mahkemesi">Aile Mahkemesi</option>
+                    <option value="Ticaret Mahkemesi">Ticaret Mahkemesi</option>
+                    <option value="İcra Hukuk Mahkemesi">İcra Hukuk Mahkemesi</option>
+                    <option value="Tüketici Mahkemesi">Tüketici Mahkemesi</option>
+                    <option value="Fikri ve Sınai Haklar Mahkemesi">Fikri ve Sınai Haklar Mahkemesi</option>
+                    <option value="Asliye Ceza Mahkemesi">Asliye Ceza Mahkemesi</option>
+                    <option value="Ağır Ceza Mahkemesi">Ağır Ceza Mahkemesi</option>
+                    <option value="Sulh Ceza Hakimliği">Sulh Ceza Hakimliği</option>
+                    <option value="İcra Dairesi">İcra Dairesi</option>
                 </select>
             </div>
 
@@ -372,23 +395,46 @@ function populateCourthouses() {
 }
 
 // Dosya türüne göre birimleri güncelle
-function updateDepartments() {
+function updateDepartments(selectedDepartment) {
     const fileType = document.getElementById('file-type').value;
     const departmentSelect = document.getElementById('department');
     const courtNumberContainer = document.getElementById('court-number-container');
+    
+    // Önceki seçimi kaydet (ya parametre olarak gelen değer ya da mevcut seçili değer)
+    selectedDepartment = selectedDepartment || departmentSelect.value;
     
     departmentSelect.innerHTML = '<option value="">Seçiniz</option>';
     
     if (fileType && departments[fileType]) {
         departments[fileType].forEach(dept => {
-            departmentSelect.innerHTML += `<option value="${dept}">${dept}</option>`;
+            const option = document.createElement('option');
+            option.value = dept;
+            option.textContent = dept;
+            departmentSelect.appendChild(option);
         });
+        
+        // Eğer önceden seçilmiş bir departman varsa ve yeni listede mevcutsa, onu seç
+        if (selectedDepartment) {
+            // Seçili değerin yeni listede olup olmadığını kontrol et
+            const exists = Array.from(departmentSelect.options).some(option => option.value === selectedDepartment);
+            if (exists) {
+                departmentSelect.value = selectedDepartment;
+                console.log('Önceki departman değeri bulundu ve seçildi:', selectedDepartment);
+            } else {
+                console.log('Önceki departman değeri yeni listede bulunamadı:', selectedDepartment);
+            }
+        }
     }
 
     // Birim değiştiğinde mahkeme seçeneğini güncelle
     departmentSelect.onchange = function() {
         updateCourtNumbers(this.value);
     };
+    
+    // Eğer şu anda bir departman seçiliyse mahkeme numaralarını güncelle
+    if (departmentSelect.value) {
+        updateCourtNumbers(departmentSelect.value);
+    }
 }
 
 // Mahkeme numaralarını güncelle

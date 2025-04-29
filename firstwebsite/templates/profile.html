@@ -72,7 +72,16 @@
                     </div>
                     <div class="profile-form-group">
                         <label for="profession">Meslek</label>
-                        <input type="text" class="profile-form-control" id="profession" name="meslek" value="{{ current_user.role }}" required>
+                        <select class="profile-form-control" id="profession" name="meslek" required>
+                            <option value="">Seçiniz</option>
+                            <option value="Yönetici Avukat" {% if current_user.role == 'Yönetici Avukat' %}selected{% endif %}>Yönetici Avukat</option>
+                            <option value="Avukat" {% if current_user.role == 'Avukat' %}selected{% endif %}>Avukat</option>
+                            <option value="Stajyer Avukat" {% if current_user.role == 'Stajyer Avukat' %}selected{% endif %}>Stajyer Avukat</option>
+                            <option value="Takip Elemanı" {% if current_user.role == 'Takip Elemanı' %}selected{% endif %}>Takip Elemanı</option>
+                            <option value="Muhasebe" {% if current_user.role == 'Muhasebe' %}selected{% endif %}>Muhasebe</option>
+                            <option value="Ulaşım" {% if current_user.role == 'Ulaşım' %}selected{% endif %}>Ulaşım</option>
+                            <option value="Sekreter" {% if current_user.role == 'Sekreter' %}selected{% endif %}>Sekreter</option>
+                        </select>
                     </div>
                 </div>
             </div>
