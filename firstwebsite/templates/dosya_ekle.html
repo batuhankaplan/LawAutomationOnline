@@ -13,41 +13,41 @@
 </header>
 
 <div class="inbox">
-    <form method="POST" class="search-form" onsubmit="return submitForm(event)">
+    <form method="POST" class="search-form" id="addCaseForm">
         <div class="form-column">
             <div class="input-group">
                 <label for="file-type">Dosya Türü</label>
-                <select id="file-type" name="file-type" onchange="updateDepartments()">
+                <select id="file-type" name="file-type" onchange="handleFileTypeChange()" required>
                     <option value="">Seçiniz</option>
                     <option value="ceza">Ceza</option>
                     <option value="hukuk">Hukuk</option>
                     <option value="icra">İcra</option>
                     <option value="savcilik">Savcılık</option>
-                    <option value="aihm">AİHM</option>
-                    <option value="aym">AYM</option>
+                    <option value="ARABULUCULUK">Arabuluculuk</option>
+                    <option value="AİHM">AİHM</option>
+                    <option value="AYM">AYM</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="city">Şehir</label>
+                <select id="city" name="city" onchange="updateCourthouses()" required>
+                    <option value="">Seçiniz</option>
+                    {% for city_name in cities %}
+                        <option value="{{ city_name }}">{{ city_name }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
             <div class="input-group">
                 <label for="courthouse">Adliye</label>
                 <select id="courthouse" name="courthouse" class="form-control" required>
-                    <option value="">Seçiniz</option>
-                    <option value="İstanbul Anadolu Adliyesi (Kartal)">İstanbul Anadolu Adliyesi (Kartal)</option>
-                    <option value="İstanbul Adliyesi (Çağlayan)">İstanbul Adliyesi (Çağlayan)</option>
-                    <option value="Bakırköy Adliyesi">Bakırköy Adliyesi</option>
-                    <option value="Büyükçekmece Adliyesi">Büyükçekmece Adliyesi</option>
-                    <option value="Gaziosmanpaşa Adliyesi">Gaziosmanpaşa Adliyesi</option>
-                    <option value="Küçükçekmece Adliyesi">Küçükçekmece Adliyesi</option>
-                    <option value="Silivri Adliyesi">Silivri Adliyesi</option>
-                    <option value="Çatalca Adliyesi">Çatalca Adliyesi</option>
-                    <option value="Üsküdar Adliyesi">Üsküdar Adliyesi</option>
-                    <option value="Adalar Adliyesi">Adalar Adliyesi</option>
-                    <option value="Sarıyer Adliyesi">Sarıyer Adliyesi</option>
+                    <option value="">Önce Şehir Seçiniz</option>
                 </select>
             </div>
 
             <div class="input-group">
-                <label for="department">Birim</label>
+                <label for="department">Mahkeme</label>
                 <select id="department" name="department" class="form-control" required>
                     <option value="">Seçiniz</option>
                     <option value="Asliye Hukuk Mahkemesi">Asliye Hukuk Mahkemesi</option>
@@ -66,7 +66,7 @@
             </div>
 
             <div class="input-group" id="court-number-container" style="display: none;">
-                <label for="court-number">Mahkeme</label>
+                <label for="court-number">Numaralı Mahkeme</label>
                 <select id="court-number" name="court-number">
                     <option value="">Seçiniz</option>
                 </select>
@@ -284,13 +284,26 @@
 .btn-secondary:hover {
     background-color: #5a6268;
 }
+
+.input-group select:disabled,
+.input-group input:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
 </style>
 
 <script>
-// Adliye ve birim listelerini tanımla
-const courthouses = [
-    "İstanbul Adliyesi (Çağlayan)",
+// Backend'den gelen tüm adliye verisi
+const allCourthousesData = JSON.parse('{{ all_courthouses | safe }}');
+
+// Orijinal Birim seçeneklerini sakla
+let originalDepartmentOptions = [];
+
+// İstanbul'a özel adliyeler
+const istanbulSpecificCourthouses = [
     "İstanbul Anadolu Adliyesi (Kartal)",
+    "İstanbul Adliyesi (Çağlayan)",
     "Bakırköy Adliyesi",
     "Büyükçekmece Adliyesi",
     "Gaziosmanpaşa Adliyesi",
@@ -302,139 +315,241 @@ const courthouses = [
     "Sarıyer Adliyesi"
 ];
 
-const departments = {
-    hukuk: [
-        "Asliye Hukuk Mahkemesi",
-        "Sulh Hukuk Mahkemesi",
-        "Aile Mahkemesi",
-        "İş Mahkemesi",
-        "Tüketici Mahkemesi",
-        "Kadastro Mahkemesi",
-        "Ticaret Mahkemesi",
-        "Fikri ve Sınai Haklar Hukuk Mahkemesi",
-        "İcra Hukuk Mahkemesi"
-    ],
-    ceza: [
-        "Asliye Ceza Mahkemesi",
-        "Ağır Ceza Mahkemesi",
-        "Sulh Ceza Hakimliği",
-        "Çocuk Mahkemesi",
-        "Çocuk Ağır Ceza Mahkemesi",
-        "İcra Ceza Mahkemesi",
-        "Fikri ve Sınai Haklar Ceza Mahkemesi"
-    ],
-    icra: Array.from({length: 30}, (_, i) => `${i + 1}. İcra Dairesi`)
-};
+document.addEventListener('DOMContentLoaded', () => {
+    const departmentSelect = document.getElementById('department');
+    // "Seçiniz" hariç orijinal seçenekleri al ve sakla
+    originalDepartmentOptions = Array.from(departmentSelect.options)
+                                    .filter(opt => opt.value !== '')
+                                    .map(opt => opt.cloneNode(true));
 
-// Sayfa yüklendiğinde
-document.addEventListener('DOMContentLoaded', function() {
-    populateCourthouses();
-    
-    // Dosya türü değiştiğinde birimleri güncelle
-    document.getElementById('file-type').addEventListener('change', updateDepartments);
-    
-    // Modal işlemleri
+    handleFileTypeChange(); // İlk yüklemede alanları ayarla
+
+    // Modal logic...
     const modal = document.getElementById('uyapSyncModal');
     const btn = document.getElementById('uyapSyncBtn');
-    const closeBtn = document.querySelector('.close');
-    const closeModalBtn = document.querySelector('.close-modal');
+    const span = document.getElementsByClassName('close')[0];
+    const cancelBtn = modal.querySelector('.close-modal');
     const startSyncBtn = document.getElementById('startSync');
-    const progress = document.querySelector('.progress');
-    
-    btn.onclick = function() {
-        modal.style.display = "block";
+    const progressBar = modal.querySelector('.progress');
+
+    if (btn) {
+         btn.onclick = function() {
+            modal.style.display = 'block';
+         }
     }
-    
-    closeBtn.onclick = closeModalBtn.onclick = function() {
-        modal.style.display = "none";
-        progress.style.display = "none";
+    if (span) {
+        span.onclick = function() {
+            modal.style.display = 'none';
+        }
     }
-    
+    if (cancelBtn) {
+        cancelBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+    }
     window.onclick = function(event) {
         if (event.target == modal) {
-            modal.style.display = "none";
-            progress.style.display = "none";
+            modal.style.display = 'none';
+        }
+    }
+    if(startSyncBtn){
+        startSyncBtn.onclick = function() {
+             progressBar.style.display = 'block';
+             console.log("UYAP senkronizasyonu başlatıldı...");
         }
     }
     
-    startSyncBtn.onclick = function() {
-        progress.style.display = "block";
-        startSyncBtn.disabled = true;
-        closeModalBtn.disabled = true;
-        
-        fetch('/uyap_sync', {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                window.location.reload();
-            } else {
-                alert('Hata: ' + data.message);
-            }
-        })
-        .catch(error => {
-            alert('Bir hata oluştu: ' + error);
-        })
-        .finally(() => {
-            progress.style.display = "none";
-            startSyncBtn.disabled = false;
-            closeModalBtn.disabled = false;
-        });
+    // Form submit eventi
+    const form = document.getElementById('addCaseForm');
+    if (form) {
+        form.addEventListener('submit', submitForm);
     }
 });
 
-// Adliye listesini doldur
-function populateCourthouses() {
-    const select = document.getElementById('courthouse');
-    select.innerHTML = '<option value="">Seçiniz</option>';
-    courthouses.forEach(courthouse => {
-        select.innerHTML += `<option value="${courthouse}">${courthouse}</option>`;
-    });
+function updateCourthouses() {
+    const citySelect = document.getElementById('city');
+    const courthouseSelect = document.getElementById('courthouse');
+    const selectedCity = citySelect.value;
+
+    // Önceki adliyeleri temizle
+    courthouseSelect.innerHTML = '<option value="">Seçiniz</option>';
+
+    // Eğer İstanbul seçiliyse, spesifik İstanbul adliyelerini ekle
+    if (selectedCity === 'İstanbul') {
+        istanbulSpecificCourthouses.forEach(courthouse => {
+            const option = document.createElement('option');
+            option.value = courthouse;
+            option.textContent = courthouse;
+            courthouseSelect.appendChild(option);
+        });
+    }
+    
+    // Seçili şehir için adliyeleri ekle
+    if (selectedCity && allCourthousesData[selectedCity]) {
+        allCourthousesData[selectedCity].forEach(courthouse => {
+            const option = document.createElement('option');
+            option.value = courthouse;
+            option.textContent = courthouse;
+            courthouseSelect.appendChild(option);
+        });
+    }
+
+    // Hiç adliye yoksa veya şehir seçilmediyse
+    if (courthouseSelect.options.length <= 1) {
+        if (selectedCity) {
+            courthouseSelect.innerHTML = '<option value="">Bu şehir için adliye bulunamadı</option>';
+        } else {
+            courthouseSelect.innerHTML = '<option value="">Önce Şehir Seçiniz</option>';
+        }
+    }
 }
 
-// Dosya türüne göre birimleri güncelle
-function updateDepartments(selectedDepartment) {
-    const fileType = document.getElementById('file-type').value;
+function handleFileTypeChange() {
+    const fileTypeSelect = document.getElementById('file-type');
+    const courthouseSelect = document.getElementById('courthouse');
     const departmentSelect = document.getElementById('department');
+    const citySelect = document.getElementById('city');
     const courtNumberContainer = document.getElementById('court-number-container');
-    
-    // Önceki seçimi kaydet (ya parametre olarak gelen değer ya da mevcut seçili değer)
-    selectedDepartment = selectedDepartment || departmentSelect.value;
-    
-    departmentSelect.innerHTML = '<option value="">Seçiniz</option>';
-    
-    if (fileType && departments[fileType]) {
-        departments[fileType].forEach(dept => {
+
+    const selectedFileType = fileTypeSelect.value.toLowerCase(); // büyük/küçük harf standardizasyonu
+
+    // Hangi alanların devre dışı bırakılacağını belirle
+    const disableCourthouseAndCity = ['arabuluculuk', 'aihm', 'aym'].includes(selectedFileType);
+    const disableDepartment = ['arabuluculuk', 'aihm', 'aym', 'savcilik'].includes(selectedFileType);
+
+    // Alanları etkinleştir/devre dışı bırak
+    courthouseSelect.disabled = disableCourthouseAndCity;
+    citySelect.disabled = disableCourthouseAndCity;
+    departmentSelect.disabled = disableDepartment;
+
+    // Gerekli (required) attribute'larını ayarla
+    courthouseSelect.required = !disableCourthouseAndCity;
+    citySelect.required = !disableCourthouseAndCity;
+    departmentSelect.required = !disableDepartment;
+
+    // Önce mevcut birimleri temizle ("Seçiniz" hariç)
+    while (departmentSelect.options.length > 1) {
+        departmentSelect.remove(1);
+    }
+
+    // Dosya türüne göre mahkeme/birim listesini ayarla
+    if (disableDepartment) {
+        // Department disabled - value temizle
+        departmentSelect.value = '';
+        courtNumberContainer.style.display = 'none'; // Mahkeme seçimini gizle
+    } else if (selectedFileType === 'hukuk') {
+        // Hukuk mahkemeleri
+        const hukukMahkemeleri = [
+            'Asliye Hukuk Mahkemesi',
+            'Sulh Hukuk Mahkemesi',
+            'İş Mahkemesi',
+            'Aile Mahkemesi',
+            'Ticaret Mahkemesi',
+            'İcra Hukuk Mahkemesi',
+            'Tüketici Mahkemesi',
+            'Fikri ve Sınai Haklar Mahkemesi'
+        ];
+        
+        hukukMahkemeleri.forEach(mahkeme => {
             const option = document.createElement('option');
-            option.value = dept;
-            option.textContent = dept;
+            option.value = mahkeme;
+            option.textContent = mahkeme;
             departmentSelect.appendChild(option);
         });
         
-        // Eğer önceden seçilmiş bir departman varsa ve yeni listede mevcutsa, onu seç
-        if (selectedDepartment) {
-            // Seçili değerin yeni listede olup olmadığını kontrol et
-            const exists = Array.from(departmentSelect.options).some(option => option.value === selectedDepartment);
-            if (exists) {
-                departmentSelect.value = selectedDepartment;
-                console.log('Önceki departman değeri bulundu ve seçildi:', selectedDepartment);
+        departmentSelect.onchange = function() {
+            updateCourtNumbers(this.value);
+        };
+    } else if (selectedFileType === 'ceza') {
+        // Ceza mahkemeleri
+        const cezaMahkemeleri = [
+            'Asliye Ceza Mahkemesi',
+            'Ağır Ceza Mahkemesi',
+            'Sulh Ceza Hakimliği'
+        ];
+        
+        cezaMahkemeleri.forEach(mahkeme => {
+            const option = document.createElement('option');
+            option.value = mahkeme;
+            option.textContent = mahkeme;
+            departmentSelect.appendChild(option);
+        });
+        
+        departmentSelect.onchange = function() {
+            updateCourtNumbers(this.value);
+        };
+    } else if (selectedFileType === 'icra') {
+        // İcra Daireleri (1-30 arası)
+        const option = document.createElement('option');
+        option.value = 'İcra Dairesi';
+        option.textContent = 'İcra Dairesi';
+        departmentSelect.appendChild(option);
+        
+        courtNumberContainer.style.display = 'none'; // İcra için farklı numaralandırma
+        
+        departmentSelect.onchange = function() {
+            // İcra Dairesi seçildiğinde özel işlem
+            if (this.value === 'İcra Dairesi') {
+                updateIcraDaireleri();
             } else {
-                console.log('Önceki departman değeri yeni listede bulunamadı:', selectedDepartment);
+                courtNumberContainer.style.display = 'none';
             }
-        }
+        };
+    } else {
+        // Hiçbir özel türe uymayan diğer durumlar için orijinal birim listesini geri yükle
+        originalDepartmentOptions.forEach(originalOption => {
+            departmentSelect.appendChild(originalOption.cloneNode(true));
+        });
+        
+        // Birim değişince mahkeme numaralarını güncelle
+        departmentSelect.onchange = function() {
+            updateCourtNumbers(this.value);
+        };
     }
 
-    // Birim değiştiğinde mahkeme seçeneğini güncelle
-    departmentSelect.onchange = function() {
-        updateCourtNumbers(this.value);
-    };
-    
-    // Eğer şu anda bir departman seçiliyse mahkeme numaralarını güncelle
-    if (departmentSelect.value) {
-        updateCourtNumbers(departmentSelect.value);
+    // Eğer seçilen dosya türü courthouse/city için disable gerektiriyorsa değerleri temizle
+    if (disableCourthouseAndCity) {
+        courthouseSelect.value = '';
+        citySelect.value = '';
+        courtNumberContainer.style.display = 'none'; // Mahkeme seçimini gizle
     }
+
+    // Şehir seçiliyse adliye listesini güncelle
+    if (!disableCourthouseAndCity && citySelect.value) {
+        updateCourthouses();
+    } else if (!disableCourthouseAndCity && !citySelect.value) {
+        courthouseSelect.innerHTML = '<option value="">Önce Şehir Seçiniz</option>';
+    }
+    
+    // Mevcut birim değerine göre mahkeme numaralarını güncelle
+    if (departmentSelect.value) {
+        if (selectedFileType === 'icra' && departmentSelect.value === 'İcra Dairesi') {
+            updateIcraDaireleri();
+        } else {
+            updateCourtNumbers(departmentSelect.value);
+        }
+    } else {
+        courtNumberContainer.style.display = 'none';
+    }
+}
+
+// İcra dairelerini güncelle (1-30 arası numara seçimi)
+function updateIcraDaireleri() {
+    const courtNumberContainer = document.getElementById('court-number-container');
+    const courtNumberSelect = document.getElementById('court-number');
+    
+    // İcra daireleri listesini temizle
+    courtNumberSelect.innerHTML = '<option value="">Seçiniz</option>';
+    
+    // İcra dairelerini ekle (1-30)
+    for (let i = 1; i <= 30; i++) {
+        const option = document.createElement('option');
+        option.value = `${i}. İcra Dairesi`;
+        option.textContent = `${i}. İcra Dairesi`;
+        courtNumberSelect.appendChild(option);
+    }
+    
+    courtNumberContainer.style.display = 'flex';
 }
 
 // Mahkeme numaralarını güncelle
@@ -442,69 +557,125 @@ function updateCourtNumbers(department) {
     const courtNumberContainer = document.getElementById('court-number-container');
     const courtNumberSelect = document.getElementById('court-number');
     
-    // İcra dairesi kontrolü
+    // İcra dairesi veya seçim boşsa mahkeme numarasını gizle
     if (!department || department === '' || department.includes('İcra Dairesi')) {
         courtNumberContainer.style.display = 'none';
         return;
     }
-
-    courtNumberSelect.innerHTML = `
-        <option value="">Seçiniz</option>
-        <option value="${department}">${department}</option>
-        ${Array.from({length: 50}, (_, i) => i + 1).map(num => 
-            `<option value="${num}.${department}">${num}.${department}</option>`
-        ).join('')}
-    `;
     
-    courtNumberContainer.style.display = 'block';
+    // Mahkeme numaralarını temizle
+    courtNumberSelect.innerHTML = '<option value="">Seçiniz</option>';
+    
+    // Seçili mahkeme adı ekle
+    const baseOption = document.createElement('option');
+    baseOption.value = department;
+    baseOption.textContent = department;
+    courtNumberSelect.appendChild(baseOption);
+    
+    // Adliye ve şehre göre mahkeme sayısını belirle
+    const citySelect = document.getElementById('city');
+    const courthouseSelect = document.getElementById('courthouse');
+    const selectedCity = citySelect.value;
+    const selectedCourthouse = courthouseSelect.value;
+    
+    // Varsayılan olarak 30 mahkeme, İstanbul için daha fazla
+    let maxCourtNumber = 30;
+    
+    // İstanbul ve belirli adliyeler için daha fazla mahkeme
+    if (selectedCity === 'İstanbul') {
+        if (selectedCourthouse.includes('Anadolu') || selectedCourthouse.includes('Çağlayan')) {
+            if (department === 'Asliye Hukuk Mahkemesi' || 
+                department === 'Asliye Ceza Mahkemesi' || 
+                department === 'İş Mahkemesi') {
+                maxCourtNumber = 50;
+            } else if (department === 'Ağır Ceza Mahkemesi') {
+                maxCourtNumber = 15;
+            }
+        } else if (selectedCourthouse.includes('Bakırköy')) {
+            maxCourtNumber = 40;
+        }
+    } else if (selectedCity === 'Ankara' || selectedCity === 'İzmir') {
+        maxCourtNumber = 40;
+    }
+    
+    // Numaralı mahkemeleri ekle
+    for (let i = 1; i <= maxCourtNumber; i++) {
+        const option = document.createElement('option');
+        option.value = `${i}. ${department}`;
+        option.textContent = `${i}. ${department}`;
+        courtNumberSelect.appendChild(option);
+    }
+    
+    courtNumberContainer.style.display = 'flex';
 }
 
-// Form gönderimi için yeni fonksiyon
-function submitForm(event) {
+async function submitForm(event) {
     event.preventDefault();
-    
-    const formData = {
-        'file-type': document.getElementById('file-type').value,
-        'courthouse': document.getElementById('courthouse').value,
-        'department': document.getElementById('court-number')?.value || document.getElementById('department').value,
-        'year': document.getElementById('year').value,
-        'case-number': document.getElementById('case-number').value,
-        'client-name': document.getElementById('client-name').value,
-        'phone-number': document.getElementById('phone-number').value,
-        'open-date': document.getElementById('open-date').value
-    };
+    const form = document.getElementById('addCaseForm');
+    const formData = new FormData(form);
+    const data = {};
+    let isValid = true;
 
-    // Tüm alanların dolu olduğunu kontrol et
-    for (let key in formData) {
-        if (!formData[key]) {
-            alert('Lütfen tüm alanları doldurunuz.');
-            return false;
+    formData.forEach((value, key) => {
+        const element = form.elements[key];
+        if (element && !element.disabled) {
+            if (element.required && !value) {
+                showFlashMessage(`Lütfen tüm zorunlu alanları doldurun: ${element.labels[0]?.textContent || key}`, 'error');
+                isValid = false;
+            }
+            data[key] = value;
         }
-    }
-
-    // Form verilerini POST isteği ile gönder
-    fetch('/dosya_ekle', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => {
-        if (response.ok) {
-            window.location.href = '/dosya_sorgula';
-        } else {
-            return response.json().then(data => {
-                throw new Error(data.message || 'Bir hata oluştu');
-            });
-        }
-    })
-    .catch(error => {
-        console.error('Hata:', error);
-        alert('Dosya eklenirken bir hata oluştu: ' + error.message);
     });
 
-    return false;
+    if (!isValid) {
+        return;
+    }
+
+    // Backend'e JSON gönder
+    try {
+        const response = await fetch('{{ url_for("dosya_ekle") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+        const result = await response.json();
+
+        if (result.success) {
+            showFlashMessage('Dosya başarıyla eklendi.', 'success');
+            form.reset(); // Formu sıfırla
+            handleFileTypeChange(); // Alanları başlangıç durumuna getir
+        } else {
+            showFlashMessage('Hata: ' + (result.message || 'Bilinmeyen bir hata oluştu'), 'error');
+        }
+    } catch (error) {
+        console.error('Form gönderme hatası:', error);
+        showFlashMessage('Bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+    }
+}
+
+// Flash mesaj gösterme fonksiyonu
+function showFlashMessage(message, category) {
+    const flashContainer = document.getElementById('flash-messages') || document.body;
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${category}`;
+    alertDiv.textContent = message;
+    alertDiv.style.position = 'fixed';
+    alertDiv.style.top = '80px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '1050';
+    alertDiv.style.padding = '10px 20px';
+    alertDiv.style.borderRadius = '5px';
+    alertDiv.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+
+    flashContainer.appendChild(alertDiv);
+
+    setTimeout(() => {
+        alertDiv.style.transition = 'opacity 0.5s ease';
+        alertDiv.style.opacity = '0';
+        setTimeout(() => alertDiv.remove(), 500);
+    }, 5000);
 }
 </script>
 {% endblock %}

@@ -28,6 +28,70 @@ from reportlab.pdfbase.ttfonts import TTFont
 from html import escape  # HTML escape için bu modülü kullanacağız
 from fpdf import FPDF
 from xhtml2pdf import pisa
+import glob # Add glob import
+
+# Helper function to parse adliyelist.txt
+def parse_adliye_list(filepath='../adliyelist.txt'): # Adjusted path
+    cities_courthouses = {}
+    try:
+        # Ensure the path is correct relative to app.py location
+        script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
+        abs_file_path = os.path.join(script_dir, filepath)
+
+        with open(abs_file_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            # Skip header and potential separator lines
+            data_lines = [line.strip() for line in lines if line.strip() and not line.startswith('İl\t') and not line.startswith('___')]
+            current_city = None
+            for line in data_lines:
+                parts = line.split('\t', 1)
+                if len(parts) == 2:
+                    city, courthouses_str = parts
+                    current_city = city.strip()
+                    # Process courthouses string: split by comma or bullet, handle ACM markers etc.
+                    # Keep the original names including ACM details
+                    courthouses = [ch.strip() for ch in re.split(r'\s*,\s*|\s*•\s*', courthouses_str) if ch.strip()]
+                    cities_courthouses[current_city] = courthouses
+                # Removed the elif part as it's unlikely based on file structure
+    except FileNotFoundError:
+        print(f"Error: {abs_file_path} not found.")
+        return {}, []
+    except Exception as e:
+        print(f"Error parsing {abs_file_path}: {e}")
+        return {}, []
+
+    # İstanbul'u şehir listesine manuel olarak ekle (zaten varsa sorun değil)
+    if 'İstanbul' not in cities_courthouses:
+        # İstanbul adliyeleri bu listede olmayacak, çünkü bunlar hardcoded olarak frontend'de tanımlanmış
+        cities_courthouses['İstanbul'] = []  
+        
+    # Önce standart alfabetik sıralama
+    cities = sorted(cities_courthouses.keys())
+    
+    # Özel sıralama için listeyi yeniden düzenle
+    # İstanbul'u listeden çıkar ve en başa ekle
+    if 'İstanbul' in cities:
+        cities.remove('İstanbul')
+        cities.insert(0, 'İstanbul')
+    
+    # İzmir'i Isparta'dan sonra getir
+    if 'İzmir' in cities and 'Isparta' in cities:
+        izmir_index = cities.index('İzmir')
+        isparta_index = cities.index('Isparta')
+        
+        # İzmir'i çıkar
+        cities.remove('İzmir')
+        
+        # Isparta'dan sonraya ekle
+        cities.insert(isparta_index + 1, 'İzmir')
+    
+    # İstanbul'un listede olduğundan emin olalım
+    if 'İstanbul' in cities:
+        print("İstanbul şehir listesinde mevcut.")
+    else:
+        print("UYARI: İstanbul şehir listesine eklenemedi!")
+        
+    return cities_courthouses, cities
 
 def permission_required(permission):
     def decorator(f):
@@ -527,6 +591,10 @@ def takvim():
             'year': year
         })
     
+    # === YENİ: Adliye verisini hazırla ===
+    # Adliye listesini dosyadan yükle
+    cities_courthouses, cities = parse_adliye_list()
+    
     # Kullanıcının yetkilerini template'e gönder
     user_permissions = {
         'can_add': current_user.has_permission('etkinlik_ekle'),
@@ -538,6 +606,7 @@ def takvim():
     return render_template('takvim.html', 
                          events=events_data,
                          adli_tatil_data=adli_tatil_data,
+                         all_courthouses=cities_courthouses, # Tüm adliye verilerini gönder
                          user_permissions=user_permissions)
 
 @app.route('/dosyalarim')
@@ -761,8 +830,10 @@ def dosya_sorgula():
     if request.method == 'POST':
         # Form verilerini al
         file_type = request.form.get('file-type')
+        city = request.form.get('city')  # Yeni eklenen şehir filtresi
         courthouse = request.form.get('courthouse')
         department = request.form.get('department')
+        court_number = request.form.get('court-number')  # Yeni eklenen mahkeme numarası filtresi
         year = request.form.get('year')
         case_number = request.form.get('case-number')
         client_name = request.form.get('client-name')
@@ -778,6 +849,9 @@ def dosya_sorgula():
             query = query.filter_by(courthouse=courthouse)
         if department:
             query = query.filter_by(department=department)
+        # Mahkeme numarası filtresi eklendi
+        if court_number:
+            query = query.filter_by(department=court_number)
         if year:
             query = query.filter_by(year=year)
         if case_number:
@@ -792,8 +866,13 @@ def dosya_sorgula():
     else:
         case_files = []
     
+    # Şehir ve adliye verilerini yükle (dosya_ekle ile aynı fonksiyonu kullanıyor)
+    cities_courthouses, cities = parse_adliye_list()
+    
     return render_template('dosya_sorgula.html', 
-                         case_files=case_files)
+                         case_files=case_files,
+                         cities=cities,
+                         all_courthouses=json.dumps(cities_courthouses, ensure_ascii=False))
 
 @app.route('/dosya_ekle', methods=['GET', 'POST'])
 @login_required
@@ -802,28 +881,54 @@ def dosya_ekle():
     if request.method == 'POST':
         try:
             data = request.get_json()
-            
-            # Tüm gerekli alanların dolu olduğunu kontrol et
-            required_fields = ['file-type', 'courthouse', 'department', 'year', 'case-number', 'client-name', 'open-date']
-            if not all(data.get(field) for field in required_fields):
-                return jsonify(success=False, message="Tüm alanları doldurunuz"), 400
-            
+            file_type = data.get('file-type')
+
+            # Define required fields based on file_type
+            required_fields = ['file-type', 'year', 'case-number', 'client-name', 'open-date']
+
+            # Add courthouse/department based on type
+            if file_type not in ['ARABULUCULUK', 'AİHM', 'AYM']:
+                required_fields.append('courthouse')
+                # Only require department if not Savcılık or the others
+                if file_type != 'Savcılık':
+                    required_fields.append('department')
+
+            # Check if all required fields are present and not empty
+            missing_fields = [field for field in required_fields if not data.get(field)]
+            if missing_fields:
+                return jsonify(success=False, message=f"Eksik alanlar: {', '.join(missing_fields)}"), 400
+
+            # Get courthouse and department, defaulting to None if not applicable/provided
+            courthouse = data.get('courthouse')
+            department = data.get('department')
+
+            if file_type in ['ARABULUCULUK', 'AİHM', 'AYM']:
+                courthouse = None
+                department = None
+            elif file_type == 'Savcılık':
+                department = None # Department not needed for Savcılık
+            else:
+                # Numaralı mahkeme/daire seçilmişse onu kullan
+                numbered_department = data.get('court-number')
+                if numbered_department:
+                    department = numbered_department
+
             new_case_file = CaseFile(
-                file_type=data['file-type'],
-                courthouse=data['courthouse'],
-                department=data['department'],
+                file_type=file_type,
+                courthouse=courthouse,
+                department=department,
                 year=int(data['year']),
                 case_number=data['case-number'],
                 client_name=data['client-name'],
-                phone_number=data.get('phone-number', ''),
+                phone_number=data.get('phone-number', ''), # Phone number is now optional
                 status='Aktif',
                 open_date=datetime.strptime(data['open-date'], '%Y-%m-%d').date(),
                 user_id=current_user.id
             )
-            
+
             db.session.add(new_case_file)
             db.session.commit()
-            
+
             # İşlem logu ekle
             log_activity(
                 activity_type='dosya_ekleme',
@@ -831,17 +936,21 @@ def dosya_ekle():
                 user_id=current_user.id,
                 case_id=new_case_file.id
             )
-            
+
             return jsonify(success=True)
-            
+
         except Exception as e:
             db.session.rollback()
             print(f"Hata: {str(e)}")
             return jsonify(success=False, message=str(e)), 400
-        
-    # GET isteği için bugünün tarihini gönder
+
+    # GET isteği için şehir ve adliye verilerini yükle
+    cities_courthouses, cities = parse_adliye_list()
     today_date = datetime.now().strftime('%Y-%m-%d')
-    return render_template('dosya_ekle.html', today_date=today_date)
+    return render_template('dosya_ekle.html',
+                         today_date=today_date,
+                         cities=cities,
+                         all_courthouses=json.dumps(cities_courthouses, ensure_ascii=False)) # Pass all data as JSON
 
 @app.route('/case_details/<int:case_id>')
 def case_details(case_id):
@@ -898,6 +1007,11 @@ def edit_case(case_id):
             case_file.status = data.get('status', case_file.status)
             case_file.description = data.get('description', case_file.description)
             case_file.hearing_time = data.get('hearing_time', case_file.hearing_time)  # Güncellenen hearing_time alanı
+            
+            # Departman bilgisini de güncelle (Frontend'den doğru değerin geldiğini varsayıyoruz)
+            department_value = data.get('department') 
+            if department_value:
+                 case_file.department = department_value
             
             # Duruşma tarihi ve saati opsiyonel
             if data.get('next_hearing'):
@@ -1023,12 +1137,7 @@ def add_event():
                 return jsonify({'error': 'Duruşma/E-Duruşma için dosya türü, adliye ve birim bilgileri gereklidir.'}), 400
         
             # Kullanıcı tarafından girilen açıklama varsa onu kullan
-            user_description = data.get('description', '')
-            if user_description:
-                description = user_description
-            else:
-                # Kullanıcı açıklama girmemişse, dosya bilgilerini içeren standart açıklama oluştur
-                description = f"Dosya Türü: {file_type}\nAdliye: {courthouse}\nBirim: {department}"
+            description = data.get('description', '')
         else:
             description = data.get('description', '')
         
@@ -1205,6 +1314,10 @@ def update_event():
         if 'is_completed' in data:
             event.is_completed = data.get('is_completed', False)
         
+        # Açıklamayı SADECE istekte varsa güncelle
+        if 'description' in data:
+            event.description = data['description']
+        
         # Duruşma bilgilerini güncelle
         if event.event_type in ['durusma', 'e-durusma']:
             if 'file_type' in data:
@@ -1225,19 +1338,20 @@ def update_event():
                     # Veri içinde varsa al
                     if field in data and data[field]:
                         setattr(event, field, data[field])
-                    else:
-                        missing_fields.append(field)
+                    # else: # Eksikse hata vermek yerine boş bırakabiliriz
+                    #     missing_fields.append(field)
             
-            if missing_fields:
-                app.logger.warning(f"Duruşma için eksik alanlar: {missing_fields}")
+            # if missing_fields:
+            #     app.logger.warning(f"Duruşma için eksik alanlar: {missing_fields}")
                 
+            # --- OTOMATİK AÇIKLAMA OLUŞTURMA KISMI KALDIRILDI ---
             # Kullanıcı tarafından girilen açıklama varsa onu kullan, yoksa standart oluştur
-            if not event.description or (data.get('description') and data['description'] != event.description):
-                if data.get('description'):
-                    event.description = data['description']
-                else:
-                    # Dosya bilgilerini içeren standart açıklama oluştur
-                    event.description = f"Dosya Türü: {event.file_type or '-'}\nAdliye: {event.courthouse or '-'}\nBirim: {event.department or '-'}"
+            # if not event.description or (data.get('description') and data['description'] != event.description):
+            #     if data.get('description'):
+            #         event.description = data['description']
+            #     else:
+            #         # Dosya bilgilerini içeren standart açıklama oluştur
+            #         event.description = f"Dosya Türü: {event.file_type or '-'}\nAdliye: {event.courthouse or '-'}\nBirim: {event.department or '-'}"
         else:
             # Duruşma değilse bu alanları temizle
             event.file_type = None
@@ -1649,7 +1763,7 @@ def sync_hearing_to_calendar():
         event_title = f"Duruşma - {case_file.client_name} ({case_file.case_number})"
         
         # Zengin açıklama
-        event_description = f"Dosya Türü: {case_file.file_type}\nAdliye: {case_file.courthouse}\nBirim: {case_file.department}"
+        event_description = '' # Açıklama kısmını boş bırak
         
         if existing_event:
             existing_event.date = event_date

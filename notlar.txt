@@ -10,11 +10,10 @@ Ayrıca tüm sayfalarda görünür olacak şekilde (layout.html'de) sağ üstte 
 Kullanıcının ufak yuvarlak resim boxunun üstüne basınca seçenekler açılacak. Profil / Ayarlar / Çıkış gibi seçenekler olacak. #YAPILDI (fakat hala kullanıcı yetkileri tam senkron değil)
 8) Son işlemler gösterim tablosunda işlemi hangi kullancının yaptığı gösterilecek. (Bunun için kullanıcı giriş bilgilerinde kayıt olurken kullandığı isim kullanılacak.)
 9) İşçi görüşme tutanağı formu eklenebilir. #YAPILDI
-10) Dosya ekleme sayfasında telefon numarası eklemeden de dosya eklenebilsin. Yani telefon numarası girmek zorunlu olmasın.
+10) Dosya detayları modalında masraf ekleme ve belge yükleme seçenekleri hala çalışmıyor.
 11) Örnek dilekçe yükleme ve sorgulama sistemi eklenebilir.
 12) Ücret tarifeleri sisteme yüklenecek. (TBB asgari tarife, İst Barosu tavsiye niteliğindeki tarife, Bizim ihtar dilekçe danışma ücreti vs tarifemiz)
 13) Ödemeler ile ilgili istatislik bilgileri, yıllık aylık, günlük ödeme istatistikleri, dosya türüne göre ortalama alınan ödemeler, dosya türlerine göre toplam alınan ödemeler, ödeme tarihlerine göre(yıllık aylık günlük) grafik gösterimi,
-
 HATA VE BUGLAR:
 1) (mesela duyurulara bir duyuru ekliyorum, duyurular sayfasında "Duyuru eklendi" uyarısı gelmiyor). (image upload)
 2) Anasayfada adliye istatistikleri 2 den fazla gösterince bug'a giriyor.
@@ -28,7 +27,7 @@ HATA VE BUGLAR:
 The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. (url:http://127.0.0.1:5000/musteri_detay/1) (Ödemeler ekranında bir detay sayfası ekleyelim search boxta aratınca da otomatik ödeme detaylarına atsın)
 
 EK: Dosya eklemede yapılacak düzenlemeler:
-1) Dosya ekleme sayfasına Dosya Türü seçiminden hemen sonra Şehir seçimi gelsin. 81 il burada listelensin. İstanbul dışındaki diğer illerin adliyeleri de buraya eklensin: 
+1) Dosya ekleme sayfasına Dosya Türü seçiminden hemen sonra Şehir seçimi gelsin. 81 il burada listelensin. İstanbul adliyeleri zaten listemizde var dolayısı ile İstanbul dışındaki diğer illerin adliyeleri de buraya eklensin. Liste: adliyelist.txt dosyasında var. @adliyelist.txt 
 
 2) Telefon numarası girmek zorunlu olmasın. Telefon numarası girilmeden de dosya eklenebilsin.
 3) Dosya Türü olarak ARABULUCULUK eklenmesini istiyorum. Arabuluculuk seçeneğini tıkladığımızda Adliye ve Birim seçenekleri seçilemez hale gelsin mesela böyle gri olsunlar tıklanamaz olsunlar ve onları girmeden de dosya ekleyebileyim.

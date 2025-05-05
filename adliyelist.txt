@@ -1,0 +1,118 @@
+İl	Faal Adliyeler
+Adana	Adana (Merkez ACM), Ceyhan, Karaisalı, Karataş, Kozan, Aladağ, Feke, Yumurtalık
+Adıyaman	Adıyaman (Merkez ACM), Besni, Gerger, Gölbaşı (Adıyaman), Kâhta
+Afyonkarahisar	Afyonkarahisar (Merkez ACM), İscehisar, Sandıklı, Sinanpaşa, Şuhut
+Ağrı	Ağrı (Merkez ACM), Eleşkirt, Taşlıçay
+Aksaray	Aksaray (Merkez ACM), Eskil, Ortaköy (Aksaray), Şereflikoçhisar
+Amasya	Amasya (Merkez ACM), Gümüşhacıköy, Merzifon, Suluova, Taşova
+Ankara	Ankara (1 ACM), Akyurt, Balâ, Çubuk, Elmadağ, Gölbaşı (Ankara), Haymana, Kalecik, Polatlı • Ankara Batı (1 ACM), Beypazarı, Kahramankazan, Kızılcahamam, Nallıhan
+Antalya	Antalya (Merkez ACM), Kemer, Korkuteli • Alanya (1 ACM), Gazipaşa • Elmalı (3 ACM), Demre, Finike, Kaş, Kumluca
+Ardahan	Ardahan (3 ACM), Göle, Hanak, Posof
+Artvin	Artvin (3 ACM), Arhavi, Borçka, Hopa, Şavşat, Yusufeli
+Aydın	Aydın (1 ACM), Çine, Germencik
+________________________________________
+İl	Faal Adliyeler
+Balıkesir	Balıkesir (1 ACM), Bigadiç, Dursunbey, İvrindi, Kepsut, Savaştepe, Sındırgı, Susurluk • Bandırma (2 ACM), Erdek, Gönen, Manyas, Marmara • Burhaniye (2 ACM), Ayvalık, Edremit
+Bartın	Bartın (2 ACM), Amasra, Ulus
+Batman	Batman (2 ACM), Kozluk, Sason
+Bayburt	Bayburt (3 ACM)
+Bilecik	Bilecik (2 ACM), Bozüyük, Gölpazarı, Osmaneli, Söğüt
+Bingöl	Bingöl (3 ACM), Genç, Karlıova, Kiğı, Solhan
+Bitlis	Bitlis (3 ACM), Adilcevaz, Ahlat, Güroymak, Hizan, Mutki, Tatvan
+Bolu	Bolu (1 ACM), Gerede, Göynük, Mengen, Mudurnu
+Burdur	Burdur (2 ACM), Bucak, Gölhisar, Tefenni, Yeşilova
+Bursa	Bursa (1 ACM), Gemlik, Karacabey, Keles, Mudanya, Mustafakemalpaşa, Orhaneli, Orhangazi
+________________________________________
+İl	Faal Adliyeler
+Çanakkale	Çanakkale (ACM), Ayvacık, Bayramiç, Biga, Bozcaada, Çan, Eceabat, Ezine, Gelibolu, Gökçeada, Lapseki, Yenice
+Çankırı	Çankırı (ACM), Atkaracalar, Çerkeş, Ilgaz, Kızılırmak, Kurşunlu, Orta, Şabanözü, Yapraklı
+Çorum	Çorum (ACM), Alaca, Bayat, İskilip, Kargı, Mecitözü, Osmancık, Sungurlu
+________________________________________
+İl	Faal Adliyeler
+Denizli	Denizli (ACM), Acıpayam, Buldan, Çal, Çameli, Çardak, Çivril, Güney, Honaz, Kale-Denizli, Sarayköy, Tavas
+Diyarbakır	Diyarbakır (ACM), Bismil, Çermik, Çınar, Ergani, Hani, Kocaköy, Lice, Silvan
+Düzce	Düzce (ACM), Akçakoca, Cumayeri, Gölyaka, Gümüşova, Kaynaşlı, Yığılca
+________________________________________
+İl	Faal Adliyeler
+Edirne	Edirne (ACM), Havsa, İpsala, Keşan, Lalapaşa, Meriç, Uzunköprü
+Elazığ	Elazığ (ACM), Baskil, Karakoçan, Keban, Kovancılar, Maden, Palu, Sivrice
+Erzincan	Erzincan (ACM), Çayırlı, İliç, Kemah, Kemaliye, Otlukbeli, Refahiye, Tercan, Üzümlü
+Erzurum	Erzurum (ACM), Aşkale, Hınıs, Horasan, İspir, Karayazı, Narman, Oltu, Olur, Pasinler, Şenkaya, Tekman, Tortum
+Eskişehir	Eskişehir (ACM), Alpu, Çifteler, Günyüzü, İnönü, Mahmudiye, Mihalgazi, Mihalıççık, Seyitgazi, Sivrihisar
+________________________________________
+İl	Faal Adliyeler
+Gaziantep	Gaziantep (ACM), Araban, İslahiye, Karkamış, Nizip, Nurdağı, Oğuzeli, Şahinbey-Şehitkâmil (Merkez)
+Giresun	Giresun (ACM), Alucra, Bulancak, Çamoluk, Dereli, Doğankent, Espiye, Eynesil, Görele, Keşap, Piraziz, Şebinkarahisar, Tirebolu
+Gümüşhane	Gümüşhane (ACM), Kelkit, Köse, Kürtün, Şiran, Torul
+________________________________________
+İl	Faal Adliyeler
+Hakkâri	Hakkâri (ACM), Çukurca, Derecik, Şemdinli, Yüksekova
+Hatay	Hatay (Antakya ACM), Altınözü, Belen, Dörtyol, Erzin, Hassa, İskenderun (ACM), Kırıkhan, Kumlu, Payas, Reyhanlı, Samandağ
+________________________________________
+İl	Faal Adliyeler
+Isparta	Isparta (ACM), Aksu-Isparta, Atabey, Eğirdir, Gelendost, Gönen-Isparta, Keçiborlu, Senirkent, Sütçüler, Şarkikaraağaç, Uluborlu, Yalvaç, Yenişarbademli
+İzmir	İzmir Adliyesi (Bayraklı), Aliağa, Bergama, Bornova, Çeşme, Dikili, Foça, Karabağlar, Karaburun, Karşıyaka (ACM), Kemalpaşa, Kiraz, Menderes, Menemen, Ödemiş, Seferihisar, Selçuk, Tire, Torbalı, Urla
+________________________________________
+
+İl	Faal Adliyeler
+Kahramanmaraş	Kahramanmaraş (ACM), Afşin, Andırın, Çağlayancerit, Elbistan, Göksun, Nurhak, Pazarcık, Türkoğlu
+Karabük	Karabük (ACM), Eflani, Eskipazar, Ovacık-Karabük, Safranbolu, Yenice-Karabük
+Karaman	Karaman (ACM), Ayrancı, Başyayla, Ermenek, Kazımkarabekir, Sarıveliler
+Kars	Kars (ACM), Akyaka, Arpaçay, Digor, Kağızman, Sarıkamış, Selim, Susuz
+Kastamonu	Kastamonu (ACM), Abana, Ağlı, Araç, Azdavay, Bozkurt, Cide, Çatalzeytin, Daday, Devrekani, Doğanyurt, Hanönü, İhsangazi, İnebolu, Küre, Pınarbaşı-Kast., Şenpazar, Seydiler, Taşköprü, Tosya
+Kayseri	Kayseri (ACM), Akkışla, Bünyan, Develi, Felahiye, Hacılar, İncesu, Pınarbaşı-Kay., Sarıoğlan, Sarız, Talas, Tomarza, Yahyalı, Yeşilhisar
+Kırıkkale	Kırıkkale (ACM), Bahşili, Balışeyh, Çelebi, Delice, Karakeçili, Keskin, Sulakyurt, Yahşihan
+Kırklareli	Kırklareli (ACM), Babaeski, Demirköy, Kofçaz, Lüleburgaz, Pehlivanköy, Pınarhisar, Vize
+Kırşehir	Kırşehir (ACM), Akçakent, Akpınar, Boztepe, Çiçekdağı, Kaman, Mucur
+Kilis	Kilis (ACM), Elbeyli, Musabeyli, Polateli
+Kocaeli	Kocaeli-İzmit (ACM), Çayırova, Darıca, Derince, Dilovası, Gebze (ACM), Gölcük, Kandıra, Karamürsel, Kartepe, Körfez
+Konya	Konya (ACM), Ahırlı, Akören, Akşehir (ACM), Altınekin, Beyşehir (ACM), Bozkır, Cihanbeyli, Çeltik, Çumra, Derbent, Derebucak, Doğanhisar, Emirgazi, Ereğli-Konya (ACM), Güneysınır, Hadim, Halkapınar, Hüyük, Ilgın, Kadınhanı, Karapınar, Kulu, Sarayönü, Seydişehir (ACM), Taşkent, Tuzlukçu, Yalıhüyük, Yunak
+________________________________________
+İl	Faal Adliyeler
+Malatya	Malatya (ACM), Akçadağ, Arapgir, Arguvan, Battalgazi-Yeşilyurt (Merkez), Darende, Doğanşehir, Doğanyol, Hekimhan, Kale-Malatya, Kuluncak, Pütürge, Yazıhan
+Manisa	Manisa (ACM), Ahmetli, Akhisar (ACM), Alaşehir, Demirci, Gölmarmara, Gördes, Kırkağaç, Köprübaşı-Manisa, Kula, Salihli (ACM), Sarıgöl, Saruhanlı, Selendi, Soma, Turgutlu
+Mardin	Mardin (ACM), Artuklu (Merkez), Dargeçit, Derik, Kızıltepe, Mazıdağı, Midyat (ACM), Nusaybin, Ömerli, Savur, Yeşilli
+Mersin	Mersin (ACM), Anamur, Aydıncık-Mersin, Bozyazı, Çamlıyayla, Erdemli, Gülnar, Mezitli-Toroslar-Yenişehir-Akdeniz (Merkez), Mut, Silifke, Tarsus (ACM)
+Muğla	Muğla (ACM), Bodrum, Dalaman, Datça, Fethiye (ACM), Kavaklıdere, Köyceğiz, Marmaris, Milas, Ortaca, Seydikemer, Ula, Yatağan
+Muş	Muş (ACM), Bulanık, Hasköy, Korkut, Malazgirt, Varto
+________________________________________
+İl	Faal Adliyeler
+Nevşehir	Nevşehir (ACM), Acıgöl, Avanos, Derinkuyu, Gülşehir, Hacıbektaş, Kozaklı, Ürgüp
+Niğde	Niğde (ACM), Altunhisar, Bor, Çamardı, Çiftlik, Ulukışla
+________________________________________
+İl	Faal Adliyeler
+Ordu	Ordu-Altınordu (ACM), Akkuş, Aybastı, Çamaş, Çatalpınar, Çaybaşı, Fatsa, Gölköy, Gürgentepe, İkizce, Kabadüz, Kabataş, Korgan, Kumru, Mesudiye, Perşembe, Ulubey, Ünye
+________________________________________
+İl	Faal Adliyeler
+Rize	Rize (ACM), Ardeşen, Çamlıhemşin, Çayeli, Derepazarı, Fındıklı, Güneysu, Hemşin, İkizdere, İyidere, Kalkandere, Pazar
+________________________________________
+İl	Faal Adliyeler
+Sakarya	Sakarya-Adapazarı (ACM), Akyazı, Arifiye, Erenler, Ferizli, Geyve, Hendek, Karapürçek, Karasu, Kaynarca, Kocaali, Pamukova, Sapanca, Serdivan, Söğütlü, Taraklı
+Samsun	Samsun (ACM), 19 Mayıs, Alaçam, Asarcık, Atakum, Ayvacık-Samsun, Bafra, Canik, Çarşamba, Havza, İlkadım, Kavak, Ladik, Salıpazarı, Tekkeköy, Terme, Vezirköprü, Yakakent
+Siirt	Siirt (ACM), Baykan, Eruh, Kurtalan, Pervari, Şirvan, Tillo (Aydınlar)
+Sinop	Sinop (ACM), Ayancık, Boyabat, Dikmen, Durağan, Erfelek, Gerze, Saraydüzü, Türkeli
+Sivas	Sivas (ACM), Akıncılar, Altınyayla, Divriği, Doğanşar, Gemerek, Gölova, Gürün, Hafik, İmranlı, Kangal, Koyulhisar, Suşehri, Şarkışla, Ulaş, Yıldızeli, Zara
+________________________________________
+İl	Faal Adliyeler
+Şanlıurfa	Şanlıurfa-Haliliye (ACM), Akçakale, Birecik, Bozova, Ceylanpınar, Eyyübiye, Halfeti, Harran, Hilvan, Karaköprü, Siverek, Suruç, Viranşehir
+Şırnak	Şırnak (ACM), Beytüşşebap, Cizre, Güçlükonak, İdil, Silopi, Uludere
+________________________________________
+İl	Faal Adliyeler
+Tekirdağ	Tekirdağ-Süleymanpaşa (ACM), Çerkezköy, Çorlu (ACM), Ergene, Hayrabolu, Kapaklı, Malkara, Marmaraereğlisi, Muratlı, Saray, Şarköy
+Tokat	Tokat (ACM), Almus, Artova, Başçiftlik, Erbaa, Niksar, Pazar-Tokat, Reşadiye, Sulusaray, Turhal, Yeşilyurt-Tokat, Zile
+Trabzon	Trabzon-Ortahisar (ACM), Akçaabat, Araklı, Arsin, Beşikdüzü, Çarşıbaşı, Çaykara, Dernekpazarı, Düzköy, Hayrat, Köprübaşı-Trabzon, Maçka, Of, Sürmene, Şalpazarı, Tonya, Vakfıkebir, Yomra
+Tunceli	Tunceli (ACM), Çemişgezek, Hozat, Mazgirt, Nazımiye, Ovacık-Tunceli, Pertek, Pülümür
+________________________________________
+İl	Faal Adliyeler
+Uşak	Uşak (ACM), Banaz, Eşme, Karahallı, Sivaslı, Ulubey-Uşak
+________________________________________
+İl	Faal Adliyeler
+Van	Van-İpekyolu (ACM), Bahçesaray, Başkale, Çaldıran, Çatak, Edremit-Van, Erciş, Gevaş, Gürpınar, Muradiye, Özalp, Saray-Van, Tuşba
+________________________________________
+İl	Faal Adliyeler
+Yalova	Yalova (ACM), Altınova, Armutlu, Çınarcık, Çiftlikköy, Termal
+Yozgat	Yozgat (ACM), Akdağmadeni, Aydıncık-Yozgat, Boğazlıyan, Çandır, Çayıralan, Çekerek, Kadışehri, Saraykent, Sarıkaya, Sorgun, Şefaatli, Yenifakılı, Yerköy
+________________________________________
+İl	Faal Adliyeler
+Zonguldak	Zonguldak (ACM), Alaplı, Çaycuma, Devrek, Ereğli-Zonguldak, Gökçebey, Kilimli, Kozlu
+
