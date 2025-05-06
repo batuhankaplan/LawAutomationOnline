@@ -425,14 +425,18 @@ def inject_datetime():
         }
     return dict(current_time=current_time)
 
-def log_activity(activity_type, description, user_id, case_id=None):
+def log_activity(activity_type, description, user_id, case_id=None, related_announcement_id=None, related_event_id=None, related_payment_id=None, details=None):
     user = User.query.get(user_id)
     if user:
         activity = ActivityLog(
             activity_type=activity_type,
-            description=description.format(user_name=user.get_full_name()),
+            description=description.format(user_name=user.get_full_name()), # Kullanıcı adını formatla
             user_id=user_id,
-            related_case_id=case_id
+            related_case_id=case_id,
+            related_announcement_id=related_announcement_id, # Yeni eklendi
+            related_event_id=related_event_id,           # Yeni eklendi
+            related_payment_id=related_payment_id,         # Yeni eklendi
+            details=details                              # Yeni eklendi
         )
         db.session.add(activity)
         db.session.commit()
@@ -937,7 +941,7 @@ def dosya_ekle():
                 case_id=new_case_file.id
             )
 
-            return jsonify(success=True)
+            return jsonify(success=True, new_case_id=new_case_file.id) # Yeni ID'yi döndür
 
         except Exception as e:
             db.session.rollback()
@@ -968,6 +972,9 @@ def case_details(case_id):
         # Dosya numarasını yıl/esas no formatında hazırla
         formatted_case_number = f"{case_file.year}/{case_file.case_number}"
         
+        # Duruşma türünü Büyük Harfle başlayacak şekilde biçimlendir
+        formatted_hearing_type = "E-Duruşma" if case_file.hearing_type == "e-durusma" else "Duruşma"
+        
         return jsonify({
             'success': True,
             'file_type': case_file.file_type,
@@ -981,6 +988,9 @@ def case_details(case_id):
             'open_date': case_file.open_date.strftime('%d.%m.%Y') if case_file.open_date else None,
             'next_hearing': case_file.next_hearing.strftime('%d.%m.%Y') if case_file.next_hearing else None,
             'hearing_time': case_file.hearing_time,  # Eklenen hearing_time alanı
+            'hearing_type': case_file.hearing_type, # Duruşma türü
+            'event_type': case_file.hearing_type,   # Frontend'de doğru radio button'un seçilmesi için
+            'formatted_hearing_type': formatted_hearing_type, # Görüntü için biçimlendirilmiş tür
             'expenses': [{
                 'id': expense.id,
                 'expense_type': expense.expense_type,
@@ -1002,11 +1012,17 @@ def edit_case(case_id):
         data = request.get_json()
         case_file = db.session.get(CaseFile, case_id)
         if case_file:
+            # Dosya bilgilerini güncelle
+            case_file.file_type = data.get('file_type', case_file.file_type)
+            case_file.courthouse = data.get('courthouse', case_file.courthouse)
             case_file.client_name = data.get('client_name', case_file.client_name)
             case_file.phone_number = data.get('phone_number', case_file.phone_number)
             case_file.status = data.get('status', case_file.status)
             case_file.description = data.get('description', case_file.description)
             case_file.hearing_time = data.get('hearing_time', case_file.hearing_time)  # Güncellenen hearing_time alanı
+            
+            # Yeni: Duruşma türünü al ve kaydet
+            case_file.hearing_type = data.get('hearing_type', 'durusma')
             
             # Departman bilgisini de güncelle (Frontend'den doğru değerin geldiğini varsayıyoruz)
             department_value = data.get('department') 
@@ -1731,9 +1747,10 @@ def sync_hearing_to_calendar():
     try:
         data = request.get_json()
         case_id = data.get('case_id')
-        hearing_date = data.get('hearing_date')
-        hearing_time = data.get('hearing_time', '09:00')
+        hearing_date_str = data.get('hearing_date') # Tarih string olarak alınır
+        hearing_time_str = data.get('hearing_time', '09:00') # Saat string olarak alınır
         status = data.get('status')
+        hearing_type = data.get('hearing_type', 'durusma').lower()
         
         case_file = CaseFile.query.get(case_id)
         if not case_file:
@@ -1741,72 +1758,103 @@ def sync_hearing_to_calendar():
 
         existing_event = CalendarEvent.query.filter_by(
             case_id=case_id,
-            event_type='durusma'
-        ).first()
+            # event_type='durusma' # Eski sorgu, hem durusma hem e-durusma olabilir
+        ).filter(CalendarEvent.event_type.in_(['durusma', 'e-durusma'])).first()
 
-        if status == 'Kapalı' or not hearing_date:
+        if status == 'Kapalı' or not hearing_date_str:
             if existing_event:
                 db.session.delete(existing_event)
                 db.session.commit()
                 log_activity(
-                    activity_type='durusma_silme',
-                    description=f"Duruşma kaydı silindi: {case_file.client_name} - {case_file.case_number}",
-                    user_id=1,
-                    case_id=case_id
+                    activity_type='durusma_silme_takvimden',
+                    description=f"Takvimden duruşma kaydı silindi (dosya kapalı veya tarih yok): {case_file.client_name}",
+                    user_id=current_user.id,
+                    case_id=case_id,
+                    related_event_id=existing_event.id
                 )
-            return jsonify(success=True)
+            return jsonify(success=True, message="Duruşma takvimden kaldırıldı.")
 
-        event_date = datetime.strptime(hearing_date, '%Y-%m-%d').date()
-        event_time = datetime.strptime(hearing_time, '%H:%M').time()
+        event_date = datetime.strptime(hearing_date_str, '%Y-%m-%d').date()
+        event_time = datetime.strptime(hearing_time_str, '%H:%M').time()
         
-        # Daha detaylı duruşma başlığı
-        event_title = f"Duruşma - {case_file.client_name} ({case_file.case_number})"
-        
-        # Zengin açıklama
-        event_description = '' # Açıklama kısmını boş bırak
-        
+        event_title_prefix = "E-Duruşma" if hearing_type == 'e-durusma' else "Duruşma"
+        event_title = f"{event_title_prefix} - {case_file.client_name} ({case_file.year}/{case_file.case_number})"
+        event_description = '' # Açıklamayı boş bırak
+
         if existing_event:
-            existing_event.date = event_date
-            existing_event.time = event_time
-            existing_event.title = event_title
-            existing_event.description = event_description
-            # Adliye ve birim bilgilerini de ayrı alanlar olarak kaydet
-            existing_event.courthouse = case_file.courthouse
-            existing_event.department = case_file.department
-            existing_event.file_type = case_file.file_type
-            
-            log_activity(
-                activity_type='durusma_guncelleme',
-                description=f"Duruşma güncellendi: {case_file.client_name} - {event_date.strftime('%d.%m.%Y')} {event_time.strftime('%H:%M')}",
-                user_id=1,
-                case_id=case_id
-            )
-        else:
+            # Tarih değişmişse, eski etkinliği sil ve yenisini oluştur
+            if existing_event.date != event_date:
+                # Mevcut (eski tarihli) etkinliği sil
+                old_event_id = existing_event.id
+                db.session.delete(existing_event)
+                # Değişikliği veritabanına hemen yansıt ki yeni event eklenebilsin
+                # db.session.commit() # Bu commit burada sorun yaratabilir, yeni event eklenmeden silinmemeli
+                                    # Ya da silme logunu burada atıp, yeni eklendikten sonra commit etmeli.
+                                    # Şimdilik logu atıp, genel commit'e bırakıyorum.
+                log_activity(
+                    activity_type='durusma_tarih_degisikligi_takvimde',
+                    description=f"Takvimde duruşma tarihi değişti, eski silindi: {case_file.client_name}",
+                    user_id=current_user.id,
+                    case_id=case_id,
+                    related_event_id=old_event_id # Silinen eventin ID'si
+                )
+                # Yeni etkinlik oluştur (aşağıdaki blokta yapılacak)
+                existing_event = None # Yeniden oluşturulması için null yap
+            else:
+                # Tarih aynı, sadece saat veya tür değişmiş olabilir. Mevcut etkinliği güncelle.
+                existing_event.time = event_time
+                existing_event.title = event_title # Başlık saat veya tür değiştiyse güncellenmeli
+                existing_event.event_type = hearing_type 
+                existing_event.description = event_description # Güncellerken de boş olacak
+                existing_event.courthouse = case_file.courthouse
+                existing_event.department = case_file.department
+                existing_event.file_type = case_file.file_type
+                # Diğer alanlar (örn. user_id, case_id) zaten doğru olmalı
+                
+                log_activity(
+                    activity_type='durusma_saat_tur_guncelleme_takvimde',
+                    description=f"Takvimde duruşma saati/türü güncellendi: {case_file.client_name} - {event_date.strftime('%d.%m.%Y')} {event_time.strftime('%H:%M')}",
+                    user_id=current_user.id,
+                    case_id=case_id,
+                    related_event_id=existing_event.id
+                )
+                db.session.commit()
+                return jsonify(success=True, message="Duruşma takvimde güncellendi.")
+
+        # Yeni etkinlik oluşturma (ya hiç yoktu ya da tarihi değiştiği için silindi)
+        if not existing_event: # Bu kontrol, yukarıda tarih değişikliği durumunda existing_event'in null yapılmasıyla çalışır.
             new_event = CalendarEvent(
                 title=event_title,
                 date=event_date,
                 time=event_time,
-                event_type='durusma',
-                description=event_description,
-                user_id=1,
+                event_type=hearing_type,
+                description=event_description, # Yeni eklerken de boş olacak
+                user_id=current_user.id, # Yetkili kullanıcı ID'si
                 case_id=case_id,
                 courthouse=case_file.courthouse,
                 department=case_file.department,
                 file_type=case_file.file_type
             )
             db.session.add(new_event)
+            db.session.commit() # Yeni event eklendikten sonra commit et
             log_activity(
-                activity_type='durusma_ekleme',
-                description=f"Yeni duruşma eklendi: {case_file.client_name} - {event_date.strftime('%d.%m.%Y')} {event_time.strftime('%H:%M')}",
-                user_id=1,
-                case_id=case_id
+                activity_type='durusma_ekleme_takvime',
+                description=f"Takvime yeni duruşma eklendi: {case_file.client_name} - {event_date.strftime('%d.%m.%Y')} {event_time.strftime('%H:%M')}",
+                user_id=current_user.id,
+                case_id=case_id,
+                related_event_id=new_event.id
             )
+            return jsonify(success=True, message="Duruşma takvime eklendi.")
         
-        db.session.commit()
-        return jsonify(success=True)
+        # Eğer buraya gelinirse bir mantık hatası vardır, normalde ya güncellenmeli ya da yeni eklenmeliydi.
+        # Ancak mevcut existing_event varsa ve tarihi aynıysa zaten yukarıda güncellenip return edilmiş olmalıydı.
+        # Bu yüzden bu jsonify teorik olarak erişilmez olmalı.
+        return jsonify(success=False, message="Takvim senkronizasyonunda bilinmeyen bir durum oluştu.") 
+
     except Exception as e:
         db.session.rollback()
-        return jsonify(success=False, message=str(e))
+        print(f"Takvim senkronizasyon hatası: {str(e)}")
+        return jsonify(success=False, message=f"Takvim senkronizasyonu sırasında bir hata oluştu: {str(e)}"), 500
 
 @app.route('/get_document_info/<int:document_id>')
 def get_document_info(document_id):

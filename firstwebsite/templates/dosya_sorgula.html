@@ -193,6 +193,8 @@
                             <span id="detailNextHearing"></span>
                             <span class="hearing-separator">-</span>
                             <span id="detailHearingTime"></span>
+                            <span class="hearing-separator">-</span>
+                            <span id="detailHearingType"></span>
                         </div>
                     </div>
                 </div>
@@ -995,6 +997,57 @@
 .actions span {
     display: none;
 }
+
+/* Duruşma türü için ek stil */
+.hearing-type-group .radio-group {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    padding-top: 5px; /* Üstteki label ile hizalamak için */
+}
+
+.hearing-type-group .radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.95rem;
+    font-weight: normal; /* Label'ı bold yapma */
+    cursor: pointer;
+    margin-bottom: 0; /* Alt boşluğu kaldır */
+}
+
+.hearing-type-group .radio-group input[type="radio"] {
+    width: auto; /* Tarayıcı varsayılanını kullan */
+    height: auto;
+    margin-right: 3px;
+    cursor: pointer;
+}
+
+/* Duruşma türü için ek stil */
++.btn-outline-primary {
++    color: #1a237e;
++    border-color: #1a237e;
++}
++.btn-outline-primary:hover {
++    background-color: #1a237e;
++    color: white;
++}
++.btn-outline-danger {
++    color: #dc3545;
++    border-color: #dc3545;
++}
++.btn-outline-danger:hover {
++    background-color: #dc3545;
++    color: white;
++}
++.btn-sm {
++    padding: 5px 10px;
++    font-size: 0.8rem;
++}
++.btn-sm i {
++    font-size: 16px; /* İkon boyutunu küçült */
++    margin-right: 4px;
++}
 </style>
 
 <script>
@@ -1317,8 +1370,24 @@ function showDetails(caseId) {
             
             // Tarih bilgilerini doldur
             document.getElementById('detailOpenDate').textContent = data.open_date || '-';
-            document.getElementById('detailNextHearing').textContent = data.next_hearing || '-';
-            document.getElementById('detailHearingTime').textContent = data.hearing_time || '-';
+            
+            // Duruşma bilgilerini sadece duruşma varsa göster, yoksa gizle veya "-" göster
+            if (data.next_hearing) {
+                document.getElementById('detailNextHearing').textContent = data.next_hearing || '-';
+                document.getElementById('detailHearingTime').textContent = data.hearing_time || '-';
+                document.getElementById('detailHearingType').textContent = data.formatted_hearing_type || 'Duruşma';
+                // Duruşma separatörleri görünür yap
+                const separators = document.querySelectorAll('.hearing-separator');
+                separators.forEach(sep => sep.style.display = 'inline');
+            } else {
+                document.getElementById('detailNextHearing').textContent = '-';
+                document.getElementById('detailHearingTime').textContent = '';
+                document.getElementById('detailHearingType').textContent = '';
+                // Duruşma separatörleri gizle
+                const separators = document.querySelectorAll('.hearing-separator');
+                separators.forEach(sep => sep.style.display = 'none');
+            }
+            
             document.getElementById('detailDescription').textContent = data.description || 'Açıklama bulunmuyor.';
 
             // Masrafları göster
@@ -1452,13 +1521,10 @@ function editCase(caseId) {
 
             // Şehir ve adliye bilgilerini belirle
             let city = '';
-            // Adliye bilgisi varsa hangi şehre ait olduğunu bul
             if (data.courthouse) {
-                // İstanbul adliyeleri
                 if (istanbulSpecificCourthouses.includes(data.courthouse)) {
                     city = 'İstanbul';
                 } else {
-                    // Diğer şehirlerde arama yap
                     for (const [cityName, courthouses] of Object.entries(allCourthousesData)) {
                         if (courthouses.includes(data.courthouse)) {
                             city = cityName;
@@ -1481,7 +1547,7 @@ function editCase(caseId) {
                             <div class="detail-grid">
                                 <div class="detail-group">
                                     <label>Dosya Türü</label>
-                                    <select id="editFileType" disabled>
+                                    <select id="editFileType" onchange="populateEditDepartments(this.value, document.getElementById('editDepartment'), null, document.getElementById('editCourthouse').value);">
                                         <option value="hukuk" ${data.file_type === 'hukuk' ? 'selected' : ''}>Hukuk</option>
                                         <option value="ceza" ${data.file_type === 'ceza' ? 'selected' : ''}>Ceza</option>
                                         <option value="icra" ${data.file_type === 'icra' ? 'selected' : ''}>İcra</option>
@@ -1493,16 +1559,17 @@ function editCase(caseId) {
                                 </div>
                                 <div class="detail-group">
                                     <label>Şehir</label>
-                                    <select id="editCity" disabled>
+                                    <select id="editCity" onchange="updateEditCourthouses(); populateEditDepartments(document.getElementById('editFileType').value, document.getElementById('editDepartment'), null, document.getElementById('editCourthouse').value);">
                                         <option value="">Seçiniz</option>
                                         ${Object.keys(allCourthousesData).map(cityName => 
                                             `<option value="${cityName}" ${city === cityName ? 'selected' : ''}>${cityName}</option>`
                                         ).join('')}
+                                        <option value="İstanbul" ${city === 'İstanbul' ? 'selected' : ''}>İstanbul</option>
                                     </select>
                                 </div>
                                 <div class="detail-group">
                                     <label>Adliye</label>
-                                    <select id="editCourthouse" disabled>
+                                    <select id="editCourthouse" onchange="populateEditDepartments(document.getElementById('editFileType').value, document.getElementById('editDepartment'), null, this.value);">
                                         <option value="">Seçiniz</option>
                                         ${city === 'İstanbul' ? 
                                             istanbulSpecificCourthouses.map(courthouse => 
@@ -1517,11 +1584,14 @@ function editCase(caseId) {
                                 </div>
                                 <div class="detail-group">
                                     <label>Mahkeme</label>
-                                    <select id="editDepartment" disabled>
+                                    <select id="editDepartment" ${['ARABULUCULUK', 'AİHM', 'AYM', 'savcilik'].includes(data.file_type) ? 'disabled' : ''} onchange="updateEditNumberedDepartments(this.value, document.getElementById('editCity').value, document.getElementById('editCourthouse').value)">
                                         <option value="">Seçiniz</option>
-                                        ${originalDepartments.map(dept => 
-                                            `<option value="${dept}" ${data.department === dept ? 'selected' : ''}>${dept}</option>`
-                                        ).join('')}
+                                    </select>
+                                </div>
+                                <div class="detail-group" id="editNumberedDepartmentContainer" style="display: none;">
+                                    <label>Numaralı Mahkeme</label>
+                                    <select id="editNumberedDepartment">
+                                        <option value="">Seçiniz</option>
                                     </select>
                                 </div>
                             </div>
@@ -1545,13 +1615,40 @@ function editCase(caseId) {
                                     <label>Açılış Tarihi</label>
                                     <input type="date" id="editOpenDate" value="${openDate}" disabled>
                                 </div>
-                                <div class="detail-group">
-                                    <label>Sonraki Duruşma (Opsiyonel)</label>
-                                    <div class="hearing-datetime">
-                                        <input type="date" id="editNextHearing" value="${nextHearing}">
-                                        <input type="time" id="editHearingTime" value="${data.hearing_time || '09:00'}">
+                            </div>
+                             <!-- Duruşma Bilgileri Başlığı -->
+                            <div class="detail-grid" style="padding-bottom:0; margin-bottom:0; border:none; background: none; box-shadow: none;"> {# Kenarlık ve arkaplanı kaldırarak görünmez yap #}
+                                 <div class="detail-group" style="grid-column: span 4;">
+                                     <label id="hearingInfoLabel" style="margin-bottom:0; ${data.next_hearing ? 'display:none;' : ''}">DURUŞMA BİLGİLERİ</label>
+                                     <button type="button" class="btn btn-outline-primary btn-sm" id="showHearingInputBtn" style="${data.next_hearing ? 'display:none;' : 'display:flex; width: fit-content;'} margin-top:10px;">
+                                        <i class="material-icons">add</i> Duruşma Ekle/Güncelle
+                                    </button>
+                                 </div>
+                            </div>
+                            <!-- Gizli Duruşma Giriş Alanı -->
+                            <div class="detail-grid" id="editHearingSection" style="${data.next_hearing ? '' : 'display: none;'} border-top: 1px solid #e9ecef; padding-top: 15px; margin-top: -15px;"> {# Üstteki boşluğu azaltmak için margin-top ayarı #}
+                                <div class="detail-group" style="grid-column: span 3;"> {# Buton için yer açmak amacıyla 3 sütun kaplasın #}
+                                    <label>Sonraki Duruşma Tarihi</label>
+                                    <div class="hearing-datetime" style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="date" id="editNextHearing" value="${nextHearing}" style="flex-grow: 1; width: auto; min-width: 120px; max-width:150px;">
+                                        <input type="time" id="editHearingTime" value="${data.hearing_time || '09:00'}" style="flex-shrink: 0; width: auto; max-width: 100px; padding: 8px 10px;"> {# Max-width ekledim #}
+                                    </div>
+                                    <div class="hearing-type-inline" style="display: flex; align-items: center; gap: 15px; margin-top: 10px;">
+                                        <div style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="radio" name="editHearingType" id="editHearingTypeDurusma" value="durusma" ${data.hearing_type === 'durusma' || !data.hearing_type ? 'checked' : ''}>
+                                            <label for="editHearingTypeDurusma" style="margin-bottom: 0; font-weight: normal;">Duruşma</label>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="radio" name="editHearingType" id="editHearingTypeEDurusma" value="e-durusma" ${data.hearing_type === 'e-durusma' ? 'checked' : ''}>
+                                            <label for="editHearingTypeEDurusma" style="margin-bottom: 0; font-weight: normal;">E-Duruşma</label>
+                                        </div>
+                                        {# Duruşmayı Kaldır butonu buraya taşındı #}
+                                        <button type="button" class="btn btn-outline-danger btn-sm" id="removeHearingBtn" style="height: 30px; margin-left: 20px;"> {# Yüksekliği ayarla ve sola boşluk ekle #}
+                                            <i class="material-icons">delete_outline</i> Duruşmayı Kaldır
+                                        </button>
                                     </div>
                                 </div>
+                                {# Eski buton yeri kaldırıldı #}
                             </div>
                         </form>
                     </div>
@@ -1567,125 +1664,256 @@ function editCase(caseId) {
             editModal.className = 'file-detail-modal';
             editModal.innerHTML = editHtml;
             document.body.appendChild(editModal);
-            editModal.style.display = 'flex';
+            // editModal.style.display = 'flex'; // Bu satırı aşağı taşıdık
+
+            const editFileTypeSelect = editModal.querySelector('#editFileType');
+            const editCitySelect = editModal.querySelector('#editCity');
+            const editCourthouseSelect = editModal.querySelector('#editCourthouse');
+            const editDepartmentSelect = editModal.querySelector('#editDepartment');
+
+            // İlk adliye ve departman yüklemesi için
+            updateEditCourthouses(editCitySelect, editCourthouseSelect, data.courthouse); // Adliyeleri yükle ve seçili adliyeyi ayarla
+            populateEditDepartments(data.file_type, editDepartmentSelect, data.department, editCourthouseSelect.value, editCitySelect.value); // Departmanları yükle, temel ve numaralıyı ayarla
+
+
+            editFileTypeSelect.onchange = function() {
+                populateEditDepartments(this.value, editDepartmentSelect, null, editCourthouseSelect.value, editCitySelect.value);
+            };
+            editCitySelect.onchange = function() {
+                updateEditCourthouses(this, editCourthouseSelect, null); // Adliyeleri güncelle
+                populateEditDepartments(editFileTypeSelect.value, editDepartmentSelect, null, editCourthouseSelect.value, this.value); // Departmanları adliyeye göre güncelle
+            };
+            editCourthouseSelect.onchange = function() {
+                populateEditDepartments(editFileTypeSelect.value, editDepartmentSelect, null, this.value, editCitySelect.value); // Departmanları adliyeye göre güncelle
+            };
+             editDepartmentSelect.onchange = function() {
+                updateEditNumberedDepartments(this.value, document.getElementById('editCity').value, document.getElementById('editCourthouse').value, data.department);
+            };
+
+
+            const showHearingBtn = editModal.querySelector('#showHearingInputBtn');
+            const removeHearingBtn = editModal.querySelector('#removeHearingBtn');
+            const hearingSection = editModal.querySelector('#editHearingSection');
+            const nextHearingInput = editModal.querySelector('#editNextHearing');
+            const hearingTimeInput = editModal.querySelector('#editHearingTime');
+            const hearingInfoLabel = editModal.querySelector('#hearingInfoLabel');
+
+            showHearingBtn.onclick = function() {
+                hearingSection.style.display = 'grid'; // detail-grid 2 column span yapar
+                showHearingBtn.style.display = 'none';
+                hearingInfoLabel.style.display = 'none';
+            };
+
+            removeHearingBtn.onclick = function() {
+                nextHearingInput.value = ''; 
+                hearingTimeInput.value = '09:00'; 
+                const durusmaRadio = editModal.querySelector('input[name="editHearingType"][value="durusma"]');
+                if (durusmaRadio) durusmaRadio.checked = true;
+                hearingSection.style.display = 'none';
+                showHearingBtn.style.display = 'flex';
+                 hearingInfoLabel.style.display = 'block';
+            };
+            
+            editModal.style.display = 'flex'; // Modal'ı tüm kurulumlar bittikten sonra göster
         });
 }
 
-// Düzenleme modalında birim seçeneklerini güncelle
-function updateEditDepartments() {
-    const fileType = document.getElementById('editFileType').value;
-    const departmentSelect = document.getElementById('editDepartment');
-    const courtNumberContainer = document.getElementById('editCourtNumberContainer');
-    
-    departmentSelect.innerHTML = '<option value="">Seçiniz</option>';
-    
-    // Dosya türüne göre birimleri ekle
-    if (fileType === 'icra') {
-        // İcra dosyaları için sadece icra daireleri
-        for (let i = 1; i <= 30; i++) {
+function updateEditCourthouses(citySelectElement, courthouseSelectElement, selectedCourthouse) {
+    const selectedCity = citySelectElement.value;
+    courthouseSelectElement.innerHTML = '<option value="">Seçiniz</option>'; // Önceki adliyeleri temizle
+
+    if (selectedCity === 'İstanbul') {
+        istanbulSpecificCourthouses.forEach(courthouse => {
             const option = document.createElement('option');
-            option.value = `${i}. İcra Dairesi`;
-            option.textContent = `${i}. İcra Dairesi`;
-            departmentSelect.appendChild(option);
-        }
-        departmentSelect.disabled = false;
-    } else if (fileType && fileType !== 'savcilik' && fileType !== 'ARABULUCULUK' && fileType !== 'AİHM' && fileType !== 'AYM') {
-        // Diğer dosya türleri için standart birimleri ekle
-        originalDepartments.forEach(dept => {
-            if (dept !== 'İcra Dairesi') {
-                const option = document.createElement('option');
-                option.value = dept;
-                option.textContent = dept;
-                departmentSelect.appendChild(option);
-            }
+            option.value = courthouse;
+            option.textContent = courthouse;
+            if (selectedCourthouse === courthouse) option.selected = true;
+            courthouseSelectElement.appendChild(option);
         });
-        departmentSelect.disabled = false;
-    } else {
-        departmentSelect.disabled = true;
+    }
+    
+    if (selectedCity && allCourthousesData[selectedCity]) {
+        allCourthousesData[selectedCity].forEach(courthouse => {
+            // İstanbul adliyesiyse ve zaten eklendiyse tekrar ekleme
+            if (selectedCity === 'İstanbul' && istanbulSpecificCourthouses.includes(courthouse)) {
+                return;
+            }
+            const option = document.createElement('option');
+            option.value = courthouse;
+            option.textContent = courthouse;
+            if (selectedCourthouse === courthouse) option.selected = true;
+            courthouseSelectElement.appendChild(option);
+        });
     }
 
-    if (courtNumberContainer) {
-        courtNumberContainer.style.display = 'none';
+    if (courthouseSelectElement.options.length <= 1) {
+        if (selectedCity) {
+            courthouseSelectElement.innerHTML = '<option value="">Bu şehir için adliye bulunamadı</option>';
+        } else {
+            courthouseSelectElement.innerHTML = '<option value="">Önce Şehir Seçiniz</option>';
+        }
     }
+}
+
+
+// Düzenleme modalında birim seçeneklerini güncelle
+function populateEditDepartments(fileType, departmentSelect, fullSelectedDepartment, selectedCourthouse, selectedCity) {
+    departmentSelect.innerHTML = '<option value="">Seçiniz</option>';
+    departmentSelect.disabled = false;
+
+    let departmentsToShow = [];
+    if (fileType === 'hukuk') {
+        departmentsToShow = originalDepartments.filter(dept => ![
+            'Asliye Ceza Mahkemesi', 'Ağır Ceza Mahkemesi', 'Sulh Ceza Hakimliği', 'İcra Dairesi'
+        ].includes(dept));
+    } else if (fileType === 'ceza') {
+        departmentsToShow = originalDepartments.filter(dept => [
+            'Asliye Ceza Mahkemesi', 'Ağır Ceza Mahkemesi', 'Sulh Ceza Hakimliği'
+        ].includes(dept));
+    } else if (fileType === 'icra') {
+        departmentsToShow = ['İcra Dairesi'];
+    } else if (['ARABULUCULUK', 'AİHM', 'AYM', 'savcilik'].includes(fileType)) {
+        departmentSelect.disabled = true;
+        updateEditNumberedDepartments(null, selectedCity, selectedCourthouse, null); // Numaralıyı da gizle
+        return;
+    } else { // Tümü veya bilinmeyen
+        departmentsToShow = originalDepartments;
+    }
+
+    departmentsToShow.forEach(dept => {
+        const option = document.createElement('option');
+        option.value = dept;
+        option.textContent = dept;
+        departmentSelect.appendChild(option);
+    });
+
+    let baseDepartmentToSelect = null;
+    if (fullSelectedDepartment) {
+        const match = fullSelectedDepartment.match(/^(\d+\.\s+)?(.*)$/);
+        if (match && match[2]) {
+            baseDepartmentToSelect = match[2]; // "Asliye Hukuk Mahkemesi"
+        }
+    }
+    
+    if (baseDepartmentToSelect && Array.from(departmentSelect.options).some(opt => opt.value === baseDepartmentToSelect)) {
+        departmentSelect.value = baseDepartmentToSelect;
+    } else if (departmentSelect.options.length > 1 && !baseDepartmentToSelect && !fullSelectedDepartment) {
+        // Eğer bir seçim yoksa ve seçenekler varsa ilkini seçme (Seçiniz kalsın)
+    } else if (baseDepartmentToSelect) {
+         console.warn(`populateEditDepartments: Temel departman "${baseDepartmentToSelect}" dropdown'da bulunamadı. Dosya türü: ${fileType}`);
+    }
+    
+    updateEditNumberedDepartments(departmentSelect.value, selectedCity, selectedCourthouse, fullSelectedDepartment);
 }
 
 // Düzenleme modalında mahkeme numaralarını güncelle
-function updateEditCourtNumbers() {
-    const department = document.getElementById('editDepartment').value;
-    const courtNumberContainer = document.getElementById('editCourtNumberContainer');
+function updateEditNumberedDepartments(baseDepartment, selectedCity, selectedCourthouse, fullSelectedDepartmentToSelect) {
+    const numberedDepartmentContainer = document.getElementById('editNumberedDepartmentContainer');
+    const numberedDepartmentSelect = document.getElementById('editNumberedDepartment');
     
-    if (!department || department === '' || department.includes('İcra Dairesi')) {
-        courtNumberContainer.style.display = 'none';
+    numberedDepartmentSelect.innerHTML = '<option value="">Seçiniz</option>'; // Her zaman temizle
+
+    if (!baseDepartment || baseDepartment === '' || ['ARABULUCULUK', 'AİHM', 'AYM', 'savcilik'].includes(document.getElementById('editFileType').value)) {
+        numberedDepartmentContainer.style.display = 'none';
         return;
     }
-
-    const courtNumberSelect = document.getElementById('editCourtNumber');
-    courtNumberSelect.innerHTML = '<option value="">Seçiniz</option>';
     
-    // Adliye ve şehre göre mahkeme sayısını belirle
-    const citySelect = document.getElementById('editCity');
-    const courthouseSelect = document.getElementById('editCourthouse');
-    const selectedCity = citySelect.value;
-    const selectedCourthouse = courthouseSelect.value;
-    
-    // Varsayılan olarak 30 mahkeme, İstanbul için daha fazla
-    let maxCourtNumber = 30;
-    
-    // İstanbul ve belirli adliyeler için daha fazla mahkeme
+    let maxCourtNumber = 30; // Varsayılan
     if (selectedCity === 'İstanbul') {
-        if (selectedCourthouse.includes('Anadolu') || selectedCourthouse.includes('Çağlayan')) {
-            if (department === 'Asliye Hukuk Mahkemesi' || 
-                department === 'Asliye Ceza Mahkemesi' || 
-                department === 'İş Mahkemesi') {
-                maxCourtNumber = 50;
-            } else if (department === 'Ağır Ceza Mahkemesi') {
-                maxCourtNumber = 15;
-            }
-        } else if (selectedCourthouse.includes('Bakırköy')) {
+        if (selectedCourthouse && (selectedCourthouse.includes('Anadolu') || selectedCourthouse.includes('Çağlayan'))) {
+            if (baseDepartment === 'Asliye Hukuk Mahkemesi' || baseDepartment === 'Asliye Ceza Mahkemesi' || baseDepartment === 'İş Mahkemesi') maxCourtNumber = 50;
+            else if (baseDepartment === 'Ağır Ceza Mahkemesi') maxCourtNumber = 15;
+        } else if (selectedCourthouse && selectedCourthouse.includes('Bakırköy')) {
             maxCourtNumber = 40;
         }
     } else if (selectedCity === 'Ankara' || selectedCity === 'İzmir') {
         maxCourtNumber = 40;
     }
-    
-    // Seçili mahkeme adı ekle
-    const baseOption = document.createElement('option');
-    baseOption.value = department;
-    baseOption.textContent = department;
-    courtNumberSelect.appendChild(baseOption);
-    
-    // Numaralı mahkemeleri ekle
-    for (let i = 1; i <= maxCourtNumber; i++) {
-        const option = document.createElement('option');
-        option.value = `${i}. ${department}`;
-        option.textContent = `${i}. ${department}`;
-        courtNumberSelect.appendChild(option);
+
+    if (baseDepartment === 'İcra Dairesi') { // İcra daireleri için özel numaralandırma
+         for (let i = 1; i <= maxCourtNumber; i++) { // Genelde 30 olur ama dinamik olsun
+            const optionValue = `${i}. ${baseDepartment}`;
+            const option = document.createElement('option');
+            option.value = optionValue;
+            option.textContent = optionValue;
+            numberedDepartmentSelect.appendChild(option);
+        }
+    } else {
+        // Temel mahkeme adını da bir seçenek olarak ekle (Numarasız hali)
+        const baseOption = document.createElement('option');
+        baseOption.value = baseDepartment; 
+        baseOption.textContent = baseDepartment;
+        numberedDepartmentSelect.appendChild(baseOption);
+
+        for (let i = 1; i <= maxCourtNumber; i++) {
+            const optionValue = `${i}. ${baseDepartment}`;
+            const option = document.createElement('option');
+            option.value = optionValue;
+            option.textContent = optionValue;
+            numberedDepartmentSelect.appendChild(option);
+        }
     }
     
-    courtNumberContainer.style.display = 'block';
+    numberedDepartmentContainer.style.display = 'flex'; // block yerine flex daha iyi olabilir
+    
+    // Kaydedilmiş veya seçilmiş numaralı/temel değeri ayarla
+    if (fullSelectedDepartmentToSelect && Array.from(numberedDepartmentSelect.options).some(opt => opt.value === fullSelectedDepartmentToSelect)) {
+        numberedDepartmentSelect.value = fullSelectedDepartmentToSelect;
+    } else if (baseDepartment && Array.from(numberedDepartmentSelect.options).some(opt => opt.value === baseDepartment) && !fullSelectedDepartmentToSelect.match(/^\d+\.\s+(.*)$/)) {
+        // Eğer fullSelectedDepartmentToSelect numarasızsa ve baseDepartment listede varsa onu seç
+        numberedDepartmentSelect.value = baseDepartment;
+    } else if (numberedDepartmentSelect.options.length > 1) {
+        // Otomatik bir şey seçme, "Seçiniz" kalsın
+    }
 }
 
 // Değişiklikleri kaydet
 function saveChanges(caseId) {
+    // Seçili departman değerini al (Önce numaralıdan, sonra temelden)
+    const numberedDeptSelect = document.getElementById('editNumberedDepartment');
+    const baseDeptSelect = document.getElementById('editDepartment');
+    let finalDepartmentValue = baseDeptSelect.value; // Varsayılan olarak temel departman
+    
+    // Eğer numaralı departman görünür ve bir değer seçiliyse onu kullan
+    if (numberedDeptSelect && getComputedStyle(numberedDeptSelect.parentElement).display !== 'none' && numberedDeptSelect.value) {
+        finalDepartmentValue = numberedDeptSelect.value;
+    } else if (!baseDeptSelect.disabled && baseDeptSelect.value) {
+        // Numaralı görünür değilse veya seçilmemişse, temel departmanı kullan (eğer devre dışı değilse)
+        finalDepartmentValue = baseDeptSelect.value;
+    } else {
+        // Hiçbiri uygun değilse (örn. Savcılık vs.) null yap
+        finalDepartmentValue = null;
+    }
+    
+    // Duruşma türünü al
+    const hearingTypeRadios = document.querySelectorAll('input[name="editHearingType"]');
+    let hearingType = 'durusma'; // varsayılan değer
+    for (const radio of hearingTypeRadios) {
+        if (radio.checked) {
+            hearingType = radio.value;
+            break;
+        }
+    }
+    
     const data = {
         file_type: document.getElementById('editFileType').value,
-        city: document.getElementById('editCity').value,
         courthouse: document.getElementById('editCourthouse').value,
-        department: document.getElementById('editDepartment').value,
+        department: finalDepartmentValue, // Güncellenmiş departman değeri
         client_name: document.getElementById('editClientName').value,
         phone_number: document.getElementById('editPhoneNumber').value,
         status: document.getElementById('editStatus').value,
         open_date: document.getElementById('editOpenDate').value,
         next_hearing: document.getElementById('editNextHearing').value || null,
-        hearing_time: document.getElementById('editHearingTime').value || null
+        hearing_time: document.getElementById('editHearingTime').value || null,
+        hearing_type: hearingType // Duruşma türünü ekledik
     };
-
+    
     // Sadece müvekkil adı kontrolü yap
     if (!data.client_name) {
         alert('Lütfen müvekkil adını giriniz.');
         return;
     }
-
+    
     fetch(`/edit_case/${caseId}`, {
         method: 'POST',
         headers: {
@@ -1696,8 +1924,8 @@ function saveChanges(caseId) {
     .then(response => response.json())
     .then(result => {
         if (result.success) {
-            // Takvim senkronizasyonu için dosya durumunu da gönder
-            syncHearingToCalendar(caseId, data.next_hearing, data.hearing_time, data.status);
+            // Takvim senkronizasyonu için dosya durumunu ve duruşma türünü gönder
+            syncHearingToCalendar(caseId, data.next_hearing, data.hearing_time, data.status, hearingType);
             
             closeEditModal();
             showDetails(caseId);
@@ -2148,7 +2376,7 @@ function saveDescription() {
 }
 
 // Duruşma bilgilerini takvime senkronize et
-function syncHearingToCalendar(caseId, hearingDate, hearingTime, status) {
+function syncHearingToCalendar(caseId, hearingDate, hearingTime, status, hearingType = 'durusma') {
     fetch('/sync_hearing_to_calendar', {
         method: 'POST',
         headers: {
@@ -2158,7 +2386,8 @@ function syncHearingToCalendar(caseId, hearingDate, hearingTime, status) {
             case_id: caseId,
             hearing_date: hearingDate,
             hearing_time: hearingTime || '09:00',
-            status: status
+            status: status,
+            hearing_type: hearingType // Duruşma türünü ekle
         })
     })
     .then(response => response.json())

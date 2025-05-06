@@ -166,6 +166,7 @@ class CaseFile(db.Model):
     open_date = db.Column(db.Date)
     next_hearing = db.Column(db.Date)
     hearing_time = db.Column(db.String(5))  # HH:MM formatında
+    hearing_type = db.Column(db.String(20), default='durusma')  # durusma veya e-durusma
     description = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     expenses = db.relationship('Expense', backref='case_file', lazy=True)

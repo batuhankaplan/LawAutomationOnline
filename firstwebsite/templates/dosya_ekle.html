@@ -646,6 +646,12 @@ async function submitForm(event) {
             showFlashMessage('Dosya başarıyla eklendi.', 'success');
             form.reset(); // Formu sıfırla
             handleFileTypeChange(); // Alanları başlangıç durumuna getir
+            // Dosya sorgulama sayfasına yönlendir ve detayı göster
+            if (result.new_case_id) {
+                window.location.href = `{{ url_for("dosya_sorgula") }}?show_details=${result.new_case_id}`;
+            } else {
+                window.location.href = '{{ url_for("dosya_sorgula") }}'; // ID yoksa sadece sayfaya yönlendir
+            }
         } else {
             showFlashMessage('Hata: ' + (result.message || 'Bilinmeyen bir hata oluştu'), 'error');
         }
