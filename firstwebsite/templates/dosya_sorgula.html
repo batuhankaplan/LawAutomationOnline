@@ -1373,8 +1373,8 @@ function showDetails(caseId) {
             
             // Duruşma bilgilerini sadece duruşma varsa göster, yoksa gizle veya "-" göster
             if (data.next_hearing) {
-                document.getElementById('detailNextHearing').textContent = data.next_hearing || '-';
-                document.getElementById('detailHearingTime').textContent = data.hearing_time || '-';
+            document.getElementById('detailNextHearing').textContent = data.next_hearing || '-';
+            document.getElementById('detailHearingTime').textContent = data.hearing_time || '-';
                 document.getElementById('detailHearingType').textContent = data.formatted_hearing_type || 'Duruşma';
                 // Duruşma separatörleri görünür yap
                 const separators = document.querySelectorAll('.hearing-separator');
@@ -1513,8 +1513,20 @@ function editCase(caseId) {
     modal.style.display = 'none';
     
     fetch(`/case_details/${caseId}`)
-        .then(response => response.json())
+        .then(response => {
+            if (response.status === 403) {
+                alert('Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz. Dosya düzenleme yetkisi gereklidir.');
+                modal.style.display = 'flex'; // Modalı tekrar göster
+                return Promise.reject(new Error('Yetki hatası'));
+            }
+            
+            if (!response.ok) {
+                throw new Error('Sunucu hatası');
+            }
+            return response.json();
+        })
         .then(data => {
+            // Devam eden kod
             // Tarihi YYYY-MM-DD formatına çevir
             const openDate = data.open_date ? data.open_date.split('.').reverse().join('-') : '';
             const nextHearing = data.next_hearing ? data.next_hearing.split('.').reverse().join('-') : '';
@@ -1615,7 +1627,7 @@ function editCase(caseId) {
                                     <label>Açılış Tarihi</label>
                                     <input type="date" id="editOpenDate" value="${openDate}" disabled>
                                 </div>
-                            </div>
+                                    </div>
                              <!-- Duruşma Bilgileri Başlığı -->
                             <div class="detail-grid" style="padding-bottom:0; margin-bottom:0; border:none; background: none; box-shadow: none;"> {# Kenarlık ve arkaplanı kaldırarak görünmez yap #}
                                  <div class="detail-group" style="grid-column: span 4;">
@@ -1623,7 +1635,7 @@ function editCase(caseId) {
                                      <button type="button" class="btn btn-outline-primary btn-sm" id="showHearingInputBtn" style="${data.next_hearing ? 'display:none;' : 'display:flex; width: fit-content;'} margin-top:10px;">
                                         <i class="material-icons">add</i> Duruşma Ekle/Güncelle
                                     </button>
-                                 </div>
+                                </div>
                             </div>
                             <!-- Gizli Duruşma Giriş Alanı -->
                             <div class="detail-grid" id="editHearingSection" style="${data.next_hearing ? '' : 'display: none;'} border-top: 1px solid #e9ecef; padding-top: 15px; margin-top: -15px;"> {# Üstteki boşluğu azaltmak için margin-top ayarı #}
@@ -1759,7 +1771,7 @@ function updateEditCourthouses(citySelectElement, courthouseSelectElement, selec
 // Düzenleme modalında birim seçeneklerini güncelle
 function populateEditDepartments(fileType, departmentSelect, fullSelectedDepartment, selectedCourthouse, selectedCity) {
     departmentSelect.innerHTML = '<option value="">Seçiniz</option>';
-    departmentSelect.disabled = false;
+        departmentSelect.disabled = false;
 
     let departmentsToShow = [];
     if (fileType === 'hukuk') {
@@ -1781,10 +1793,10 @@ function populateEditDepartments(fileType, departmentSelect, fullSelectedDepartm
     }
 
     departmentsToShow.forEach(dept => {
-        const option = document.createElement('option');
-        option.value = dept;
-        option.textContent = dept;
-        departmentSelect.appendChild(option);
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                departmentSelect.appendChild(option);
     });
 
     let baseDepartmentToSelect = null;
@@ -1812,12 +1824,12 @@ function updateEditNumberedDepartments(baseDepartment, selectedCity, selectedCou
     const numberedDepartmentSelect = document.getElementById('editNumberedDepartment');
     
     numberedDepartmentSelect.innerHTML = '<option value="">Seçiniz</option>'; // Her zaman temizle
-
+    
     if (!baseDepartment || baseDepartment === '' || ['ARABULUCULUK', 'AİHM', 'AYM', 'savcilik'].includes(document.getElementById('editFileType').value)) {
         numberedDepartmentContainer.style.display = 'none';
         return;
     }
-    
+
     let maxCourtNumber = 30; // Varsayılan
     if (selectedCity === 'İstanbul') {
         if (selectedCourthouse && (selectedCourthouse.includes('Anadolu') || selectedCourthouse.includes('Çağlayan'))) {
@@ -1829,7 +1841,7 @@ function updateEditNumberedDepartments(baseDepartment, selectedCity, selectedCou
     } else if (selectedCity === 'Ankara' || selectedCity === 'İzmir') {
         maxCourtNumber = 40;
     }
-
+    
     if (baseDepartment === 'İcra Dairesi') { // İcra daireleri için özel numaralandırma
          for (let i = 1; i <= maxCourtNumber; i++) { // Genelde 30 olur ama dinamik olsun
             const optionValue = `${i}. ${baseDepartment}`;
@@ -1840,18 +1852,18 @@ function updateEditNumberedDepartments(baseDepartment, selectedCity, selectedCou
         }
     } else {
         // Temel mahkeme adını da bir seçenek olarak ekle (Numarasız hali)
-        const baseOption = document.createElement('option');
+    const baseOption = document.createElement('option');
         baseOption.value = baseDepartment; 
         baseOption.textContent = baseDepartment;
         numberedDepartmentSelect.appendChild(baseOption);
-
-        for (let i = 1; i <= maxCourtNumber; i++) {
+    
+    for (let i = 1; i <= maxCourtNumber; i++) {
             const optionValue = `${i}. ${baseDepartment}`;
-            const option = document.createElement('option');
+        const option = document.createElement('option');
             option.value = optionValue;
             option.textContent = optionValue;
             numberedDepartmentSelect.appendChild(option);
-        }
+    }
     }
     
     numberedDepartmentContainer.style.display = 'flex'; // block yerine flex daha iyi olabilir
@@ -1907,13 +1919,13 @@ function saveChanges(caseId) {
         hearing_time: document.getElementById('editHearingTime').value || null,
         hearing_type: hearingType // Duruşma türünü ekledik
     };
-    
+
     // Sadece müvekkil adı kontrolü yap
     if (!data.client_name) {
         alert('Lütfen müvekkil adını giriniz.');
         return;
     }
-    
+
     fetch(`/edit_case/${caseId}`, {
         method: 'POST',
         headers: {
@@ -1921,7 +1933,18 @@ function saveChanges(caseId) {
         },
         body: JSON.stringify(data)
     })
-    .then(response => response.json())
+    .then(response => {
+        if (response.status === 403) {
+            alert('Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz. Dosya düzenleme yetkisi gereklidir.');
+            closeEditModal();
+            return Promise.reject(new Error('Yetki hatası'));
+        }
+        
+        if (!response.ok) {
+            throw new Error('Sunucu hatası');
+        }
+        return response.json();
+    })
     .then(result => {
         if (result.success) {
             // Takvim senkronizasyonu için dosya durumunu ve duruşma türünü gönder
@@ -1935,7 +1958,9 @@ function saveChanges(caseId) {
     })
     .catch(error => {
         console.error('Hata:', error);
-        alert('Güncelleme sırasında bir hata oluştu: ' + error.message);
+        if (error.message !== 'Yetki hatası') {
+            alert('Güncelleme sırasında bir hata oluştu: ' + error.message);
+        }
     });
 }
 
@@ -2260,6 +2285,11 @@ function deleteDocument(docId) {
             }
         })
         .then(response => {
+            if (response.status === 403) {
+                alert('Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz. Dosya silme yetkisi gereklidir.');
+                return Promise.reject(new Error('Yetki hatası'));
+            }
+            
             if (!response.ok) {
                 throw new Error('Sunucu hatası');
             }
@@ -2274,7 +2304,9 @@ function deleteDocument(docId) {
         })
         .catch(error => {
             console.error('Hata:', error);
-            alert('Belge silinirken bir hata oluştu: ' + error.message);
+            if (error.message !== 'Yetki hatası') {
+                alert('Belge silinirken bir hata oluştu: ' + error.message);
+            }
         });
     }
 }
@@ -2359,7 +2391,18 @@ function saveDescription() {
             description: newDescription
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (response.status === 403) {
+            alert('Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz. Dosya düzenleme yetkisi gereklidir.');
+            cancelEditDescription();
+            return Promise.reject(new Error('Yetki hatası'));
+        }
+        
+        if (!response.ok) {
+            throw new Error('Sunucu hatası');
+        }
+        return response.json();
+    })
     .then(result => {
         if (result.success) {
             document.getElementById('detailDescription').textContent = 
@@ -2371,7 +2414,9 @@ function saveDescription() {
     })
     .catch(error => {
         console.error('Hata:', error);
-        alert('Açıklama güncellenirken bir hata oluştu: ' + error.message);
+        if (error.message !== 'Yetki hatası') {
+            alert('Açıklama güncellenirken bir hata oluştu: ' + error.message);
+        }
     });
 }
 
@@ -2411,7 +2456,17 @@ function deleteCase(caseId) {
                 'Content-Type': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (response.status === 403) {
+                alert('Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz. Dosya silme yetkisi gereklidir.');
+                return Promise.reject(new Error('Yetki hatası'));
+            }
+            
+            if (!response.ok) {
+                throw new Error('Sunucu hatası');
+            }
+            return response.json();
+        })
         .then(result => {
             if (result.success) {
                 // Tablodan ilgili satırı kaldır
@@ -2425,7 +2480,9 @@ function deleteCase(caseId) {
         })
         .catch(error => {
             console.error('Hata:', error);
-            alert('Dosya silinirken bir hata oluştu: ' + error.message);
+            if (error.message !== 'Yetki hatası') {
+                alert('Dosya silinirken bir hata oluştu: ' + error.message);
+            }
         });
     }
 }

@@ -565,10 +565,15 @@
                                     <i class="material-icons">settings</i>
                                     <span>Ayarlar</span>
                                 </a>
-                                {% if current_user.is_admin %}
+                                {# Yönetim Paneli Linki - Sadece Adminler için #}
+                                {% if current_user.is_authenticated and current_user.is_admin %}
                                 <a href="{{ url_for('admin_panel') }}" class="dropdown-item">
                                     <i class="material-icons">admin_panel_settings</i>
-                                    <span>Yönetici Paneli</span>
+                                    <span>Kullanıcı Yönetimi</span>
+                                </a>
+                                <a href="/admin/" class="dropdown-item">
+                                    <i class="material-icons">storage</i>
+                                    <span>Veritabanı Yönetimi</span>
                                 </a>
                                 {% endif %}
                                 <div class="dropdown-divider"></div>

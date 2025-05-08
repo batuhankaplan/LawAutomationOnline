@@ -1,0 +1,243 @@
+{% extends 'admin/master.html' %}
+
+{% block head_css %}
+{{ super() }}
+<style>
+    /* Tam ekran görünüm için stil ayarları */
+    body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+    .container-fluid {
+        padding-left: 0;
+        padding-right: 0;
+        max-width: 100%;
+        width: 100%;
+    }
+    .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+    .col-xl-3, .col-md-6, .col-sm-12, .col {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    .admin-main {
+        padding: 0;
+    }
+    /* Ana içerik alanını genişlet */
+    .admin-content {
+        padding: 20px;
+        width: 100%;
+    }
+    .card {
+        margin-bottom: 20px;
+    }
+    /* Dashboard header stilini düzelt */
+    .dashboard-header {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 0;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+  {# Flask-Admin'in master.html'i genellikle kendi navigasyonunu ve mesajlarını içerir.
+     super() çağrısı, master.html'in body bloğundaki bu varsayılan öğeleri korur.
+     Eğer master.html'in body bloğu sadece bizim içeriğimiz için bir yer tutucu ise
+     super() gerekmeyebilir veya farklı bir şekilde kullanılabilir.
+     Genellikle Flask-Admin'in navigasyonu master.html'in body bloğunun dışında yer alır
+     ve extends ile otomatik gelir. super() mesajlar gibi body içindeki öğeler için olabilir.
+  #}
+  {{ super() }}
+
+  <!-- Modern Admin Dashboard -->
+  <div class="container-fluid p-0">
+      <!-- Dashboard Header -->
+      <div class="dashboard-header w-100">
+          <div class="row">
+              <div class="col">
+                  <h3 class="mb-0 text-gray-800">Veri Kontrol Paneli</h3>
+                  <p class="text-muted">Hoş geldiniz, tüm sistem verilerine buradan erişebilirsiniz.</p>
+              </div>
+          </div>
+      </div>
+
+      <div class="admin-content">
+          <!-- İstatistik Kartları Satırı -->
+          <div class="row">
+              <!-- Toplam Kullanıcı Kartı -->
+              <div class="col-xl-3 col-md-6 mb-4">
+                  <div class="card border-left-primary shadow h-100 py-2">
+                      <div class="card-body">
+                          <div class="row no-gutters align-items-center">
+                              <div class="col mr-2">
+                                  <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                      TOPLAM KULLANICILAR
+                                  </div>
+                                  <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_users }}</div>
+                              </div>
+                              <div class="col-auto">
+                                  <i class="fas fa-users fa-2x text-gray-300"></i>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Onay Bekleyen Kullanıcılar Kartı -->
+              <div class="col-xl-3 col-md-6 mb-4">
+                  <div class="card border-left-warning shadow h-100 py-2">
+                      <div class="card-body">
+                          <div class="row no-gutters align-items-center">
+                              <div class="col mr-2">
+                                  <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                      ONAY BEKLEYEN KULLANICILAR
+                                  </div>
+                                  <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending_users }}</div>
+                              </div>
+                              <div class="col-auto">
+                                  <i class="fas fa-user-clock fa-2x text-gray-300"></i>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Toplam Dosyalar Kartı -->
+              <div class="col-xl-3 col-md-6 mb-4">
+                  <div class="card border-left-success shadow h-100 py-2">
+                      <div class="card-body">
+                          <div class="row no-gutters align-items-center">
+                              <div class="col mr-2">
+                                  <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                      TOPLAM DOSYALAR
+                                  </div>
+                                  <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_case_files }}</div>
+                              </div>
+                              <div class="col-auto">
+                                  <i class="fas fa-folder fa-2x text-gray-300"></i>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Bugünkü Aktiviteler Kartı -->
+              <div class="col-xl-3 col-md-6 mb-4">
+                  <div class="card border-left-info shadow h-100 py-2">
+                      <div class="card-body">
+                          <div class="row no-gutters align-items-center">
+                              <div class="col mr-2">
+                                  <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                      BUGÜNKÜ AKTİVİTELER
+                                  </div>
+                                  <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.activities_today }}</div>
+                              </div>
+                              <div class="col-auto">
+                                  <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Model Yönetimi Kartları ve Sistem Bilgisi -->
+          <div class="row">
+              <!-- Model Yönetimi -->
+              <div class="col-xl-8 col-lg-7">
+                  <div class="card shadow mb-4">
+                      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                          <h6 class="m-0 font-weight-bold text-primary">Veri Tipleri</h6>
+                      </div>
+                      <div class="card-body">
+                          <div class="row">
+                              {% for view in model_views %}
+                              <div class="col-md-6 col-lg-4 mb-4">
+                                  <a href="{{ view.url }}" class="card h-100 border-left-primary shadow py-2 text-decoration-none">
+                                      <div class="card-body">
+                                          <div class="row no-gutters align-items-center">
+                                              <div class="col mr-2">
+                                                  <div class="h5 mb-0 font-weight-bold text-gray-800">{{ view.name }}</div>
+                                              </div>
+                                              <div class="col-auto">
+                                                  <i class="fas {{ view.icon }} fa-2x text-gray-300"></i>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </a>
+                              </div>
+                              {% endfor %}
+                          </div>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Sistem Bilgisi -->
+              <div class="col-xl-4 col-lg-5">
+                  <div class="card shadow mb-4">
+                      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                          <h6 class="m-0 font-weight-bold text-primary">Sistem Bilgisi</h6>
+                      </div>
+                      <div class="card-body">
+                          <div class="mb-3">
+                              <h4 class="small font-weight-bold">Sunucu Durumu <span class="float-right">Aktif</span></h4>
+                              <div class="progress mb-4">
+                                  <div class="progress-bar bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                          </div>
+                          <div class="mb-3">
+                              <h4 class="small font-weight-bold">Veritabanı Durumu <span class="float-right">Aktif</span></h4>
+                              <div class="progress mb-4">
+                                  <div class="progress-bar bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                              </div>
+                          </div>
+                          <div class="mb-3">
+                              <h4 class="small font-weight-bold">Sistem Sürümü <span class="float-right">v1.0</span></h4>
+                          </div>
+                          <div class="mb-3">
+                              <h4 class="small font-weight-bold">Son Güncelleme <span class="float-right">{{ today_date }}</span></h4>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Takvim Özeti -->
+                  <div class="card shadow mb-4">
+                      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                          <h6 class="m-0 font-weight-bold text-primary">Takvim Özeti</h6>
+                      </div>
+                      <div class="card-body text-center">
+                          <div class="h1 font-weight-bold text-gray-800 mb-3">{{ stats.total_calendar_events }}</div>
+                          <div class="text-muted">Toplam Etkinlik</div>
+                          <a href="{{ url_for('takvim') }}" class="btn btn-primary btn-sm mt-3">
+                              <i class="fas fa-calendar mr-1"></i>
+                              Takvimi Görüntüle
+                          </a>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+      // Bugünün tarihini al ve formatlayarak today_date değişkenine at
+      let today = new Date();
+      let dd = String(today.getDate()).padStart(2, '0');
+      let mm = String(today.getMonth() + 1).padStart(2, '0'); // Ocak 0!
+      let yyyy = today.getFullYear();
+      let today_date = dd + '.' + mm + '.' + yyyy;
+      
+      // Şablonda today_date değişkeni yoksa, DOM'da belirli bir elementin içeriğini güncelle
+      if (!document.contains(document.querySelector('span:contains("{{ today_date }}")')) && document.querySelector('.card-body span.float-right:last-child')) {
+          document.querySelector('.card-body span.float-right:last-child').textContent = today_date;
+      }
+  });
+  </script>
+{% endblock %} 

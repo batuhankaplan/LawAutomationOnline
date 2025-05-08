@@ -29,7 +29,7 @@
                 <h3><i class="material-icons">history</i>Son İşlemler</h3>
             </div>
             <div class="activities-list" id="activitiesList">
-                {% for activity in recent_activities %}
+                {% for activity in activities %}
                 <div class="activity-item">
                     <div class="activity-icon">
                         <img src="{{ url_for('static', filename='images/pp.png') }}" alt="Profil">
@@ -58,7 +58,7 @@
                         <div class="activity-meta">
                             <div class="activity-user">
                                 <i class="material-icons">person</i>
-                                <span>İşlemi Yapan: {{ activity.user }}</span>
+                                <span>İşlemi Yapan: {{ activity.user.get_full_name() if activity.user else 'Bilinmeyen Kullanıcı' }}</span>
                             </div>
                             <div class="activity-time">
                                 <i class="material-icons">access_time</i>
@@ -151,20 +151,34 @@
                         <div class="date-time-inner">
                             <div class="hearing-date">
                                 <i class="material-icons">event</i>
-                                {{ hearing.date.strftime('%d.%m.%Y') }}
+                                <span>{{ hearing.date.strftime('%d.%m.%Y') }}</span>
                             </div>
                             <div class="hearing-time">
                                 <i class="material-icons">schedule</i>
-                                {{ hearing.time.strftime('%H:%M') }}
+                                <span>{{ hearing.time.strftime('%H:%M') }}</span>
                             </div>
                         </div>
                     </div>
                     <div class="hearing-details">
-                        <div class="hearing-title">{{ hearing.title }}</div>
-                        {% if hearing.courthouse %}
+                        <div class="hearing-title">
+                            {% set title_lower = hearing.title | lower %}
+                            {% if hearing.event_type == 'durusma' and not title_lower.startswith('duruşma -') %}
+                                <i class="material-icons">gavel</i> Duruşma - {{ hearing.title }}
+                            {% elif hearing.event_type == 'e-durusma' and not title_lower.startswith('e-duruşma -') %}
+                                <i class="material-icons">videocam</i> E-Duruşma - {{ hearing.title }}
+                            {% else %}
+                                {# Başlık zaten türü içeriyorsa veya farklı bir türse ikonu ve başlığı doğrudan göster #}
+                                {% if hearing.event_type == 'durusma' %} <i class="material-icons">gavel</i>
+                                {% elif hearing.event_type == 'e-durusma' %} <i class="material-icons">videocam</i>
+                                {% else %} <i class="material-icons">event</i>
+                                {% endif %}
+                                {{ hearing.title }}
+                            {% endif %}
+                        </div>
+                        {% if hearing.courthouse and hearing.department %}
                         <div class="hearing-location">
                             <i class="material-icons">location_on</i>
-                            {{ hearing.courthouse.split(' ')[0] }} - {{ hearing.department }}
+                            <span>{{ hearing.courthouse }} - {{ hearing.department }}</span>
                         </div>
                         {% endif %}
                     </div>
@@ -173,7 +187,7 @@
                 <div class="no-data">Yaklaşan duruşma bulunmuyor.</div>
                 {% endfor %}
             </div>
-            {% if total_hearings > 3 %}
+            {% if total_hearings > 4 %}
             <div class="view-all-hearings">
                 <a href="{{ url_for('takvim') }}" class="view-all-btn">
                     <span>Tümünü Görüntüle</span>
@@ -303,6 +317,7 @@
 .announcement-item {
     padding: 12px;
     border-bottom: 1px solid #eee;
+    position: relative;
 }
 
 .announcement-title {
@@ -319,8 +334,8 @@
 
 /* Son İşlemler */
 .activities-list {
-    max-height: 400px;
-    overflow-y: auto;
+    max-height: none;
+    overflow-y: visible;
     transition: max-height 0.3s ease;
     padding: 15px;
 }
@@ -476,7 +491,9 @@
 
 /* Yaklaşan Duruşmalar */
 .hearings-list {
-    padding: 15px;
+    max-height: none;
+    overflow-y: hidden;
+    padding: 0 15px;
 }
 
 .hearing-item {
@@ -533,6 +550,14 @@
     color: #333;
     margin-bottom: 5px;
     font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.hearing-title i {
+    font-size: 18px;
+    color: var(--primary-color);
 }
 
 .hearing-location {
@@ -667,30 +692,6 @@
 
 .view-all-btn i {
     font-size: 18px;
-}
-
-/* Duruşma listesi için max-height ekle */
-.hearings-list {
-    max-height: 250px;
-    overflow-y: auto;
-}
-
-/* Scrollbar stilleri */
-.hearings-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.hearings-list::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.hearings-list::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 3px;
-}
-
-.hearings-list::-webkit-scrollbar-thumb:hover {
-    background: #999;
 }
 
 /* Stat kutuları için genel stil */
@@ -935,7 +936,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const activitiesList = document.getElementById('activitiesList');
     const loadMoreBtn = document.getElementById('loadMoreActivities');
     const loadLessBtn = document.getElementById('loadLessActivities');
-    let offset = 5;
+    let offset = 4;
     let isLoading = false;
     let allActivities = [];
 
@@ -979,40 +980,54 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch(`/load_more_activities/${offset}`)
                 .then(response => response.json())
                 .then(data => {
-                    allActivities = data.activities;
-                    
-                    data.activities.forEach(activity => {
-                        const activityHtml = `
-                            <div class="activity-item">
-                                <div class="activity-icon">
-                                    <img src="{{ url_for('static', filename='images/pp.png') }}" alt="Profil">
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-header">
-                                        <p class="activity-text">${activity.description}</p>
-                                        <div class="activity-details">
-                                            ${formatActivityDetails(activity)}
+                    if (data.activities && data.activities.length > 0) {
+                        allActivities = data.activities;
+                        
+                        // Her seferinde en fazla 4 aktivite göster
+                        const activitiesToShow = data.activities.slice(0, 4);
+                        
+                        activitiesToShow.forEach(activity => {
+                            const activityHtml = `
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <img src="{{ url_for('static', filename='images/pp.png') }}" alt="Profil">
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-header">
+                                            <p class="activity-text">${activity.description}</p>
+                                            <div class="activity-details">
+                                                ${formatActivityDetails(activity)}
+                                            </div>
+                                        </div>
+                                        <div class="activity-meta">
+                                            <div class="activity-user">
+                                                <i class="material-icons">person</i>
+                                                <span>İşlemi Yapan: ${activity.user ? activity.user.get_full_name() : 'Bilinmeyen Kullanıcı'}</span>
+                                            </div>
+                                            <div class="activity-time">
+                                                <i class="material-icons">access_time</i>
+                                                <span>${activity.timestamp}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="activity-meta">
-                                        <div class="activity-user">
-                                            <i class="material-icons">person</i>
-                                            <span>İşlemi Yapan: ${activity.user if activity and activity.user else 'Bilinmeyen Kullanıcı'}</span>
-                                        </div>
-                                        <div class="activity-time">
-                                            <i class="material-icons">access_time</i>
-                                            <span>${activity.timestamp}</span>
-                                        </div>
-                                    </div>
                                 </div>
-                            </div>
-                        `;
-                        activitiesList.insertAdjacentHTML('beforeend', activityHtml);
-                    });
-                    
-                    loadMoreBtn.style.display = 'none';
-                    loadLessBtn.style.display = 'block';
-                    activitiesList.classList.add('expanded');
+                            `;
+                            activitiesList.insertAdjacentHTML('beforeend', activityHtml);
+                        });
+                        
+                        // offset değerini güncelle
+                        offset += 4;
+                        
+                        // Eğer gösterilecek başka aktivite kalmadıysa "Daha Fazla Göster" butonunu gizle
+                        if (data.activities.length <= 4) {
+                            loadMoreBtn.style.display = 'none';
+                            loadLessBtn.style.display = 'block';
+                        }
+                    } else {
+                        // Gösterilecek aktivite kalmadı
+                        loadMoreBtn.style.display = 'none';
+                        loadLessBtn.style.display = 'block';
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -1027,16 +1042,54 @@ document.addEventListener('DOMContentLoaded', function() {
     if (loadLessBtn) {
         loadLessBtn.addEventListener('click', function() {
             const items = activitiesList.querySelectorAll('.activity-item');
-            for (let i = items.length - 1; i >= 5; i--) {
+            for (let i = items.length - 1; i >= 4; i--) {
                 items[i].remove();
             }
             
+            offset = 4; // 5'ten 4'e düşürüldü
             loadLessBtn.style.display = 'none';
             loadMoreBtn.style.display = 'block';
             activitiesList.classList.remove('expanded');
             activitiesList.scrollTop = 0;
         });
     }
+
+    // Yaklaşan duruşmalarda tekrarlanan kayıtları temizle
+    function removeDuplicateHearings() {
+        // Yaklaşan duruşmaları seç
+        const hearingsList = document.querySelector('.hearings-list');
+        if (!hearingsList) return;
+        
+        const hearingItems = hearingsList.querySelectorAll('.hearing-item');
+        if (!hearingItems || hearingItems.length == 0) return;
+        
+        // Görülen duruşmaları kontrol et
+        const seenHearings = new Map();
+        
+        hearingItems.forEach(item => {
+            // Duruşmanın benzersiz kimliğini oluştur (tarih + saat + başlık)
+            const date = item.querySelector('.hearing-date span')?.textContent?.trim();
+            const time = item.querySelector('.hearing-time span')?.textContent?.trim();
+            const title = item.querySelector('.hearing-title')?.textContent?.trim();
+            
+            if (date && time && title) {
+                // Konum (adliye ve mahkeme) bilgisini de kimliğe ekle
+                const location = item.querySelector('.hearing-location span')?.textContent?.trim() || '';
+                const uniqueKey = `${date}_${time}_${title}_${location}`;
+                
+                // Eğer bu duruşma daha önce görülmüşse, bu elemanı gizle
+                if (seenHearings.has(uniqueKey)) {
+                    item.style.display = 'none';
+                } else {
+                    // İlk kez görülen duruşmayı kaydet
+                    seenHearings.set(uniqueKey, true);
+                }
+            }
+        });
+    }
+    
+    // Sayfa yüklendiğinde duruşmalardaki tekrarları temizle
+    removeDuplicateHearings();
 });
 </script>
 {% endblock %}

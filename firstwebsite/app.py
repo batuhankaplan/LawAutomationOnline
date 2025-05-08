@@ -13,7 +13,7 @@ from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
 import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi
+from .models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi
 import uuid
 from PIL import Image
 from functools import wraps
@@ -29,6 +29,12 @@ from html import escape  # HTML escape için bu modülü kullanacağız
 from fpdf import FPDF
 from xhtml2pdf import pisa
 import glob # Add glob import
+
+# Flask-Admin imports
+from flask_admin import Admin, AdminIndexView, BaseView, expose
+from flask_admin.contrib.sqla import ModelView
+from flask_admin.actions import action # Import action decorator
+from markupsafe import Markup # For rendering HTML in actions
 
 # Helper function to parse adliyelist.txt
 def parse_adliye_list(filepath='../adliyelist.txt'): # Adjusted path
@@ -97,9 +103,63 @@ def permission_required(permission):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                flash('Bu işlem için giriş yapmanız gerekmektedir.', 'error')
+                return redirect(url_for('login', next=request.url))
+            
+            # Admin kontrolü ekle - Admin her şeyi yapabilir
+            if current_user.is_admin:
+                return f(*args, **kwargs)
+                
+            # Normal kullanıcılar için yetki kontrolü yap
             if not current_user.has_permission(permission):
-                flash('Bu işlem için yetkiniz bulunmamaktadır.', 'error')
+                # Hangi yetkiye ihtiyaç duyulduğunu belirten bir hata mesajı
+                permission_names = {
+                    'dosya_sorgula': 'Dosya Sorgulama',
+                    'dosya_ekle': 'Dosya Ekleme', 
+                    'dosya_duzenle': 'Dosya Düzenleme',
+                    'dosya_sil': 'Dosya Silme',
+                    'takvim_goruntule': 'Takvim Görüntüleme',
+                    'etkinlik_goruntule': 'Etkinlik Görüntüleme',
+                    'etkinlik_ekle': 'Etkinlik Ekleme',
+                    'etkinlik_duzenle': 'Etkinlik Düzenleme',
+                    'etkinlik_sil': 'Etkinlik Silme',
+                    'duyuru_goruntule': 'Duyuru Görüntüleme',
+                    'duyuru_ekle': 'Duyuru Ekleme',
+                    'duyuru_duzenle': 'Duyuru Düzenleme',
+                    'duyuru_sil': 'Duyuru Silme',
+                    'odeme_goruntule': 'Ödeme Görüntüleme',
+                    'odeme_ekle': 'Ödeme Ekleme',
+                    'odeme_duzenle': 'Ödeme Düzenleme',
+                    'odeme_sil': 'Ödeme Silme',
+                    'faiz_hesaplama': 'Faiz Hesaplama',
+                    'harc_hesaplama': 'Harç Hesaplama',
+                    'isci_hesaplama': 'İşçi Alacağı Hesaplama',
+                    'vekalet_hesaplama': 'Vekalet Ücreti Hesaplama',
+                    'ceza_infaz_hesaplama': 'Ceza İnfaz Hesaplama',
+                    'rapor_goruntule': 'Rapor Görüntüleme',
+                    'rapor_olustur': 'Rapor Oluşturma',
+                    'musteri_goruntule': 'Müşteri Görüntüleme',
+                    'musteri_ekle': 'Müşteri Ekleme',
+                    'musteri_duzenle': 'Müşteri Düzenleme',
+                    'musteri_sil': 'Müşteri Silme',
+                    'panel_goruntule': 'Panel Görüntüleme',
+                    'ayarlar': 'Ayarlar Erişimi',
+                    'isci_gorusme_goruntule': 'İşçi Görüşme Görüntüleme',
+                    'isci_gorusme_ekle': 'İşçi Görüşme Ekleme',
+                    'isci_gorusme_duzenle': 'İşçi Görüşme Düzenleme',
+                    'isci_gorusme_sil': 'İşçi Görüşme Silme'
+                }
+                
+                permission_name = permission_names.get(permission, permission)
+                flash(f'Bu işlem için "{permission_name}" yetkisine sahip olmanız gerekiyor.', 'error')
+                
+                # API isteklerinde JSON yanıtı döndür, sayfa isteklerinde anasayfaya yönlendir
+                if request.is_json:
+                    return jsonify({'success': False, 'error': f'Yetkiniz yok: {permission_name}'}), 403
+                    
                 return redirect(url_for('anasayfa'))
+                
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -130,6 +190,181 @@ login_manager.login_message_category = 'info'
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+# --- Flask-Admin Setup ---
+
+# Secure Admin Index View
+class MyAdminIndexView(AdminIndexView):
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.is_admin
+
+    def inaccessible_callback(self, name, **kwargs):
+        # Redirect non-admins or non-authenticated users to login page
+        flash("Yönetim paneline erişim yetkiniz yok.", "error")
+        return redirect(url_for('login', next=request.url))
+
+    @expose('/')
+    def index(self):
+        if not self.is_accessible():
+            return self.inaccessible_callback(name='index')
+
+        # İstatistikleri çek
+        total_users = User.query.count()
+        pending_users_count = User.query.filter_by(is_approved=False).count()
+        total_case_files = CaseFile.query.count()
+        total_calendar_events = CalendarEvent.query.count()
+        
+        # Bugün eklenen aktivite sayısı
+        today_start = datetime.combine(date.today(), time.min)
+        today_end = datetime.combine(date.today(), time.max)
+        activities_today = ActivityLog.query.filter(ActivityLog.timestamp.between(today_start, today_end)).count()
+
+        stats = {
+            'total_users': total_users,
+            'pending_users': pending_users_count,
+            'total_case_files': total_case_files,
+            'total_calendar_events': total_calendar_events,
+            'activities_today': activities_today,
+        }
+        
+        model_views_data = []
+        # Flask-Admin instance'ının ve menüsünün varlığını kontrol et
+        if hasattr(self, '_admin') and self._admin and hasattr(self._admin, 'menu'):
+            for item in self._admin.menu():
+                # Sadece erişilebilir, kategori olmayan, URL'i olan ve 'Home' veya panelin kendi adı olmayan linkleri al
+                is_home_or_panel_name = item.name == self._admin.name or item.name == 'Home'
+                if hasattr(item, 'get_url') and item.is_accessible() and not item.is_category() and not is_home_or_panel_name:
+                    # ModelView'ların ikonlarını almak için menu_icon_type ve menu_icon_value kullanılabilir
+                    icon_class = 'fa-link' # Varsayılan ikon
+                    if hasattr(item, 'menu_icon_type') and item.menu_icon_type == 'fa' and hasattr(item, 'menu_icon_value'):
+                        icon_class = item.menu_icon_value
+                    elif hasattr(item, 'menu_icon_type') and item.menu_icon_type == 'glyph' and hasattr(item, 'menu_icon_value'):
+                        icon_class = f"glyphicon {item.menu_icon_value}" # Glyphicon desteği için
+                    
+                    model_views_data.append({'name': item.name, 'url': item.get_url(), 'icon': icon_class})
+
+        return self.render(
+            'admin/my_index.html', # Kendi özel template'imiz
+            stats=stats,
+            model_views=model_views_data, # Model view linklerini template'e gönder
+            # Gerekli view sınıflarını şablona aktar (HTML'deki get_view_by_class içinde kullanılıyorlar)
+            UserView=UserView,
+            CaseFile=CaseFile, # Bu aslında bir model, eğer CaseFileView gibi bir view varsa o kullanılmalı
+            CalendarEvent=CalendarEvent, # Bu da model, CalendarEventView varsa o kullanılmalı
+            Announcement=Announcement, # Bu da model, AnnouncementView varsa o kullanılmalı
+            ActivityLogView=ActivityLogView
+            # ÖNEMLİ NOT: Eğer CaseFile, CalendarEvent, Announcement için özel ModelView altsınıflarınız
+            # (SecureModelView dışında, örneğin CaseFileView) yoksa ve doğrudan SecureModelView kullanıyorsanız,
+            # o zaman get_view_by_class içine bu model sınıflarını (models.CaseFile vb.) vermelisiniz.
+            # Bu durumda bu sınıfları (models.CaseFile vb.) buraya import edip şablona öyle göndermelisiniz.
+            # Şimdiki my_index.html kurgusunda CaseFile vs. sanki view sınıfıymış gibi kullanılıyor,
+            # bu yüzden ya my_index.html düzeltilmeli ya da bu sınıflar gerçekten view sınıfı olmalı.
+            # Şimdilik app.py içindeki tanımlı view sınıflarını ve bazı temel modelleri geçiyorum.
+            # Eğer CaseFile vb. için özel view'leriniz yoksa, HTML'de sadece UserView ve ActivityLogView
+            # için get_view_by_class kontrolü yapıp, diğerleri için direkt SecureModelView üzerinden
+            # endpoint adına göre link vermek daha doğru olabilir.
+        )
+
+# Secure Model View
+class SecureModelView(ModelView):
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.is_admin
+
+    def inaccessible_callback(self, name, **kwargs):
+        flash("Bu sayfaya erişim yetkiniz yok.", "error")
+        return redirect(url_for('login', next=request.url))
+
+# User Model View Customization
+class UserView(SecureModelView):
+    column_exclude_list = ['password_hash']
+    form_excluded_columns = ['password_hash', 'activities']
+    column_searchable_list = ['username', 'email', 'first_name', 'last_name']
+    column_filters = ['role', 'is_admin', 'is_approved']
+    column_list = ('username', 'email', 'first_name', 'last_name', 'role', 'is_admin', 'is_approved', 'created_at')
+    column_labels = dict(username='Kullanıcı Adı', email='E-posta', first_name='Ad', last_name='Soyad', role='Rol', is_admin='Admin?', is_approved='Onaylı?', created_at='Kayıt Tarihi')
+    
+    can_create = True
+    can_edit = True
+    can_delete = True
+
+    # Kullanıcı onaylama eylemi
+    @action('approve', 'Seçili Kullanıcıları Onayla', 'Seçili kullanıcıları onaylamak istediğinizden emin misiniz?')
+    def action_approve(self, ids):
+        try:
+            query = User.query.filter(User.id.in_(ids))
+            count = 0
+            for user in query.all():
+                if not user.is_approved:
+                    user.is_approved = True
+                    user.approval_date = datetime.now()
+                    user.approved_by = current_user.id
+                    count += 1
+            db.session.commit()
+            flash(f'{count} kullanıcı başarıyla onaylandı.', 'success')
+        except Exception as ex:
+            if not self.handle_view_exception(ex):
+                raise
+            flash(f'Kullanıcılar onaylanırken hata oluştu: {ex}', 'error')
+
+    # Kullanıcı onay durumunu değiştirme eylemi
+    @action('toggle_approval', 'Seçili Kullanıcıların Onay Durumunu Değiştir', 'Seçili kullanıcıların onay durumunu değiştirmek istediğinizden emin misiniz?')
+    def action_toggle_approval(self, ids):
+        try:
+            query = User.query.filter(User.id.in_(ids))
+            approved_count = 0
+            disapproved_count = 0
+            for user in query.all():
+                if user.is_approved:
+                    user.is_approved = False
+                    user.approval_date = None
+                    user.approved_by = None
+                    disapproved_count += 1
+                else:
+                    user.is_approved = True
+                    user.approval_date = datetime.now()
+                    user.approved_by = current_user.id
+                    approved_count += 1
+            db.session.commit()
+            flash(f'{approved_count} kullanıcı onaylandı, {disapproved_count} kullanıcının onayı kaldırıldı.', 'success')
+        except Exception as ex:
+            if not self.handle_view_exception(ex):
+                raise
+            flash(f'Onay durumu değiştirilirken hata oluştu: {ex}', 'error')
+
+# ActivityLog için özel view (ilişkili alanları göstermek için)
+class ActivityLogView(SecureModelView):
+    can_create = False
+    can_edit = False
+    can_delete = True # Logları silebilme (opsiyonel)
+    column_list = ('timestamp', 'user', 'activity_type', 'description', 'related_case', 'related_event')
+    column_labels = dict(timestamp='Zaman Damgası', user='Kullanıcı', activity_type='İşlem Türü', description='Açıklama', related_case='İlgili Dosya', related_event='İlgili Etkinlik')
+    column_formatters = {
+        'user': lambda v, c, m, p: m.user.get_full_name() if m.user else '-',
+        'related_case': lambda v, c, m, p: f"{m.case.client_name} ({m.case.year}/{m.case.case_number})" if m.case else '-',
+        'related_event': lambda v, c, m, p: m.event.title if m.event else '-'
+    }
+    column_filters = ('activity_type', 'user.username', 'timestamp')
+    column_searchable_list = ('description', 'user.username', 'activity_type')
+    column_default_sort = ('timestamp', True) # En son işlem en üstte
+
+# Initialize Flask-Admin
+admin = Admin(app, name='Veri Kontrol', template_mode='bootstrap4', index_view=MyAdminIndexView())
+
+# Add Admin Views for your models
+admin.add_view(UserView(User, db.session, name='Kullanıcılar'))
+admin.add_view(SecureModelView(CaseFile, db.session, name='Dosyalar'))
+admin.add_view(SecureModelView(CalendarEvent, db.session, name='Takvim Etkinlikleri'))
+admin.add_view(SecureModelView(Document, db.session, name='Belgeler'))
+admin.add_view(SecureModelView(Expense, db.session, name='Masraflar'))
+admin.add_view(SecureModelView(Client, db.session, name='Müşteri Ödemeleri'))
+admin.add_view(SecureModelView(Payment, db.session, name='Ödemeler (Taksit)'))
+admin.add_view(SecureModelView(Announcement, db.session, name='Duyurular'))
+admin.add_view(ActivityLogView(ActivityLog, db.session, name='İşlem Kayıtları')) # Özel view kullanıldı
+admin.add_view(SecureModelView(WorkerInterview, db.session, name='İşçi Görüşme (Eski)'))
+admin.add_view(SecureModelView(IsciGorusmeTutanagi, db.session, name='İşçi Görüşme Tutanağı'))
+admin.add_view(SecureModelView(Notification, db.session, name='Bildirimler'))
+
+# --- End Flask-Admin Setup ---
 
 # Auth routes
 @app.route('/login', methods=['GET', 'POST'])
@@ -376,9 +611,19 @@ def enable_2fa():
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or not current_user.is_admin:
-            flash('Bu sayfaya erişim yetkiniz yok.', 'error')
+        if not current_user.is_authenticated:
+            flash('Bu sayfaya erişmek için giriş yapmanız gerekiyor.', 'error')
+            return redirect(url_for('login', next=request.url))
+            
+        if not current_user.is_admin:
+            flash('Bu sayfa sadece yöneticiler tarafından erişilebilir.', 'error')
+            
+            # API istekleri için JSON yanıtı
+            if request.is_json:
+                return jsonify({'success': False, 'error': 'Yönetici yetkisi gerekiyor'}), 403
+                
             return redirect(url_for('anasayfa'))
+            
         return f(*args, **kwargs)
     return decorated_function
 
@@ -453,80 +698,64 @@ def anasayfa():
         logout_user()
         return redirect(url_for('login'))
     
-    # Duyuruları al
-    announcements = Announcement.query.all()
+    # Duyuruları al - Sadece gerekli sütunları seç
+    # announcements = Announcement.query.all() # Eski sorgu
+    announcements = db.session.query(Announcement.id, Announcement.title, Announcement.content).all()
     
     # Dosya türlerine göre sayıları hesapla
     hukuk_count = CaseFile.query.filter_by(file_type='hukuk').count()
     ceza_count = CaseFile.query.filter_by(file_type='ceza').count()
     icra_count = CaseFile.query.filter_by(file_type='icra').count()
     
-    # Son aktiviteleri al (ilk 5 işlem)
-    recent_activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all()
-    # Toplam aktivite sayısını al
+    # Toplam dosya sayısı
+    total_count = hukuk_count + ceza_count + icra_count
+    
+    # Son aktiviteleri al (son 5)
+    activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all()
+    
+    # Toplam aktivite sayısını hesapla
     total_activities = ActivityLog.query.count()
     
-    # Yaklaşan duruşmaları al - hem dosyalardan hem de takvimden (sadece ilk 3)
-    # Önce dosyalardan
-    case_hearings = CalendarEvent.query.filter(
-        CalendarEvent.date >= datetime.now().date(),
-        CalendarEvent.event_type == 'durusma',
-        CalendarEvent.case_id.isnot(None)
-    ).order_by(CalendarEvent.date, CalendarEvent.time).all()
+    # Yaklaşan duruşmaları SADECE takvimden al
+    today = datetime.now().date()
     
-    # Sonra takvimden eklenen duruşmaları al
-    calendar_hearings = CalendarEvent.query.filter(
-        CalendarEvent.date >= datetime.now().date(),
-        CalendarEvent.event_type.in_(['durusma', 'e-durusma']),
-        CalendarEvent.case_id.is_(None), # Dosyadan otomatik eklenenler değil
-        CalendarEvent.file_type.isnot(None) # Dosya bilgileri girilmiş olanlar
-    ).order_by(CalendarEvent.date, CalendarEvent.time).all()
-    
-    # Tüm duruşmaları birleştir ve sırala
-    all_hearings = case_hearings + calendar_hearings
-    all_hearings.sort(key=lambda x: (x.date, x.time))
-    upcoming_hearings = all_hearings[:3]  # İlk 3 duruşma
+    # Sadece takvimden duruşmaları al (hem bağlı hem bağımsız olan tüm duruşma ve e-duruşma etkinlikleri)
+    upcoming_hearings = CalendarEvent.query.filter(
+        CalendarEvent.date >= today,
+        CalendarEvent.event_type.in_(['durusma', 'e-durusma'])
+    ).order_by(CalendarEvent.date, CalendarEvent.time).limit(4).all()
     
     # Toplam duruşma sayısını al
-    total_hearings = len(all_hearings)
+    total_hearings = CalendarEvent.query.filter(
+        CalendarEvent.date >= today,
+        CalendarEvent.event_type.in_(['durusma', 'e-durusma'])
+    ).count()
     
-    # Toplam aktif dosya sayısını hesapla
+    # Kullanıcı yetkilerini kontrol et
+    is_admin = current_user.is_admin
+    user_permissions = current_user.permissions if current_user.permissions else {}
+    takvim_goruntule = user_permissions.get('takvim_goruntule', False) or is_admin
+    
+    # Debug mesajları
+    print(f"Kullanıcı admin mi: {is_admin}")
+    print(f"Kullanıcı yetkileri: {user_permissions}")
+    print(f"Takvim görüntüleme yetkisi: {takvim_goruntule}")
+    
+    # Aktif dosya sayısını hesapla (status=Aktif olan dosyalar)
     total_active_cases = CaseFile.query.filter_by(status='Aktif').count()
     
-    # Adliye istatistiklerini al (en çok dosyası olan ilk 4 adliye)
-    # Sadece dosyalardan adliye bilgisi
-    courthouse_stats = db.session.query(
-        CaseFile.courthouse,
-        db.func.count(CaseFile.id).label('total_cases')
-    ).group_by(CaseFile.courthouse).order_by(db.func.count(CaseFile.id).desc()).limit(4).all()
-    
-    # İstatistikleri dictionary formatına çevir
-    courthouse_stats = [{"courthouse": k, "total_cases": v} for k, v in courthouse_stats]
-    
-    # Her aktivite için kullanıcı bilgisini ve detayları ekle
-    activities_with_details = []
-    for activity in recent_activities:
-        user = User.query.get(activity.user_id)
-        activity_data = {
-            'type': activity.activity_type,
-            'description': activity.description,
-            'timestamp': activity.timestamp,
-            'user': user.get_full_name() if user else 'Bilinmeyen Kullanıcı',
-            'details': activity.details
-        }
-        activities_with_details.append(activity_data)
-    
-    return render_template('anasayfa.html', 
-                         announcements=announcements,
-                         hukuk_count=hukuk_count,
-                         ceza_count=ceza_count,
-                         icra_count=icra_count,
-                         total_active_cases=total_active_cases,
-                         recent_activities=activities_with_details,
-                         total_activities=total_activities,
-                         upcoming_hearings=upcoming_hearings,
-                         total_hearings=total_hearings,
-                         courthouse_stats=courthouse_stats)
+    return render_template('anasayfa.html',
+                           announcements=announcements,
+                           hukuk_count=hukuk_count,
+                           ceza_count=ceza_count,
+                           icra_count=icra_count,
+                           total_count=total_count,
+                           total_active_cases=total_active_cases,
+                           activities=activities, 
+                           total_activities=total_activities,
+                           upcoming_hearings=upcoming_hearings,
+                           total_hearings=total_hearings,
+                           can_view_calendar=takvim_goruntule)
 
 # Daha fazla aktivite yüklemek için yeni endpoint
 @app.route('/load_more_activities/<int:offset>')
@@ -685,12 +914,49 @@ def odemeler():
         name = request.form['name']
         surname = request.form['surname']
         tc = request.form['tc']
-        amount = request.form['amount']
         currency = request.form['currency']
         installments = request.form['installments']
-        date = request.form['date']
+
+        try:
+            # Frontend'den gelen tutarı direkt olarak çevir, hiçbir temizleme işlemi yapmadan
+            amount_str = request.form['amount']
+            
+            # Sayısal değer kontrolü (herhangi bir formatlama yapmıyoruz)
+            try:
+                amount_value = float(amount_str)
+            except ValueError:
+                app.logger.error(f"Tutar dönüşüm hatası: Tutar '{amount_str}' geçerli bir sayı değil")
+                return jsonify({'success': False, 'error': 'Geçersiz tutar formatı. Lütfen sadece sayı girin.'}), 400
+            
+            # Kayıt için kullanılacak değeri log kaydına ekle
+            app.logger.info(f"POST /odemeler - Kaydedilen tutar: {amount_value}")
+        except Exception as e:
+            app.logger.error(f"POST /odemeler - Tutar işleme hatası: {str(e)}")
+            return jsonify({'success': False, 'error': 'Tutar işlenirken bir hata oluştu.'}), 400
+
+        # Tarih alanlarını datetime.date nesnelerine dönüştür
+        registration_date = None
+        due_date = None
         
-        new_client = Client(name=name, surname=surname, tc=tc, amount=amount, currency=currency, installments=installments, date=date)
+        if request.form.get('registration_date'):
+            registration_date = datetime.strptime(request.form.get('registration_date'), '%Y-%m-%d').date()
+        
+        if request.form.get('due_date'):
+            due_date = datetime.strptime(request.form.get('due_date'), '%Y-%m-%d').date()
+        
+        # Yeni client oluştur
+        new_client = Client(
+            name=name, 
+            surname=surname, 
+            tc=tc, 
+            amount=amount_value,  # Sayısal değeri kullan
+            currency=currency, 
+            installments=installments, 
+            registration_date=registration_date, 
+            due_date=due_date
+        )
+        
+        # Kaydet
         db.session.add(new_client)
         
         # Log kaydı
@@ -700,9 +966,10 @@ def odemeler():
             details={
                 'musteri': f'{name} {surname}',
                 'tc': tc,
-                'tutar': f'{amount} {currency}',
+                'tutar': f'{amount_value} {currency}',
                 'taksit': installments,
-                'tarih': date
+                'borc_kayit_tarihi': request.form.get('registration_date'),
+                'son_odeme_tarihi': request.form.get('due_date')
             },
             user_id=current_user.id,
             related_payment_id=new_client.id
@@ -719,95 +986,85 @@ def odemeler():
 @login_required
 def update_client(client_id):
     if not current_user.has_permission('odeme_duzenle'):
-        return jsonify({'success': False, 'error': 'Ödeme düzenleme yetkiniz bulunmamaktadır.'}), 403
-        
-    data = request.get_json()
-    client = Client.query.get(client_id)
-    if client:
-        old_status = client.status
-        client.name = data['name']
-        client.surname = data['surname']
-        client.tc = data['tc']
-        client.amount = data['amount']
-        client.currency = data['currency']
-        client.installments = data['installments']
-        client.date = data['date']
-        client.status = data['status']
-        client.description = data.get('description', '')
-
-        # Ödeme durumu değiştiyse log kaydı ekle
-        if old_status != data['status']:
-            log = ActivityLog(
-                activity_type='odeme_guncelleme',
-                description=f'Ödeme durumu güncellendi: {client.name} {client.surname}',
-                details={
-                    'musteri': f'{client.name} {client.surname}',
-                    'eski_durum': old_status,
-                    'yeni_durum': data['status'],
-                    'tutar': f'{client.amount} {client.currency}'
-                },
-                user_id=current_user.id,
-                related_payment_id=client.id
-            )
-            db.session.add(log)
-        
-        try:
-            db.session.commit()
-            return jsonify({'success': True})
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'success': False, 'error': str(e)})
-    
-    return jsonify({'success': False, 'error': 'Müşteri bulunamadı'})
-
-@app.route('/delete_client/<int:client_id>', methods=['DELETE'])
-@login_required
-def delete_client(client_id):
-    if not current_user.has_permission('odeme_sil'):
-        return jsonify({'success': False, 'error': 'Ödeme silme yetkiniz bulunmamaktadır.'}), 403
+        return jsonify({'success': False, 'error': 'Ödeme düzenleme yetkiniz bulunmamaktadır.'})
         
     try:
-        client = Client.query.get(client_id)
+        data = request.get_json()
+        client = Client.query.get_or_404(client_id)
         if client:
-            # İlgili ödemeleri sil
-            Payment.query.filter_by(client_id=client_id).delete()
+            old_status = client.status
+            client.name = data['name']
+            client.surname = data['surname']
+            client.tc = data['tc']
             
-            # Müşteriyi sil
-            db.session.delete(client)
+            # Frontend'den gelen tutarı doğrudan dönüştür, hiçbir temizleme yapmadan
+            try:
+                amount_str = data['amount']
+                
+                # Sayısal değer kontrolü
+                try:
+                    amount_value = float(amount_str)
+                except ValueError:
+                    app.logger.error(f"Tutar dönüşüm hatası: Tutar '{amount_str}' geçerli bir sayı değil")
+                    return jsonify({'success': False, 'error': 'Geçersiz tutar formatı. Lütfen sadece sayı girin.'}), 400
+                    
+                # Önceki değer ve yeni değeri karşılaştır
+                app.logger.info(f"POST /update_client/{client_id} - Eski tutar: {client.amount}, Yeni tutar: {amount_value}")
+                
+                # Tutarı güncelle
+                client.amount = amount_value
+            except Exception as e:
+                app.logger.error(f"POST /update_client/{client_id} - Tutar işleme hatası: {str(e)}")
+                return jsonify({'success': False, 'error': 'Tutar işlenirken bir hata oluştu.'})
+            
+            client.currency = data['currency']
+            client.installments = data['installments']
+            
+            # Tarih alanlarını datetime.date nesnesine dönüştür
+            if data.get('registration_date'):
+                try:
+                    client.registration_date = datetime.strptime(data['registration_date'], '%Y-%m-%d').date()
+                except ValueError:
+                    return jsonify({'success': False, 'error': 'Geçersiz borç kayıt tarihi formatı'})
+            else:
+                client.registration_date = None
+                
+            if data.get('due_date'):
+                try:
+                    client.due_date = datetime.strptime(data['due_date'], '%Y-%m-%d').date()
+                except ValueError:
+                    return jsonify({'success': False, 'error': 'Geçersiz son ödeme tarihi formatı'})
+            else:
+                client.due_date = None
+                
+            client.status = data['status']
+            client.description = data.get('description', '')
+
+            # Ödeme durumu değiştiyse log kaydı ekle
+            if old_status != data['status']:
+                log = ActivityLog(
+                    activity_type='odeme_guncelleme',
+                    description=f'Ödeme durumu güncellendi: {client.name} {client.surname}',
+                    details={
+                        'musteri': f'{client.name} {client.surname}',
+                        'eski_durum': old_status,
+                        'yeni_durum': data['status'],
+                        'tutar': f'{client.amount} {client.currency}'
+                    },
+                    user_id=current_user.id,
+                    related_payment_id=client.id
+                )
+                db.session.add(log)
+            
             db.session.commit()
-            
-            # Aktivite loguna kaydet
-            log_activity(
-                'delete',
-                f'Ödeme silindi: {client.name} {client.surname}',
-                current_user.id
-            )
-            
             return jsonify({'success': True})
-        else:
-            return jsonify({'success': False, 'error': 'Müşteri bulunamadı'})
-            
+        
+        return jsonify({'success': False, 'error': 'Müşteri bulunamadı'})
     except Exception as e:
         db.session.rollback()
+        # Hata ayrıntılarını kaydet
+        app.logger.error(f"update_client hatası: {str(e)}")
         return jsonify({'success': False, 'error': str(e)})
-
-@app.route('/musteri_sorgula', methods=['GET', 'POST'])
-def musteri_sorgula():
-    if request.method == 'POST':
-        name = request.form['name']
-        surname = request.form['surname']
-        tc = request.form['tc']
-        query = Client.query
-        if name:
-            query = query.filter(Client.name.ilike(f'%{name}%'))
-        if surname:
-            query = query.filter(Client.surname.ilike(f'%{surname}%'))
-        if tc:
-            query = query.filter_by(tc=tc)
-        clients = query.all()
-    else:
-        clients = []
-    return render_template('musteri_sorgula.html', clients=clients)
 
 @app.route('/musteri_yonetimi')
 def musteri_yonetimi():
@@ -1007,6 +1264,8 @@ def case_details(case_id):
         return jsonify(success=False, message=str(e))
 
 @app.route('/edit_case/<int:case_id>', methods=['POST'])
+@login_required
+@permission_required('dosya_duzenle')
 def edit_case(case_id):
     try:
         data = request.get_json()
@@ -1052,6 +1311,8 @@ def edit_case(case_id):
         return jsonify(success=False, message=str(e))
 
 @app.route('/delete_case/<int:case_id>', methods=['POST'])
+@login_required
+@permission_required('dosya_sil')
 def delete_case(case_id):
     case_file = CaseFile.query.get(case_id)
     if case_file:
@@ -1872,16 +2133,19 @@ def get_document_info(document_id):
         })
 
 @app.route('/update_description/<int:case_id>', methods=['POST'])
+@login_required
+@permission_required('dosya_duzenle')
 def update_description(case_id):
     try:
         data = request.get_json()
-        case_file = CaseFile.query.get_or_404(case_id)
-        
-        case_file.description = data.get('description', '')
-        db.session.commit()
-        
-        return jsonify(success=True)
+        case_file = db.session.get(CaseFile, case_id)
+        if case_file:
+            case_file.description = data.get('description', '')
+            db.session.commit()
+            return jsonify(success=True)
+        return jsonify(success=False, message="Dosya bulunamadı")
     except Exception as e:
+        print(f"Hata: {str(e)}")
         db.session.rollback()
         return jsonify(success=False, message=str(e))
 
@@ -2090,40 +2354,90 @@ def toggle_user_status(user_id):
 @login_required
 @admin_required
 def get_user_permissions(user_id):
+    """Kullanıcı yetkilerini JSON formatında döndürür"""
     try:
         user = User.query.get_or_404(user_id)
+        
+        # Tüm yetki anahtarlarını içeren bir sözlük oluştur
+        permissions = user.permissions if user.permissions else {}
+        
+        # Tüm izinler için varsayılan değer olarak False ekle
+        all_permissions = [
+            'dosya_sorgula', 'dosya_ekle', 'dosya_duzenle', 'dosya_sil',
+            'takvim_goruntule', 'etkinlik_ekle', 'etkinlik_duzenle', 'etkinlik_sil', 'etkinlik_goruntule',
+            'duyuru_goruntule', 'duyuru_ekle', 'duyuru_duzenle', 'duyuru_sil',
+            'odeme_goruntule', 'odeme_ekle', 'odeme_duzenle', 'odeme_sil', 'odeme_istatistik_goruntule',
+            'faiz_hesaplama', 'harc_hesaplama', 'isci_hesaplama', 'vekalet_hesaplama', 'ceza_infaz_hesaplama',
+            'rapor_goruntule', 'rapor_olustur',
+            'musteri_goruntule', 'musteri_ekle', 'musteri_duzenle', 'musteri_sil',
+            'panel_goruntule', 'ayarlar', 'isci_gorusme_goruntule', 'isci_gorusme_ekle', 'isci_gorusme_duzenle', 'isci_gorusme_sil'
+        ]
+        
+        # Eksik izinleri ekle
+        for permission in all_permissions:
+            if permission not in permissions:
+                permissions[permission] = False
+        
         return jsonify({
             'success': True,
-            'permissions': user.permissions or {}
+            'permissions': permissions
         })
     except Exception as e:
         return jsonify({
             'success': False,
-            'message': str(e)
-        })
+            'message': f'Kullanıcı yetkileri alınamadı: {str(e)}'
+        }), 500
 
 @app.route('/admin/update_user_permissions/<int:user_id>', methods=['POST'])
 @login_required
 @admin_required
 def update_user_permissions(user_id):
+    """Kullanıcı yetkilerini günceller"""
     try:
         user = User.query.get_or_404(user_id)
         data = request.get_json()
         
         # Yetkileri güncelle
-        user.permissions = data.get('permissions', {})
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Kullanıcı yetkileri güncellendi'
-        })
+        if 'permissions' in data:
+            # Yeni bir permissions sözlüğü oluştur - tamamen değiştir
+            new_permissions = {}
+            
+            # Gelen her yetkiyi yeni sözlüğe ekle
+            for permission, value in data['permissions'].items():
+                new_permissions[permission] = value == True
+            
+            # Kullanıcının permissions alanını tamamen güncelle
+            user.permissions = new_permissions
+            db.session.commit()
+            
+            # Log oluştur
+            log_activity(
+                activity_type='yetki_guncelleme',
+                description=f'Kullanıcı yetkileri güncellendi: {user.username}',
+                user_id=current_user.id,
+                details={
+                    'updated_by': current_user.get_full_name(),
+                    'permissions': new_permissions
+                }
+            )
+            
+            return jsonify({
+                'success': True,
+                'message': 'Kullanıcı yetkileri güncellendi',
+                'permissions': new_permissions
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Yetki bilgileri eksik'
+            }), 400
     except Exception as e:
         db.session.rollback()
+        print(f"Yetki güncelleme hatası: {str(e)}")
         return jsonify({
             'success': False,
-            'message': str(e)
-        })
+            'message': f'Kullanıcı yetkileri güncellenirken hata oluştu: {str(e)}'
+        }), 500
 
 @app.route('/duyuru_duzenle/<int:duyuru_id>', methods=['POST'])
 @login_required
@@ -2187,14 +2501,100 @@ def duyuru_sil(duyuru_id):
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/isci_gorusme')
+@app.route('/isci_gorusme', endpoint='isci_gorusme')
 @login_required
-def isci_gorusme():
+@permission_required('isci_gorusme_goruntule')
+def worker_interview():
     return render_template('isci_gorusme.html')
 
-@app.route('/save_worker_interview', methods=['POST'])
+@app.route('/save_isci_gorusme', methods=['POST'])
 @login_required
-def save_worker_interview():
+@permission_required('isci_gorusme_ekle')
+def save_isci_gorusme():
+    try:
+        form_data = request.form.to_dict()
+        
+        # Tanık durumunu kontrol et
+        witness_option = form_data.get('witnessOption', 'no')
+        
+        # Tarih alanlarını kontrol et - formatı değiştirmeden olduğu gibi kaydet
+        date_fields = ['startDate', 'endDate']
+        for field in date_fields:
+            if field in form_data and form_data[field]:
+                # Tarih formatını kontrol et (GG.AA.YYYY veya GG.AA.YYYY/GG.AA.YYYY)
+                date_str = form_data[field]
+                single_date_regex = r'^\d{2}\.\d{2}\.\d{4}$'
+                dual_date_regex = r'^\d{2}\.\d{2}\.\d{4}/\d{2}\.\d{2}\.\d{4}$'
+                
+                if not (re.match(single_date_regex, date_str) or re.match(dual_date_regex, date_str)):
+                    return jsonify({'success': False, 'error': f'Geçersiz tarih formatı: {field}. Lütfen GG.AA.YYYY veya GG.AA.YYYY/GG.AA.YYYY formatında girin.'})
+            else:
+                # Tarih alanı boş ise hata döndür
+                return jsonify({'success': False, 'error': f'{field} alanı boş olamaz'})
+        
+        # Form ID'si varsa güncelle, yoksa yeni kayıt oluştur
+        form_id = form_data.get('id')
+        if form_id:
+            form = IsciGorusmeTutanagi.query.get(int(form_id))
+            if not form:
+                return jsonify({'success': False, 'error': 'Form bulunamadı'})
+        else:
+            form = IsciGorusmeTutanagi()
+            form.user_id = current_user.id
+        
+        # Form verilerini modele aktar
+        for key, value in form_data.items():
+            if key != 'id' and hasattr(form, key):
+                # Tarih alanlarını string olarak sakla
+                if key in date_fields:
+                    # Tarih alanlarını string olarak bırak, dönüştürme yapma
+                    setattr(form, key, value)
+                else:
+                    setattr(form, key, value)
+        
+        # Tanık bilgilerini işle
+        if witness_option == 'yes':
+            # Tanık sayısını al
+            witness_count = int(form_data.get('witnessCount', 0))
+            witnesses = []
+            
+            # Tanıkları ekle
+            for i in range(1, witness_count + 1):
+                witness_name_key = f'witness{i}Name'
+                witness_info_key = f'witness{i}Info'
+                
+                if witness_name_key in form_data:
+                    witness_name = form_data.get(witness_name_key, '').strip()
+                    witness_info = form_data.get(witness_info_key, '').strip()
+                    
+                    if witness_name:  # Sadece adı dolu olan tanıkları ekle
+                        witnesses.append({
+                            'name': witness_name,
+                            'info': witness_info
+                        })
+            
+            # Tanık bilgilerini JSON olarak kaydet
+            form.witnesses = json.dumps({
+                'count': len(witnesses),
+                'witnesses': witnesses
+            })
+        else:
+            # Tanık seçeneği "yok" ise boş liste olarak ayarla
+            form.witnesses = json.dumps({'count': 0, 'witnesses': []})
+        
+        # Veritabanına kaydet
+        db.session.add(form)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        print(f"Form kaydetme hatası: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/save_isci_gorusme_json', methods=['POST'])
+@login_required
+@permission_required('isci_gorusme_ekle')
+def save_isci_gorusme_json():
     try:
         data = request.get_json()
         
@@ -2293,9 +2693,12 @@ def generate_worker_interview_pdf():
     # Bu fonksiyon artık kullanılmıyor, PDF oluşturma işlemi tamamen client-side yapılacak
     return jsonify({'success': True, 'message': 'PDF oluşturma işlemi artık client-side yapılıyor'})
 
-@app.route('/save_isci_gorusme', methods=['POST'])
+
+
+@app.route('/save_isci_gorusme_form', methods=['POST'])
 @login_required
-def save_isci_gorusme():
+@permission_required('isci_gorusme_ekle')
+def save_isci_gorusme_form():
     try:
         form_data = request.form.to_dict()
         
@@ -2379,6 +2782,7 @@ def save_isci_gorusme():
 # Kaydedilmiş formları getirme
 @app.route('/get_isci_gorusme_forms')
 @login_required
+@permission_required('isci_gorusme_goruntule')
 def get_isci_gorusme_forms():
     try:
         forms = IsciGorusmeTutanagi.query.filter_by(user_id=current_user.id).order_by(IsciGorusmeTutanagi.created_at.desc()).all()
@@ -2398,6 +2802,7 @@ def get_isci_gorusme_forms():
 # Belirli bir formu getirme
 @app.route('/get_isci_gorusme_form/<int:form_id>')
 @login_required
+@permission_required('isci_gorusme_goruntule')
 def get_isci_gorusme_form(form_id):
     try:
         form = IsciGorusmeTutanagi.query.get(form_id)
@@ -2421,6 +2826,7 @@ def get_isci_gorusme_form(form_id):
 # Form silme
 @app.route('/delete_isci_gorusme_form/<int:form_id>', methods=['DELETE'])
 @login_required
+@permission_required('isci_gorusme_sil')
 def delete_isci_gorusme_form(form_id):
     try:
         form = IsciGorusmeTutanagi.query.get(form_id)
@@ -2438,61 +2844,165 @@ def delete_isci_gorusme_form(form_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/worker_interview')
+@app.route('/worker_interview', endpoint='worker_interview_alt')
 @login_required
 def worker_interview():
     return render_template('worker_interview.html')
 
+@app.route('/worker_interview_page')
+@login_required
+def worker_interview_page():
+    return render_template('worker_interview.html')
+
+def create_admin_user():
+    """Admin kullanıcısı oluşturur (daha önce yoksa)"""
+    admin_exists = User.query.filter_by(username='admin').first()
+    if not admin_exists:
+        admin_user = User(
+            username='admin',
+            email='admin@lawautomation.com',
+            first_name='Admin',
+            last_name='Kullanıcısı',
+            role='Yönetici Avukat',
+            gender='erkek',
+            phone='5555555555',
+            birthdate=datetime(1990, 1, 1).date(),
+            is_admin=True,
+            is_approved=True,
+            approval_date=datetime.now(),
+            permissions={
+                'takvim_goruntule': True,
+                'etkinlik_ekle': True,
+                'etkinlik_duzenle': True,
+                'etkinlik_sil': True,
+                'etkinlik_goruntule': True,
+                'duyuru_goruntule': True,
+                'duyuru_ekle': True,
+                'duyuru_duzenle': True,
+                'duyuru_sil': True,
+                'odeme_goruntule': True,
+                'odeme_ekle': True,
+                'odeme_duzenle': True,
+                'odeme_sil': True,
+                'dosya_sorgula': True,
+                'dosya_ekle': True,
+                'dosya_duzenle': True,
+                'dosya_sil': True,
+                'faiz_hesaplama': True,
+                'harc_hesaplama': True,
+                'isci_hesaplama': True,
+                'vekalet_hesaplama': True,
+                'ceza_infaz_hesaplama': True
+            }
+        )
+        admin_user.set_password('Pemus3458')
+        db.session.add(admin_user)
+        db.session.commit()
+        print("Admin kullanıcısı oluşturuldu!")
+    else:
+        print("Admin kullanıcısı zaten mevcut.")
+
+@app.route('/admin/get_user_info/<int:user_id>')
+@login_required
+@admin_required
+def get_user_info(user_id):
+    """Kullanıcı bilgilerini JSON formatında döndürür"""
+    try:
+        user = User.query.get_or_404(user_id)
+        return jsonify({
+            'success': True,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': user.role,
+                'is_admin': user.is_admin,
+                'is_approved': user.is_approved,
+                'created_at': user.created_at.strftime('%d.%m.%Y %H:%M') if user.created_at else None,
+                'approval_date': user.approval_date.strftime('%d.%m.%Y %H:%M') if user.approval_date else None
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Kullanıcı bilgileri alınamadı: {str(e)}'
+        }), 500
+
+
+
+# User model için permission bağımlılıklarını güncelleyelim
+def get_permission_dependencies():
+    """Yetkiler arasındaki bağımlılıkları döndürür"""
+    return {
+        # Dosya işlemleri
+        'dosya_ekle': ['dosya_sorgula'],
+        'dosya_duzenle': ['dosya_sorgula'],
+        'dosya_sil': ['dosya_sorgula'],
+        
+        # Takvim işlemleri
+        'etkinlik_ekle': ['takvim_goruntule'],
+        'etkinlik_duzenle': ['takvim_goruntule'],
+        'etkinlik_sil': ['takvim_goruntule'],
+        
+        # Duyuru işlemleri
+        'duyuru_ekle': ['duyuru_goruntule'],
+        'duyuru_duzenle': ['duyuru_goruntule'],
+        'duyuru_sil': ['duyuru_goruntule'],
+        
+        # Ödeme işlemleri
+        'odeme_ekle': ['odeme_goruntule'],
+        'odeme_duzenle': ['odeme_goruntule'],
+        'odeme_sil': ['odeme_goruntule'],
+        'odeme_istatistik_goruntule': ['odeme_goruntule'],
+        
+        # Müşteri işlemleri
+        'musteri_ekle': ['musteri_goruntule'],
+        'musteri_duzenle': ['musteri_goruntule'],
+        'musteri_sil': ['musteri_goruntule'],
+        
+        # Rapor işlemleri
+        'rapor_olustur': ['rapor_goruntule']
+    }
+
+# Müşteri silme route'u ekleyelim
+@app.route('/delete_client/<int:client_id>', methods=['DELETE'])
+@login_required
+def delete_client(client_id):
+    if not current_user.has_permission('odeme_sil'):
+        return jsonify({'success': False, 'error': 'Ödeme silme yetkiniz bulunmamaktadır.'})
+        
+    client = Client.query.get_or_404(client_id)
+    
+    # Log kaydı
+    log = ActivityLog(
+        activity_type='odeme_silme',
+        description=f'Ödeme silindi: {client.name} {client.surname}',
+        details={
+            'musteri': f'{client.name} {client.surname}',
+            'tc': client.tc,
+            'tutar': f'{client.amount} {client.currency}'
+        },
+        user_id=current_user.id
+    )
+    
+    try:
+        db.session.add(log)
+        db.session.delete(client)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
 if __name__ == '__main__':
     with app.app_context():
-        # Mevcut veritabanını sil
-        db.drop_all()
-        # Yeni şema ile veritabanını oluştur
+        # Veritabanı tablolarının var olup olmadığını kontrol et,
+        # yoksa oluştur (Mevcut verileri silmez)
         db.create_all()
         
-        # Admin kullanıcısını oluştur
-        admin_user = User.query.filter_by(email='admin@kaplanhukuk.com').first()
-        if not admin_user:
-            admin_user = User(
-                email='admin@kaplanhukuk.com',
-                username='admin',
-                first_name='Admin',
-                last_name='Kullanıcısı',
-                role='Yönetici Avukat',
-                gender='erkek',
-                phone='5555555555',
-                birthdate=datetime(1990, 1, 1).date(),
-                is_admin=True,
-                is_approved=True,
-                approval_date=datetime.now(),
-                permissions={
-                    'takvim_goruntule': True,
-                    'etkinlik_ekle': True,
-                    'etkinlik_duzenle': True,
-                    'etkinlik_sil': True,
-                    'etkinlik_goruntule': True,
-                    'duyuru_goruntule': True,
-                    'duyuru_ekle': True,
-                    'duyuru_duzenle': True,
-                    'duyuru_sil': True,
-                    'odeme_goruntule': True,
-                    'odeme_ekle': True,
-                    'odeme_duzenle': True,
-                    'odeme_sil': True,
-                    'dosya_sorgula': True,
-                    'dosya_ekle': True,
-                    'dosya_duzenle': True,
-                    'dosya_sil': True,
-                    'faiz_hesaplama': True,
-                    'harc_hesaplama': True,
-                    'isci_hesaplama': True,
-                    'vekalet_hesaplama': True,
-                    'ceza_infaz_hesaplama': True
-                }
-            )
-            admin_user.set_password('Pemus3458')
-            db.session.add(admin_user)
-            db.session.commit()
-            print("Admin kullanıcısı oluşturuldu!")
-    
+        # Admin kullanıcısını kontrol et/oluştur
+        create_admin_user()
+        
     app.run(debug=True)

@@ -1,3 +1,8 @@
+from flask import request, jsonify, flash, redirect, url_for
+from flask_login import login_required, current_user
+from firstwebsite.models import db, Announcement, CalendarEvent, ActivityLog
+from firstwebsite import app
+
 # Duyuru ekleme route'u
 @app.route('/duyuru_ekle', methods=['POST'])
 @login_required

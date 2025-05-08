@@ -106,8 +106,17 @@ function previewImage(input) {
     }
 }
 
-// Profil formu gönderildiğinde
+// Sayfa yüklendiğinde çalışacak kodlar
 $(document).ready(function() {
+    // Toast mesajlarını temizle
+    clearAllToasts();
+    
+    // Link tıklamaları için event listener ekle
+    $(document).on('click', 'a', function() {
+        // Toast mesajlarını temizle 
+        clearAllToasts();
+    });
+    
     $('#profile-form').on('submit', function(e) {
         e.preventDefault();
         
@@ -145,4 +154,20 @@ $(document).ready(function() {
             toastr.warning('Lütfen tüm gerekli alanları doldurun');
         }
     });
-}); 
+});
+
+// Toast mesajlarını temizleme fonksiyonu
+function clearAllToasts() {
+    // Toastr kütüphanesinin toast mesajlarını temizle
+    if (typeof toastr !== 'undefined') {
+        toastr.clear();
+    }
+    
+    // Özel toast elementlerini temizle
+    const customToasts = document.querySelectorAll('.toast');
+    if (customToasts.length > 0) {
+        customToasts.forEach(toast => {
+            toast.remove();
+        });
+    }
+} 

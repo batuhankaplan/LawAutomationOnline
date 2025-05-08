@@ -26,6 +26,7 @@ HATA VE BUGLAR:
 9) Search boxta kayıtlı ödeme ismiyle birini arayıp tıklatınca hatalı sayfaya atıyor. Hata: Not Found
 The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. (url:http://127.0.0.1:5000/musteri_detay/1) (Ödemeler ekranında bir detay sayfası ekleyelim search boxta aratınca da otomatik ödeme detaylarına atsın)
 10) Dosya detayları modalında masraflar ve belgeler belge ekle ve masraf ekle çalışmıyor. 
+11) İşçi görüşme tutanağında yazdır seçeneği çalışmıyor.
 
 EK: Dosya eklemede yapılacak düzenlemeler:
 1) Dosya ekleme sayfasına Dosya Türü seçiminden hemen sonra Şehir seçimi gelsin. 81 il burada listelensin. İstanbul adliyeleri zaten listemizde var dolayısı ile İstanbul dışındaki diğer illerin adliyeleri de buraya eklensin. Liste: adliyelist.txt dosyasında var. @adliyelist.txt 

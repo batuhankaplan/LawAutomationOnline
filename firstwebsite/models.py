@@ -25,7 +25,7 @@ class User(UserMixin, db.Model):
     is_approved = db.Column(db.Boolean, default=False)
     approval_date = db.Column(db.DateTime)
     approved_by = db.Column(db.Integer, db.ForeignKey('user.id'))
-    permissions = db.Column(db.JSON, default=dict)
+    permissions = db.Column(db.JSON, default={})
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -34,36 +34,23 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def has_permission(self, permission):
+        """Kullanıcının belirli bir yetkiye sahip olup olmadığını kontrol eder"""
         if self.is_admin:  # Admin her şeyi yapabilir
             return True
             
-        # Bazı yetkiler birbirine bağımlı
-        permission_dependencies = {
-            'duyuru_ekle': ['duyuru_goruntule'],
-            'duyuru_duzenle': ['duyuru_goruntule'],
-            'duyuru_sil': ['duyuru_goruntule'],
-            'etkinlik_ekle': ['takvim_goruntule'],
-            'etkinlik_duzenle': ['takvim_goruntule'],
-            'etkinlik_sil': ['takvim_goruntule'],
-            'odeme_ekle': ['odeme_goruntule'],
-            'odeme_duzenle': ['odeme_goruntule'],
-            'odeme_sil': ['odeme_goruntule'],
-            'dosya_ekle': ['dosya_sorgula'],
-            'dosya_duzenle': ['dosya_sorgula'],
-            'dosya_sil': ['dosya_sorgula']
-        }
+        # Eğer yetkiler hiç tanımlanmamışsa
+        if not self.permissions:
+            return False
+            
+        # İstenen yetkiyi doğrudan kontrol et
+        if permission in self.permissions and self.permissions[permission]:
+            return True
         
-        # Doğrudan yetkiyi kontrol et
-        if self.permissions and permission in self.permissions and self.permissions[permission]:
+        # Özel durumlar için kontrol
+        # Eğer takvim görüntüleme yetkisi varsa ve etkinlik_görüntüleme istenmişse izin ver
+        if permission == 'etkinlik_goruntule' and 'takvim_goruntule' in self.permissions and self.permissions['takvim_goruntule']:
             return True
             
-        # İstenen yetkiyi veya bağımlı olduğu yetkileri kontrol et
-        if permission in permission_dependencies:
-            # Eğer bağımlı yetkilerden biri varsa, bu yetkiyi de ver
-            for required_permission in permission_dependencies[permission]:
-                if self.permissions and required_permission in self.permissions and self.permissions[required_permission]:
-                    return True
-                    
         return False
 
     def get_title(self):
@@ -117,7 +104,8 @@ class Client(db.Model):
     amount = db.Column(db.Float, nullable=False)
     currency = db.Column(db.String(3), nullable=False)
     installments = db.Column(db.Integer, nullable=False)
-    date = db.Column(db.String(10), nullable=False)
+    registration_date = db.Column(db.Date, nullable=True)  # Borç kayıt tarihi
+    due_date = db.Column(db.Date, nullable=True)  # Son ödeme tarihi
     payments = db.relationship('Payment', backref='client', lazy=True)
     status = db.Column(db.String(10), nullable=False, default='Ödenmedi')
     description = db.Column(db.Text, nullable=True)
@@ -177,6 +165,7 @@ class Announcement(db.Model):
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class CalendarEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
