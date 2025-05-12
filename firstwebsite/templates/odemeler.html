@@ -333,6 +333,7 @@
                             <h4>Yıllara Göre Beklenen Ödemeler (Ödenmemiş)</h4>
                             <div id="expectedPaymentsByYearTableContainer">
                                 <!-- Tablo JavaScript ile eklenecek -->
+                                <canvas id="expectedPaymentsByYearChart" style="height: 300px; min-height: 250px;"></canvas>
                             </div>
                         </div>
                     </div>
@@ -641,15 +642,15 @@
         }
         
         .status-paid {
-            background-color: rgba(76, 175, 80, 0.7); /* Yeşilimsi arka plan */
-            color: white;                             /* Beyaz metin */
-            border: 1px solid rgb(34, 87, 36);      /* Daha koyu tok yeşil çerçeve */
+            background-color: rgba(76, 175, 80, 0.7) !important; /* Yeşilimsi arka plan */
+            color: white !important;                             /* Beyaz metin */
+            border: 1px solid rgb(34, 87, 36) !important;      /* Daha koyu tok yeşil çerçeve */
         }
         
         .status-unpaid {
-            background-color: rgba(244, 67, 54, 0.7); /* Kırmızımsı arka plan */
-            color: white;                              /* Beyaz metin */
-            border: 1px solid rgb(139, 23, 19);       /* Daha koyu tok kırmızı çerçeve */
+            background-color: rgba(244, 67, 54, 0.7) !important; /* Kırmızımsı arka plan */
+            color: white !important;                              /* Beyaz metin */
+            border: 1px solid rgb(139, 23, 19) !important;       /* Daha koyu tok kırmızı çerçeve */
         }
         
         .status-badge.status-paid:hover {
@@ -1543,6 +1544,16 @@
                         editModal.style.display = 'none';
                     }
                 });
+
+                // Düzenleme Modalı içindeki Ödeme Durumu geçiş anahtarını dinle
+                const editStatusCheckbox = editModal.querySelector('#editStatus');
+                const statusTextSpan = editModal.querySelector('.status-text'); // Daha spesifik seçici
+                
+                if (editStatusCheckbox && statusTextSpan) {
+                    editStatusCheckbox.addEventListener('change', function() {
+                        statusTextSpan.textContent = this.checked ? 'Ödendi' : 'Ödenmedi';
+                    });
+                }
             }
             
             // İstatistik butonuna tıklandığında modalı aç
@@ -1807,6 +1818,7 @@
             
             let highestPayment = { amount: 0, clientName: '-', date: '-', currency: 'TL' };
             let mostOverdue = { days: 0, clientName: '-', amount: 0, currency: 'TL', dueDate: '-' };
+            let totalOverdueAmountTL = 0; // *** YENİ: Vadesi geçmiş TL tutarı için ***
             
             // İstatistik sayaçları
             let paidCount = 0;
@@ -1926,6 +1938,12 @@
                                     dueDate: dueDateText
                                 };
                             }
+                            
+                            // *** YENİ: Vadesi geçmiş TL tutarını topla ***
+                            if (currency === 'TL') {
+                                totalOverdueAmountTL += amount;
+                            }
+                            // *** BİTTİ: Vadesi geçmiş TL tutarını topla ***
                         }
                         
                         // Gelecek tahminleri için - vadesi yaklaşan ödemeler
@@ -2107,7 +2125,8 @@
             
             document.getElementById('paidClients').textContent = `${paidCount} Müvekkil`;
             document.getElementById('unpaidClients').textContent = `${unpaidCount} Müvekkil`;
-            document.getElementById('overdueAmount').textContent = `${formatCurrency(currencyTotals.TL.unpaid)} TL`;
+            // *** DÜZELTİLDİ: overdueAmount artık hesaplanan toplamı kullanıyor ***
+            document.getElementById('overdueAmount').textContent = `${typeof formatCurrency === 'function' ? formatCurrency(totalOverdueAmountTL) : totalOverdueAmountTL} TL`;
             
             // Ödeme durumu istatistikleri
             document.getElementById('paidTransCount').textContent = paidCount;
@@ -2210,6 +2229,7 @@
                 lowestClient,
                 avgPerClient,
                 clientVariation,
+                totalOverdueAmountTL, // *** YENİ: Hesaplanan değeri ekle ***
                 clients: clients.length
             };
             
@@ -2224,8 +2244,9 @@
         function updateActiveTab(tabName) {
             switch(tabName) {
                 case 'summary':
-                    populateSummaryTab();
+                    // populateSummaryTab(); // Bu fonksiyonun varlığını kontrol et veya kaldır
                     createSummaryChart();
+                    createExpectedPaymentsByYearChart(); // *** YENİ: Grafik çağrısını ekle ***
                     break;
                 case 'monthly':
                     createMonthlyChart();
@@ -3025,5 +3046,93 @@
 
             tableContainer.appendChild(table);
         }
+
+        // *** YENİ FONKSİYON: Yıllara Göre Beklenen Ödemeler Grafiği ***
+        let expectedPaymentsChartInstance = null; // Grafik örneğini takip etmek için
+
+        function createExpectedPaymentsByYearChart() {
+            // Gerekli verilerin varlığını kontrol et
+            if (!window.statsData || !window.statsData.expectedPaymentsByYear) {
+                console.log("Yıllara göre beklenen ödeme verisi bulunamadı.");
+                return; 
+            }
+
+            const expectedData = window.statsData.expectedPaymentsByYear;
+            // Yılları sayısal olarak sırala
+            const years = Object.keys(expectedData).map(Number).sort((a, b) => a - b); 
+            
+            // Sadece TL tutarlarını al
+            const amountsTL = years.map(year => expectedData[year.toString()]['TL'] || 0); 
+            // İsteğe bağlı: Gerekirse USD/EUR eklemek veya dönüştürmek için mantık ekle
+
+            const ctx = document.getElementById('expectedPaymentsByYearChart')?.getContext('2d');
+            if (!ctx) {
+                console.error("expectedPaymentsByYearChart canvas bulunamadı!");
+                return;
+            }
+
+            // Varsa önceki grafik örneğini yok et
+            if (expectedPaymentsChartInstance) {
+                expectedPaymentsChartInstance.destroy();
+            }
+
+            // formatCurrency fonksiyonunun varlığını kontrol et
+            const formatFunc = typeof formatCurrency === 'function' ? formatCurrency : (val) => val;
+
+            // Grafik oluşturma
+            expectedPaymentsChartInstance = new Chart(ctx, {
+                type: 'bar', // Çubuk grafik
+                data: {
+                    labels: years, // X ekseni etiketleri (yıllar)
+                    datasets: [{
+                        label: 'Beklenen Ödeme (TL)', // Veri seti etiketi
+                        data: amountsTL, // Y ekseni verileri (tutarlar)
+                        backgroundColor: 'rgba(244, 67, 54, 0.7)', // Kırmızı (ödenmemiş)
+                        borderColor: 'rgba(211, 47, 47, 1)',  // Koyu Kırmızı
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Grafiğin kapsayıcıya sığmasına izin ver
+                    scales: {
+                        y: { // Y ekseni ayarları
+                            beginAtZero: true, // Sıfırdan başla
+                            ticks: {
+                                // Tutarları formatlamak için callback
+                                callback: function(value) { 
+                                    return formatFunc(value) + ' TL'; 
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: { // Başlık ekle
+                            display: true,
+                            text: 'Yıllara Göre Beklenen Ödenmemiş TL Ödemeleri',
+                            font: { size: 14 }
+                        },
+                        legend: { display: false }, // Tek veri seti olduğu için açıklamayı gizle
+                        tooltip: { // Fare üzerine gelince çıkan ipucu ayarları
+                            callbacks: {
+                                // İpucu etiketini formatla
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += formatFunc(context.parsed.y) + ' TL'; 
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log("Yıllara göre beklenen ödemeler grafiği oluşturuldu.");
+        }
+        // *** BİTTİ: Yeni Fonksiyon ***
     </script>
 {% endblock %}

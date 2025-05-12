@@ -1050,7 +1050,23 @@
 +}
 </style>
 
+<!-- TIFF ve DOCX Önizleme Kütüphaneleri -->
+<script src="https://cdn.jsdelivr.net/npm/tiff.js/tiff.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx-preview@0.1.16/dist/docx-preview.min.js"></script>
+
 <script>
+// Örnek Masraf Türleri (Bunları kendi türlerinizle değiştirin)
+const expenseTypes = [
+    "Dava Harcı", "Vekalet Ücreti", "Posta Gideri", "Yol Gideri",
+    "Bilirkişi Ücreti", "Tebligat Gideri", "Keşif Harcı", "Diğer"
+];
+
+// Örnek Belge Türleri (Bunları kendi türlerinizle değiştirin)
+const documentTypes = [
+    "Dilekçe", "Vekaletname", "Fatura", "Makbuz", "Karar",
+    "Tutanak", "İhtarname", "Sözleşme", "Delil", "Diğer"
+];
+
 let currentCaseId = null;
 let currentExpenses = [];
 
@@ -1080,6 +1096,25 @@ const istanbulSpecificCourthouses = [
     "Adalar Adliyesi",
     "Sarıyer Adliyesi"
 ];
+
+// Hata mesajı gösterme işlevi 
+function showError(message) {
+    Swal.fire({
+        icon: 'error',
+        title: 'Hata Oluştu',
+        text: message,
+        confirmButtonText: 'Tamam'
+    });
+}
+
+// docx-preview kütüphanesinin varlığını kontrol et
+function checkDocxPreviewAvailability() {
+    if (typeof window.docx === 'undefined') {
+        console.error('docx-preview kütüphanesi bulunamadı');
+        return false;
+    }
+    return true;
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Sayfa yüklendiğinde başlangıç durumunu ayarla
@@ -2229,33 +2264,269 @@ function previewDocument(docId, filename) {
     showPreviewModal(docId, filename, ext);
 }
 
-// Önizleme modalını güncelle
+// Önizleme modalını güncelle (TIFF ve DOCX desteği ekle)
 function showPreviewModal(docId, filename, ext) {
+    const previewUrl = `/preview_document/${docId}`;
+    const modalContentElement = document.createElement('div');
+    modalContentElement.className = 'modal-content preview-modal-content';
+
     const previewHtml = `
-        <div class="modal-content preview-modal-content">
-            <div class="modal-header">
-                <h2>${filename}</h2>
-                <button class="close-btn" onclick="closePreviewModal()">
-                    <i class="material-icons">close</i>
-                </button>
-            </div>
-            <div class="modal-body preview-modal-body">
-                <div class="document-preview-container">
-                    ${ext === 'pdf' ? 
-                        `<iframe id="previewFrame" src="/preview_document/${docId}" frameborder="0"></iframe>` :
-                        `<img src="/preview_document/${docId}" alt="Belge önizleme">`
-                    }
-                </div>
+        <div class="modal-header">
+            <h2>${filename}</h2>
+            <button class="close-btn" onclick="closePreviewModal()">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        <div class="modal-body preview-modal-body">
+            <div class="document-preview-container" id="previewContainer-${docId}" style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: white;">
+                <p>Önizleme yükleniyor...</p> {# Initial loading message #}
             </div>
         </div>
     `;
-    
+    modalContentElement.innerHTML = previewHtml;
+
     const previewModal = document.createElement('div');
     previewModal.id = 'previewModal';
     previewModal.className = 'file-detail-modal';
-    previewModal.innerHTML = previewHtml;
+    previewModal.appendChild(modalContentElement);
     document.body.appendChild(previewModal);
     previewModal.style.display = 'flex';
+
+    const previewContainer = document.getElementById(`previewContainer-${docId}`);
+    previewContainer.innerHTML = '<p>Önizleme yükleniyor...</p>'; // Reset content
+
+    function showError(message) {
+        previewContainer.style.background = 'white';
+        previewContainer.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <i class="material-icons" style="font-size: 48px; color: #999;">error_outline</i>
+                <p style="margin-top: 15px; font-size: 1.1rem; color: #555;">${message}</p>
+                <p style="margin-top: 10px; font-size: 0.9rem; color: #777;">Belgeyi görüntülemek için lütfen indirin.</p>
+                <button class="btn primary" style="margin-top: 20px;" onclick="downloadDocument(${docId})">
+                    <i class="material-icons" style="margin-right: 5px;">download</i> İndir
+                </button>
+            </div>
+        `;
+    }
+
+    // UDF için özel görüntüleyici
+    function showUdfHelp() {
+        previewContainer.style.background = 'white';
+        previewContainer.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <i class="material-icons" style="font-size: 48px; color: #3f51b5;">info</i>
+                <p style="margin-top: 15px; font-size: 1.1rem; color: #555;">UDF Dosyası (Ulusal Yargı Ağı Projesi)</p>
+                <p style="margin: 15px 0; color: #666; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    UDF dosyaları, UYAP sistemine özgü belgelerdir ve özel UYAP Editör yazılımı ile açılmalıdır. 
+                    Bu dosyaları görüntülemek için aşağıdaki adımları takip edebilirsiniz:
+                </p>
+                <ol style="text-align: left; max-width: 600px; margin: 15px auto; color: #666;">
+                    <li>Dosyayı indirin</li>
+                    <li>UYAP Editör programını açın (bilgisayarınızda yüklü değilse <a href="https://www.e-justice.gov.tr/indir" target="_blank">e-justice.gov.tr</a> adresinden edinebilirsiniz)</li>
+                    <li>İndirdiğiniz UDF dosyasını UYAP Editör ile açın</li>
+                </ol>
+                <button class="btn primary" style="margin-top: 20px;" onclick="downloadDocument(${docId})">
+                    <i class="material-icons" style="margin-right: 5px;">download</i> UDF Dosyasını İndir
+                </button>
+            </div>
+        `;
+    }
+
+    if (ext === 'pdf' || ext === 'txt') {
+        previewContainer.style.background = '#f5f5f5';
+        previewContainer.innerHTML = `<iframe id="previewFrame" src="${previewUrl}" frameborder="0" style="width: 100%; height: 100%;"></iframe>`;
+    } else if (['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'].includes(ext)) {
+        previewContainer.style.background = '#f5f5f5';
+        previewContainer.innerHTML = `<img src="${previewUrl}" alt="Belge önizleme" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+    } else if (ext === 'tiff' || ext === 'tif') {
+        previewContainer.style.background = '#f5f5f5';
+        fetch(previewUrl)
+            .then(response => {
+                if (!response.ok) throw new Error('TIFF dosyası yüklenemedi');
+                return response.arrayBuffer();
+            })
+            .then(buffer => {
+                Tiff.initialize({ TOTAL_MEMORY: 16777216 * 5 }); // Bellek ayır
+                const tiff = new Tiff({ buffer: buffer });
+                const canvas = tiff.toCanvas();
+                canvas.style.maxWidth = '100%';
+                canvas.style.maxHeight = '100%';
+                canvas.style.objectFit = 'contain';
+                previewContainer.innerHTML = ''; // Clear loading
+                previewContainer.appendChild(canvas);
+            })
+            .catch(error => {
+                console.error('TIFF Önizleme Hatası:', error);
+                showError(`".${ext}" uzantılı dosya için önizleme yüklenirken hata oluştu.`);
+            });
+    } else if (ext === 'docx' || ext === 'doc') {
+        // Client tarafında docx-preview kütüphanesini kullan
+        previewContainer.style.background = '#f5f5f5';
+        previewContainer.innerHTML = `
+            <div style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+                <div id="docx-container" style="flex-grow: 1; position: relative; overflow: auto; padding: 20px;">
+                    <div style="text-align: center;">
+                        <p>Belge yükleniyor...</p>
+                        <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; margin: 20px auto;"></div>
+                    </div>
+                </div>
+                <div style="background: #f0f0f0; padding: 10px; text-align: center; border-top: 1px solid #ddd;">
+                    <p style="margin: 0; font-size: 0.9rem; color: #666;">Belge yüklenirken sorun yaşanırsa, lütfen dosyayı indirip bilgisayarınızda açın.</p>
+                    <button class="btn primary" style="margin-top: 10px;" onclick="downloadDocument(${docId})">
+                        <i class="material-icons" style="margin-right: 5px;">download</i> Dosyayı İndir
+                    </button>
+                </div>
+            </div>
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
+        `;
+
+        // docx-preview kütüphanesinin yüklenmesi için daha uzun süre bekleyelim
+        setTimeout(() => {
+            // Kütüphane var mı kontrol et
+            if (typeof window.docx === 'undefined' || typeof window.docx.renderAsync !== 'function') {
+                document.getElementById('docx-container').innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <i class="material-icons" style="font-size: 48px; color: #f57c00;">warning</i>
+                        <p style="margin-top: 15px; font-size: 1.1rem; color: #555;">
+                            DOCX önizleme kütüphanesi yüklenemedi veya desteklenmiyor.
+                        </p>
+                        <p style="margin-top: 5px; font-size: 0.9rem; color: #777;">
+                            Lütfen dosyayı indirip bilgisayarınızda açın.
+                        </p>
+                        <button class="btn primary" style="margin-top: 20px;" onclick="downloadDocument(${docId})">
+                            <i class="material-icons" style="margin-right: 5px;">download</i> Dosyayı İndir
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Dosyayı fetch et
+            fetch(previewUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error('DOCX dosyası yüklenemedi');
+                    return response.arrayBuffer();
+                })
+                .then(buffer => {
+                    const docxContainer = document.getElementById('docx-container');
+                    if (!docxContainer) {
+                        throw new Error('Docx container bulunamadı');
+                    }
+                    
+                    // docx-preview kütüphanesini kullan
+                    try {
+                        window.docx.renderAsync(buffer, docxContainer, null, {
+                            className: 'docx-rendered',
+                            inWrapper: true,
+                            ignoreWidth: true,
+                            ignoreHeight: false,
+                            debug: false
+                        })
+                        .then(() => {
+                            console.log('DOCX başarıyla render edildi');
+                        })
+                        .catch(err => {
+                            console.error('DOCX render hatası:', err);
+                            docxContainer.innerHTML = `
+                                <div style="text-align: center; padding: 20px;">
+                                    <i class="material-icons" style="font-size: 48px; color: #f57c00;">error_outline</i>
+                                    <p style="margin-top: 15px; font-size: 1.1rem; color: #555;">
+                                        DOCX dosyası render edilemedi.
+                                    </p>
+                                    <p style="color: #888; font-size: 0.9rem;">${err.message || 'Bilinmeyen hata'}</p>
+                                    <button class="btn primary" style="margin-top: 20px;" onclick="downloadDocument(${docId})">
+                                        <i class="material-icons" style="margin-right: 5px;">download</i> Dosyayı İndir
+                                    </button>
+                                </div>
+                            `;
+                        });
+                    } catch (err) {
+                        console.error('docx.renderAsync hatası:', err);
+                        docxContainer.innerHTML = `
+                            <div style="text-align: center; padding: 20px;">
+                                <i class="material-icons" style="font-size: 48px; color: #f57c00;">error_outline</i>
+                                <p style="margin-top: 15px; font-size: 1.1rem; color: #555;">
+                                    DOCX önizleme işlemi başlatılamadı.
+                                </p>
+                                <p style="color: #888; font-size: 0.9rem;">${err.message || 'Bilinmeyen hata'}</p>
+                                <button class="btn primary" style="margin-top: 20px;" onclick="downloadDocument(${docId})">
+                                    <i class="material-icons" style="margin-right: 5px;">download</i> Dosyayı İndir
+                                </button>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('DOCX Önizleme Hatası:', error);
+                    const docxContainer = document.getElementById('docx-container');
+                    if (docxContainer) {
+                        docxContainer.innerHTML = `
+                            <div style="text-align: center; padding: 20px;">
+                                <i class="material-icons" style="font-size: 48px; color: #f57c00;">error_outline</i>
+                                <p style="margin-top: 15px; font-size: 1.1rem; color: #555;">
+                                    Dosya yüklenirken bir hata oluştu.
+                                </p>
+                                <p style="color: #888; font-size: 0.9rem;">${error.message || 'Bilinmeyen hata'}</p>
+                                <button class="btn primary" style="margin-top: 20px;" onclick="downloadDocument(${docId})">
+                                    <i class="material-icons" style="margin-right: 5px;">download</i> Dosyayı İndir
+                                </button>
+                            </div>
+                        `;
+                    }
+                });
+        }, 500); // 500ms bekle, kütüphanenin yüklenmesi için
+    } else if (ext === 'udf') {
+        // UDF için iyileştirilmiş bilgilendirme ekranı
+        previewContainer.style.background = 'white';
+        previewContainer.innerHTML = `
+            <div style="text-align: center; padding: 30px 40px;">
+                <img src="https://www.e-justice.gov.tr/assets/img/uyaplogo.png" alt="UYAP Logo" style="max-width: 100px; margin-bottom: 15px;" onerror="this.style.display='none'">
+                <h2 style="margin: 10px 0; color: #3f51b5; font-size: 1.4rem;">UDF Dosyası (Ulusal Yargı Ağı Projesi)</h2>
+                
+                <div style="max-width: 700px; margin: 0 auto; text-align: left; background: #f5f7ff; padding: 20px; border-radius: 8px; border-left: 4px solid #3f51b5;">
+                    <p style="margin: 0 0 15px 0; color: #444; font-size: 1rem;">
+                        <strong>UDF (UYAP Doküman Formatı)</strong> dosyalarını sadece UYAP Editör yazılımı ile açabilirsiniz.
+                    </p>
+                    
+                    <div style="margin: 20px 0;">
+                        <div style="font-weight: 500; margin-bottom: 10px; color: #333;">Dosyayı Görüntülemek İçin:</div>
+                        <ol style="padding-left: 25px; margin: 0; color: #444;">
+                            <li style="margin-bottom: 8px;">Bu dosyayı bilgisayarınıza indirin</li>
+                            <li style="margin-bottom: 8px;">UYAP Editör programını açın</li>
+                            <li>İndirdiğiniz UDF dosyasını UYAP Editör ile açın</li>
+                        </ol>
+                    </div>
+                    
+                    <div style="background: #e3f2fd; padding: 15px; margin-top: 15px; border-radius: 6px;">
+                        <p style="margin: 0 0 10px 0; font-weight: 500; color: #0d47a1;">UYAP Editör Yazılımını Edinme</p>
+                        <p style="margin: 0; color: #444; font-size: 0.95rem;">
+                            UYAP Editör bilgisayarınızda yüklü değilse, <a href="https://www.e-justice.gov.tr/indir" target="_blank" style="color: #1976d2; font-weight: 500;">e-justice.gov.tr</a> adresinden indirebilirsiniz.
+                        </p>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+                        <p style="margin: 0; color: #555; font-size: 0.9rem;">
+                            <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom; color: #f57c00;">info</i>
+                            Not: UDF dosyaları web tarayıcılarında doğrudan görüntülenemez; sadece özel UYAP yazılımı bu formatı açabilir.
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <button class="btn primary" style="padding: 10px 20px; font-size: 1rem;" onclick="downloadDocument(${docId})">
+                        <i class="material-icons" style="margin-right: 8px; font-size: 20px;">download</i> UDF Dosyasını İndir
+                    </button>
+                </div>
+            </div>
+        `;
+    } else { // Diğer desteklenmeyenler
+        showError(`".${ext}" uzantılı dosyalar için önizleme desteklenmiyor.`);
+    }
 }
 
 function closePreviewModal() {

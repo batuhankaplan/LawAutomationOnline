@@ -13,7 +13,7 @@ from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
 import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from .models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi
+from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi
 import uuid
 from PIL import Image
 from functools import wraps
@@ -29,6 +29,7 @@ from html import escape  # HTML escape için bu modülü kullanacağız
 from fpdf import FPDF
 from xhtml2pdf import pisa
 import glob # Add glob import
+from sqlalchemy import func, desc
 
 # Flask-Admin imports
 from flask_admin import Admin, AdminIndexView, BaseView, expose
@@ -197,73 +198,32 @@ def load_user(user_id):
 class MyAdminIndexView(AdminIndexView):
     def is_accessible(self):
         return current_user.is_authenticated and current_user.is_admin
-
+    
     def inaccessible_callback(self, name, **kwargs):
         # Redirect non-admins or non-authenticated users to login page
-        flash("Yönetim paneline erişim yetkiniz yok.", "error")
-        return redirect(url_for('login', next=request.url))
-
+        flash('Bu sayfaya erişmek için admin yetkilerine sahip olmanız gerekiyor.', 'error')
+        return redirect(url_for('login'))
+    
     @expose('/')
     def index(self):
-        if not self.is_accessible():
-            return self.inaccessible_callback(name='index')
-
-        # İstatistikleri çek
-        total_users = User.query.count()
-        pending_users_count = User.query.filter_by(is_approved=False).count()
-        total_case_files = CaseFile.query.count()
-        total_calendar_events = CalendarEvent.query.count()
-        
-        # Bugün eklenen aktivite sayısı
-        today_start = datetime.combine(date.today(), time.min)
-        today_end = datetime.combine(date.today(), time.max)
-        activities_today = ActivityLog.query.filter(ActivityLog.timestamp.between(today_start, today_end)).count()
-
         stats = {
-            'total_users': total_users,
-            'pending_users': pending_users_count,
-            'total_case_files': total_case_files,
-            'total_calendar_events': total_calendar_events,
-            'activities_today': activities_today,
+            'total_users': User.query.count(),
+            'pending_users': User.query.filter_by(is_approved=False).count(),
+            'total_case_files': CaseFile.query.count(),
+            'active_case_files': CaseFile.query.filter_by(status='Aktif').count(),
+            'total_hearings': CalendarEvent.query.filter(CalendarEvent.event_type.in_(['durusma', 'e-durusma'])).count(),
+            'total_payments': Payment.query.count(),
+            'total_expenses': Expense.query.count(),
+            'total_documents': Document.query.count(),
         }
-        
-        model_views_data = []
-        # Flask-Admin instance'ının ve menüsünün varlığını kontrol et
-        if hasattr(self, '_admin') and self._admin and hasattr(self._admin, 'menu'):
-            for item in self._admin.menu():
-                # Sadece erişilebilir, kategori olmayan, URL'i olan ve 'Home' veya panelin kendi adı olmayan linkleri al
-                is_home_or_panel_name = item.name == self._admin.name or item.name == 'Home'
-                if hasattr(item, 'get_url') and item.is_accessible() and not item.is_category() and not is_home_or_panel_name:
-                    # ModelView'ların ikonlarını almak için menu_icon_type ve menu_icon_value kullanılabilir
-                    icon_class = 'fa-link' # Varsayılan ikon
-                    if hasattr(item, 'menu_icon_type') and item.menu_icon_type == 'fa' and hasattr(item, 'menu_icon_value'):
-                        icon_class = item.menu_icon_value
-                    elif hasattr(item, 'menu_icon_type') and item.menu_icon_type == 'glyph' and hasattr(item, 'menu_icon_value'):
-                        icon_class = f"glyphicon {item.menu_icon_value}" # Glyphicon desteği için
-                    
-                    model_views_data.append({'name': item.name, 'url': item.get_url(), 'icon': icon_class})
+        self._template_args['stats'] = stats
+        self._template_args['admin_view'] = self
+        return super(MyAdminIndexView, self).index()
 
-        return self.render(
-            'admin/my_index.html', # Kendi özel template'imiz
-            stats=stats,
-            model_views=model_views_data, # Model view linklerini template'e gönder
-            # Gerekli view sınıflarını şablona aktar (HTML'deki get_view_by_class içinde kullanılıyorlar)
-            UserView=UserView,
-            CaseFile=CaseFile, # Bu aslında bir model, eğer CaseFileView gibi bir view varsa o kullanılmalı
-            CalendarEvent=CalendarEvent, # Bu da model, CalendarEventView varsa o kullanılmalı
-            Announcement=Announcement, # Bu da model, AnnouncementView varsa o kullanılmalı
-            ActivityLogView=ActivityLogView
-            # ÖNEMLİ NOT: Eğer CaseFile, CalendarEvent, Announcement için özel ModelView altsınıflarınız
-            # (SecureModelView dışında, örneğin CaseFileView) yoksa ve doğrudan SecureModelView kullanıyorsanız,
-            # o zaman get_view_by_class içine bu model sınıflarını (models.CaseFile vb.) vermelisiniz.
-            # Bu durumda bu sınıfları (models.CaseFile vb.) buraya import edip şablona öyle göndermelisiniz.
-            # Şimdiki my_index.html kurgusunda CaseFile vs. sanki view sınıfıymış gibi kullanılıyor,
-            # bu yüzden ya my_index.html düzeltilmeli ya da bu sınıflar gerçekten view sınıfı olmalı.
-            # Şimdilik app.py içindeki tanımlı view sınıflarını ve bazı temel modelleri geçiyorum.
-            # Eğer CaseFile vb. için özel view'leriniz yoksa, HTML'de sadece UserView ve ActivityLogView
-            # için get_view_by_class kontrolü yapıp, diğerleri için direkt SecureModelView üzerinden
-            # endpoint adına göre link vermek daha doğru olabilir.
-        )
+    # Özel dizayn ekliyoruz
+    @expose('/admin/back_to_app')
+    def back_to_app(self):
+        return redirect(url_for('anasayfa'))
 
 # Secure Model View
 class SecureModelView(ModelView):
@@ -744,6 +704,22 @@ def anasayfa():
     # Aktif dosya sayısını hesapla (status=Aktif olan dosyalar)
     total_active_cases = CaseFile.query.filter_by(status='Aktif').count()
     
+    # Adliye istatistiklerini hesapla
+    courthouse_stats = db.session.query(
+        CaseFile.courthouse, 
+        func.count(CaseFile.id).label('total_cases')
+    ).filter(
+        CaseFile.courthouse != None,
+        CaseFile.courthouse != "Uygulanmaz",
+        CaseFile.file_type.in_(['hukuk', 'ceza', 'savcilik', 'icra'])
+    ).group_by(CaseFile.courthouse).order_by(desc('total_cases')).limit(6).all()
+    
+    # Adliye istatistiklerini sözlük listesine dönüştür
+    courthouse_stats_list = [
+        {'courthouse': stat.courthouse, 'total_cases': stat.total_cases} 
+        for stat in courthouse_stats
+    ]
+    
     return render_template('anasayfa.html',
                            announcements=announcements,
                            hukuk_count=hukuk_count,
@@ -755,6 +731,7 @@ def anasayfa():
                            total_activities=total_activities,
                            upcoming_hearings=upcoming_hearings,
                            total_hearings=total_hearings,
+                           courthouse_stats=courthouse_stats_list,
                            can_view_calendar=takvim_goruntule)
 
 # Daha fazla aktivite yüklemek için yeni endpoint
@@ -896,7 +873,16 @@ def duyurular():
         flash('Duyuru başarıyla eklendi.', 'success')
         return redirect(url_for('duyurular'))
     
-    announcements = Announcement.query.all()
+    # Açık SQL hatası: Announcement.created_at sütunu eklenmiş ama 
+    # models.py'da tanımlandığını gördük; bu sorgu tüm nesneleri çekiyor
+    # Sadece gerekli sütunları belirterek sorunu çözelim
+    announcements = db.session.query(
+        Announcement.id,
+        Announcement.title,
+        Announcement.content,
+        Announcement.user_id
+    ).all()
+    
     return render_template('duyurular.html', announcements=announcements)
 
 @app.route('/odemeler', methods=['GET', 'POST'])
@@ -1151,7 +1137,7 @@ def dosya_ekle():
             if file_type not in ['ARABULUCULUK', 'AİHM', 'AYM']:
                 required_fields.append('courthouse')
                 # Only require department if not Savcılık or the others
-                if file_type != 'Savcılık':
+                if file_type != 'savcilik':
                     required_fields.append('department')
 
             # Check if all required fields are present and not empty
@@ -1164,10 +1150,13 @@ def dosya_ekle():
             department = data.get('department')
 
             if file_type in ['ARABULUCULUK', 'AİHM', 'AYM']:
-                courthouse = None
-                department = None
-            elif file_type == 'Savcılık':
-                department = None # Department not needed for Savcılık
+                courthouse = "Uygulanmaz"  # Varsayılan değer ata
+                department = "Uygulanmaz"  # Varsayılan değer ata
+            elif file_type.upper() in ['AIHM', 'AHM']:  # Türkçe karakter sorunu için ek kontrol
+                courthouse = "Uygulanmaz"  # Varsayılan değer ata
+                department = "Uygulanmaz"  # Varsayılan değer ata
+            elif file_type == 'savcilik':  # Küçük harfle doğru şekilde kontrol ediyoruz
+                department = "Savcılık"    # Savcılık için her zaman sabit bir değer kullan
             else:
                 # Numaralı mahkeme/daire seçilmişse onu kullan
                 numbered_department = data.get('court-number')
@@ -1813,7 +1802,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/upload_document/<int:case_id>', methods=['POST'])
 def upload_document(case_id):
@@ -1946,25 +1935,46 @@ def convert_udf_to_pdf(input_path):
 @app.route('/preview_document/<int:document_id>')
 def preview_document(document_id):
     document = Document.query.get_or_404(document_id)
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
-    
-    # Dosya uzantısını kontrol et
-    ext = document.filename.rsplit('.', 1)[1].lower()
-    
-    if ext in ['jpg', 'jpeg', 'png', 'tiff', 'tif']:
-        return send_from_directory(
-            app.config['UPLOAD_FOLDER'],
-            document.filepath,
-            mimetype=f'image/{ext}'
-        )
-    elif ext == 'pdf':
-        return send_from_directory(
-            app.config['UPLOAD_FOLDER'],
-            document.filepath,
-            mimetype='application/pdf'
-        )
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+
+    if not os.path.exists(filepath):
+        return "Dosya bulunamadı", 404
+
+    _, extension = os.path.splitext(document.filepath)
+    extension = extension.lower()
+
+    # PDF dosyaları doğrudan gösterilir
+    if extension == '.pdf':
+        return send_file(filepath, mimetype='application/pdf')
+
+    # Resim dosyaları doğrudan gösterilir
+    elif extension in ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.tif', '.webp']:
+        mimetype = f'image/{extension[1:]}' if extension != '.tif' else 'image/tiff'
+        return send_file(filepath, mimetype=mimetype)
+
+    # UDF dosyaları PDF'e dönüştürülüp gösterilir
+    elif extension == '.udf':
+        try:
+            pdf_path = convert_udf_to_pdf(filepath)
+            if pdf_path:
+                # Dönüştürülmüş PDF dosyasını gönder ve sonra sil
+                response = send_file(pdf_path, mimetype='application/pdf')
+                # response.call_on_close(lambda: os.remove(pdf_path) if os.path.exists(pdf_path) else None)
+                # Not: call_on_close yerine daha güvenilir bir temizlik mekanizması (örn. Celery task) gerekebilir.
+                # Şimdilik manuel silme veya periyodik temizlik varsayımıyla ilerleyelim.
+                # VEYA geçici bir dizin kullanıp onu temizleyebilirsiniz.
+                return response
+            else:
+                # Dönüştürme başarısız olursa orijinal dosyayı indirme olarak sun
+                return send_file(filepath, as_attachment=True, download_name=document.filename)
+        except Exception as e:
+            print(f"UDF önizleme hatası (docId: {document_id}): {e}")
+            # Hata durumunda orijinal dosyayı indirme olarak sun
+            return send_file(filepath, as_attachment=True, download_name=document.filename)
+
+    # Diğer dosya türleri için indirme işlemi
     else:
-        return jsonify(success=False, message="Bu dosya türü için önizleme kullanılamıyor.")
+        return send_file(filepath, as_attachment=True, download_name=document.filename)
 
 @app.route('/get_udf_manifest/<int:document_id>')
 def get_udf_manifest(document_id):

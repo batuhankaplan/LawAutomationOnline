@@ -412,10 +412,22 @@ function handleFileTypeChange() {
     const courtNumberContainer = document.getElementById('court-number-container');
 
     const selectedFileType = fileTypeSelect.value.toLowerCase(); // büyük/küçük harf standardizasyonu
+    const originalValue = fileTypeSelect.value; // Orijinal değeri de alalım
 
     // Hangi alanların devre dışı bırakılacağını belirle
-    const disableCourthouseAndCity = ['arabuluculuk', 'aihm', 'aym'].includes(selectedFileType);
-    const disableDepartment = ['arabuluculuk', 'aihm', 'aym', 'savcilik'].includes(selectedFileType);
+    // Türkçe karakter sorunu için doğrudan değeri de kontrol ediyoruz
+    const disableCourthouseAndCity = ['arabuluculuk', 'aihm', 'ahm', 'aym'].includes(selectedFileType) || 
+                                    originalValue === 'AİHM' || originalValue === 'AYM' || originalValue === 'ARABULUCULUK';
+    
+    const disableDepartment = ['arabuluculuk', 'aihm', 'ahm', 'aym', 'savcilik'].includes(selectedFileType) || 
+                             originalValue === 'AİHM' || originalValue === 'AYM' || originalValue === 'ARABULUCULUK' || 
+                             originalValue === 'Savcılık' || originalValue === 'savcilik';
+
+    // Debug için konsola yazdıralım
+    console.log("Seçilen dosya türü:", originalValue);
+    console.log("toLowerCase sonucu:", selectedFileType);
+    console.log("Şehir/Adliye devre dışı mı:", disableCourthouseAndCity);
+    console.log("Mahkeme devre dışı mı:", disableDepartment);
 
     // Alanları etkinleştir/devre dışı bırak
     courthouseSelect.disabled = disableCourthouseAndCity;

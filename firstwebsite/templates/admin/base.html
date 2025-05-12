@@ -1,0 +1,98 @@
+{% import 'admin/layout.html' as layout with context %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <title>{% block title %}{% if admin_view.category %}{{ admin_view.category }} - {% endif %}{{ admin_view.name }} - {{ admin_view.admin.name }}{% endblock %}</title>
+    {% block head %}
+        {{ layout.meta() }}
+        {{ layout.favicon() }}
+        {{ layout.css() }}
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+        <style>
+            /* Uygulamaya Dön Butonu */
+            .return-to-app {
+                position: fixed;
+                top: 65px;
+                right: 20px;
+                z-index: 1030;
+            }
+            
+            .return-to-app a {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background-color: #1a237e;
+                color: white !important;
+                padding: 8px 16px;
+                border-radius: 4px;
+                text-decoration: none;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+            
+            .return-to-app a:hover {
+                background-color: #0d1b6e;
+                box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+                transform: translateY(-1px);
+            }
+            
+            @media (max-width: 768px) {
+                .return-to-app {
+                    position: absolute;
+                    top: 60px;
+                    right: 15px;
+                }
+                
+                .return-to-app a {
+                    padding: 6px 12px;
+                    font-size: 14px;
+                }
+            }
+        </style>
+        {% block head_css %}{% endblock %}
+        {% block head_tail %}{% endblock %}
+    {% endblock %}
+</head>
+<body>
+    {% block page_body %}
+    <div class="wrapper">
+        <div class="return-to-app">
+            <a href="{{ url_for('anasayfa') }}">
+                <i class="fas fa-home"></i>
+                <span>Uygulamaya Dön</span>
+            </a>
+        </div>
+        
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand" href="{{ admin_view.admin.url }}">{{ admin_view.admin.name }}</a>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                {{ layout.menu() }}
+                {{ layout.menu_links() }}
+            </div>
+        </nav>
+
+        <div class="container-fluid">
+            {% block messages %}
+            {{ layout.messages() }}
+            {% endblock %}
+
+            {# Main content #}
+            <div class="main-content">
+                {% block body %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+    {% block tail_js %}
+    {{ layout.tail_js() }}
+    {% endblock %}
+
+    {% block tail %}
+    {% endblock %}
+</body>
+</html> 

@@ -42,6 +42,47 @@
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         margin-bottom: 20px;
     }
+
+    /* Uygulamaya Dön Butonu */
+    .return-to-app {
+        position: fixed;
+        top: 15px;
+        right: 20px;
+        z-index: 1030;
+    }
+    
+    .return-to-app a {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background-color: #1a237e;
+        color: white !important;
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .return-to-app a:hover {
+        background-color: #0d1b6e;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        transform: translateY(-1px);
+    }
+    
+    @media (max-width: 768px) {
+        .return-to-app {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+        }
+        
+        .return-to-app a {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -54,6 +95,14 @@
      ve extends ile otomatik gelir. super() mesajlar gibi body içindeki öğeler için olabilir.
   #}
   {{ super() }}
+
+  <!-- Uygulamaya Dön Butonu -->
+  <div class="return-to-app">
+    <a href="{{ url_for('anasayfa') }}">
+        <i class="fa fa-home"></i>
+        <span>Uygulamaya Dön</span>
+    </a>
+  </div>
 
   <!-- Modern Admin Dashboard -->
   <div class="container-fluid p-0">

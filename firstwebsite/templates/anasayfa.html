@@ -936,7 +936,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const activitiesList = document.getElementById('activitiesList');
     const loadMoreBtn = document.getElementById('loadMoreActivities');
     const loadLessBtn = document.getElementById('loadLessActivities');
-    let offset = 4;
+    let offset = 5; // İlk 5 kayıt zaten ekranda gösteriliyor
     let isLoading = false;
     let allActivities = [];
 
@@ -973,36 +973,38 @@ document.addEventListener('DOMContentLoaded', function() {
         loadMoreBtn.addEventListener('click', function() {
             if (isLoading) return;
             
-            const btn = loadMoreBtn.querySelector('button');
-            btn.classList.add('loading');
             isLoading = true;
+            loadMoreBtn.querySelector('button').innerHTML = '<i class="material-icons">hourglass_empty</i><span>Yükleniyor...</span>';
 
             fetch(`/load_more_activities/${offset}`)
                 .then(response => response.json())
                 .then(data => {
+                    // Gelen aktiviteleri işle
                     if (data.activities && data.activities.length > 0) {
-                        allActivities = data.activities;
-                        
-                        // Her seferinde en fazla 4 aktivite göster
-                        const activitiesToShow = data.activities.slice(0, 4);
-                        
-                        activitiesToShow.forEach(activity => {
+                        data.activities.forEach(activity => {
+                            let detailsHtml = '';
+                            if (activity.details) {
+                                detailsHtml = `
+                                    <div class="activity-details">
+                                        ${formatActivityDetails(activity)}
+                                    </div>
+                                `;
+                            }
+                            
                             const activityHtml = `
                                 <div class="activity-item">
-                                    <div class="activity-icon">
-                                        <img src="{{ url_for('static', filename='images/pp.png') }}" alt="Profil">
+                                    <div class="activity-icon ${activity.type.split('_')[0]}">
+                                        <i class="material-icons">${getActivityIcon(activity.type)}</i>
                                     </div>
                                     <div class="activity-content">
-                                        <div class="activity-header">
-                                            <p class="activity-text">${activity.description}</p>
-                                            <div class="activity-details">
-                                                ${formatActivityDetails(activity)}
-                                            </div>
+                                        <div class="activity-text">
+                                            <p>${activity.description}</p>
+                                            ${detailsHtml}
                                         </div>
                                         <div class="activity-meta">
                                             <div class="activity-user">
                                                 <i class="material-icons">person</i>
-                                                <span>İşlemi Yapan: ${activity.user ? activity.user.get_full_name() : 'Bilinmeyen Kullanıcı'}</span>
+                                                <span>İşlemi Yapan: ${activity.user}</span>
                                             </div>
                                             <div class="activity-time">
                                                 <i class="material-icons">access_time</i>
@@ -1016,11 +1018,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                         
                         // offset değerini güncelle
-                        offset += 4;
+                        offset += data.activities.length;
                         
-                        // Eğer gösterilecek başka aktivite kalmadıysa "Daha Fazla Göster" butonunu gizle
-                        if (data.activities.length <= 4) {
+                        // Eğer gösterilecek başka aktivite kalmadıysa veya son kayıtlara ulaşıldıysa
+                        if (data.activities.length < 5) {
                             loadMoreBtn.style.display = 'none';
+                            loadLessBtn.style.display = 'block';
+                        } else {
+                            // Hala daha fazla kayıt var
+                            loadMoreBtn.querySelector('button').innerHTML = '<i class="material-icons">expand_more</i><span>Daha Fazla Göster</span>';
+                            // Daha az göster butonunu da görünür yap
                             loadLessBtn.style.display = 'block';
                         }
                     } else {
@@ -1031,65 +1038,79 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch(error => {
                     console.error('Error:', error);
+                    alert('Aktiviteler yüklenirken bir hata oluştu.');
                 })
                 .finally(() => {
-                    btn.classList.remove('loading');
                     isLoading = false;
+                    if (loadMoreBtn.style.display !== 'none') {
+                        loadMoreBtn.querySelector('button').innerHTML = '<i class="material-icons">expand_more</i><span>Daha Fazla Göster</span>';
+                    }
                 });
         });
     }
 
+    // Daha az göster butonu
     if (loadLessBtn) {
         loadLessBtn.addEventListener('click', function() {
-            const items = activitiesList.querySelectorAll('.activity-item');
-            for (let i = items.length - 1; i >= 4; i--) {
-                items[i].remove();
+            // Sadece ilk 5 aktiviteyi göster, diğerlerini kaldır
+            const activityItems = activitiesList.querySelectorAll('.activity-item');
+            for (let i = 5; i < activityItems.length; i++) {
+                activityItems[i].remove();
             }
             
-            offset = 4; // 5'ten 4'e düşürüldü
+            // Butonları güncelle
             loadLessBtn.style.display = 'none';
             loadMoreBtn.style.display = 'block';
-            activitiesList.classList.remove('expanded');
-            activitiesList.scrollTop = 0;
+            
+            // Offset'i sıfırla
+            offset = 5;
         });
     }
 
-    // Yaklaşan duruşmalarda tekrarlanan kayıtları temizle
-    function removeDuplicateHearings() {
-        // Yaklaşan duruşmaları seç
-        const hearingsList = document.querySelector('.hearings-list');
-        if (!hearingsList) return;
+    // Aktivite tipine göre ikon belirle
+    function getActivityIcon(type) {
+        const iconMap = {
+            'dosya_ekleme': 'folder_open',
+            'dosya_duzenleme': 'edit',
+            'dosya_silme': 'delete',
+            'etkinlik_ekleme': 'event',
+            'etkinlik_duzenleme': 'edit_calendar',
+            'etkinlik_silme': 'event_busy',
+            'duyuru_ekleme': 'campaign',
+            'duyuru_duzenleme': 'edit_note',
+            'duyuru_silme': 'delete_sweep',
+            'odeme_ekleme': 'payments',
+            'odeme_duzenleme': 'edit_note',
+            'odeme_silme': 'money_off',
+            'masraf_ekleme': 'receipt_long',
+            'masraf_duzenleme': 'edit_note',
+            'masraf_silme': 'delete_sweep',
+            'belge_yukleme': 'upload_file',
+            'belge_silme': 'delete_forever',
+            'isci_gorusme': 'groups',
+            'kullanici_giris': 'login',
+            'kullanici_cikis': 'logout'
+        };
         
-        const hearingItems = hearingsList.querySelectorAll('.hearing-item');
-        if (!hearingItems || hearingItems.length == 0) return;
+        const baseTip = type.split('_')[0];
+        const eylem = type.split('_')[1] || '';
         
-        // Görülen duruşmaları kontrol et
-        const seenHearings = new Map();
-        
-        hearingItems.forEach(item => {
-            // Duruşmanın benzersiz kimliğini oluştur (tarih + saat + başlık)
-            const date = item.querySelector('.hearing-date span')?.textContent?.trim();
-            const time = item.querySelector('.hearing-time span')?.textContent?.trim();
-            const title = item.querySelector('.hearing-title')?.textContent?.trim();
-            
-            if (date && time && title) {
-                // Konum (adliye ve mahkeme) bilgisini de kimliğe ekle
-                const location = item.querySelector('.hearing-location span')?.textContent?.trim() || '';
-                const uniqueKey = `${date}_${time}_${title}_${location}`;
-                
-                // Eğer bu duruşma daha önce görülmüşse, bu elemanı gizle
-                if (seenHearings.has(uniqueKey)) {
-                    item.style.display = 'none';
-                } else {
-                    // İlk kez görülen duruşmayı kaydet
-                    seenHearings.set(uniqueKey, true);
-                }
-            }
-        });
+        if (iconMap[type]) {
+            return iconMap[type];
+        } else if (baseTip === 'dosya') {
+            return 'folder';
+        } else if (baseTip === 'etkinlik') {
+            return 'event_note';
+        } else if (baseTip === 'duyuru') {
+            return 'announcement';
+        } else if (baseTip === 'odeme' || baseTip === 'masraf') {
+            return 'attach_money';
+        } else if (baseTip === 'kullanici') {
+            return 'person';
+        } else {
+            return 'info';
+        }
     }
-    
-    // Sayfa yüklendiğinde duruşmalardaki tekrarları temizle
-    removeDuplicateHearings();
 });
 </script>
 {% endblock %}
