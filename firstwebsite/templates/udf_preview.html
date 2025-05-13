@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UDF Dosya Önizleme</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .title {
+            color: #3f51b5;
+            margin: 0;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-top: 10px;
+        }
+        .info-box {
+            background-color: #e8f4fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background-color: #2196f3;
+        }
+        .btn-success {
+            background-color: #4caf50;
+        }
+        .btn:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            opacity: 0.9;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            color: #999;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="javascript:window.close();" class="close-btn">✕</a>
+        
+        <div class="header">
+            <h1 class="title">UDF Dosyası (UYAP Doküman Formatı)</h1>
+            <p class="subtitle">Bu dosya türü için iki görüntüleme seçeneği bulunmaktadır</p>
+        </div>
+        
+        <div class="info-box">
+            <p><b>UDF (UYAP Doküman Formatı)</b> dosyaları, normalde sadece UYAP Editör yazılımı ile açılabilir.</p>
+            <p>Dosya içeriğini şu şekillerde görüntüleyebilirsiniz:</p>
+            <ol>
+                <li><b>İçeriği Tarayıcıda Görüntüle:</b> UDF içeriğini doğrudan tarayıcınızda görüntüleyin</li>
+                <li><b>Dosyayı İndir:</b> UDF dosyasını bilgisayarınıza indirip UYAP Editör ile açın</li>
+            </ol>
+        </div>
+        
+        <div class="button-container">
+            <a href="{{ view_link }}" class="btn btn-primary" target="_blank">İçeriği Görüntüle</a>
+            <a href="{{ download_link }}" class="btn btn-success">UDF Dosyasını İndir</a>
+        </div>
+    </div>
+</body>
+</html> 

@@ -31,6 +31,8 @@ from xhtml2pdf import pisa
 import glob # Add glob import
 from sqlalchemy import func, desc
 import shutil
+import mammoth
+import pdfkit
 
 # Flask-Admin imports
 from flask_admin import Admin, AdminIndexView, BaseView, expose
@@ -1832,13 +1834,45 @@ def upload_document(case_id):
             os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
             file.save(file_path)
             
+            # PDF path'i başlangıçta None olarak ayarla
+            pdf_path = None
+            
+            # UDF, DOC veya DOCX dosyası ise otomatik PDF dönüşümü yap
+            if file_ext.lower() in ['udf', 'doc', 'docx']:
+                print(f"{file_ext.upper()} dosyası yüklendi, PDF'e dönüştürülüyor: {file_path}")
+                try:
+                    pdf_path = convert_udf_to_pdf(file_path)
+                    if pdf_path:
+                        print(f"Dönüştürme başarılı: {pdf_path}")
+                        
+                        # PDF dosyasını saklamak için benzersiz isim oluştur
+                        pdf_filename = f"{case_id}_{int(pytime.time())}_converted_{display_name}.pdf"
+                        permanent_pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], pdf_filename)
+                        
+                        # Geçici PDF dosyasını kalıcı konuma taşı
+                        shutil.copy(pdf_path, permanent_pdf_path)
+                        
+                        # Geçici dosyayı temizle
+                        try:
+                            os.remove(pdf_path)
+                        except:
+                            pass
+                        
+                        # PDF path'i güncelle
+                        pdf_path = pdf_filename
+                    else:
+                        print(f"Dönüştürme başarısız oldu")
+                except Exception as e:
+                    print(f"PDF dönüştürme hatası: {str(e)}")
+            
             new_document = Document(
                 case_id=case_id,
                 document_type=document_type,
                 filename=f"{display_name}.{file_ext}",  # Görünen isim
                 filepath=unique_filename,  # Gerçek dosya yolu
                 upload_date=datetime.now(),
-                user_id=1
+                user_id=current_user.id if current_user.is_authenticated else 1,
+                pdf_version=pdf_path  # PDF versiyonu varsa kaydet
             )
             
             db.session.add(new_document)
@@ -1849,7 +1883,7 @@ def upload_document(case_id):
             log_activity(
                 activity_type='belge_yukleme',
                 description=f"Yeni belge yüklendi: {case_file.client_name} - {document_type} ({custom_name or file.filename})",
-                user_id=1,
+                user_id=current_user.id if current_user.is_authenticated else 1,
                 case_id=case_id
             )
             
@@ -1914,63 +1948,34 @@ def convert_udf_to_pdf(input_path):
         print(f"Dönüştürme başlatılıyor: {input_path} -> {output_path}")
         print(f"Dosya uzantısı: {ext}")
         
-        # 1. Yöntem: unoconv kullanarak dönüştürme
-        try:
-            print("unoconv ile dönüştürme deneniyor...")
-            result = subprocess.run(
-                ['unoconv', '-f', 'pdf', '-o', output_path, input_path], 
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=30  # 30 saniye timeout
-            )
-            
-            # Dönüştürme başarılı mı kontrol et
-            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                print(f"unoconv ile dönüştürme başarılı: {output_path}")
-                return output_path
-            else:
-                print("unoconv çıktı dosyası oluştu ancak boş veya erişilemiyor")
-                if result.stderr:
-                    print(f"unoconv stderr: {result.stderr}")
-                # İkinci yönteme devam et
-        except subprocess.CalledProcessError as e:
-            print(f"unoconv çalıştırma hatası: {str(e)}")
-            if hasattr(e, 'stderr') and e.stderr:
-                print(f"unoconv stderr: {e.stderr}")
-            # İkinci yönteme devam et
-        except subprocess.TimeoutExpired:
-            print("unoconv zaman aşımına uğradı")
-            # İkinci yönteme devam et
-        except Exception as e:
-            print(f"unoconv beklenmeyen hata: {str(e)}")
-            # İkinci yönteme devam et
-        
-        # 2. Yöntem: LibreOffice'i doğrudan çağırma (Windows için)
-        if os.name == 'nt':  # Windows ise
+        # 1. ÖZEL YÖNTEM: UDF dosyaları için UYAP Editör CLI komutunu dene
+        if ext == '.udf':
             try:
-                # LibreOffice'in yüklü olduğu tipik konumlar
-                libreoffice_paths = [
-                    r"C:\Program Files\LibreOffice\program\soffice.exe",
-                    r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"
+                # UYAP Editör'ün muhtemel konumları
+                uyap_editor_paths = [
+                    r"C:\Program Files\UYAP\UYAP Editor\UYAPEditor.exe",
+                    r"C:\Program Files (x86)\UYAP\UYAP Editor\UYAPEditor.exe",
+                    r"C:\UYAP\UYAP Editor\UYAPEditor.exe"
                 ]
                 
-                libreoffice_exe = None
-                for path in libreoffice_paths:
+                uyap_exe = None
+                for path in uyap_editor_paths:
                     if os.path.exists(path):
-                        libreoffice_exe = path
+                        uyap_exe = path
                         break
                 
-                if libreoffice_exe:
-                    print(f"LibreOffice bulundu: {libreoffice_exe}")
-                    print("LibreOffice ile doğrudan dönüştürme deneniyor...")
+                if uyap_exe:
+                    print(f"UYAP Editör bulundu: {uyap_exe}")
+                    print("UYAP Editör ile dönüştürme deneniyor...")
                     
                     # Çıktı dizinini hazırla
                     output_dir = os.path.dirname(output_path)
                     
-                    # LibreOffice çağrısı
+                    # UYAP Editör export komut satırı kullanımı
+                    # Not: Bu komut satırı özellikleri UYAPEditor'ün gerçekte böyle bir özelliği
+                    # olduğunu varsayar. Gerçek komut satırı seçenekleri farklı olabilir.
                     result = subprocess.run(
-                        [libreoffice_exe, '--headless', '--convert-to', 'pdf', '--outdir', output_dir, input_path],
+                        [uyap_exe, "--export-pdf", input_path, "--output", output_path],
                         check=True,
                         capture_output=True,
                         text=True,
@@ -2025,13 +2030,25 @@ def convert_udf_to_pdf(input_path):
 @app.route('/preview_document/<int:document_id>')
 def preview_document(document_id):
     document = Document.query.get_or_404(document_id)
+    
+    # Önce belgenin PDF sürümü var mı kontrol et
+    if document.pdf_version:
+        pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], document.pdf_version)
+        if os.path.exists(pdf_path):
+            print(f"Belge için hazır PDF sürümü kullanılıyor: {pdf_path}")
+            return send_file(pdf_path, mimetype='application/pdf')
+    
+    # PDF sürümü yoksa, normal işleme devam et
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
-
     if not os.path.exists(filepath):
         return "Dosya bulunamadı", 404
 
     _, extension = os.path.splitext(document.filepath)
     extension = extension.lower()
+
+    # UDF dosyaları için özel görüntüleme sayfasına yönlendir
+    if extension == '.udf':
+        return redirect(url_for('preview_udf', document_id=document_id))
 
     # PDF dosyaları doğrudan gösterilir
     if extension == '.pdf':
@@ -2042,28 +2059,162 @@ def preview_document(document_id):
         mimetype = f'image/{extension[1:]}' if extension != '.tif' else 'image/tiff'
         return send_file(filepath, mimetype=mimetype)
 
-    # UDF, DOC ve DOCX dosyaları PDF'e dönüştürülüp gösterilir
-    elif extension in ['.udf', '.doc', '.docx']:
+    # DOC ve DOCX dosyaları için önizleme
+    elif extension in ['.doc', '.docx']:
         try:
-            pdf_path = convert_udf_to_pdf(filepath)
+            print(f"{extension} dosyası için PDF dönüşümü başlatılıyor...")
+            pdf_path = convert_office_to_pdf(filepath)
             if pdf_path:
                 # Dönüştürülmüş PDF dosyasını gönder
                 response = send_file(pdf_path, mimetype='application/pdf')
-                # response.call_on_close(lambda: os.remove(pdf_path) if os.path.exists(pdf_path) else None)
-                # Not: call_on_close yerine daha güvenilir bir temizlik mekanizması (örn. Celery task) gerekebilir.
-                # Şimdilik manuel silme veya periyodik temizlik varsayımıyla ilerleyelim.
+                
+                # Dönüştürme başarılı olduysa, PDF'i sonraki kullanımlar için kaydet
+                try:
+                    # PDF dosyasını saklamak için benzersiz isim oluştur
+                    pdf_filename = f"{document.case_id}_{int(pytime.time())}_converted_{document.filename}.pdf"
+                    permanent_pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], pdf_filename)
+                    
+                    # Geçici PDF dosyasını kalıcı konuma kopyala
+                    shutil.copy(pdf_path, permanent_pdf_path)
+                    
+                    # Veritabanında belgenin PDF sürümünü güncelle
+                    document.pdf_version = pdf_filename
+                    db.session.commit()
+                    print(f"PDF sürümü kaydedildi: {pdf_filename}")
+                except Exception as e:
+                    print(f"PDF sürümü kaydedilirken hata: {str(e)}")
+                
                 return response
             else:
-                # Dönüştürme başarısız olursa orijinal dosyayı indirme olarak sun
-                return send_file(filepath, as_attachment=True, download_name=document.filename)
+                # Dönüştürme başarısız olursa, dosyayı uygun MIME tipi ile görüntüle
+                print(f"PDF dönüşümü başarısız oldu, {extension} dosyası görüntülenecek")
+                
+                if extension == '.doc':
+                    # .doc için uygun MIME tipi
+                    return send_file(filepath, mimetype='application/msword')
+                else:
+                    # .docx için uygun MIME tipi
+                    return send_file(filepath, 
+                                   mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         except Exception as e:
             print(f"{extension.upper()} önizleme hatası (docId: {document_id}): {e}")
-            # Hata durumunda orijinal dosyayı indirme olarak sun
+            # Hata durumunda dosyayı indirmeye ver
             return send_file(filepath, as_attachment=True, download_name=document.filename)
 
     # Diğer dosya türleri için indirme işlemi
     else:
         return send_file(filepath, as_attachment=True, download_name=document.filename)
+
+# Office belgelerini PDF'e dönüştüren yeni fonksiyon
+def convert_office_to_pdf(input_path):
+    """Office belgelerini (doc, docx) PDF'e dönüştürür"""
+    if not os.path.exists(input_path):
+        return None
+    
+    try:
+        _, extension = os.path.splitext(input_path)
+        extension = extension.lower()
+        print(f"Dosya uzantısı: {extension}")
+        
+        if extension not in ['.doc', '.docx']:
+            print("Bu uzantı desteklenmiyor.")
+            return None
+            
+        # Çıktı için geçici dosya oluştur
+        output_path = os.path.join(tempfile.gettempdir(), 
+                                  f"temp_converted_{int(pytime.time())}.pdf")
+        
+        # 1. DOCX-PREVIEW modülünü kullanarak HTML'e dönüştür ve sonra PDF'e çevir
+        if extension == '.docx':
+            try:
+                with open(input_path, 'rb') as f:
+                    html_content = mammoth.convert_to_html(f).value
+                
+                # HTML içeriğinden PDF oluştur
+                options = {
+                    'page-size': 'A4',
+                    'margin-top': '20mm',
+                    'margin-right': '20mm',
+                    'margin-bottom': '20mm',
+                    'margin-left': '20mm',
+                    'encoding': 'UTF-8',
+                }
+                
+                pdfkit.from_string(html_content, output_path, options=options)
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                    print(f"mammoth ve pdfkit ile dönüştürme başarılı: {output_path}")
+                    return output_path
+            except Exception as e:
+                print(f"mammoth ile dönüştürme hatası: {str(e)}")
+        
+        # 2. LibreOffice ile dönüştürmeyi dene
+        try:
+            soffice_path = None
+            if os.name == 'nt':  # Windows
+                # Windows'da olası LibreOffice konumları
+                possible_paths = [
+                    "C:\\Program Files\\LibreOffice\\program\\soffice.exe",
+                    "C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe",
+                    # Program Files dizininde arama
+                    *glob.glob("C:\\Program Files\\*\\program\\soffice.exe"),
+                    *glob.glob("C:\\Program Files (x86)\\*\\program\\soffice.exe"),
+                ]
+                
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        soffice_path = path
+                        break
+            else:  # Linux/Mac
+                # Linux/Mac'te soffice genellikle PATH içindedir
+                soffice_path = "/usr/bin/soffice"
+                
+            if soffice_path and os.path.exists(soffice_path):
+                # Geçici çalışma dizini oluştur
+                temp_dir = tempfile.mkdtemp()
+                
+                # LibreOffice komutu
+                cmd = [
+                    soffice_path,
+                    '--headless',
+                    '--convert-to', 'pdf',
+                    '--outdir', temp_dir,
+                    input_path
+                ]
+                
+                print(f"LibreOffice komutu çalıştırılıyor: {' '.join(cmd)}")
+                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout, stderr = process.communicate()
+                
+                if process.returncode == 0:
+                    # Dönüştürülen dosyayı bul
+                    base_name = os.path.basename(input_path)
+                    base_name_without_ext = os.path.splitext(base_name)[0]
+                    converted_path = os.path.join(temp_dir, f"{base_name_without_ext}.pdf")
+                    
+                    if os.path.exists(converted_path):
+                        # Geçici konuma taşı
+                        shutil.copy(converted_path, output_path)
+                        # Geçici dizini temizle
+                        shutil.rmtree(temp_dir, ignore_errors=True)
+                        
+                        print(f"LibreOffice ile dönüştürme başarılı: {output_path}")
+                        return output_path
+                    else:
+                        print(f"LibreOffice çıktı dosyası bulunamadı: {converted_path}")
+                else:
+                    print(f"LibreOffice hatası: {stderr.decode()}")
+                
+                # Geçici dizini temizle
+                shutil.rmtree(temp_dir, ignore_errors=True)
+        except Exception as e:
+            print(f"LibreOffice ile dönüştürme hatası: {str(e)}")
+        
+        # Tüm dönüştürme yöntemleri başarısız oldu
+        print("Tüm dönüştürme yöntemleri başarısız oldu")
+        return None
+    except Exception as e:
+        print(f"Dönüştürme sırasında hata: {str(e)}")
+        return None
 
 @app.route('/get_udf_manifest/<int:document_id>')
 def get_udf_manifest(document_id):
@@ -3094,6 +3245,558 @@ def delete_client(client_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/preview_udf/<int:document_id>')
+def preview_udf(document_id):
+    """UDF dosyaları için özel önizleme sayfası"""
+    try:
+        document = Document.query.get_or_404(document_id)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+        
+        if not os.path.exists(filepath):
+            return "Dosya bulunamadı", 404
+            
+        _, extension = os.path.splitext(document.filepath)
+        if extension.lower() != '.udf':
+            return "Bu dosya .udf uzantılı değil, önizlenemez", 400
+        
+        # 1. Dosyanın PDF versiyonu varsa onu göster
+        if document.pdf_version:
+            pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], document.pdf_version)
+            if os.path.exists(pdf_path):
+                print(f"UDF için hazır PDF sürümü kullanılıyor: {pdf_path}")
+                return send_file(pdf_path, mimetype='application/pdf')
+        
+        # 2. PDF dönüşümü dene
+        try:
+            print(f"UDF dosyasını PDF'e dönüştürme deneniyor...")
+            pdf_path = convert_udf_to_pdf(filepath)
+            if pdf_path:
+                print(f"UDF dosyası PDF'e dönüştürüldü: {pdf_path}")
+                # Dönüştürülmüş PDF dosyasını kaydet
+                pdf_filename = f"{document.case_id}_{int(pytime.time())}_converted_{document.filename}.pdf"
+                permanent_pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], pdf_filename)
+                
+                # Geçici PDF dosyasını kalıcı konuma kopyala
+                shutil.copy(pdf_path, permanent_pdf_path)
+                
+                # Veritabanında belgenin PDF sürümünü güncelle
+                document.pdf_version = pdf_filename
+                db.session.commit()
+                
+                return send_file(permanent_pdf_path, mimetype='application/pdf')
+        except Exception as e:
+            print(f"UDF dosyasını PDF'e dönüştürürken hata: {str(e)}")
+            # PDF dönüşümü başarısız olduysa bilgilendirme sayfasını göster
+            pass
+        
+        # İndirme bağlantısını oluştur
+        download_link = url_for('download_document', document_id=document_id)
+        
+        # İçerik görüntüleme bağlantısını oluştur (HTML ayrıştırma)
+        view_link = url_for('direct_view_udf', document_id=document_id)
+        
+        # Önizleme sayfasını göster
+        return render_template('udf_preview.html', download_link=download_link, view_link=view_link)
+    except Exception as e:
+        print(f"UDF önizleme hatası: {str(e)}")
+        return f"UDF dosyasını açarken bir hata oluştu: {str(e)}", 500
+
+def parse_udf_content(input_path):
+    """UDF dosyasını ayrıştırıp içeriği çıkarır"""
+    try:
+        print(f"UDF dosyası ayrıştırılıyor: {input_path}")
+        
+        # UDF dosyasını ikili modda aç
+        with open(input_path, 'rb') as f:
+            content = f.read()
+        
+        # UDF formatını analiz et
+        # 1. Magic bytes kontrolü
+        if content.startswith(b'PK'):
+            # ZIP formatındaysa, ZIP olarak açmayı dene
+            import zipfile
+            from io import BytesIO
+            import re
+            
+            print("UDF ZIP formatında olabilir, ZIP olarak açılıyor...")
+            
+            try:
+                with zipfile.ZipFile(BytesIO(content)) as zip_ref:
+                    file_list = zip_ref.namelist()
+                    print(f"ZIP içerisindeki dosyalar: {file_list}")
+                    
+                    # Sadece content.xml dosyasını ara ve içeriğini al
+                    actual_content = ""
+                    
+                    for file_name in file_list:
+                        if file_name == 'content.xml' or file_name.endswith('/content.xml'):
+                            content_xml = zip_ref.read(file_name).decode('utf-8', errors='ignore')
+                            
+                            # CDATA içeriğini çıkar
+                            cdata_match = re.search(r'<!\[CDATA\[(.*?)\]\]>', content_xml, re.DOTALL)
+                            if cdata_match:
+                                # CDATA içeriğini direkt kullan
+                                actual_content = cdata_match.group(1)
+                            else:
+                                # Eğer CDATA yoksa, metin içeriğini çıkar
+                                actual_content = re.sub(r'<[^>]+>', ' ', content_xml)
+                                actual_content = re.sub(r'\s+', ' ', actual_content).strip()
+                    
+                    # İçerik bulunamadıysa boş dönme, ham içeriği temizleyerek göster
+                    if not actual_content:
+                        for file_name in file_list:
+                            if file_name.endswith('.xml') and not file_name.startswith('document'):
+                                try:
+                                    file_content = zip_ref.read(file_name).decode('utf-8', errors='ignore')
+                                    # XML etiketlerini kaldır
+                                    text_only = re.sub(r'<[^>]+>', ' ', file_content)
+                                    # Gereksiz boşlukları temizle
+                                    text_only = re.sub(r'\s+', ' ', text_only).strip()
+                                    
+                                    if len(text_only) > 100:  # Anlamlı içerik kontrolü
+                                        actual_content = text_only
+                                        break
+                                except:
+                                    pass
+                
+                # Daha temiz bir HTML gösterim
+                html_content = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>UDF Dosya İçeriği</title>
+                    <style>
+                        body {{ 
+                            font-family: Arial, sans-serif; 
+                            margin: 0; 
+                            padding: 0;
+                            line-height: 1.6;
+                            color: #333;
+                        }}
+                        .content {{ 
+                            background: #fff; 
+                            padding: 30px; 
+                            border-radius: 8px; 
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                            white-space: pre-wrap;
+                            max-width: 100%;
+                            margin: 0;
+                            text-align: left;
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <div class="content">{escape(actual_content)}</div>
+                </body>
+                </html>
+                """
+                
+                # HTML içeriğini geçici dosyaya kaydet
+                with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as tmp_html:
+                    tmp_html.write(html_content.encode('utf-8'))
+                    html_path = tmp_html.name
+                
+                print(f"UDF içeriği HTML olarak kaydedildi: {html_path}")
+                return html_path
+                
+            except zipfile.BadZipFile:
+                print("UDF dosyası geçerli bir ZIP formatında değil")
+        
+        # 2. XML formatı kontrolü
+        if b'<?xml' in content or b'<UYAP' in content:
+            print("UDF XML formatında olabilir, XML olarak ayrıştırılıyor...")
+            import re
+            
+            # XML içeriğini text olarak decode et
+            text_content = content.decode('utf-8', errors='ignore')
+            
+            # CDATA içeriğini arama
+            cdata_match = re.search(r'<!\[CDATA\[(.*?)\]\]>', text_content, re.DOTALL)
+            if cdata_match:
+                # CDATA içeriğini direkt kullan
+                text_only = cdata_match.group(1)
+            else:
+                # XML etiketlerini kaldırarak sadece metin içeriğini al
+                try:
+                    # XML etiketlerini kaldır
+                    text_only = re.sub(r'<[^>]+>', ' ', text_content)
+                    # Gereksiz boşlukları temizle
+                    text_only = re.sub(r'\s+', ' ', text_only).strip()
+                except:
+                    text_only = text_content
+            
+            # Daha temiz bir HTML gösterim
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>UDF Dosya İçeriği</title>
+                <style>
+                    body {{ 
+                        font-family: Arial, sans-serif; 
+                        margin: 0;
+                        padding: 0;
+                        line-height: 1.6;
+                        color: #333;
+                    }}
+                    .content {{ 
+                        background: #fff; 
+                        padding: 30px; 
+                        border-radius: 8px; 
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        white-space: pre-wrap;
+                        max-width: 100%;
+                        margin: 0;
+                        text-align: left;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="content">{escape(text_only)}</div>
+            </body>
+            </html>
+            """
+            
+            # HTML içeriğini geçici dosyaya kaydet
+            with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as tmp_html:
+                tmp_html.write(html_content.encode('utf-8'))
+                html_path = tmp_html.name
+            
+            print(f"UDF içeriği HTML olarak kaydedildi: {html_path}")
+            return html_path
+        
+        # 3. Metin formatı kontrolü
+        try:
+            # Dosyayı text olarak decode etmeyi dene
+            text_content = content.decode('utf-8', errors='ignore')
+            
+            # Minimum anlamlı içerik kontrolü
+            if len(text_content) > 10:
+                print("UDF metin formatında olabilir, metin olarak işleniyor...")
+                
+                # HTML dönüşümü - daha temiz metin formatlaması
+                html_content = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>UDF Dosya İçeriği</title>
+                    <style>
+                        body {{ 
+                            font-family: Arial, sans-serif; 
+                            margin: 0;
+                            padding: 0;
+                            line-height: 1.6;
+                            color: #333;
+                        }}
+                        .content {{ 
+                            background: #fff; 
+                            padding: 30px; 
+                            border-radius: 8px; 
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                            white-space: pre-wrap;
+                            max-width: 100%;
+                            margin: 0;
+                            text-align: left;
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <div class="content">{escape(text_content)}</div>
+                </body>
+                </html>
+                """
+                
+                # HTML içeriğini geçici dosyaya kaydet
+                with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as tmp_html:
+                    tmp_html.write(html_content.encode('utf-8'))
+                    html_path = tmp_html.name
+                
+                print(f"UDF içeriği HTML olarak kaydedildi: {html_path}")
+                return html_path
+        except:
+            pass
+        
+        # 4. İkili içerik olarak göster - son çare
+        print("UDF formatı tanınamadı, ikili içerik olarak gösteriliyor...")
+        
+        # Bilgilendirici hata mesajı göster
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>UDF Dosya İçeriği</title>
+            <style>
+                body {{ 
+                    font-family: Arial, sans-serif; 
+                    margin: 0; 
+                    color: #333;
+                    text-align: center;
+                }}
+                .warning {{ 
+                    background-color: #fff3cd; 
+                    padding: 25px; 
+                    border-radius: 8px; 
+                    margin: 40px auto;
+                    max-width: 600px;
+                    border-left: 5px solid #ffc107;
+                    text-align: left;
+                }}
+                h1 {{
+                    color: #2c3e50;
+                }}
+                .btn {{
+                    display: inline-block;
+                    padding: 10px 20px;
+                    background-color: #4CAF50;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 4px;
+                    margin-top: 20px;
+                }}
+            </style>
+        </head>
+        <body>
+            <h1>UDF Dosya İçeriği</h1>
+            
+            <div class="warning">
+                <h2>Bu UDF dosyasının içeriği görüntülenemiyor</h2>
+                <p>Bu UDF dosyası görüntülenebilir metin içeriğine sahip değil veya tanımlanamayan bir formatta.</p>
+                <p>Dosyayı bilgisayarınıza indirip UYAP Editör ile açmanız önerilir.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # HTML içeriğini geçici dosyaya kaydet
+        with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as tmp_html:
+            tmp_html.write(html_content.encode('utf-8'))
+            html_path = tmp_html.name
+        
+        print(f"UDF içeriği ikili formatta HTML olarak kaydedildi: {html_path}")
+        return html_path
+        
+    except Exception as e:
+        print(f"UDF dosyası ayrıştırma hatası: {str(e)}")
+        return None
+
+def convert_udf_to_pdf(input_path):
+    """UDF dosyasını PDF'e dönüştürür"""
+    try:
+        print(f"UDF dosyasını PDF'e dönüştürme başlatılıyor: {input_path}")
+        
+        # Çıktı için geçici dosya oluştur
+        output_path = os.path.join(tempfile.gettempdir(), 
+                                  f"temp_converted_{int(pytime.time())}.pdf")
+        
+        # 1. YÖNTEM: UYAP Editör CLI komutunu dene
+        try:
+            print("UYAP Editör CLI ile dönüştürme deneniyor...")
+            # UYAP Editör'ün muhtemel konumları
+            uyap_editor_paths = [
+                r"C:\Program Files\UYAP\UYAP Editor\UYAPEditor.exe",
+                r"C:\Program Files (x86)\UYAP\UYAP Editor\UYAPEditor.exe",
+                r"C:\UYAP\UYAP Editor\UYAPEditor.exe"
+            ]
+            
+            uyap_exe = None
+            for path in uyap_editor_paths:
+                if os.path.exists(path):
+                    uyap_exe = path
+                    break
+            
+            if uyap_exe:
+                print(f"UYAP Editör bulundu: {uyap_exe}")
+                # UYAP Editör export komut satırı kullanımı (teorik)
+                # UYAP Editör gerçekte böyle bir komut satırı arayüzü sağlamıyor olabilir
+                try:
+                    result = subprocess.run(
+                        [uyap_exe, "--export-pdf", input_path, "--output", output_path],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        timeout=30
+                    )
+                    
+                    if result.returncode == 0 and os.path.exists(output_path):
+                        print("UYAP Editör ile dönüştürme başarılı")
+                        return output_path
+                except:
+                    print("UYAP Editör komut satırı dönüştürmesi başarısız")
+        except Exception as e:
+            print(f"UYAP Editör dönüştürme hatası: {str(e)}")
+        
+        # 2. YÖNTEM: LibreOffice ile dönüştürmeyi dene
+        try:
+            print("LibreOffice ile dönüştürme deneniyor...")
+            soffice_path = None
+            if os.name == 'nt':  # Windows
+                # Windows'da olası LibreOffice konumları
+                possible_paths = [
+                    "C:\\Program Files\\LibreOffice\\program\\soffice.exe",
+                    "C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe",
+                    # Program Files dizininde arama
+                    *glob.glob("C:\\Program Files\\*\\program\\soffice.exe"),
+                    *glob.glob("C:\\Program Files (x86)\\*\\program\\soffice.exe"),
+                ]
+                
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        soffice_path = path
+                        break
+            else:  # Linux/Mac
+                # Linux/Mac'te soffice genellikle PATH içindedir
+                soffice_path = "/usr/bin/soffice"
+                
+            if soffice_path and os.path.exists(soffice_path):
+                # Geçici çalışma dizini oluştur
+                temp_dir = tempfile.mkdtemp()
+                
+                # LibreOffice komutu
+                cmd = [
+                    soffice_path,
+                    '--headless',
+                    '--convert-to', 'pdf',
+                    '--outdir', temp_dir,
+                    input_path
+                ]
+                
+                print(f"LibreOffice komutu çalıştırılıyor: {' '.join(cmd)}")
+                process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout, stderr = process.communicate()
+                
+                if process.returncode == 0:
+                    # Dönüştürülen dosyayı bul
+                    base_name = os.path.basename(input_path)
+                    base_name_without_ext = os.path.splitext(base_name)[0]
+                    converted_path = os.path.join(temp_dir, f"{base_name_without_ext}.pdf")
+                    
+                    if os.path.exists(converted_path):
+                        # Geçici konuma taşı
+                        shutil.copy(converted_path, output_path)
+                        # Geçici dizini temizle
+                        shutil.rmtree(temp_dir, ignore_errors=True)
+                        
+                        print(f"LibreOffice ile dönüştürme başarılı: {output_path}")
+                        return output_path
+                    else:
+                        print(f"LibreOffice çıktı dosyası bulunamadı: {converted_path}")
+                else:
+                    print(f"LibreOffice hatası: {stderr.decode()}")
+                
+                # Geçici dizini temizle
+                shutil.rmtree(temp_dir, ignore_errors=True)
+        except Exception as e:
+            print(f"LibreOffice ile dönüştürme hatası: {str(e)}")
+        
+        # 3. YÖNTEM: UDF içeriğini HTML olarak ayrıştırıp PDF'e dönüştür
+        try:
+            print("UDF içeriğini ayrıştırıp PDF'e dönüştürme deneniyor...")
+            html_path = parse_udf_content(input_path)
+            
+            if html_path:
+                try:
+                    # HTML'i PDF'e dönüştürme için wkhtmltopdf kullanan pdfkit'i dene
+                    # Bu kısmın çalışması için wkhtmltopdf yüklü olmalı
+                    import pdfkit
+                    pdfkit_options = {
+                        'page-size': 'A4',
+                        'margin-top': '10mm',
+                        'margin-right': '10mm',
+                        'margin-bottom': '10mm',
+                        'margin-left': '10mm',
+                        'encoding': 'UTF-8',
+                    }
+                    
+                    pdfkit.from_file(html_path, output_path, options=pdfkit_options)
+                    
+                    # HTML dosyasını temizle
+                    os.remove(html_path)
+                    
+                    if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                        print(f"HTML->PDF dönüşümü başarılı: {output_path}")
+                        return output_path
+                except Exception as e:
+                    print(f"HTML->PDF dönüşüm hatası: {str(e)}")
+        except Exception as e:
+            print(f"İçerik ayrıştırma ve PDF dönüşüm hatası: {str(e)}")
+        
+        print("Tüm dönüştürme yöntemleri başarısız oldu")
+        return None
+    except Exception as e:
+        print(f"Dönüştürme hatası: {str(e)}")
+        return None
+
+@app.route('/view_udf_content/<int:document_id>')
+def view_udf_content(document_id):
+    """UDF içeriğini doğrudan tarayıcıda gösterir"""
+    try:
+        document = Document.query.get_or_404(document_id)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+        
+        if not os.path.exists(filepath):
+            return "Dosya bulunamadı", 404
+            
+        _, extension = os.path.splitext(document.filepath)
+        if extension.lower() != '.udf':
+            return "Bu dosya .udf uzantılı değil, görüntülenemez", 400
+            
+        # UDF içeriğini HTML olarak ayrıştır
+        html_path = parse_udf_content(filepath)
+        if html_path:
+            # HTML içeriğini doğrudan döndür
+            with open(html_path, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+                
+            # HTML dosyasını temizle
+            try:
+                os.remove(html_path)
+            except:
+                pass
+                
+            return html_content
+            
+        return "UDF içeriği ayrıştırılamadı", 500
+    except Exception as e:
+        return f"UDF içeriği görüntüleme hatası: {str(e)}", 500
+
+# UDF içeriğini doğrudan göster - bu yeni bir endpoint
+@app.route('/direct_view_udf/<int:document_id>')
+def direct_view_udf(document_id):
+    """UDF içeriğini doğrudan tarayıcıda göster"""
+    try:
+        document = Document.query.get_or_404(document_id)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+        
+        if not os.path.exists(filepath):
+            return "Dosya bulunamadı", 404
+            
+        # UDF dosyasını ayrıştır ve HTML olarak göster
+        print(f"UDF içeriği doğrudan ayrıştırılıyor: {filepath}")
+        html_path = parse_udf_content(filepath)
+        
+        if html_path:
+            # HTML içeriğini oku
+            with open(html_path, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+                
+            # HTML dosyasını temizle
+            try:
+                os.remove(html_path)
+            except:
+                pass
+                
+            # HTML içeriğini doğrudan döndür
+            return html_content
+        else:
+            return "UDF içeriği ayrıştırılamadı", 500
+    except Exception as e:
+        print(f"UDF içeriği doğrudan görüntüleme hatası: {str(e)}")
+        return f"UDF dosyası görüntülenirken hata oluştu: {str(e)}", 500
 
 if __name__ == '__main__':
     with app.app_context():

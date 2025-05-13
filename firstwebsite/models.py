@@ -125,6 +125,7 @@ class Document(db.Model):
     filepath = db.Column(db.String(255), nullable=False)
     upload_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    pdf_version = db.Column(db.String(255), nullable=True)  # PDF dönüşümü varsa dosya yolu
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)

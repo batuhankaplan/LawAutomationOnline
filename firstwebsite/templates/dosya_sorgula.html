@@ -2385,48 +2385,10 @@ function showPreviewModal(docId, filename, ext) {
              showError(`".${ext}" uzantılı dosya için önizleme alanı (iframe) oluşturulamadı. Lütfen dosyayı indirip görüntüleyin.`);
         }
     } else if (ext === 'udf') {
-        // UDF için iyileştirilmiş bilgilendirme ekranı
-        previewContainer.style.background = 'white';
+        // UDF dosyasını doğrudan uygulama içinde görüntüle
+        previewContainer.style.background = '#f5f5f5';
         previewContainer.innerHTML = `
-            <div style="text-align: center; padding: 30px 40px;">
-                <img src="https://www.e-justice.gov.tr/assets/img/uyaplogo.png" alt="UYAP Logo" style="max-width: 100px; margin-bottom: 15px;" onerror="this.style.display='none'">
-                <h2 style="margin: 10px 0; color: #3f51b5; font-size: 1.4rem;">UDF Dosyası (Ulusal Yargı Ağı Projesi)</h2>
-                
-                <div style="max-width: 700px; margin: 0 auto; text-align: left; background: #f5f7ff; padding: 20px; border-radius: 8px; border-left: 4px solid #3f51b5;">
-                    <p style="margin: 0 0 15px 0; color: #444; font-size: 1rem;">
-                        <strong>UDF (UYAP Doküman Formatı)</strong> dosyalarını sadece UYAP Editör yazılımı ile açabilirsiniz.
-                    </p>
-                    
-                    <div style="margin: 20px 0;">
-                        <div style="font-weight: 500; margin-bottom: 10px; color: #333;">Dosyayı Görüntülemek İçin:</div>
-                        <ol style="padding-left: 25px; margin: 0; color: #444;">
-                            <li style="margin-bottom: 8px;">Bu dosyayı bilgisayarınıza indirin</li>
-                            <li style="margin-bottom: 8px;">UYAP Editör programını açın</li>
-                            <li>İndirdiğiniz UDF dosyasını UYAP Editör ile açın</li>
-                        </ol>
-                    </div>
-                    
-                    <div style="background: #e3f2fd; padding: 15px; margin-top: 15px; border-radius: 6px;">
-                        <p style="margin: 0 0 10px 0; font-weight: 500; color: #0d47a1;">UYAP Editör Yazılımını Edinme</p>
-                        <p style="margin: 0; color: #444; font-size: 0.95rem;">
-                            UYAP Editör bilgisayarınızda yüklü değilse, <a href="https://www.e-justice.gov.tr/indir" target="_blank" style="color: #1976d2; font-weight: 500;">e-justice.gov.tr</a> adresinden indirebilirsiniz.
-                        </p>
-                    </div>
-                    
-                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
-                        <p style="margin: 0; color: #555; font-size: 0.9rem;">
-                            <i class="material-icons" style="font-size: 16px; vertical-align: text-bottom; color: #f57c00;">info</i>
-                            Not: UDF dosyaları web tarayıcılarında doğrudan görüntülenemez; sadece özel UYAP yazılımı bu formatı açabilir.
-                        </p>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 30px;">
-                    <button class="btn primary" style="padding: 10px 20px; font-size: 1rem;" onclick="downloadDocument(${docId})">
-                        <i class="material-icons" style="margin-right: 8px; font-size: 20px;">download</i> UDF Dosyasını İndir
-                    </button>
-                </div>
-            </div>
+            <iframe src="/direct_view_udf/${docId}" frameborder="0" style="width: 100%; height: 100%;"></iframe>
         `;
     } else { // Diğer desteklenmeyenler
         showError(`".${ext}" uzantılı dosyalar için önizleme desteklenmiyor.`);
