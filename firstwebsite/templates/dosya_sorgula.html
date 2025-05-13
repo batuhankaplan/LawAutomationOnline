@@ -1052,7 +1052,7 @@
 
 <!-- TIFF ve DOCX Önizleme Kütüphaneleri -->
 <script src="https://cdn.jsdelivr.net/npm/tiff.js/tiff.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/docx-preview@0.1.16/dist/docx-preview.min.js"></script>
+{# <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.1.20/dist/docx-preview.min.js"></script> #}
 
 <script>
 // Örnek Masraf Türleri (Bunları kendi türlerinizle değiştirin)
@@ -1107,14 +1107,14 @@ function showError(message) {
     });
 }
 
-// docx-preview kütüphanesinin varlığını kontrol et
-function checkDocxPreviewAvailability() {
+// docx-preview kütüphanesinin varlığını kontrol etme fonksiyonu kaldırıldı/yorumlandı.
+{# function checkDocxPreviewAvailability() {
     if (typeof window.docx === 'undefined') {
         console.error('docx-preview kütüphanesi bulunamadı');
         return false;
     }
     return true;
-}
+} #}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Sayfa yüklendiğinde başlangıç durumunu ayarla
@@ -2360,126 +2360,30 @@ function showPreviewModal(docId, filename, ext) {
                 showError(`".${ext}" uzantılı dosya için önizleme yüklenirken hata oluştu.`);
             });
     } else if (ext === 'docx' || ext === 'doc') {
-        // Client tarafında docx-preview kütüphanesini kullan
-        previewContainer.style.background = '#f5f5f5';
-        previewContainer.innerHTML = `
-            <div style="display: flex; flex-direction: column; width: 100%; height: 100%;">
-                <div id="docx-container" style="flex-grow: 1; position: relative; overflow: auto; padding: 20px;">
-                    <div style="text-align: center;">
-                        <p>Belge yükleniyor...</p>
-                        <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite; margin: 20px auto;"></div>
-                    </div>
-                </div>
-                <div style="background: #f0f0f0; padding: 10px; text-align: center; border-top: 1px solid #ddd;">
-                    <p style="margin: 0; font-size: 0.9rem; color: #666;">Belge yüklenirken sorun yaşanırsa, lütfen dosyayı indirip bilgisayarınızda açın.</p>
-                    <button class="btn primary" style="margin-top: 10px;" onclick="downloadDocument(${docId})">
-                        <i class="material-icons" style="margin-right: 5px;">download</i> Dosyayı İndir
-                    </button>
-                </div>
-            </div>
-            <style>
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            </style>
-        `;
-
-        // docx-preview kütüphanesinin yüklenmesi için daha uzun süre bekleyelim
-        setTimeout(() => {
-            // Kütüphane var mı kontrol et
-            if (typeof window.docx === 'undefined' || typeof window.docx.renderAsync !== 'function') {
-                document.getElementById('docx-container').innerHTML = `
-                    <div style="text-align: center; padding: 20px;">
-                        <i class="material-icons" style="font-size: 48px; color: #f57c00;">warning</i>
-                        <p style="margin-top: 15px; font-size: 1.1rem; color: #555;">
-                            DOCX önizleme kütüphanesi yüklenemedi veya desteklenmiyor.
-                        </p>
-                        <p style="margin-top: 5px; font-size: 0.9rem; color: #777;">
-                            Lütfen dosyayı indirip bilgisayarınızda açın.
-                        </p>
-                        <button class="btn primary" style="margin-top: 20px;" onclick="downloadDocument(${docId})">
-                            <i class="material-icons" style="margin-right: 5px;">download</i> Dosyayı İndir
-                        </button>
-                    </div>
-                `;
-                return;
-            }
-
-            // Dosyayı fetch et
-            fetch(previewUrl)
-                .then(response => {
-                    if (!response.ok) throw new Error('DOCX dosyası yüklenemedi');
-                    return response.arrayBuffer();
-                })
-                .then(buffer => {
-                    const docxContainer = document.getElementById('docx-container');
-                    if (!docxContainer) {
-                        throw new Error('Docx container bulunamadı');
-                    }
-                    
-                    // docx-preview kütüphanesini kullan
-                    try {
-                        window.docx.renderAsync(buffer, docxContainer, null, {
-                            className: 'docx-rendered',
-                            inWrapper: true,
-                            ignoreWidth: true,
-                            ignoreHeight: false,
-                            debug: false
-                        })
-                        .then(() => {
-                            console.log('DOCX başarıyla render edildi');
-                        })
-                        .catch(err => {
-                            console.error('DOCX render hatası:', err);
-                            docxContainer.innerHTML = `
-                                <div style="text-align: center; padding: 20px;">
-                                    <i class="material-icons" style="font-size: 48px; color: #f57c00;">error_outline</i>
-                                    <p style="margin-top: 15px; font-size: 1.1rem; color: #555;">
-                                        DOCX dosyası render edilemedi.
-                                    </p>
-                                    <p style="color: #888; font-size: 0.9rem;">${err.message || 'Bilinmeyen hata'}</p>
-                                    <button class="btn primary" style="margin-top: 20px;" onclick="downloadDocument(${docId})">
-                                        <i class="material-icons" style="margin-right: 5px;">download</i> Dosyayı İndir
-                                    </button>
-                                </div>
-                            `;
-                        });
-                    } catch (err) {
-                        console.error('docx.renderAsync hatası:', err);
-                        docxContainer.innerHTML = `
-                            <div style="text-align: center; padding: 20px;">
-                                <i class="material-icons" style="font-size: 48px; color: #f57c00;">error_outline</i>
-                                <p style="margin-top: 15px; font-size: 1.1rem; color: #555;">
-                                    DOCX önizleme işlemi başlatılamadı.
-                                </p>
-                                <p style="color: #888; font-size: 0.9rem;">${err.message || 'Bilinmeyen hata'}</p>
-                                <button class="btn primary" style="margin-top: 20px;" onclick="downloadDocument(${docId})">
-                                    <i class="material-icons" style="margin-right: 5px;">download</i> Dosyayı İndir
-                                </button>
-                            </div>
-                        `;
-                    }
-                })
-                .catch(error => {
-                    console.error('DOCX Önizleme Hatası:', error);
-                    const docxContainer = document.getElementById('docx-container');
-                    if (docxContainer) {
-                        docxContainer.innerHTML = `
-                            <div style="text-align: center; padding: 20px;">
-                                <i class="material-icons" style="font-size: 48px; color: #f57c00;">error_outline</i>
-                                <p style="margin-top: 15px; font-size: 1.1rem; color: #555;">
-                                    Dosya yüklenirken bir hata oluştu.
-                                </p>
-                                <p style="color: #888; font-size: 0.9rem;">${error.message || 'Bilinmeyen hata'}</p>
-                                <button class="btn primary" style="margin-top: 20px;" onclick="downloadDocument(${docId})">
-                                    <i class="material-icons" style="margin-right: 5px;">download</i> Dosyayı İndir
-                                </button>
-                            </div>
-                        `;
-                    }
-                });
-        }, 500); // 500ms bekle, kütüphanenin yüklenmesi için
+        // Varsayım: Backend bu dosyaları PDF'e çevirip sunacak
+        // veya tarayıcının iframe'de gösterebileceği bir formata.
+        previewContainer.style.background = '#f5f5f5'; // PDF'teki gibi
+        previewContainer.innerHTML = `<iframe id="previewFrame" src="${previewUrl}" frameborder="0" style="width: 100%; height: 100%;"></iframe>`;
+        
+        const iframe = previewContainer.querySelector('#previewFrame');
+        if (iframe) {
+            iframe.onload = () => {
+                // Başarıyla yüklendiğinde, alttaki genel indirme mesajını gizleyebiliriz.
+                console.log('DOC/DOCX (PDF olarak) iframe başarıyla yüklendi.');
+                // İsteğe bağlı: Yükleme sonrası alttaki "Belge yüklenirken sorun yaşanırsa..." mesajını gizleyebilirsiniz.
+                // Örnek:
+                // const docxFooterMessage = document.querySelector('.preview-modal-content .modal-body > div[style*="background: #f0f0f0"]');
+                // if (docxFooterMessage) {
+                //     docxFooterMessage.style.display = 'none';
+                // }
+            };
+            iframe.onerror = () => {
+                // showError fonksiyonu zaten bir indirme butonu içeriyor.
+                showError(`".${ext}" uzantılı dosya için önizleme yüklenemedi. Dosya formatı tarayıcıda doğrudan görüntülenemiyor veya sunucu PDF'e dönüştürme hatası oluştu. Lütfen dosyayı indirip görüntüleyin.`);
+            };
+        } else {
+             showError(`".${ext}" uzantılı dosya için önizleme alanı (iframe) oluşturulamadı. Lütfen dosyayı indirip görüntüleyin.`);
+        }
     } else if (ext === 'udf') {
         // UDF için iyileştirilmiş bilgilendirme ekranı
         previewContainer.style.background = 'white';

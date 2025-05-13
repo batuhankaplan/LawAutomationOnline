@@ -30,6 +30,7 @@ from fpdf import FPDF
 from xhtml2pdf import pisa
 import glob # Add glob import
 from sqlalchemy import func, desc
+import shutil
 
 # Flask-Admin imports
 from flask_admin import Admin, AdminIndexView, BaseView, expose
@@ -1902,34 +1903,123 @@ def delete_document(document_id):
 
 def convert_udf_to_pdf(input_path):
     try:
+        # Dosya uzantısını al
+        _, ext = os.path.splitext(input_path)
+        ext = ext.lower()
+        
         # Geçici PDF dosyası için path oluştur
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_pdf:
             output_path = tmp_pdf.name
         
-        # unoconv ile UDF'yi PDF'e dönüştür
-        result = subprocess.run(
-            ['unoconv', '-f', 'pdf', '-o', output_path, input_path], 
-            check=True,
-            capture_output=True,
-            text=True
-        )
+        print(f"Dönüştürme başlatılıyor: {input_path} -> {output_path}")
+        print(f"Dosya uzantısı: {ext}")
         
-        # Dönüştürme başarılı mı kontrol et
-        if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-            return output_path
-        else:
-            print(f"Dönüştürme başarısız. Çıktı dosyası oluşturulamadı veya boş.")
-            if result.stderr:
-                print(f"Hata çıktısı: {result.stderr}")
-            return None
+        # 1. Yöntem: unoconv kullanarak dönüştürme
+        try:
+            print("unoconv ile dönüştürme deneniyor...")
+            result = subprocess.run(
+                ['unoconv', '-f', 'pdf', '-o', output_path, input_path], 
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=30  # 30 saniye timeout
+            )
             
-    except subprocess.CalledProcessError as e:
-        print(f"unoconv çalıştırma hatası: {str(e)}")
-        if e.stderr:
-            print(f"Hata çıktısı: {e.stderr}")
+            # Dönüştürme başarılı mı kontrol et
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                print(f"unoconv ile dönüştürme başarılı: {output_path}")
+                return output_path
+            else:
+                print("unoconv çıktı dosyası oluştu ancak boş veya erişilemiyor")
+                if result.stderr:
+                    print(f"unoconv stderr: {result.stderr}")
+                # İkinci yönteme devam et
+        except subprocess.CalledProcessError as e:
+            print(f"unoconv çalıştırma hatası: {str(e)}")
+            if hasattr(e, 'stderr') and e.stderr:
+                print(f"unoconv stderr: {e.stderr}")
+            # İkinci yönteme devam et
+        except subprocess.TimeoutExpired:
+            print("unoconv zaman aşımına uğradı")
+            # İkinci yönteme devam et
+        except Exception as e:
+            print(f"unoconv beklenmeyen hata: {str(e)}")
+            # İkinci yönteme devam et
+        
+        # 2. Yöntem: LibreOffice'i doğrudan çağırma (Windows için)
+        if os.name == 'nt':  # Windows ise
+            try:
+                # LibreOffice'in yüklü olduğu tipik konumlar
+                libreoffice_paths = [
+                    r"C:\Program Files\LibreOffice\program\soffice.exe",
+                    r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"
+                ]
+                
+                libreoffice_exe = None
+                for path in libreoffice_paths:
+                    if os.path.exists(path):
+                        libreoffice_exe = path
+                        break
+                
+                if libreoffice_exe:
+                    print(f"LibreOffice bulundu: {libreoffice_exe}")
+                    print("LibreOffice ile doğrudan dönüştürme deneniyor...")
+                    
+                    # Çıktı dizinini hazırla
+                    output_dir = os.path.dirname(output_path)
+                    
+                    # LibreOffice çağrısı
+                    result = subprocess.run(
+                        [libreoffice_exe, '--headless', '--convert-to', 'pdf', '--outdir', output_dir, input_path],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=30
+                    )
+                    
+                    # LibreOffice çıktı dosyasının adını belirle
+                    input_filename = os.path.basename(input_path)
+                    input_name, _ = os.path.splitext(input_filename)
+                    lo_output_path = os.path.join(output_dir, f"{input_name}.pdf")
+                    
+                    # Çıktı dosyasını kontrol et
+                    if os.path.exists(lo_output_path) and os.path.getsize(lo_output_path) > 0:
+                        print(f"LibreOffice ile dönüştürme başarılı: {lo_output_path}")
+                        
+                        # Çıktıyı istenen yere taşı
+                        if lo_output_path != output_path:
+                            shutil.move(lo_output_path, output_path)
+                            print(f"PDF dosyası taşındı: {lo_output_path} -> {output_path}")
+                            
+                        return output_path
+                    else:
+                        print("LibreOffice çıktı dosyası oluşturulamadı veya boş")
+                        if result.stderr:
+                            print(f"LibreOffice stderr: {result.stderr}")
+                else:
+                    print("LibreOffice bulunamadı")
+            except subprocess.CalledProcessError as e:
+                print(f"LibreOffice çalıştırma hatası: {str(e)}")
+                if hasattr(e, 'stderr') and e.stderr:
+                    print(f"LibreOffice stderr: {e.stderr}")
+            except subprocess.TimeoutExpired:
+                print("LibreOffice zaman aşımına uğradı")
+            except Exception as e:
+                print(f"LibreOffice beklenmeyen hata: {str(e)}")
+        
+        # Her iki yöntem de başarısız oldu
+        print("Tüm dönüştürme yöntemleri başarısız oldu")
         return None
+            
     except Exception as e:
-        print(f"Beklenmeyen hata: {str(e)}")
+        print(f"Üst düzey bir hata oluştu: {str(e)}")
+        # Çıktı dosyası oluşturulduysa temizle
+        if 'output_path' in locals() and os.path.exists(output_path):
+            try:
+                os.remove(output_path)
+                print(f"Geçici dosya temizlendi: {output_path}")
+            except:
+                pass
         return None
 
 @app.route('/preview_document/<int:document_id>')
@@ -1952,23 +2042,22 @@ def preview_document(document_id):
         mimetype = f'image/{extension[1:]}' if extension != '.tif' else 'image/tiff'
         return send_file(filepath, mimetype=mimetype)
 
-    # UDF dosyaları PDF'e dönüştürülüp gösterilir
-    elif extension == '.udf':
+    # UDF, DOC ve DOCX dosyaları PDF'e dönüştürülüp gösterilir
+    elif extension in ['.udf', '.doc', '.docx']:
         try:
             pdf_path = convert_udf_to_pdf(filepath)
             if pdf_path:
-                # Dönüştürülmüş PDF dosyasını gönder ve sonra sil
+                # Dönüştürülmüş PDF dosyasını gönder
                 response = send_file(pdf_path, mimetype='application/pdf')
                 # response.call_on_close(lambda: os.remove(pdf_path) if os.path.exists(pdf_path) else None)
                 # Not: call_on_close yerine daha güvenilir bir temizlik mekanizması (örn. Celery task) gerekebilir.
                 # Şimdilik manuel silme veya periyodik temizlik varsayımıyla ilerleyelim.
-                # VEYA geçici bir dizin kullanıp onu temizleyebilirsiniz.
                 return response
             else:
                 # Dönüştürme başarısız olursa orijinal dosyayı indirme olarak sun
                 return send_file(filepath, as_attachment=True, download_name=document.filename)
         except Exception as e:
-            print(f"UDF önizleme hatası (docId: {document_id}): {e}")
+            print(f"{extension.upper()} önizleme hatası (docId: {document_id}): {e}")
             # Hata durumunda orijinal dosyayı indirme olarak sun
             return send_file(filepath, as_attachment=True, download_name=document.filename)
 
