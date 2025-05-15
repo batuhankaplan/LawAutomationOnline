@@ -1,0 +1,195 @@
+# TARIFE DOSYASI
+# Format: TarifeGrubu|Kategori|HizmetKodu|HizmetAdi|TemelUcret|UcretTuru|Birim|EkNot|EkstraAciklama1;EkstraDeger1;DegerTuru1|EkstraAciklama2;EkstraDeger2;DegerTuru2
+# Tarife Grupları: ISTBARO_2025, TBB_2025, KAPLAN_OZEL
+# Değer Türleri (Ekstralar için): SABIT_EKLE, YUZDE_EKLE_TEMEL, SABIT_INDIR, YUZDE_INDIR_TEMEL
+
+# --- İstanbul Barosu Tavsiye Ücret Tarifesi 2025 (Güncellenmiş Liste) ---
+ISTBARO_2025|A- Sulh Hukuk Mahkemelerinde Görülen Davalar|IB_A_1|Kat Mülkiyeti Yasasından Kaynaklanan Uyuşmazlıklar|57000|Sabit|TL||
+ISTBARO_2025|A- Sulh Hukuk Mahkemelerinde Görülen Davalar|IB_A_1_alt|Mirasçılık belgesinin alınması|35000|Sabit|TL||
+ISTBARO_2025|A- Sulh Hukuk Mahkemelerinde Görülen Davalar|IB_A_2|Noterden alınması halinde (Mirasçılık belgesi)|22000|Sabit|TL||
+ISTBARO_2025|A- Sulh Hukuk Mahkemelerinde Görülen Davalar|IB_A_3|Tahliye Davası|55000|Sabit|TL|'den az olmamak üzere yıllık kira bedelinin %10'u|
+ISTBARO_2025|A- Sulh Hukuk Mahkemelerinde Görülen Davalar|IB_A_4|İzale-i Şuyu (Ortaklığın giderilmesi) davası|80000|Sabit|TL|'den az olmamak üzere dava konusu malın/malların muhammen bedelinin vekiledenin payına düşen miktarının %10'u|
+ISTBARO_2025|A- Sulh Hukuk Mahkemelerinde Görülen Davalar|IB_A_5|Vesayet ve Kayyım davaları|50000|Sabit|TL||
+ISTBARO_2025|A- Sulh Hukuk Mahkemelerinde Görülen Davalar|IB_A_6|Terekede ihtiyati tedbirler, Mirasın reddi, miras şirketine mümessil atanmasına ilişkin davalar|45000|Sabit|TL||
+ISTBARO_2025|A- Sulh Hukuk Mahkemelerinde Görülen Davalar|IB_A_7|Mirasta defter tutulması|60000|Sabit|TL|'den az olmamak üzere dava değerinin %10'u|
+ISTBARO_2025|A- Sulh Hukuk Mahkemelerinde Görülen Davalar|IB_A_8a|Kira Tespiti ve Kira Bedelinin Arttırımı davaları (Davacı Vekilliğinde)|70000|Sabit|TL|'den az olmamak üzere artan yıllık kira değerinin %16'sı (Kira farkına ilişkin icra takibinde ayrıca %10'u)|
+ISTBARO_2025|A- Sulh Hukuk Mahkemelerinde Görülen Davalar|IB_A_8b|Kira Tespiti ve Kira Bedelinin Arttırımı davaları (Davalı Vekilliğinde)|40000|Sabit|TL|'dan az olmamak üzere talep edilen ile hükmedilen arasındaki farkın yıllık değerinin %16'sı|
+ISTBARO_2025|A- Sulh Hukuk Mahkemelerinde Görülen Davalar|IB_A_9|Delil tespit istemi|40000|Sabit|TL||
+ISTBARO_2025|A- Sulh Hukuk Mahkemelerinde Görülen Davalar|IB_A_10|Tevdi mahalli tayini (ödeme yeri belirlenmesi)|30000|Sabit|TL||
+
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_1|Tapu veya nüfus kayıtlarında isim düzeltme ve değiştirme, yaş düzeltme, kaza-i rüşt davaları|75000|Sabit|TL||
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_1_alt|İdari yoldan düzeltilmesi halinde (isim, yaş vb.)|30000|Sabit|TL||
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_2|Tenkis ve mirasta iade davası|110000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_3|Muvazaa nedeniyle tapu iptal davası|130000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_4|Vasiyetnamenin iptali davası|130000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_5|Men'i müdahale (Elatmanın önlenmesi) Davası|80000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_6|Tapu iptali ve Tescili Davaları|130000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_7|Şufa Davası|110000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_8|Geçit Hakkı Davası|110000|Sabit|TL||
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_9|Ecrimisil Davası|110000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_10|Alacak Maddi ve Manevi Tazminat davaları|85000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_11|Tezyid-i (Bedel Arttırımı) davası, Kamulaştırmasız El Atma davaları|85000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_12|Kamulaştırma Bedelinin Tespiti ve Tescil davası*|130000|Sabit|TL||
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_13|Tespit davası|55000|Sabit|TL||
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_14|Şirket kararları hakkında ortaklar adına açılacak davalar|75000|Sabit|TL||
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_15|Kooperatif üyeliğinden çıkarma kararının iptaline ilişkin dava|75000|Sabit|TL||
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_16|Tenfiz ve Tanıma davaları|90000|Sabit|TL||
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_17|Zayi ve Kambiyo Senedi İptali Davaları|75000|Sabit|TL||
+ISTBARO_2025|B- Asliye Hukuk Mahkemelerinde Görülen Davalar|IB_B_18|Mirasçılık belgesinin iptali davası|75000|Sabit|TL||
+
+ISTBARO_2025|C- Aile Mahkemelerinde Görülen Davalar|IB_C_1|Evlenmeye izin, İddet müddetinin kaldırılmasına ilişkin Davalar|50000|Sabit|TL||
+ISTBARO_2025|C- Aile Mahkemelerinde Görülen Davalar|IB_C_2|Nişan bozulmasından doğan Davalar (Hediyelerin geri verilmesi, maddi ve manevi tazminat vb)|75000|Sabit|TL|'den az olmamak üzere dava değerinin %10'u|
+ISTBARO_2025|C- Aile Mahkemelerinde Görülen Davalar|IB_C_3a|Boşanma davaları (Anlaşmalı)|75000|Sabit|TL||
+ISTBARO_2025|C- Aile Mahkemelerinde Görülen Davalar|IB_C_3b|Boşanma davaları (Çekişmeli)|110000|Sabit|TL||
+ISTBARO_2025|C- Aile Mahkemelerinde Görülen Davalar|IB_C_3c|Boşanma davaları (Çekişmeli ve maddi, manevi tazminat istemli)|110000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|C- Aile Mahkemelerinde Görülen Davalar|IB_C_4|Mal rejimleri davası|110000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|C- Aile Mahkemelerinde Görülen Davalar|IB_C_5|Soy bağına İlişkin Davalar (Tanıma/Tanımanın İptali, Babalık Hükmü, Soy bağının Reddi, Evlat Edinme)|80000|Sabit|TL||
+ISTBARO_2025|C- Aile Mahkemelerinde Görülen Davalar|IB_C_6|Nafaka Davası|60000|Sabit|TL||
+ISTBARO_2025|C- Aile Mahkemelerinde Görülen Davalar|IB_C_7|Evlat edinme davası|75000|Sabit|TL||
+ISTBARO_2025|C- Aile Mahkemelerinde Görülen Davalar|IB_C_8|Ailenin Korunmasına dair 6284 Sayılı Kanun'dan Doğan Davalar ve Evlilik Birliği Devam Ederken Alınacak Tedbirler|45000|Sabit|TL||
+ISTBARO_2025|C- Aile Mahkemelerinde Görülen Davalar|IB_C_9|Tenfiz davası (Aile Mah.)|90000|Sabit|TL||
+
+ISTBARO_2025|D- Tüketici Mahkemelerinde Görülen Davalar|IB_D_1|Tüketici Mahkemeleri|50000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|D- Tüketici Mahkemelerinde Görülen Davalar|IB_D_2|Tüketici Hakem Heyetleri|15000|Sabit|TL||
+
+ISTBARO_2025|E- İcra İflas Hukukundan Doğan Davalar|IB_E_1|Menfi tespit ve istirdat davaları|75000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|E- İcra İflas Hukukundan Doğan Davalar|IB_E_2|İstihkak Davaları|75000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|E- İcra İflas Hukukundan Doğan Davalar|IB_E_3a|İcra Mahkemeleri'nin görevine giren Davalar (İmzaya ve borca itiraz, Şikayet vd) (Duruşmalı)|60000|Sabit|TL||
+ISTBARO_2025|E- İcra İflas Hukukundan Doğan Davalar|IB_E_3b|İcra Mahkemeleri'nin görevine giren Davalar (İmzaya ve borca itiraz, Şikayet vd) (Duruşmasız)|45000|Sabit|TL||
+ISTBARO_2025|E- İcra İflas Hukukundan Doğan Davalar|IB_E_3c|İcra Ceza|45000|Sabit|TL||
+ISTBARO_2025|E- İcra İflas Hukukundan Doğan Davalar|IB_E_4|İcra İflas Kanunu'ndan doğan İptal davaları|75000|Sabit|TL||
+ISTBARO_2025|E- İcra İflas Hukukundan Doğan Davalar|IB_E_5a|İhalenin feshi davası (Taşınabilir mal ihaleleri)|50000|Sabit|TL|'den az olmamak üzere malın muhammen bedelinin %16'sı|
+ISTBARO_2025|E- İcra İflas Hukukundan Doğan Davalar|IB_E_5b|İhalenin feshi davası (Taşınmaz mal ihaleleri)|90000|Sabit|TL|'den az olmamak üzere malın muhammen bedelinin %16'sı|
+ISTBARO_2025|E- İcra İflas Hukukundan Doğan Davalar|IB_E_6a|İcra takipleri (Değeri parayla ölçülebilen icra takipleri)|45000|Sabit|TL|'den az olmamak üzere takip konusu değerin %16'sı|
+ISTBARO_2025|E- İcra İflas Hukukundan Doğan Davalar|IB_E_6b|İcra takipleri (Değeri parayla ölçülemeyen icra takipleri)|45000|Sabit|TL||
+ISTBARO_2025|E- İcra İflas Hukukundan Doğan Davalar|IB_E_7|Genel mahkemelerde ihtiyati hacze itiraz davaları|40000|Sabit|TL||
+
+ISTBARO_2025|F- Fikri ve Sınai Haklar Mahkemelerinde Görülen Dava ve İşler|IB_F_1|Hukuk Davaları**|80000|Sabit|TL|(**Fikri ve Sınai Haklar Mahkemelerinde görülen dava ve işlerde, konusuna göre diğer mahkemelerde görülen benzeri dava ve işler için öngörülen çizelge hükümlerine bakılmalıdır)|
+ISTBARO_2025|F- Fikri ve Sınai Haklar Mahkemelerinde Görülen Dava ve İşler|IB_F_2a|Ceza Davaları (Şikayet ve takibi)|65000|Sabit|TL||
+ISTBARO_2025|F- Fikri ve Sınai Haklar Mahkemelerinde Görülen Dava ve İşler|IB_F_2b|Ceza Davaları (Sanık müdafiliği / Müdahil Vekilliği)|100000|Sabit|TL||
+
+ISTBARO_2025|G- İş Mahkemelerinde Görülen Davalar|IB_G_1|Değeri parayla ölçülebilen Davalar|70000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|G- İş Mahkemelerinde Görülen Davalar|IB_G_2|Değeri parayla ölçülemeyen Davalar|70000|Sabit|TL||
+
+ISTBARO_2025|H- İdare ve Vergi Mahkemelerinde Görülen Davalar|IB_H_1a|İptal Davası (Duruşmalı)|90000|Sabit|TL||
+ISTBARO_2025|H- İdare ve Vergi Mahkemelerinde Görülen Davalar|IB_H_1b|İptal Davası (Duruşmasız)|70000|Sabit|TL||
+ISTBARO_2025|H- İdare ve Vergi Mahkemelerinde Görülen Davalar|IB_H_2a|Tam yargı Davası (Duruşmalı)|90000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|H- İdare ve Vergi Mahkemelerinde Görülen Davalar|IB_H_2b|Tam yargı Davası (Duruşmasız)|70000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|H- İdare ve Vergi Mahkemelerinde Görülen Davalar|IB_H_3a|Vergi uyuşmazlığından doğan Davalar (Duruşmalı)|90000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|H- İdare ve Vergi Mahkemelerinde Görülen Davalar|IB_H_3b|Vergi uyuşmazlığından doğan Davalar (Duruşmasız)|70000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|H- İdare ve Vergi Mahkemelerinde Görülen Davalar|IB_H_4a|4483 sayılı Kanun uyarınca yapılan itirazlar (Bölge İdare Mahkemesinde)|50000|Sabit|TL||
+ISTBARO_2025|H- İdare ve Vergi Mahkemelerinde Görülen Davalar|IB_H_4b|4483 sayılı Kanun uyarınca yapılan itirazlar (Danıştay'da)|60000|Sabit|TL||
+ISTBARO_2025|H- İdare ve Vergi Mahkemelerinde Görülen Davalar|IB_H_5a|Danıştay'da ilk derecede görülen davalar (Duruşmalı)|115000|Sabit|TL||
+ISTBARO_2025|H- İdare ve Vergi Mahkemelerinde Görülen Davalar|IB_H_5b|Danıştay'da ilk derecede görülen davalar (Duruşmasız)|90000|Sabit|TL||
+
+ISTBARO_2025|I- Ceza Mahkemelerinde Görülen Davalar|IB_I_1a|Ağır/Çocuk Ağır Ceza Mahkemesi (Sanık Müdafiliği)|190000|Sabit|TL||
+ISTBARO_2025|I- Ceza Mahkemelerinde Görülen Davalar|IB_I_1b|Ağır/Çocuk Ağır Ceza Mahkemesi (Mağdur/Katılan Vekilliği)|120000|Sabit|TL||
+ISTBARO_2025|I- Ceza Mahkemelerinde Görülen Davalar|IB_I_2a|Asliye Ceza / Çocuk Mahkemesi (Sanık/SSÇ Müdafiliği)|120000|Sabit|TL||
+ISTBARO_2025|I- Ceza Mahkemelerinde Görülen Davalar|IB_I_2b|Asliye Ceza / Çocuk Mahkemesi (Mağdur/Katılan Vekilliği)|85000|Sabit|TL||
+ISTBARO_2025|I- Ceza Mahkemelerinde Görülen Davalar|IB_I_3|Sulh Ceza ve İnfaz Hakimliği|50000|Sabit|TL||
+ISTBARO_2025|I- Ceza Mahkemelerinde Görülen Davalar|IB_I_4|Disiplin Mahkemesi|55000|Sabit|TL||
+
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_1a|Büroda sözlü danışma (İlk bir saat için)|10000|Sabit|TL/Saat||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_1b|Büroda sözlü danışma (Bir saati aşan her saat için)|6500|Sabit|TL/Saat||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_2|Yazılı danışma|20000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_3|Sesli ve görüntülü iletişim araçları ile danışma|9000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_4a|Çağrı üzerine gidilen yerde sözlü danışma (İlk bir saat için)|15000|Sabit|TL/Saat||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_4b|Çağrı üzerine gidilen yerde sözlü danışma (Bir saati aşan her saat için)|8000|Sabit|TL/Saat||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_5|İdari Mercilerde, Bankalarda Vekillik Tapu işlemleri / İntikal işlemleri|45000|Sabit|TL|'den az olmamak üzere işlem değerinin %3'ü|
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_6|İhtarname, İhbarname, Protesto düzenleme|21000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_7|Cumhuriyet Savcılığı Şikayet Dilekçeleri|21000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_8|Dava, Cevap Dilekçesi vb. Dilekçeler|21000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_9|İstinaf, Temyiz ve Karar düzeltme Dilekçeleri|30000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_10|Miras Sözleşmesi, İstisna Akdi, Taksim Sözleşmesi vb düzenlemeler|100000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_11|Diğer her türlü Sözleşme düzenlenmesi|60000|Sabit|TL|'den az olmamak üzere Sözleşme değerinin %5'i|
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_12|Yargıtay, Danıştay, Askeri Yargı ve Sayıştay'da Temyiz Duruşmalarına katılma (masraf dışında)|90000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_13|İstinaf Mahkemelerinde Duruşmalara katılma|65000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_14|Şirket ana sözleşmesi, dernek Tüzüğü, vakıf senedi, yönetmelik, vasiyetname, yönetim planı vb. düzenlemeler|110000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_15|Ceza yahut idari soruşturmada müdafilik, vekillik|50000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_16|Avukatın yanında çalışan Avukatlar|70000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_17a|Şirketlerde sürekli danışmanlık (Adi, kollektif, komandit, limited şirketler - Aylık)|55000|Aylık|TL|Dava ve takip ücretleri ayrı tutularak|
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_17ba|Şirketlerde sürekli danışmanlık (Anonim Şirket - 250.000 TL.den az sermayeli - Aylık)|60000|Aylık|TL|Dava ve takip ücretleri ayrı tutularak|
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_17bb|Şirketlerde sürekli danışmanlık (Anonim Şirket - 250.000 TL.den yukarı sermayeli - Aylık)|70000|Aylık|TL|Dava ve takip ücretleri ayrı tutularak|
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_18a|Kooperatiflerde sürekli danışmanlık (100'den az üyeli - Aylık)|50000|Aylık|TL|Dava ve takip ücretleri ayrı tutularak|
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_18b|Kooperatiflerde sürekli danışmanlık (100'den fazla üyeli - Aylık)|60000|Aylık|TL|Dava ve takip ücretleri ayrı tutularak|
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_19|Ticari olmayan tüzel kişiliklerde sürekli danışmanlık (Aylık)|60000|Aylık|TL|Dava ve takip ücretleri ayrı tutularak|
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_20a|Ana sözleşme değişiklikleri ve Sermaye arttırımı (Adi, Kollektif, Komandit, Limited Şirketler)|45000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_20b|Ana sözleşme değişiklikleri ve Sermaye arttırımı (Kooperatif)|55000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_20c|Ana sözleşme değişiklikleri ve Sermaye arttırımı (Anonim Şirket)|60000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_21a|Şirket Genel Kurul İşlemleri (Ortak sayısı 10'a kadar A.Ş.)|40000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_21b|Şirket Genel Kurul İşlemleri (Ortak sayısı 10'dan fazla A.Ş.)|55000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_22a|Kooperatif Genel Kurul İşlemleri (Ortak sayısı 100'e kadar)|60000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_22b|Kooperatif Genel Kurul İşlemleri (Ortak sayısı 100'den fazla)|70000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_23|Şirket Pay Devri|45000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_24|Şirket, Kuruluş, Tür değiştirme ve Birleşmeleri|115000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_25|Sayıştay Davaları|75000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_26|Vergi Uzlaşma Komisyonu İşlemleri|75000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_27|Arabuluculuk da Taraf Vekilliği|35000|Sabit|TL|'den az olmamak üzere uyuşmazlık konusunun değerinin %16'sı|
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_28a|Anayasa Mahkemesi (Yüce Divan Sıfatıyla Bakılan İşler)|150000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_28bDRML|Anayasa Mahkemesi (Bireysel Başvuru - Duruşmalı işlerde)|100000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_28bDRMSZ|Anayasa Mahkemesi (Bireysel Başvuru - Duruşmasız İşlerde)|85000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_29a|Avrupa İnsan Hakları Mahkemesi ve Uluslararası Yargı Yerleri (Duruşmalı)|315000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_29b|Avrupa İnsan Hakları Mahkemesi ve Uluslararası Yargı Yerleri (Duruşmasız)|215000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_30|Görülmekte olan bir dava içinde olmamak koşulu ile ihtiyati haciz, ihtiyati tedbir, fikir ve sınai mülkiyet hukukuna göre toplatma işleri|55000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_31|KVKK Dönüşüm ve Uyum Proje/Danışmanlığı (Aylık)|120000|Aylık|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_32|Türkiye'de Oturum İzni Alınması|110000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_33|Türkiye'de Çalışma İzni Alınması|110000|Sabit|TL||
+ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_34|İnsan Hakları Tazminat Komisyonunda takip edilen işler|60000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
+ISTBARO_2025|Genel Not|IB_GN_1|Çizelgede yazılı olmayan dava, takip ve hukuki yardımlar için işin özelliği gözetilerek benzeri işlere göre ücret belirlenebilir.||Bilgi|||
+
+
+# --- TBB Avukatlık Asgari Ücret Tarifesi 2024-2025 (Güncellenmiş Liste) ---
+TBB_2025|Birinci Kısım - Birinci Bölüm: Dava ve Takiplerin Dışındaki Hukuki Yardımlar|TBB_1_1_1a|Büroda sözlü danışma (ilk bir saate kadar)|3500|Saatlik|TL/Saat||
+TBB_2025|Birinci Kısım - Birinci Bölüm: Dava ve Takiplerin Dışındaki Hukuki Yardımlar|TBB_1_1_1b|Büroda sözlü danışma (Takip eden her saat için)|1500|Saatlik|TL/Saat||
+TBB_2025|Birinci Kısım - Birinci Bölüm: Dava ve Takiplerin Dışındaki Hukuki Yardımlar|TBB_1_1_2a|Çağrı üzerine gidilen yerde sözlü danışma (ilk bir saate kadar)|6000|Saatlik|TL/Saat||
+TBB_2025|Birinci Kısım - Birinci Bölüm: Dava ve Takiplerin Dışındaki Hukuki Yardımlar|TBB_1_1_2b|Çağrı üzerine gidilen yerde sözlü danışma (Takip eden her saat için)|3000|Saatlik|TL/Saat||
+TBB_2025|Birinci Kısım - Birinci Bölüm: Dava ve Takiplerin Dışındaki Hukuki Yardımlar|TBB_1_1_3a|Yazılı danışma için (ilk bir saate kadar)|6000|Saatlik|TL/Saat||
+TBB_2025|Birinci Kısım - Birinci Bölüm: Dava ve Takiplerin Dışındaki Hukuki Yardımlar|TBB_1_1_3b|Yazılı danışma için (Takip eden her saat için)|3000|Saatlik|TL/Saat||
+TBB_2025|Birinci Kısım - Birinci Bölüm: Dava ve Takiplerin Dışındaki Hukuki Yardımlar|TBB_1_1_4|Her türlü dilekçe yazılması, ihbarname, ihtarname, protesto düzenlenmesinde|4500|Sabit|TL||
+TBB_2025|Birinci Kısım - Birinci Bölüm: Dava ve Takiplerin Dışındaki Hukuki Yardımlar|TBB_1_1_5a|Sözleşmeler ve benzeri belgelerin hazırlanması (Kira sözleşmesi ve benzeri)|6000|Sabit|TL||
+TBB_2025|Birinci Kısım - Birinci Bölüm: Dava ve Takiplerin Dışındaki Hukuki Yardımlar|TBB_1_1_5b|Sözleşmeler ve benzeri belgelerin hazırlanması (Tüzük, yönetmelik, miras sözleşmesi, vasiyetname, vakıf senedi vb.)|24000|Sabit|TL||
+TBB_2025|Birinci Kısım - Birinci Bölüm: Dava ve Takiplerin Dışındaki Hukuki Yardımlar|TBB_1_1_5c|Sözleşmeler ve benzeri belgelerin hazırlanması (Şirket ana sözleşmesi, şirketlerin devir ve birleşmesi vb. ticari işlerle ilgili sözleşmeler)|16000|Sabit|TL||
+TBB_2025|Birinci Kısım - İkinci Bölüm: İş Takibi Konusundaki Hukuki Yardımlar|TBB_1_2_1|Bir durumun belgelendirilmesi, ödeme aşamasındaki paranın tahsili veya bir belgenin örneğinin çıkarılması gibi işlerin takibi için|5000|Sabit|TL||
+TBB_2025|Birinci Kısım - İkinci Bölüm: İş Takibi Konusundaki Hukuki Yardımlar|TBB_1_2_2a|Bir hakkın doğumu, tespiti, tescili, nakli, değiştirilmesi, sona erdirilmesi veya korunması gibi amaçlarla yapılan işler için|9000|Sabit|TL||
+TBB_2025|Birinci Kısım - İkinci Bölüm: İş Takibi Konusundaki Hukuki Yardımlar|TBB_1_2_2b|İpotek tesisi ve fekki gibi işlemler nedeni ile sürekli sözleşme ile çalışılan bankalar, finans kuruluşları vb. hukuki yardım|2250|Sabit|TL||
+TBB_2025|Birinci Kısım - İkinci Bölüm: İş Takibi Konusundaki Hukuki Yardımlar|TBB_1_2_3|Tüzel kişi tacirlerin şirket kuruluş sözleşmelerinin imzalanması, ruhsat ve imtiyazların alınması, devri ve Türk vatandaşlığına kabul edilme gibi işlerin takibi için|45000|Sabit|TL||
+TBB_2025|Birinci Kısım - İkinci Bölüm: İş Takibi Konusundaki Hukuki Yardımlar|TBB_1_2_4|Vergi uzlaşma komisyonlarında takip edilen işler için|18000|Sabit|TL||
+TBB_2025|Birinci Kısım - İkinci Bölüm: İş Takibi Konusundaki Hukuki Yardımlar|TBB_1_2_5a|Uluslararası yargı yerlerinde takip edilen işlerde (Duruşmasız ise)|80000|Sabit|TL||
+TBB_2025|Birinci Kısım - İkinci Bölüm: İş Takibi Konusundaki Hukuki Yardımlar|TBB_1_2_5b|Uluslararası yargı yerlerinde takip edilen işlerde (Duruşmalı ise)|150000|Sabit|TL||
+TBB_2025|Birinci Kısım - İkinci Bölüm: İş Takibi Konusundaki Hukuki Yardımlar|TBB_1_2_5c|Uluslararası yargı yerlerinde takip edilen işlerde (Konusu para olan işlerde)|-|Yüzdelik|%|Tarifenin üçüncü kısmına göre belirlenir.|
+TBB_2025|Birinci Kısım - İkinci Bölüm: İş Takibi Konusundaki Hukuki Yardımlar|TBB_1_2_6|Tüketici hakem heyetleri, sebze ve meyve hal hakem heyetleri nezdinde sunulacak hukuki yardımlar|5000|Maktu|TL|6502 S.K. m.70/1 saklı. Üçüncü kısıma göre belirlenecek ücret maktu ücretin altında ise asıl alacağı geçmemek kaydıyla.|
+TBB_2025|Birinci Kısım - Üçüncü Bölüm: Zorunlu Sözleşmeli Avukatlara Aylık Ödenecek Ücret|TBB_1_3_1|Yapı kooperatiflerinde|19200|Aylık|TL|Yıllık ücret üzerinde hesaplanırsa fark ödenir.|
+TBB_2025|Birinci Kısım - Üçüncü Bölüm: Zorunlu Sözleşmeli Avukatlara Aylık Ödenecek Ücret|TBB_1_3_2|Anonim şirketlerde|32000|Aylık|TL|Yıllık ücret üzerinde hesaplanırsa fark ödenir.|
+TBB_2025|Birinci Kısım - Dördüncü Bölüm: Sözleşmeli Avukatlara Aylık Ödenecek Ücret|TBB_1_4_1|Özel Kişi ve Tüzel Kişilerin Sözleşmeli Avukatlarına Ödeyecekleri Aylık Avukatlık Ücreti|25000|Aylık|TL|Yıllık ücret üzerinde hesaplanırsa fark ödenir.|
+TBB_2025|Birinci Kısım - Dördüncü Bölüm: Sözleşmeli Avukatlara Aylık Ödenecek Ücret|TBB_1_4_2|Kamu Kurum ve Kuruluşlarının Sözleşmeli Avukatlarına Ödeyecekleri Aylık Avukatlık Ücreti|25000|Aylık|TL|Yıllık ücret üzerinde hesaplanırsa fark ödenir.|
+TBB_2025|İkinci Kısım - Birinci Bölüm: Maktu Ücrete Bağlı Hukuki Yardımlar|TBB_2_1_1a|İhtiyati haciz, ihtiyati tedbir, delillerin tespiti, icranın geri bırakılması, ödeme ve tevdi yeri belirlenmesi (Duruşmasız ise)|7500|Maktu|TL||
+TBB_2025|İkinci Kısım - Birinci Bölüm: Maktu Ücrete Bağlı Hukuki Yardımlar|TBB_2_1_1b|İhtiyati haciz, ihtiyati tedbir, delillerin tespiti, icranın geri bırakılması, ödeme ve tevdi yeri belirlenmesi (Duruşmalı ise)|9500|Maktu|TL||
+TBB_2025|İkinci Kısım - Birinci Bölüm: Maktu Ücrete Bağlı Hukuki Yardımlar|TBB_2_1_2|Ortaklığın giderilmesi için satış memurluğunda yapılacak işlerin takibi için|12500|Maktu|TL||
+TBB_2025|İkinci Kısım - Birinci Bölüm: Maktu Ücrete Bağlı Hukuki Yardımlar|TBB_2_1_3|Ortaklığın giderilmesi ve taksim davaları için|28500|Maktu|TL||
+TBB_2025|İkinci Kısım - Birinci Bölüm: Maktu Ücrete Bağlı Hukuki Yardımlar|TBB_2_1_4a|Vergi Mahkemelerinde takip edilen dava ve işler için (Duruşmasız ise)|18000|Maktu|TL||
+TBB_2025|İkinci Kısım - Birinci Bölüm: Maktu Ücrete Bağlı Hukuki Yardımlar|TBB_2_1_4b|Vergi Mahkemelerinde takip edilen dava ve işler için (Duruşmalı ise)|36000|Maktu|TL||
+TBB_2025|İkinci Kısım - Birinci Bölüm: Maktu Ücrete Bağlı Hukuki Yardımlar|TBB_2_1_5|Tüketici Mahkemelerinde görülen kredi taksitlerinin veya faizinin uyarlanması davaları için|14000|Maktu|TL||
+TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_21a|Danıştay’da ilk derecede görülen davalar için (Duruşmasız ise)|28000|Maktu|TL||
+TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_21b|Danıştay’da ilk derecede görülen davalar için (Duruşmalı ise)|56000|Maktu|TL||
+TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_22|Yargıtay, Danıştay ve Sayıştay’da temyiz yolu ile görülen işlerin duruşması için|28000|Maktu|TL||
+TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_23|Uyuşmazlık Mahkemesindeki davalar için|30000|Maktu|TL||
+TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_24a|Anayasa Mahkemesinde görülen dava ve işler için (Yüce Divan sıfatı ile bakılan davalar)|90000|Maktu|TL||
+TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_24bDRMSZ|Anayasa Mahkemesinde görülen dava ve işler için (Bireysel başvuru - Duruşmasız işlerde)|30000|Maktu|TL||
+TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_24bDRML|Anayasa Mahkemesinde görülen dava ve işler için (Bireysel başvuru - Duruşmalı işlerde)|60000|Maktu|TL||
+TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_24c|Anayasa Mahkemesinde görülen dava ve işler için (Diğer dava ve işler)|65000|Maktu|TL||
+TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_1|İlk 400.000,00 TL için|16|Yüzdelik|%||
+TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_2|Sonra gelen 400.000,00 TL için|15|Yüzdelik|%||
+TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_3|Sonra gelen 800.000,00 TL için|14|Yüzdelik|%||
+TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_4|Sonra gelen 1.200.000,00 TL için|11|Yüzdelik|%||
+TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_5|Sonra gelen 1.600.000,00 TL için|8|Yüzdelik|%||
+TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_6|Sonra gelen 2.000.000,00 TL için|5|Yüzdelik|%||
+TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_7|Sonra gelen 2.400.000,00 TL için|3|Yüzdelik|%||
+TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_8|Sonra gelen 2.800.000,00 TL için|2|Yüzdelik|%||
+TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_9|11.600.000,00 TL’dan yukarısı için|1|Yüzdelik|%||
+
+# --- Kaplan Hukuk Bürosu Asgari Ücret Tarifesi (Örnekler - Manuel Belirlenecek) ---
+KAPLAN_OZEL|Danışmanlık|KH_DNS_01|Ticari Şirketlere Kapsamlı Hukuki Danışmanlık Paketi (Aylık)|30000|Aylık|TL/Ay|Minimum 6 ay sözleşmeli|Acil Durum Müdahalesi (Ayda 2 Kez);5000;SABIT_EKLE|Sözleşme İnceleme (Ekstra 5 Adet);3000;SABIT_EKLE
+KAPLAN_OZEL|Dava|KH_DV_01|Marka Hakkına Tecavüz Davası|60000|Sabit|TL|Dava değerinin %15'i (hangisi yüksekse)|İhtiyati Tedbir Talebi;10000;SABIT_EKLE|Delil Tespiti Masrafı;5000;SABIT_EKLE
+KAPLAN_OZEL|Sözleşme Hazırlama|KH_SZL_01|Kapsamlı Franchise Sözleşmesi Hazırlama|45000|Sabit|TL||Yabancı Dilde Çeviri;15000;SABIT_EKLE|Noter Masrafı Karşılama;2000;SABIT_EKLE
+KAPLAN_OZEL|Ceza Hukuku|KH_CZ_01|Ekonomik Suçlar Kapsamında Şüpheli Müdafiliği (Soruşturma Aşaması)|70000|Sabit|TL||Haftasonu Mesai Farkı;10000;SABIT_EKLE
+KAPLAN_OZEL|Ceza Hukuku|KH_CZ_02|Ekonomik Suçlar Kapsamında Sanık Müdafiliği (Kovuşturma Aşaması)|120000|Sabit|TL||Uzman Mütalaası Alma;25000;SABIT_EKLE

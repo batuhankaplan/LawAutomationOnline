@@ -31,7 +31,7 @@ input, textarea, [contenteditable="true"], .selectable-text {
     user-select: text;
 }
 
-.container {
+.app-container {
     display: flex;
     min-height: 100vh;
 }
@@ -264,7 +264,7 @@ header {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .container {
+    .app-container {
         flex-direction: column;
     }
     

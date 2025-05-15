@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+
+{% block title %}Ücret Tarifeleri{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tarifeler.css') }}">
+<style>
+    /* Sayfaya özel ek CSS gerekirse buraya eklenebilir */
+    .tarifeler-page-content .nav-tabs .nav-link {
+        color: var(--primary-color);
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px; /* Aktif sekme border'ı ile hizalamak için */
+    }
+    .tarifeler-page-content .nav-tabs .nav-link.active {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+        font-weight: 500;
+        background-color: var(--background-color); /* Arka planı ana arka planla aynı yap */
+    }
+    .tarifeler-page-content .nav-tabs {
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: 25px;
+    }
+    .tarifeler-page-content .tab-content {
+        padding-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}Ücret Tarifelerimiz{% endblock %}
+
+{% block content %}
+<div class="tarifeler-page-content">
+    <ul class="nav nav-tabs" id="tarifeTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="istbaro-tab" data-bs-toggle="tab" data-bs-target="#istbaro-content" type="button" role="tab" aria-controls="istbaro-content" aria-selected="true">İstanbul Barosu Tavsiye 2025</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tbb-tab" data-bs-toggle="tab" data-bs-target="#tbb-content" type="button" role="tab" aria-controls="tbb-content" aria-selected="false">TBB Asgari Ücret 2025</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="kaplan-danismanlik-tab" data-bs-toggle="tab" data-bs-target="#kaplan-danismanlik-content" type="button" role="tab" aria-controls="kaplan-danismanlik-content" aria-selected="false">Kaplan Hukuk Danışmanlık Ücret Tarifesi</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="tarifeTabContent">
+        <div class="tab-pane fade show active" id="istbaro-content" role="tabpanel" aria-labelledby="istbaro-tab">
+            <!-- İstanbul Barosu tarifeleri buraya yüklenecek -->
+            <div class="spinner-border text-primary tarifeler-page-loader" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="tbb-content" role="tabpanel" aria-labelledby="tbb-tab">
+            <!-- TBB tarifeleri buraya yüklenecek -->
+            <div class="spinner-border text-primary tarifeler-page-loader" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="kaplan-danismanlik-content" role="tabpanel" aria-labelledby="kaplan-danismanlik-tab">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>Kaplan Hukuk Danışmanlık Ücret Tarifesi (Düzenlenebilir)</h4>
+                <button class="btn btn-success" id="kaydet-kaplan-danismanlik-tarife"><i class="fas fa-save me-2"></i>Değişiklikleri Kaydet</button>
+            </div>
+            <p class="text-muted small">Bu bölümdeki tarifeleri aşağıdan yönetebilirsiniz. Yeni kategoriler (Dava Türü), hizmetler ve ekstralar ekleyebilir, mevcutları düzenleyebilir, silebilir ve sıralayabilirsiniz.</p>
+            <hr>
+            <div id="kaplan-danismanlik-editor-container">
+                <!-- Düzenleme arayüzü buraya dinamik olarak yüklenecek -->
+                <div class="alert alert-info">Düzenleme arayüzü yükleniyor... Eğer tarife boşsa, yeni kategori ekleme seçeneği sunulacaktır.</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/tarifeler.js') }}"></script>
+<script>
+    // Bootstrap tabları aktif etmek için (eğer global bir script'te yoksa)
+    var triggerTabList = [].slice.call(document.querySelectorAll('#tarifeTabs button'))
+    triggerTabList.forEach(function (triggerEl) {
+        var tabTrigger = new bootstrap.Tab(triggerEl)
+
+        triggerEl.addEventListener('click', function (event) {
+            event.preventDefault()
+            tabTrigger.show()
+        })
+    })
+</script>
+{% endblock %} 

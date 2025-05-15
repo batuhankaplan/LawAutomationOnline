@@ -1,5 +1,5 @@
 YAPILACAKLAR:
-1) Takvimdeki etkinlik seçeneklerine e-duruşma seçeneği de eklenecek. #YAPIlLDI
+1) Takvimdeki etkinlik seçeneklerine e-duruşma seçeneği de eklenecek. #YAPILDI
 2) Ödeme silme butonu yok. #YAPILDI
 3) (Ödemelere açıklama ekleme yok) #YAPILDI
 4) Ceza infaz hesaplama. #YAPILDI
@@ -12,7 +12,7 @@ Kullanıcının ufak yuvarlak resim boxunun üstüne basınca seçenekler açıl
 9) İşçi görüşme tutanağı formu eklenebilir. #YAPILDI
 10) Örnek dilekçe yükleme ve sorgulama sistemi eklenebilir.
 12) Ücret tarifeleri sisteme yüklenecek. (TBB asgari tarife, İst Barosu tavsiye niteliğindeki tarife, Bizim ihtar dilekçe danışma ücreti vs tarifemiz)
-13) Ödemeler ile ilgili istatislik bilgileri, yıllık aylık, günlük ödeme istatistikleri, dosya türüne göre ortalama alınan ödemeler, dosya türlerine göre toplam alınan ödemeler, ödeme tarihlerine göre(yıllık aylık günlük) grafik gösterimi, (#Yapım aşamasında)
+13) Ödemeler ile ilgili istatislik bilgileri, yıllık aylık, günlük ödeme istatistikleri, dosya türüne göre ortalama alınan ödemeler, dosya türlerine göre toplam alınan ödemeler, ödeme tarihlerine göre(yıllık aylık günlük) grafik gösterimi, #YAPILDI
 HATA VE BUGLAR:
 1) (mesela duyurulara bir duyuru ekliyorum, duyurular sayfasında "Duyuru eklendi" uyarısı gelmiyor). Tüm işem geri bildirimlerinin kontrolünü yapalım. duyuru eklendi(dosya eklendi/etkinlik eklendi(ödeme eklendi vs vs.))
 2) Anasayfada adliye istatistikleri 2 den fazla gösterince bug'a giriyor.

@@ -33,6 +33,7 @@ from sqlalchemy import func, desc
 import shutil
 import mammoth
 import pdfkit
+import logging # Logging için eklendi
 
 # Flask-Admin imports
 from flask_admin import Admin, AdminIndexView, BaseView, expose
@@ -3797,6 +3798,195 @@ def direct_view_udf(document_id):
     except Exception as e:
         print(f"UDF içeriği doğrudan görüntüleme hatası: {str(e)}")
         return f"UDF dosyası görüntülenirken hata oluştu: {str(e)}", 500
+
+def parse_tarifeler():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    filepath = os.path.join(base_dir, '..', 'tarifeler.txt')
+    # JS tarafının beklediği anahtarlar: "İstanbul Barosu", "TBB"
+    tarifeler = { 
+        "İstanbul Barosu": [], 
+        "TBB": [], 
+        "kaplan_danismanlik_tarifesi": None 
+    }
+    
+    # tarifeler.txt'deki grup isimlerini JS'in beklediği isimlere map'lemek için
+    grup_map = {
+        "ISTBARO_2025": "İstanbul Barosu",
+        "TBB_2025": "TBB"
+        # Eski KAPLAN_OZEL grubu artık parse edilmeyecek, JSON ile yönetiliyor.
+    }
+
+    in_kaplan_danismanlik_json_block = False
+    kaplan_danismanlik_json_str = ""
+
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+
+        for line_num, line_content in enumerate(lines):
+            line_content = line_content.strip()
+
+            if not line_content or line_content.startswith("#"): # Boş satırları ve yorumları atla
+                continue
+
+            if line_content.startswith("KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ START"):
+                in_kaplan_danismanlik_json_block = True
+                kaplan_danismanlik_json_str = "" 
+                continue
+            elif line_content.startswith("KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ END"):
+                in_kaplan_danismanlik_json_block = False
+                if kaplan_danismanlik_json_str:
+                    try:
+                        tarifeler["kaplan_danismanlik_tarifesi"] = json.loads(kaplan_danismanlik_json_str)
+                    except json.JSONDecodeError as e:
+                        logging.error(f"Hata: Kaplan Danışmanlık JSON parse edilemedi: {e} (Satır aralığı yaklaşık {line_num})\\nİçerik: {kaplan_danismanlik_json_str[:200]}...")
+                        tarifeler["kaplan_danismanlik_tarifesi"] = {"error": "JSON parse hatası", "details": str(e)}
+                kaplan_danismanlik_json_str = ""
+                continue
+
+            if in_kaplan_danismanlik_json_block:
+                kaplan_danismanlik_json_str += line_content + "\\n" # JSON \n karakterlerini korumak için string'e eklerken \\n kullanıldı, json.loads için sorun olmamalı.
+                continue
+
+            # Statik tarifeler için (ISTBARO, TBB) pipe (|) ile ayrılmış formatı işle
+            parts = [part.strip() for part in line_content.split('|')]
+            
+            # Minimum beklenen sütun sayısı (TarifeGrubu, Kategori, HizmetKodu, HizmetAdi, TemelUcret, UcretTuru, Birim)
+            # EkNot opsiyonel olduğu için 7 veya 8 olabilir.
+            if len(parts) < 7: 
+                logging.warning(f"Uyarı: Satır {line_num + 1} yetersiz bölüm içeriyor ({len(parts)}), atlanıyor: {line_content}")
+                continue
+
+            tarife_grubu_txt = parts[0]
+            kategori_adi_txt = parts[1]
+            # hizmet_kodu_txt = parts[2] # Şimdilik kullanılmıyor
+            hizmet_adi_txt = parts[3]
+            temel_ucret_txt = parts[4]
+            # ucret_turu_txt = parts[5] # Şimdilik kullanılmıyor, JS'de temel_ucret'ten parse ediliyor.
+            birim_txt = parts[6] if parts[6] else None # Boş birim None olsun
+            ek_not_txt = parts[7] if len(parts) > 7 and parts[7] else None
+            
+            current_group_key = grup_map.get(tarife_grubu_txt)
+            if not current_group_key:
+                logging.warning(f"Uyarı: Satır {line_num + 1}'deki tarife grubu '{tarife_grubu_txt}' tanınmıyor, atlanıyor.")
+                continue
+
+            kategori_obj = None
+            for kat_existing in tarifeler[current_group_key]:
+                if kat_existing["kategori"] == kategori_adi_txt:
+                    kategori_obj = kat_existing
+                    break
+            
+            if kategori_obj is None:
+                kategori_obj = {"kategori": kategori_adi_txt, "items": []}
+                tarifeler[current_group_key].append(kategori_obj)
+
+            item = {
+                "hizmet_adi": hizmet_adi_txt,
+                "temel_ucret": temel_ucret_txt, 
+                "original_ucret_str": temel_ucret_txt # JS'nin parse etmesi için orijinal string
+            }
+            # Birim 'TL' ise veya boşsa JS tarafı TRY olarak algılayacak, farklıysa ekleyelim.
+            if birim_txt and birim_txt.upper() not in ["TL", "TRY", ""]:
+                item["birim"] = birim_txt
+            if ek_not_txt:
+                item["ek_not"] = ek_not_txt
+            
+            kategori_obj["items"].append(item)
+
+    except FileNotFoundError:
+        logging.error(f"Hata: Tarife dosyası bulunamadı: {filepath}")
+        return {"error": "Tarife dosyası bulunamadı"}
+    except Exception as e:
+        import traceback
+        logging.error(f"Hata: Tarife dosyası okunurken/işlenirken hata: {e}\\n{traceback.format_exc()}")
+        return {"error": f"Tarife dosyası okunurken/işlenirken hata: {e}"}
+
+    return tarifeler
+
+@app.route('/api/tarifeler')
+def api_tarifeler():
+    data = parse_tarifeler()
+    if "error" in data:
+        return jsonify(data), 500
+    return jsonify(data)
+
+@app.route('/api/kaydet_kaplan_danismanlik_tarife', methods=['POST'])
+@login_required
+# @permission_required('tarife_yonetimi') # Gerekirse eklenecek bir yetki
+def kaydet_kaplan_danismanlik_tarife():
+    if not current_user.is_admin: # Şimdilik sadece adminler değiştirebilsin
+        return jsonify({"success": False, "error": "Yetkiniz yok."}), 403
+
+    try:
+        new_kaplan_data = request.get_json()
+        if not new_kaplan_data or "kategoriler" not in new_kaplan_data:
+            return jsonify({"success": False, "error": "Geçersiz veri formatı."}), 400
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        filepath = os.path.join(base_dir, '..', 'tarifeler.txt')
+
+        lines = []
+        with open(filepath, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+
+        start_marker = "KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ START\\n"
+        end_marker = "KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ END\\n"
+        
+        new_content_str = json.dumps(new_kaplan_data, ensure_ascii=False, indent=2)
+
+        output_lines = []
+        in_block = False
+        block_written = False
+
+        for line in lines:
+            if line.strip() == start_marker.strip():
+                in_block = True
+                output_lines.append(start_marker)
+                output_lines.append(new_content_str + "\\n") # JSON içeriğini yaz
+                output_lines.append(end_marker)
+                block_written = True
+            elif line.strip() == end_marker.strip() and in_block:
+                in_block = False
+                # Zaten yukarıda end_marker eklendi, burada bir şey yapma
+            elif not in_block:
+                output_lines.append(line)
+        
+        if not block_written: # Eğer dosya içinde blok hiç bulunamadıysa, sona ekle
+            if output_lines and not output_lines[-1].endswith("\\n"):
+                 output_lines.append("\\n") # Önceki satırın sonuna newline ekle
+            output_lines.append(start_marker)
+            output_lines.append(new_content_str + "\\n")
+            output_lines.append(end_marker)
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.writelines(output_lines)
+
+        log_activity("Tarife Güncelleme", f"Kaplan Hukuk Danışmanlık Ücret Tarifesi güncellendi.", current_user.id)
+        return jsonify({"success": True, "message": "Kaplan Hukuk Danışmanlık Tarifesi başarıyla güncellendi."})
+
+    except FileNotFoundError:
+        return jsonify({"success": False, "error": "Tarife dosyası bulunamadı."}), 500
+    except json.JSONDecodeError:
+        return jsonify({"success": False, "error": "Gönderilen JSON verisi hatalı."}), 400
+    except Exception as e:
+        logging.error(f"Kaplan Danışmanlık Tarifesi kaydedilirken hata: {e}", exc_info=True)
+        return jsonify({"success": False, "error": f"Sunucu hatası: {str(e)}"}), 500
+
+
+@app.route('/ucret-tarifeleri')
+@login_required # Eğer kullanıcı girişi gerekiyorsa bu decorator'ı kullanın
+def ucret_tarifeleri_page():
+    """
+    Ücret tarifeleri sayfasını render eder.
+    """
+    # Eğer @login_required kullanmıyorsanız ve kullanıcı bilgisi template'e göndermeniz gerekmiyorsa,
+    # bu kısımları silebilirsiniz.
+    user_id = current_user.id
+    user = User.query.get_or_404(user_id)
+    profile_image_url = url_for('static', filename='profile_pics/' + user.profile_image) if user.profile_image else url_for('static', filename='profile_pics/default.jpg')
+    
+    return render_template('ucret_tarifeleri.html', title="Ücret Tarifeleri", profile_image_url=profile_image_url, current_user=current_user)
 
 if __name__ == '__main__':
     with app.app_context():

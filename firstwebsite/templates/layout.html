@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %} - Kaplan Hukuk Otomasyon</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -437,7 +438,7 @@
 
 <body>
     
-    <div class="container">
+    <div class="app-container">
         <nav class="sidebar">
             <div class="logo">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kaplan Hukuk">
@@ -504,13 +505,15 @@
                 
                 <!-- İşçi Görüşme Formu -->
                 <li><a href="{{ url_for('isci_gorusme') }}"><i class="material-icons">description</i>İşçi Görüşme Formu</a></li>
-                
-                {% if current_user.has_permission('duyuru_goruntule') %}
-                <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
-                {% endif %}
+                <li>
+                    <a href="{{ url_for('ucret_tarifeleri_page') }}" {% if request.endpoint == 'ucret_tarifeleri_page' %}class="active"{% endif %}><i class="fas fa-file-invoice-dollar"></i>Ücret Tarifeleri</a>
+                </li>
                 
                 {% if current_user.has_permission('odeme_goruntule') %}
                 <li><a href="{{ url_for('odemeler') }}"><i class="material-icons">payment</i>Ödemeler</a></li>
+                {% endif %}
+                {% if current_user.has_permission('duyuru_goruntule') %}
+                <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
                 {% endif %}
                 
                 <li><a href="{{ url_for('iletisim') }}"><i class="material-icons">contact_mail</i>İletişim</a></li>
@@ -561,7 +564,7 @@
                                     <i class="material-icons">person</i>
                                     <span>Profilim</span>
                                 </a>
-                                <a href="{{ url_for('settings') }}" class="dropdown-item">
+                                <a href="{{ url_for('settings') }}" {% if request.endpoint == 'settings' %}class="dropdown-item active"{% else %}class="dropdown-item"{% endif %}>
                                     <i class="material-icons">settings</i>
                                     <span>Ayarlar</span>
                                 </a>
@@ -600,6 +603,8 @@
             </footer>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js" integrity="sha384-oBqDVmMz9ATKxIep9tiCxS/Z9fNfEXiDAYTujMAeBAsjFuCZSmKbSSUnQlmh/jp3" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js" integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V" crossorigin="anonymous"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Kullanıcının font boyutu tercihini uygula
@@ -708,7 +713,7 @@
         });
     }
     </script>
-    
+    {% block scripts %}{% endblock %}
 </body>
   
 </html>

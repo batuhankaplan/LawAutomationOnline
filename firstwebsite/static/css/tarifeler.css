@@ -1,0 +1,256 @@
+/* tarifeler.css */
+:root {
+    --tarife-primary-bg: #ffffff;
+    --tarife-secondary-bg: #f8f9fa; /* Hafif gri */
+    --tarife-border-color: #dee2e6; /* Daha belirgin border */
+    --tarife-text-color: #212529; /* Koyu metin */
+    --tarife-title-color: var(--primary-color, #1a1a2e); 
+    --tarife-ekstra-bg: #f1f3f5; /* Ekstralar için çok açık gri */
+    --tarife-hover-bg: #e9ecef; /* Hover için biraz daha koyu gri */
+    --tarife-active-tab-bg: #ffffff;
+    --tarife-active-tab-text: var(--tarife-title-color);
+    --tarife-inactive-tab-text: #495057; /* Biraz daha soluk metin */
+}
+
+.tarifeler-page-content {
+    padding: 30px; /* Genel padding artırıldı */
+    background-color: var(--tarife-secondary-bg); /* Sayfa arkaplanı */
+}
+
+/* Sekme Navigasyonu Stil Güncellemesi */
+.tarifeler-page-content .nav-tabs {
+    border-bottom: 1px solid var(--tarife-border-color); /* Alt çizgiyi incelt */
+    margin-bottom: 35px;
+}
+
+.tarifeler-page-content .nav-tabs .nav-link {
+    border: 1px solid transparent; /* Üst ve yan borderlar için yer hazırla */
+    border-bottom: none; /* Aktif olunca alttaki border ana border ile birleşecek */
+    color: var(--tarife-inactive-tab-text);
+    padding: 14px 25px; /* Padding artırıldı */
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    margin-right: 8px;
+    border-radius: 8px 8px 0 0; 
+    background-color: #e9ecef; /* Aktif olmayan sekmelere hafif arkaplan */
+    position: relative;
+    bottom: -1px; /* Border ile hizalamak için */
+}
+
+.tarifeler-page-content .nav-tabs .nav-link:hover {
+    color: var(--tarife-active-tab-text);
+    background-color: #f5f7f9; /* Hover'da biraz daha açık */
+    border-color: var(--tarife-border-color) var(--tarife-border-color) transparent var(--tarife-border-color);
+}
+
+.tarifeler-page-content .nav-tabs .nav-link.active {
+    color: var(--tarife-active-tab-text);
+    background-color: var(--tarife-active-tab-bg);
+    border-color: var(--tarife-border-color) var(--tarife-border-color) var(--tarife-active-tab-bg) var(--tarife-border-color); /* Alt border'ı arkaplanla aynı yap */
+    font-weight: 600; /* Aktif sekme daha kalın */
+    box-shadow: 0 -3px 8px rgba(0,0,0,0.04);
+}
+
+.tarifeler-page-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 150px;
+}
+
+/* Tarife Tablosu */
+.tarife-tablosu {
+    margin-bottom: 0;
+    font-size: 0.9rem;
+    width: 100%;
+    border: 1px solid var(--tarife-border-color);
+    border-radius: 10px; /* Köşe yuvarlama artırıldı */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+    overflow: hidden;
+    background-color: var(--tarife-primary-bg); /* Tablo arkaplanı */
+}
+
+.tarife-tablosu thead th {
+    background-color: var(--tarife-secondary-bg) !important; 
+    color: var(--tarife-title-color) !important; /* Başlık yazısı daha koyu */
+    font-weight: 600;
+    padding: 16px 18px; /* Padding artırıldı */
+    border-bottom: 2px solid var(--tarife-border-color) !important; /* Daha belirgin alt çizgi */
+    vertical-align: middle;
+    text-align: left;
+    white-space: nowrap; /* Başlıkların tek satırda kalması için */
+}
+.tarife-tablosu thead th:first-child { border-top-left-radius: 9px; } 
+.tarife-tablosu thead th:last-child { border-top-right-radius: 9px; }
+
+/* Kategori Başlık Satırı */
+.tarife-kategori-baslik-satiri td {
+    background-color: #f5f7fa !important; /* Kategori başlığı için daha açık ve yumuşak bir arkaplan */
+    padding: 14px 18px !important;
+    font-weight: 600;
+    color: var(--tarife-title-color);
+    border-top: 1px solid var(--tarife-border-color) !important;
+    border-bottom: 1px solid var(--tarife-border-color) !important;
+}
+
+.tarife-kategori-baslik-satiri h3 {
+    font-size: 1.2rem; /* Biraz büyütüldü */
+    margin: 0;
+    font-weight: 600;
+    color: var(--tarife-title-color); /* Ana başlık rengiyle aynı */
+}
+
+.tarife-tablosu tbody tr:not(.tarife-kategori-baslik-satiri):hover {
+    background-color: var(--tarife-hover-bg) !important;
+}
+
+.tarife-tablosu td {
+    padding: 14px 18px; /* Hücre padding'i artırıldı */
+    vertical-align: top;
+    color: #333; /* Metin rengi biraz daha koyu */
+    border-top: 1px solid #f0f0f0 !important; /* Hücreler arası çizgiler daha ince */
+    line-height: 1.55;
+}
+
+/* Sütun Bazlı Hizalama ve Stiller */
+.tarife-tablosu td:nth-child(1) { /* Hizmet Adı Sütunu */
+    font-weight: 500;
+    font-size: 0.98rem; 
+    color: var(--tarife-text-color);
+    min-width: 280px;
+    text-align: left;
+}
+
+.tarife-tablosu td:nth-child(2) { /* Temel Ücret Sütunu */
+    text-align: right;
+    min-width: 160px; /* Genişlik artırıldı */
+    font-weight: 500;
+}
+
+#kaplan-content .tarife-tablosu td:nth-child(3) { /* Ekstra Hizmetler Sütunu */
+    text-align: left;
+    min-width: 260px;
+}
+
+#kaplan-content .tarife-tablosu td:nth-child(4) { /* Toplam Ücret Sütunu */
+    text-align: right;
+    min-width: 160px; /* Genişlik artırıldı */
+    font-weight: 500;
+}
+
+.tarife-tablosu .text-muted {
+    font-size: 0.82em;
+    font-style: italic;
+    display: block;
+    margin-top: 5px;
+    color: #6c757d !important; /* Bootstrap text-muted rengi */
+}
+
+.kaplan-ekstralar-container-compact {
+    padding: 0;
+}
+
+.ekstra-item-compact {
+    display: flex;
+    align-items: center;
+    margin-bottom: 7px;
+    padding: 4px 0;
+}
+.ekstra-item-compact:last-child {
+    margin-bottom: 0;
+}
+
+.ekstra-item-compact .form-check-input {
+    margin-top: 1px; /* Hafif aşağı kaydır */
+    margin-right: 10px;
+    width: 17px;
+    height: 17px;
+    accent-color: var(--tarife-title-color);
+    border: 1px solid #adb5bd; /* Checkbox border */
+}
+
+.ekstra-item-compact .form-check-label {
+    font-size: 0.88rem;
+    color: #495057;
+    line-height: 1.4;
+}
+
+.kaplan-toplam-ucret-cell {
+    padding: 0;
+    text-align: right;
+    font-size: 1.1rem; /* Biraz büyütüldü */
+}
+
+.kaplan-toplam-ucret-cell strong {
+    color: var(--tarife-title-color);
+    font-weight: 600;
+}
+
+.alert {
+    margin-top: 20px;
+}
+
+/* Responsive ayarlar */
+@media (max-width: 992px) {
+    .tarife-tablosu td:nth-child(1) { font-size: 0.92rem; min-width: 200px; }
+    .tarife-tablosu td:nth-child(2) { min-width: 140px; }
+    #kaplan-content .tarife-tablosu td:nth-child(3) { min-width: 200px; }
+    #kaplan-content .tarife-tablosu td:nth-child(4) { min-width: 140px; }
+    .tarife-kategori-baslik-satiri h3 { font-size: 1.1rem; }
+    .tarifeler-page-content .nav-tabs .nav-link { padding: 12px 18px; }
+}
+
+@media (max-width: 768px) {
+    .tarifeler-page-content { padding: 20px; }
+    .tarifeler-page-content .nav-tabs .nav-link {
+        font-size: 0.88rem;
+        padding: 10px 12px;
+        margin-right: 5px;
+    }
+    .tarife-tablosu {
+        font-size: 0.82rem;
+        border-radius: 8px;
+    }
+    .tarife-tablosu thead th {
+        padding: 12px 14px;
+        font-size: 0.85rem; 
+    }
+    .tarife-tablosu td {
+        padding: 12px 14px;
+        line-height: 1.45;
+    }
+    .tarife-tablosu td:nth-child(1) { font-size: 0.88rem; min-width: 160px; }
+    .tarife-kategori-baslik-satiri h3 { font-size: 1.02rem; }
+    .tarife-kategori-baslik-satiri td { padding: 12px 14px !important; }
+    .ekstra-item-compact .form-check-label { font-size: 0.8rem; }
+    .kaplan-toplam-ucret-cell { font-size: 0.95rem; }
+}
+
+@media (max-width: 576px) {
+    .tarifeler-page-content { padding: 15px; }
+    .tarifeler-page-content .nav-tabs .nav-link {
+        padding: 9px 10px;
+        font-size: 0.82rem;
+        margin-right: 4px;
+    }
+    .tarife-tablosu {
+        font-size: 0.78rem;
+    }
+    .tarife-tablosu thead th {
+        font-size: 0.8rem;
+        padding: 10px 10px;
+    }
+    .tarife-tablosu td {
+        padding: 10px 10px;
+    }
+    .tarife-tablosu td:nth-child(1) { font-size: 0.82rem; min-width: 120px; word-break: break-word; }
+    .tarife-tablosu td:nth-child(2),
+    #kaplan-content .tarife-tablosu td:nth-child(4) { min-width: 80px; }
+    #kaplan-content .tarife-tablosu td:nth-child(3) { min-width: 130px; }
+    .tarife-kategori-baslik-satiri h3 { font-size: 0.95rem; }
+    .tarife-kategori-baslik-satiri td { padding: 10px 10px !important; }
+    .ekstra-item-compact .form-check-label {
+        font-size: 0.75rem;
+    }
+    .kaplan-toplam-ucret-cell { font-size: 0.88rem; }
+} 
