@@ -1606,6 +1606,93 @@
                     updateActiveTab(tabName);
                 });
             });
+
+            // TABLO SIRALAMA İŞLEVSELLİĞİ
+            const getCellValue = (row, headerId) => {
+                let cellIndex;
+                switch (headerId) {
+                    case 'sort-name': cellIndex = 0; break;
+                    case 'sort-surname': cellIndex = 1; break;
+                    case 'sort-tc': cellIndex = 2; break;
+                    case 'sort-amount': cellIndex = 3; break;
+                    case 'sort-installments': cellIndex = 4; break;
+                    case 'sort-registration-date': cellIndex = 5; break;
+                    case 'sort-due-date': cellIndex = 6; break;
+                    case 'sort-status': cellIndex = 7; break;
+                    default: return '';
+                }
+                const cell = row.cells[cellIndex];
+                return cell ? cell.innerText || cell.textContent : '';
+            };
+
+            const parseValue = (value, headerId) => {
+                if (headerId === 'sort-amount') {
+                    // "10000.0 TL" formatından sayıyı ve para birimini ayır
+                    const parts = value.split(' ');
+                    const amount = parseFloat(parts[0].replace(/\./g, '').replace(',', '.')); // 10.000,50 -> 10000.50
+                    return isNaN(amount) ? 0 : amount; 
+                }
+                if (headerId === 'sort-installments' || headerId === 'sort-tc') {
+                    return parseInt(value, 10) || 0;
+                }
+                if (headerId === 'sort-registration-date' || headerId === 'sort-due-date') {
+                    if (value === '-' || !value) return null; // veya çok eski bir tarih
+                    const parts = value.split('.'); // GG.AA.YYYY
+                    return new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+                return value.toLowerCase(); // Metinler için küçük harfe çevir
+            };
+
+            document.querySelectorAll('.data-table th[id^="sort-"]').forEach(headerCell => {
+                let currentSortOrder = 'asc'; // Varsayılan sıralama yönü
+
+                headerCell.addEventListener('click', () => {
+                    const tableElement = headerCell.closest('table');
+                    const tbody = tableElement.querySelector('tbody');
+                    const headerId = headerCell.id;
+                    const sortIcon = headerCell.querySelector('.sort-icon');
+
+                    // Diğer başlıklardaki sıralama ikonlarını sıfırla
+                    document.querySelectorAll('.data-table th[id^="sort-"]').forEach(th => {
+                        if (th !== headerCell) {
+                            const icon = th.querySelector('.sort-icon');
+                            if (icon) icon.textContent = 'unfold_more';
+                        }
+                    });
+
+                    Array.from(tbody.querySelectorAll('tr'))
+                        .sort((rowA, rowB) => {
+                            const valA = parseValue(getCellValue(rowA, headerId), headerId);
+                            const valB = parseValue(getCellValue(rowB, headerId), headerId);
+
+                            if (valA === null && valB === null) return 0;
+                            if (valA === null) return currentSortOrder === 'asc' ? 1 : -1; // Null'ları sona at
+                            if (valB === null) return currentSortOrder === 'asc' ? -1 : 1; // Null'ları sona at
+
+
+                            if (typeof valA === 'number' && typeof valB === 'number') {
+                                return currentSortOrder === 'asc' ? valA - valB : valB - valA;
+                            } else if (valA instanceof Date && valB instanceof Date) {
+                                return currentSortOrder === 'asc' ? valA - valB : valB - valA;
+                            } else {
+                                // String karşılaştırması
+                                if (valA < valB) return currentSortOrder === 'asc' ? -1 : 1;
+                                if (valA > valB) return currentSortOrder === 'asc' ? 1 : -1;
+                                return 0;
+                            }
+                        })
+                        .forEach(sortedRow => tbody.appendChild(sortedRow));
+
+                    // Sıralama ikonunu ve yönünü güncelle
+                    if (currentSortOrder === 'asc') {
+                        currentSortOrder = 'desc';
+                        if (sortIcon) sortIcon.textContent = 'expand_more'; // Aşağı ok
+                    } else {
+                        currentSortOrder = 'asc';
+                        if (sortIcon) sortIcon.textContent = 'expand_less'; // Yukarı ok
+                    }
+                });
+            });
         });
 
         function deletePayment(button) {
@@ -1859,8 +1946,21 @@
                 const amountText = client.querySelector('td:nth-child(4)').textContent.trim();
                 const parts = amountText.split(' ');
                 const amount = parseFloat(parts[0]); // Önceki hatalı parse düzeltildi
-                const currency = parts[1] || 'TL';
-                
+                const currency = parts[1] || 'TL'; // Para birimini al, yoksa TL varsay
+
+                console.log(`[generateStats] İşlenen Kayıt: Ad: ${clientName}, Tutar Yazısı: '${amountText}', Parse Edilen Tutar: ${amount}, Para Birimi: ${currency}`); // YENİ LOG
+
+                // currencyTotals içinde para birimi yoksa, tüm alanlarla birlikte başlat
+                if (!currencyTotals[currency]) {
+                    currencyTotals[currency] = { 
+                        total: 0, 
+                        paid: 0, 
+                        unpaid: 0, 
+                        expectedNextYear: 0, // Bu önemli
+                        transactions: 0 
+                    };
+                }
+
                 // Taksit bilgisini al
                 const installments = parseInt(client.querySelector('td:nth-child(5)').textContent.trim());
                 totalInstallments += installments;
@@ -1990,9 +2090,9 @@
                 }
                 
                 // Aylık ve yıllık verileri güncelle
-                if (registrationDate) {
-                    const year = registrationDate.getFullYear();
-                    const month = registrationDate.getMonth() + 1;
+                if (dueDate) { // registrationDate yerine dueDate kullanılıyor
+                    const year = dueDate.getFullYear(); // dueDate kullanılıyor
+                    const month = dueDate.getMonth() + 1; // dueDate kullanılıyor
                     years.add(year);
                     
                     // Yıllık veriler
@@ -2016,7 +2116,11 @@
                             yearlyData[year].currencies[currency].unpaid += amount;
                         }
                         
-                        if (currency === 'TL') {
+                        // Yıllık genel toplamlar için sadece TL'yi değil,
+                        // seçilen para birimine göre veya "ALL" ise tümünü çevirerek hesapla.
+                        // Bu kısım createYearlyChart ve updateYearlyCards içinde daha doğru yönetilecek.
+                        // Şimdilik TL bazlı bırakıyorum, ancak bu genel mantık ileride değişebilir.
+                        if (currency === 'TL') { // Bu koşul daha sonra kaldırılabilir/genelleştirilebilir.
                             yearlyData[year].amount += amount;
                             if (isPaid) yearlyData[year].paid += amount;
                             else yearlyData[year].unpaid += amount;
@@ -2038,14 +2142,19 @@
                     
                     if (!isNaN(amount)) {
                         monthlyData[yearMonth].currencies[currency].total += amount;
+                        console.log(`[generateStats - dueDate based] monthlyData[${yearMonth}].currencies[${currency}].total güncellendi: ${monthlyData[yearMonth].currencies[currency].total}`); 
                         
                         if (isPaid) {
                             monthlyData[yearMonth].currencies[currency].paid += amount;
+                            console.log(`[generateStats - dueDate based] monthlyData[${yearMonth}].currencies[${currency}].paid güncellendi: ${monthlyData[yearMonth].currencies[currency].paid}`); 
                         } else {
                             monthlyData[yearMonth].currencies[currency].unpaid += amount;
+                            console.log(`[generateStats - dueDate based] monthlyData[${yearMonth}].currencies[${currency}].unpaid güncellendi: ${monthlyData[yearMonth].currencies[currency].unpaid}`); 
                         }
                         
-                        if (currency === 'TL') {
+                        // Aylık genel toplamlar için de benzer şekilde, TL bazlı bırakıyorum.
+                        // Bu da createMonthlyChart ve updateMonthlyCards içinde daha doğru yönetilecek.
+                         if (currency === 'TL') { // Bu koşul daha sonra kaldırılabilir/genelleştirilebilir.
                             monthlyData[yearMonth].amount += amount;
                             if (isPaid) monthlyData[yearMonth].paid += amount;
                             else monthlyData[yearMonth].unpaid += amount;
@@ -2234,24 +2343,93 @@
             };
             
             // Aktif sekmeye göre ilgili grafik ve tabloyu oluştur
-            const activeTab = document.querySelector('.stats-tab-btn.active').getAttribute('data-tab');
-            updateActiveTab(activeTab);
+            // const activeTab = document.querySelector('.stats-tab-btn.active').getAttribute('data-tab'); // ESKİ SATIR
+            // updateActiveTab(activeTab); // ESKİ SATIR
+
+            // Doğrudan özet sekmesi fonksiyonlarını çağır
+            populateSummaryTab(window.statsData);
+            // createExpectedPaymentsByYearChart(); // ÇAĞRI BURADAN KALDIRILDI
+            createSummaryChart(window.statsData);
             
             console.log("İstatistikler hesaplandı:", window.statsData);
         }
         
         // Aktif sekmeye göre ilgili içeriği güncelle
         function updateActiveTab(tabName) {
+            console.log("[updateActiveTab] Aktif sekme:", tabName, "Veri:", window.statsData);
+            if (!window.statsData) {
+                console.warn("Genel istatistik verisi (window.statsData) bulunamadı. Sekme güncellemeleri sınırlı olabilir.");
+            }
+
+            const clearAndShowMessage = (chartInstanceOrInstances, canvasIdOrIds, tableContainerId, message) => {
+                const chartInstances = Array.isArray(chartInstanceOrInstances) ? chartInstanceOrInstances : [chartInstanceOrInstances];
+                const canvasIds = Array.isArray(canvasIdOrIds) ? canvasIdOrIds : [canvasIdOrIds];
+
+                canvasIds.forEach((canvasId, index) => {
+                    const canvas = document.getElementById(canvasId);
+                    const chartInstance = chartInstances[index];
+                    if (canvas) {
+                        const ctx = canvas.getContext('2d');
+                        if (chartInstance && typeof chartInstance.destroy === 'function') {
+                            chartInstance.destroy();
+                             // Global referansları da null yapalım
+                            if (canvasId === 'monthlyChart') window.monthlyChart = null;
+                            else if (canvasId === 'yearlyChart') window.yearlyChart = null;
+                            else if (canvasId === 'statusChart') window.statusChart = null;
+                            else if (canvasId === 'expectedPaymentsByYearChart') expectedPaymentsChartInstance = null;
+                            else if (canvasId === 'currencyDistributionChart') currencyDistributionChartInstance = null;
+                            else if (canvasId === 'currencyStatusChart') currencyStatusChartInstance = null;
+                            else if (canvasId === 'collectionTrendChart') collectionTrendChartInstance = null;
+                        }
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.textAlign = 'center';
+                        ctx.font = '14px Segoe UI'; // Mesaj için font ayarı
+                        ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+                    }
+                });
+                
+                if (tableContainerId) {
+                    const tableContainer = document.getElementById(tableContainerId);
+                    if (tableContainer) {
+                        tableContainer.innerHTML = `<p style="text-align:center; padding: 20px;">${message}</p>`;
+                    }
+                }
+            };
+            
+            const resetCards = (cardIdsValues) => { 
+                Object.keys(cardIdsValues).forEach(cardId => {
+                    const card = document.getElementById(cardId);
+                    if (card) {
+                        card.textContent = cardIdsValues[cardId];
+                    }
+                });
+            };
+            
             switch(tabName) {
                 case 'summary':
-                    // populateSummaryTab(); // Bu fonksiyonun varlığını kontrol et veya kaldır
-                    createSummaryChart();
-                    createExpectedPaymentsByYearChart(); // *** YENİ: Grafik çağrısını ekle ***
+                    populateSummaryTab(window.statsData); 
+                    createSummaryChart(window.statsData); 
+                    createExpectedPaymentsByYearChart(); // ÇAĞRI BURAYA EKLENDİ
                     break;
                 case 'monthly':
-                    createMonthlyChart();
-                    populateMonthlyTable();
-                    updateMonthlyCards();
+                    // Aylık analiz için gerekli verileri doğrudan geçir
+                    if (window.statsData) {
+                        const yearFilter = document.getElementById('monthlyYearFilter');
+                        const currencyFilter = document.getElementById('monthlyCurrencyFilter');
+                        
+                        // Yıl ve para birimi filtrelerinin değerlerini al
+                        const yearVal = yearFilter ? yearFilter.value : undefined;
+                        const currencyVal = currencyFilter ? currencyFilter.value : undefined;
+
+                        // Değerlerin tanımsız olmadığından emin ol
+                        if (typeof yearVal !== 'undefined' && typeof currencyVal !== 'undefined') {
+                            createMonthlyChart(window.statsData.monthlyData, yearVal, currencyVal);
+                            populateMonthlyTable(window.statsData.monthlyData, yearVal);
+                            updateMonthlyCards(window.statsData.monthlyData, yearVal, currencyVal);
+                        } else {
+                            console.warn("[updateActiveTab - monthly] Yıl veya para birimi filtresi tanımsız.");
+                        }
+                    }
                     break;
                 case 'yearly':
                     createYearlyChart();
@@ -2263,8 +2441,20 @@
                     populateStatusTable();
                     break;
                 case 'currency':
-                    createCurrencyCharts();
-                    populateCurrencyTable();
+                    if (window.statsData && window.statsData.currencyTotals && Object.keys(window.statsData.currencyTotals).length > 0) {
+                        createCurrencyCharts();
+                        populateCurrencyTable();
+                    } else {
+                        clearAndShowMessage(
+                            [currencyDistributionChartInstance, currencyStatusChartInstance],
+                            ['currencyDistributionChart', 'currencyStatusChart'], 
+                            'currencyTableContainer', 
+                            'Para birimi verisi bulunamadı.'
+                        );
+                         resetCards({
+                            'tryTransactionCount': '0', 'usdTransactionCount': '0', 'eurTransactionCount': '0', 'mostUsedCurrency': '-'
+                         });
+                    }
                     break;
                 case 'predictions':
                     createCollectionTrendChart();
@@ -2274,47 +2464,51 @@
 
         // Para birimi biçimlendirme fonksiyonu
         function formatCurrency(amount) {
-            // Sayıyı doğru bir şekilde parseFloat ile çevir
             amount = parseFloat(amount);
+            if (isNaN(amount)) { 
+                amount = 0;
+            }
             
-            // Sayıyı tam sayıya çevir
-            const wholePart = Math.floor(amount).toString();
-            
-            // Ondalık kısmı hesapla (2 basamak)
-            const decimalPart = Math.round((amount - Math.floor(amount)) * 100).toString().padStart(2, '0');
+            // Sayıyı iki ondalık basamağa yuvarla ve string'e çevir
+            let parts = amount.toFixed(2).split('.');
+            let wholePart = parts[0];
+            let decimalPart = parts[1] || '00'; // Ondalık kısım yoksa '00' ekle
             
             // Binlik ayırıcı olarak nokta ekle
-            const formattedWholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            wholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
             
             // Ondalık ayırıcı olarak virgül kullan
-            return formattedWholePart + ',' + decimalPart;
+            return wholePart + ',' + decimalPart;
         }
 
         // Özet grafiği oluştur
-        function createSummaryChart() {
+        function createSummaryChart(data) {
             const ctx = document.getElementById('summaryChart').getContext('2d');
             
-            // Önceki grafiği temizle
-            if (window.summaryChart) {
+            if (window.summaryChart && typeof window.summaryChart.destroy === 'function') {
                 window.summaryChart.destroy();
             }
             
-            if (!window.statsData) {
-                console.error("İstatistik verileri bulunamadı");
+            if (!data || !data.currencyTotals || !data.currencyTotals.TL) { // Daha detaylı kontrol
+                console.error("Özet grafik için istatistik verileri (currencyTotals.TL) bulunamadı", data);
+                // Grafik alanını temizle ve mesaj göster
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.textAlign = 'center';
+                ctx.fillText('Özet grafik için veri bulunamadı.', ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
             
-            const { currencyTotals } = window.statsData;
+            const { currencyTotals } = data;
             const paidAmount = currencyTotals.TL.paid;
             const unpaidAmount = currencyTotals.TL.unpaid;
-            const overdueAmount = window.statsData.overdueCount > 0 ? unpaidAmount * (window.statsData.overdueCount / window.statsData.unpaidCount) : 0;
+            const overdueAmount = data.totalOverdueAmountTL || 0;
             
             window.summaryChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Ödenen', 'Vadesi Gelmemiş', 'Vadesi Geçmiş'],
                     datasets: [{
-                        data: [paidAmount, unpaidAmount - overdueAmount, overdueAmount],
+                        data: [paidAmount, Math.max(0, unpaidAmount - overdueAmount), overdueAmount], // Negatif değer olmaması için Math.max
                         backgroundColor: [
                             'rgba(76, 175, 80, 0.8)',
                             'rgba(33, 150, 243, 0.8)',
@@ -2363,7 +2557,7 @@
                                     if (context.parsed !== null) {
                                         const value = context.parsed;
                                         const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = Math.round((value / total) * 100);
+                                        const percentage = total > 0 ? Math.round((value / total) * 100) : 0; // total 0 kontrolü
                                         label += `${formatCurrency(value)} TL (${percentage}%)`;
                                     }
                                     return label;
@@ -2376,82 +2570,100 @@
         }
 
         // Aylık grafik oluştur
-        function createMonthlyChart() {
+        function createMonthlyChart() { 
+            const monthlyDataLocal = window.statsData && window.statsData.monthlyData;
+            const selectedYear = document.getElementById('monthlyYearFilter').value;
+            const selectedCurrency = document.getElementById('monthlyCurrencyFilter').value;
             const ctx = document.getElementById('monthlyChart').getContext('2d');
-            const yearFilterElement = document.getElementById('monthlyYearFilter');
-            const currencyFilterElement = document.getElementById('monthlyCurrencyFilter');
-            
-            if (!yearFilterElement || !yearFilterElement.value) {
-                console.error("Yıl filtresi bulunamadı");
-                return;
-            }
-            
-            const selectedYear = yearFilterElement.value;
-            const selectedCurrency = currencyFilterElement ? currencyFilterElement.value : 'TL';
-            
-            // Önceki grafiği temizle
-            if (window.monthlyChart) {
+
+            if (window.monthlyChart && typeof window.monthlyChart.destroy === 'function') {
                 window.monthlyChart.destroy();
+                window.monthlyChart = null;
             }
-            
-            // Veri kontrolü
-            if (!window.statsData || !window.statsData.monthlyData) {
-                console.error("Aylık istatistik verileri bulunamadı");
+
+            if (typeof selectedYear === 'undefined' || selectedYear === '' || typeof selectedCurrency === 'undefined' || !monthlyDataLocal) {
+                console.warn("[createMonthlyChart] Yıl, para birimi veya aylık veri tanımsız/eksik. Grafik oluşturulmayacak.");
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.textAlign = 'center';
+                ctx.fillText('Grafik için lütfen yıl ve para birimi seçin veya veri mevcut değil.', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                updateMonthlyCards(); 
+                populateMonthlyTable(); // Tabloyu da boşalt/güncelle
                 return;
             }
             
-            // Aylık verileri filtrele
+            console.log("[createMonthlyChart] Seçilen Yıl:", selectedYear, "Seçilen Para Birimi:", selectedCurrency); 
+            
             const months = [
                 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
                 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
             ];
             
-            // Tüm aylar için boş veri oluştur
-            const monthlyAmountData = Array(12).fill(0);
+            // Veri setlerini doğrudan aylık veriden dolduracağız
             const monthlyPaidData = Array(12).fill(0);
             const monthlyUnpaidData = Array(12).fill(0);
+            // Toplam tutar için ayrı bir diziye gerek yok, paid ve unpaid toplanarak bulunabilir
+            // Ancak grafik için ayrı tutmak daha iyi olabilir, bu yüzden onu da ekliyorum:
+            const monthlyTotalData = Array(12).fill(0); 
+            let dataFoundForSelectedParameters = false;
             
-            // Aylık verileri doldur
-            for (const key in window.statsData.monthlyData) {
-                const [year, month] = key.split('-').map(Number);
+            for (const key in monthlyDataLocal) {
+                // Anahtarın formatı YYYY-AA olmalı
+                const parts = key.split('-');
+                if (parts.length !== 2) continue;
+
+                const year = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10);
+
                 if (year == selectedYear && month >= 1 && month <= 12) {
-                    const monthData = window.statsData.monthlyData[key];
+                    const monthEntry = monthlyDataLocal[key];
+                    if (!monthEntry || !monthEntry.currencies) continue;
+                    dataFoundForSelectedParameters = true; 
                     
+                    let currentMonthPaid = 0;
+                    let currentMonthUnpaid = 0;
+                    let currentMonthTotal = 0;
+
                     if (selectedCurrency === 'ALL') {
-                        // Tüm para birimleri için toplam hesaplama
-                        const currencies = Object.keys(monthData.currencies);
-                        let totalAmount = 0;
-                        let totalPaid = 0;
-                        let totalUnpaid = 0;
-                        
-                        currencies.forEach(currency => {
-                            const currencyData = monthData.currencies[currency];
-                            // Basit bir kur varsayımı, gerçek uygulamada güncel kurlar kullanılmalı
+                        Object.keys(monthEntry.currencies).forEach(currency => {
+                            const currencyData = monthEntry.currencies[currency];
                             let multiplier = 1;
-                            if (currency === 'USD') multiplier = 30;
-                            if (currency === 'EUR') multiplier = 32;
+                            // TODO: Dinamik kur alınabilir veya sabit bir varsayım kullanılabilir. Şimdilik sabit.
+                            if (currency === 'USD') multiplier = 30; 
+                            if (currency === 'EUR') multiplier = 32; 
                             
-                            totalAmount += currencyData.total * multiplier;
-                            totalPaid += currencyData.paid * multiplier;
-                            totalUnpaid += currencyData.unpaid * multiplier;
+                            currentMonthPaid += (currencyData.paid || 0) * multiplier;
+                            currentMonthUnpaid += (currencyData.unpaid || 0) * multiplier;
+                            currentMonthTotal += (currencyData.total || 0) * multiplier;
                         });
-                        
-                        monthlyAmountData[month-1] = totalAmount;
-                        monthlyPaidData[month-1] = totalPaid;
-                        monthlyUnpaidData[month-1] = totalUnpaid;
                     } else {
-                        // Seçilen para birimine göre veri
-                        const currencyData = monthData.currencies[selectedCurrency] || 
-                            { total: 0, paid: 0, unpaid: 0 };
-                        
-                        monthlyAmountData[month-1] = currencyData.total;
-                        monthlyPaidData[month-1] = currencyData.paid;
-                        monthlyUnpaidData[month-1] = currencyData.unpaid;
+                        const currencyData = monthEntry.currencies[selectedCurrency];
+                        if (currencyData) {
+                            currentMonthPaid = currencyData.paid || 0;
+                            currentMonthUnpaid = currencyData.unpaid || 0;
+                            currentMonthTotal = currencyData.total || 0;
+                        }
                     }
+                    monthlyPaidData[month-1] = currentMonthPaid;
+                    monthlyUnpaidData[month-1] = currentMonthUnpaid;
+                    monthlyTotalData[month-1] = currentMonthTotal; 
                 }
             }
+
+            if (!dataFoundForSelectedParameters) {
+                 console.warn(`[createMonthlyChart] ${selectedYear} yılı için veri bulunamadı.`);
+                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                 ctx.textAlign = 'center';
+                 ctx.fillText(`${selectedYear} yılı için veri bulunamadı.`, ctx.canvas.width / 2, ctx.canvas.height / 2);
+                 updateMonthlyCards(); 
+                 populateMonthlyTable(); // Tabloyu da boşalt/güncelle
+                 return;
+            }
             
-            // Renk paleti
+            console.log("[createMonthlyChart] Grafik için veri dizileri:", 
+                        "Toplam:", monthlyTotalData, 
+                        "Ödenen:", monthlyPaidData, 
+                        "Ödenmemiş:", monthlyUnpaidData);
+
             const colors = {
                 total: { bg: 'rgba(54, 162, 235, 0.5)', border: 'rgba(54, 162, 235, 1)' },
                 paid: { bg: 'rgba(75, 192, 192, 0.5)', border: 'rgba(75, 192, 192, 1)' },
@@ -2465,7 +2677,7 @@
                     datasets: [
                         {
                             label: 'Toplam Tutar',
-                            data: monthlyAmountData,
+                            data: monthlyTotalData, // monthlyAmountData -> monthlyTotalData
                             backgroundColor: colors.total.bg,
                             borderColor: colors.total.border,
                             borderWidth: 1
@@ -2494,7 +2706,7 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: `Tutar (${selectedCurrency === 'ALL' ? 'TL' : selectedCurrency})`,
+                                text: `Tutar (${selectedCurrency === 'ALL' ? 'TL (Yaklaşık)' : selectedCurrency})`,
                                 font: {
                                     weight: 'bold'
                                 }
@@ -2518,7 +2730,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: `${selectedYear} Yılı Aylık Ödeme Analizi (${selectedCurrency === 'ALL' ? 'Tüm Para Birimleri' : selectedCurrency})`,
+                            text: `${selectedYear} Yılı Aylık Ödeme Analizi (${selectedCurrency === 'ALL' ? 'Tüm Para Birimleri (TL Yaklaşık)' : selectedCurrency})`,
                             font: {
                                 size: 16,
                                 weight: 'bold'
@@ -2537,7 +2749,7 @@
                                     }
                                     if (context.parsed.y !== null) {
                                         label += formatCurrency(context.parsed.y) + ' ' + 
-                                            (selectedCurrency === 'ALL' ? 'TL' : selectedCurrency);
+                                            (selectedCurrency === 'ALL' ? 'TL (Yaklaşık)' : selectedCurrency);
                                     }
                                     return label;
                                 }
@@ -2547,67 +2759,82 @@
                 }
             });
             
-            // Aylık kartları güncelle
             updateMonthlyCards();
+            populateMonthlyTable(); // Grafik güncellendikten sonra tabloyu da güncelle
         }
 
         // Aylık analiz kartlarını güncelle
-        function updateMonthlyCards() {
-            if (!window.statsData || !window.statsData.monthlyData) return;
+        function updateMonthlyCards() { 
+            const monthlyDataLocal = window.statsData && window.statsData.monthlyData;
+            const selectedYear = document.getElementById('monthlyYearFilter').value;
+            const selectedCurrency = document.getElementById('monthlyCurrencyFilter').value;
             
-            const yearFilterElement = document.getElementById('monthlyYearFilter');
-            const currencyFilterElement = document.getElementById('monthlyCurrencyFilter');
+            const highestMonthEl = document.getElementById('highestMonth');
+            const lowestMonthEl = document.getElementById('lowestMonth');
+            const monthlyAverageEl = document.getElementById('monthlyAverage');
+            const monthlyTotalCollectionEl = document.getElementById('monthlyTotalCollection'); // Bu "Toplam Tahsilat" (Ödenenler)
+
+            if (!highestMonthEl || !lowestMonthEl || !monthlyAverageEl || !monthlyTotalCollectionEl) {
+                console.warn("[updateMonthlyCards] Gerekli kart elementleri bulunamadı.");
+                return;
+            }
+
+            if (!monthlyDataLocal || typeof selectedYear === 'undefined' || selectedYear === '' || typeof selectedCurrency === 'undefined') {
+                console.warn("[updateMonthlyCards] Aylık veri, yıl veya para birimi bulunamadı/seçilmedi.");
+                highestMonthEl.textContent = '-';
+                lowestMonthEl.textContent = '-';
+                monthlyAverageEl.textContent = '0 TL'; // Varsayılan para birimi
+                monthlyTotalCollectionEl.textContent = '0 TL'; // Varsayılan para birimi
+                return;
+            }
             
-            if (!yearFilterElement || !yearFilterElement.value) return;
+            console.log("[updateMonthlyCards] Seçilen Yıl:", selectedYear, "Seçilen Para Birimi:", selectedCurrency);
+
+            let highestMonthStats = { month: 0, amount: -Infinity }; 
+            let lowestMonthStats = { month: 0, amount: Infinity };
+            let totalAmountAllMonthsForAverage = 0; // Ortalama için toplam tutar
+            let totalPaidAllMonths = 0; // Toplam tahsilat (ödenen)
+            let monthsWithDataCount = 0;
+            let dataFoundForYear = false;
             
-            const selectedYear = yearFilterElement.value;
-            const selectedCurrency = currencyFilterElement ? currencyFilterElement.value : 'TL';
-            
-            let highestMonth = { month: 0, amount: 0 };
-            let lowestMonth = { month: 0, amount: Infinity };
-            let totalAmount = 0;
-            let monthsWithData = 0;
-            let totalCollection = 0;
-            
-            // Aylık verileri işle
-            for (let month = 1; month <= 12; month++) {
-                const yearMonth = `${selectedYear}-${String(month).padStart(2, '0')}`;
-                const monthData = window.statsData.monthlyData[yearMonth];
+            for (let m = 1; m <= 12; m++) {
+                const yearMonthKey = `${selectedYear}-${String(m).padStart(2, '0')}`;
+                const monthEntry = monthlyDataLocal[yearMonthKey];
                 
-                if (!monthData) continue;
+                if (!monthEntry || !monthEntry.currencies) continue;
+                dataFoundForYear = true;
                 
-                let amount = 0;
+                let currentMonthTotalAmount = 0; // İlgili ayın toplam tutarı (ödenen + ödenmeyen)
+                let currentMonthPaidAmount = 0;  // İlgili ayın ödenen tutarı
                 
                 if (selectedCurrency === 'ALL') {
-                    // Tüm para birimleri için toplam
-                    Object.keys(monthData.currencies).forEach(currency => {
+                    Object.keys(monthEntry.currencies).forEach(currency => {
+                        const currencyData = monthEntry.currencies[currency];
                         let multiplier = 1;
-                        if (currency === 'USD') multiplier = 30;
-                        if (currency === 'EUR') multiplier = 32;
+                        if (currency === 'USD') multiplier = 30; 
+                        if (currency === 'EUR') multiplier = 32; 
                         
-                        amount += monthData.currencies[currency].total * multiplier;
-                        totalCollection += monthData.currencies[currency].paid * multiplier;
+                        currentMonthTotalAmount += (currencyData.total || 0) * multiplier;
+                        currentMonthPaidAmount += (currencyData.paid || 0) * multiplier;
                     });
                 } else {
-                    // Seçilen para birimi
-                    if (monthData.currencies[selectedCurrency]) {
-                        amount = monthData.currencies[selectedCurrency].total;
-                        totalCollection += monthData.currencies[selectedCurrency].paid;
+                    if (monthEntry.currencies[selectedCurrency]) {
+                        currentMonthTotalAmount = monthEntry.currencies[selectedCurrency].total || 0;
+                        currentMonthPaidAmount = monthEntry.currencies[selectedCurrency].paid || 0;
                     }
                 }
                 
-                // En yüksek ve en düşük ayı bul
-                if (amount > 0) {
-                    monthsWithData++;
-                    totalAmount += amount;
-                    
-                    if (amount > highestMonth.amount) {
-                        highestMonth = { month, amount };
-                    }
-                    
-                    if (amount < lowestMonth.amount) {
-                        lowestMonth = { month, amount };
-                    }
+                // Ay için veri varsa say ve toplamları güncelle
+                monthsWithDataCount++; // Veri olan ay sayısını artır
+                totalAmountAllMonthsForAverage += currentMonthTotalAmount;
+                totalPaidAllMonths += currentMonthPaidAmount;
+                
+                // En yüksek ve en düşük ay (toplam tutara göre)
+                if (currentMonthTotalAmount > highestMonthStats.amount) {
+                    highestMonthStats = { month: m, amount: currentMonthTotalAmount };
+                }
+                if (currentMonthTotalAmount < lowestMonthStats.amount) {
+                    lowestMonthStats = { month: m, amount: currentMonthTotalAmount };
                 }
             }
             
@@ -2616,25 +2843,116 @@
                 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
             ];
             
-            // Aylık ortalama hesapla
-            const monthlyAverage = monthsWithData > 0 ? totalAmount / monthsWithData : 0;
+            const monthlyAverageCalculated = monthsWithDataCount > 0 ? totalAmountAllMonthsForAverage / monthsWithDataCount : 0;
+            const displayCurrency = selectedCurrency === 'ALL' ? 'TL (Yaklaşık)' : selectedCurrency;
+
+            if (!dataFoundForYear) {
+                highestMonthEl.textContent = '-';
+                lowestMonthEl.textContent = '-';
+                monthlyAverageEl.textContent = `0 ${displayCurrency}`;
+                monthlyTotalCollectionEl.textContent = `0 ${displayCurrency}`;
+                return;
+            }
+
+            highestMonthEl.textContent = 
+                highestMonthStats.amount > -Infinity && highestMonthStats.month > 0 ? 
+                `${monthsNames[highestMonthStats.month-1]} - ${formatCurrency(highestMonthStats.amount)} ${displayCurrency}` : 
+                '-';
+                
+            lowestMonthEl.textContent = 
+                lowestMonthStats.amount < Infinity && lowestMonthStats.month > 0 ?
+                `${monthsNames[lowestMonthStats.month-1]} - ${formatCurrency(lowestMonthStats.amount)} ${displayCurrency}` : 
+                '-';
+                
+            monthlyAverageEl.textContent = 
+                `${formatCurrency(monthlyAverageCalculated)} ${displayCurrency}`;
+                
+            monthlyTotalCollectionEl.textContent = // Toplam Tahsilat (Ödenenler)
+                `${formatCurrency(totalPaidAllMonths)} ${displayCurrency}`;
+        }
+
+        // Aylık Analiz Tablosunu Doldur
+        function populateMonthlyTable() { 
+            const monthlyDataLocal = window.statsData && window.statsData.monthlyData;
+            const year = document.getElementById('monthlyYearFilter').value; // Yıl filtresinden al
+            const tableContainer = document.getElementById('monthlyTableContainer'); // ID düzeltildi
+
+            if (!tableContainer) {
+                console.error("[populateMonthlyTable] Tablo konteyneri 'monthlyTableContainer' bulunamadı.");
+                return;
+            }
+            tableContainer.innerHTML = ''; // Önceki tabloyu temizle
+
+            if (!monthlyDataLocal || typeof year === 'undefined' || year === '') {
+                console.warn("[populateMonthlyTable] Aylık veri veya seçili yıl bulunamadı.");
+                tableContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Lütfen bir yıl seçin veya veri mevcut değil.</p>';
+                return;
+            }
             
-            // Kartları güncelle
-            document.getElementById('highestMonth').textContent = 
-                highestMonth.month > 0 ? 
-                `${monthsNames[highestMonth.month-1]} - ${formatCurrency(highestMonth.amount)} ${selectedCurrency === 'ALL' ? 'TL' : selectedCurrency}` : 
-                '-';
+            const table = document.createElement('table');
+            table.className = 'detail-table';
+            const thead = table.createTHead();
+            const tbody = table.createTBody();
+            const headerRow = thead.insertRow();
+            console.log("[populateMonthlyTable] Seçilen Yıl:", year); 
+
+            ['Ay', 'Toplam TL', 'Ödenen TL', 'Beklenen TL', 'Toplam USD', 'Ödenen USD', 'Beklenen USD', 'Toplam EUR', 'Ödenen EUR', 'Beklenen EUR'].forEach(text => {
+                const th = document.createElement('th');
+                th.textContent = text;
+                headerRow.appendChild(th);
+            });
+
+            const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+            let dataFoundForTable = false;
+            for (let i = 0; i < 12; i++) {
+                const monthKey = `${year}-${String(i + 1).padStart(2, '0')}`;
+                const monthEntry = monthlyDataLocal[monthKey];
+                // console.log(`[populateMonthlyTable] Ay: ${months[i]}, Veri Anahtarı: ${monthKey}, Veri:`, monthEntry ? JSON.stringify(monthEntry.currencies) : "Veri Yok"); 
+
+                const row = tbody.insertRow();
+                row.insertCell().textContent = months[i];
+
+                // Her para birimi için varsayılan boş değerler
+                let tlTotal = 0, tlPaid = 0, tlUnpaid = 0;
+                let usdTotal = 0, usdPaid = 0, usdUnpaid = 0;
+                let eurTotal = 0, eurPaid = 0, eurUnpaid = 0;
+
+                if (monthEntry && monthEntry.currencies) {
+                    dataFoundForTable = true; // En az bir ay için veri var
+                    const currencies = monthEntry.currencies;
+                    if (currencies.TL) {
+                        tlTotal = currencies.TL.total || 0;
+                        tlPaid = currencies.TL.paid || 0;
+                        tlUnpaid = currencies.TL.unpaid || 0;
+                    }
+                    if (currencies.USD) {
+                        usdTotal = currencies.USD.total || 0;
+                        usdPaid = currencies.USD.paid || 0;
+                        usdUnpaid = currencies.USD.unpaid || 0;
+                    }
+                    if (currencies.EUR) {
+                        eurTotal = currencies.EUR.total || 0;
+                        eurPaid = currencies.EUR.paid || 0;
+                        eurUnpaid = currencies.EUR.unpaid || 0;
+                    }
+                }
                 
-            document.getElementById('lowestMonth').textContent = 
-                lowestMonth.month > 0 && lowestMonth.amount < Infinity ? 
-                `${monthsNames[lowestMonth.month-1]} - ${formatCurrency(lowestMonth.amount)} ${selectedCurrency === 'ALL' ? 'TL' : selectedCurrency}` : 
-                '-';
-                
-            document.getElementById('monthlyAverage').textContent = 
-                `${formatCurrency(monthlyAverage)} ${selectedCurrency === 'ALL' ? 'TL' : selectedCurrency}`;
-                
-            document.getElementById('monthlyTotalCollection').textContent = 
-                `${formatCurrency(totalCollection)} ${selectedCurrency === 'ALL' ? 'TL' : selectedCurrency}`;
+                row.insertCell().textContent = formatCurrency(tlTotal);
+                row.insertCell().textContent = formatCurrency(tlPaid);
+                row.insertCell().textContent = formatCurrency(tlUnpaid);
+                row.insertCell().textContent = formatCurrency(usdTotal);
+                row.insertCell().textContent = formatCurrency(usdPaid);
+                row.insertCell().textContent = formatCurrency(usdUnpaid);
+                row.insertCell().textContent = formatCurrency(eurTotal);
+                row.insertCell().textContent = formatCurrency(eurPaid);
+                row.insertCell().textContent = formatCurrency(eurUnpaid);
+            }
+            
+            if (!dataFoundForTable) {
+                 tableContainer.innerHTML = `<p style="text-align:center; padding: 20px;">${year} yılı için gösterilecek aylık detay bulunmamaktadır.</p>`;
+            } else {
+                tableContainer.appendChild(table);
+            }
         }
 
         // Yıllık grafik oluştur
@@ -2643,81 +2961,78 @@
             const currencyFilterElement = document.getElementById('yearlyCurrencyFilter');
             const chartTypeElement = document.getElementById('yearlyChartType');
             
-            const selectedCurrency = currencyFilterElement ? currencyFilterElement.value : 'TL';
-            const chartType = chartTypeElement ? chartTypeElement.value : 'bar';
-            
-            // Önceki grafiği temizle
-            if (window.yearlyChart) {
+            if (window.yearlyChart && typeof window.yearlyChart.destroy === 'function') {
                 window.yearlyChart.destroy();
+                window.yearlyChart = null;
             }
-            
-            // Veri kontrolü
-            if (!window.statsData || !window.statsData.yearlyData || !window.statsData.years) {
-                console.error("Yıllık istatistik verileri bulunamadı");
+
+            if (!window.statsData || !window.statsData.yearlyData || !window.statsData.years || window.statsData.years.length === 0) {
+                console.warn("Yıllık grafik için yıllık istatistik verileri veya yıl listesi bulunamadı/boş.");
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.textAlign = 'center';
+                ctx.fillText('Yıllık grafik için veri bulunamadı.', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                updateYearlyCards(); 
+                populateYearlyTable(); 
                 return;
             }
+
+            const selectedCurrency = currencyFilterElement ? currencyFilterElement.value : 'TL'; // Varsayılan TL
+            const chartType = chartTypeElement ? chartTypeElement.value : 'bar'; // Varsayılan bar
             
-            // Grafik verilerini oluştur
-            const years = window.statsData.years;
-            const yearlyAmountData = [];
-            const yearlyPaidData = [];
-            const yearlyUnpaidData = [];
+            // Yılları küçükten büyüğe sırala, böylece grafik soldan sağa doğru zamanla ilerler
+            const years = [...window.statsData.years].sort((a,b) => a-b); 
+            
+            const yearlyTotalData = []; // Toplam tutar (ödenen + ödenmemiş)
+            const yearlyPaidData = [];  // Ödenen tutar
+            const yearlyUnpaidData = []; // Ödenmemiş (beklenen) tutar
             
             years.forEach(year => {
-                const yearData = window.statsData.yearlyData[year];
+                const yearEntry = window.statsData.yearlyData[year.toString()]; // Yıl string olmalı
                 
-                if (yearData) {
+                let currentYearTotal = 0;
+                let currentYearPaid = 0;
+                let currentYearUnpaid = 0;
+
+                if (yearEntry && yearEntry.currencies) {
                     if (selectedCurrency === 'ALL') {
-                        // Tüm para birimleri için toplam
-                        let totalAmount = 0;
-                        let totalPaid = 0;
-                        let totalUnpaid = 0;
-                        
-                        Object.keys(yearData.currencies).forEach(currency => {
+                        Object.keys(yearEntry.currencies).forEach(currency => {
+                            const currencyData = yearEntry.currencies[currency];
                             let multiplier = 1;
-                            if (currency === 'USD') multiplier = 30;
-                            if (currency === 'EUR') multiplier = 32;
+                            if (currency === 'USD') multiplier = 30; 
+                            if (currency === 'EUR') multiplier = 32; 
                             
-                            totalAmount += yearData.currencies[currency].total * multiplier;
-                            totalPaid += yearData.currencies[currency].paid * multiplier;
-                            totalUnpaid += yearData.currencies[currency].unpaid * multiplier;
+                            currentYearTotal += (currencyData.total || 0) * multiplier;
+                            currentYearPaid += (currencyData.paid || 0) * multiplier;
+                            currentYearUnpaid += (currencyData.unpaid || 0) * multiplier;
                         });
-                        
-                        yearlyAmountData.push(totalAmount);
-                        yearlyPaidData.push(totalPaid);
-                        yearlyUnpaidData.push(totalUnpaid);
                     } else {
-                        // Seçilen para birimi
-                        const currencyData = yearData.currencies[selectedCurrency] || 
-                            { total: 0, paid: 0, unpaid: 0 };
-                        
-                        yearlyAmountData.push(currencyData.total);
-                        yearlyPaidData.push(currencyData.paid);
-                        yearlyUnpaidData.push(currencyData.unpaid);
+                        const currencyData = yearEntry.currencies[selectedCurrency];
+                        if (currencyData) {
+                            currentYearTotal = currencyData.total || 0;
+                            currentYearPaid = currencyData.paid || 0;
+                            currentYearUnpaid = currencyData.unpaid || 0;
+                        }
                     }
-                } else {
-                    yearlyAmountData.push(0);
-                    yearlyPaidData.push(0);
-                    yearlyUnpaidData.push(0);
                 }
+                yearlyTotalData.push(currentYearTotal);
+                yearlyPaidData.push(currentYearPaid);
+                yearlyUnpaidData.push(currentYearUnpaid);
             });
             
-            // Renk paleti
             const colors = {
                 total: { bg: 'rgba(33, 150, 243, 0.5)', border: 'rgba(33, 150, 243, 1)' },
                 paid: { bg: 'rgba(76, 175, 80, 0.5)', border: 'rgba(76, 175, 80, 1)' },
                 unpaid: { bg: 'rgba(239, 83, 80, 0.5)', border: 'rgba(239, 83, 80, 1)' }
             };
             
-            // Grafik tipi için ayarlar
             let chartConfig = {
-                type: chartType, // bar, line veya area için (area'yı line olarak ayarlayıp fill true yapacağız)
+                type: chartType === 'area' ? 'line' : chartType,
                 data: {
                     labels: years,
                     datasets: [
                         {
                             label: 'Toplam Tutar',
-                            data: yearlyAmountData,
+                            data: yearlyTotalData, // yearlyAmountData -> yearlyTotalData
                             backgroundColor: colors.total.bg,
                             borderColor: colors.total.border,
                             borderWidth: 1,
@@ -2749,7 +3064,7 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: `Tutar (${selectedCurrency === 'ALL' ? 'TL' : selectedCurrency})`,
+                                text: `Tutar (${selectedCurrency === 'ALL' ? 'TL (Yaklaşık)' : selectedCurrency})`,
                                 font: {
                                     weight: 'bold'
                                 }
@@ -2773,7 +3088,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: `Yıllık Ödeme Analizi (${selectedCurrency === 'ALL' ? 'Tüm Para Birimleri' : selectedCurrency})`,
+                            text: `Yıllık Ödeme Analizi (${selectedCurrency === 'ALL' ? 'Tüm Para Birimleri (TL Yaklaşık)' : selectedCurrency})`,
                             font: {
                                 size: 16,
                                 weight: 'bold'
@@ -2792,7 +3107,7 @@
                                     }
                                     if (context.parsed.y !== null) {
                                         label += formatCurrency(context.parsed.y) + ' ' + 
-                                            (selectedCurrency === 'ALL' ? 'TL' : selectedCurrency);
+                                            (selectedCurrency === 'ALL' ? 'TL (Yaklaşık)' : selectedCurrency);
                                     }
                                     return label;
                                 }
@@ -2802,51 +3117,277 @@
                 }
             };
             
-            // Alan grafik için düzeltme (line chart olarak oluşturup fill true yaparız)
-            if (chartType === 'area') {
-                chartConfig.type = 'line';
+            window.yearlyChart = new Chart(ctx, chartConfig);
+            updateYearlyCards(); 
+            populateYearlyTable(); 
+        }
+
+        // Yıllık analiz kartlarını güncelle
+        function updateYearlyCards() {
+            const highestYearEl = document.getElementById('highestYear');
+            const yearlyAverageEl = document.getElementById('yearlyAverage');
+            const yearlyGrowthEl = document.getElementById('yearlyGrowth');
+            const nextYearForecastEl = document.getElementById('nextYearForecast'); // Bu "Gelecek Yıl Tahmin" (Ödenmemişler)
+            const trendIconEl = document.querySelector('#yearlyGrowth + .trend-indicator i');
+
+            // Kritik DOM elementlerinin varlığını kontrol et
+            if (!highestYearEl || !yearlyAverageEl || !yearlyGrowthEl || !nextYearForecastEl || !trendIconEl) {
+                console.error("[updateYearlyCards] Kritik kart veya trend ikonu elementleri DOM'da bulunamadı. Kart güncellemesi iptal ediliyor.");
+                return; 
             }
             
-            window.yearlyChart = new Chart(ctx, chartConfig);
+            // Kartları varsayılan boş/sıfır durumuna ayarla
+            highestYearEl.textContent = '-';
+            yearlyAverageEl.textContent = '0 TL';
+            yearlyGrowthEl.textContent = '0%';
+            nextYearForecastEl.textContent = '0 TL';
+            trendIconEl.className = 'material-icons trend-neutral';
+            trendIconEl.textContent = 'trending_flat';
+
+            // window.statsData varlığını ve gerekli alt özellikleri kontrol et
+            if (!window.statsData) {
+                console.warn("[updateYearlyCards] window.statsData mevcut değil. Kartlar varsayılan boş durumda kalacak.");
+                return;
+            }
+            if (!window.statsData.yearlyData || typeof window.statsData.yearlyData !== 'object') {
+                console.warn("[updateYearlyCards] window.statsData.yearlyData mevcut değil veya bir nesne değil. Kartlar varsayılan boş durumda kalacak.", window.statsData.yearlyData);
+                return;
+            }
+            // window.statsData.years boş bir dizi olabilir, bu bir hata değil, veri olmadığı anlamına gelir.
+            if (!window.statsData.years || !Array.isArray(window.statsData.years)) {
+                console.warn("[updateYearlyCards] window.statsData.years mevcut değil veya bir dizi değil. Kartlar varsayılan boş durumda kalacak.", window.statsData.years);
+                return;
+            }
+            // Eğer yıllar dizisi boşsa, veri yoktur, bu yüzden varsayılan değerler kalır.
+             if (window.statsData.years.length === 0) {
+                console.log("[updateYearlyCards] window.statsData.years dizisi boş. Yıllık veri yok, kartlar varsayılan durumda kalacak.");
+                return;
+            }
+
+            console.log("[updateYearlyCards] Kart güncellemeleri için devam ediliyor. yearlyData:", JSON.parse(JSON.stringify(window.statsData.yearlyData)), "years:", window.statsData.years);
+
+            const { yearlyData, years } = window.statsData;
+            const selectedCurrency = document.getElementById('yearlyCurrencyFilter').value;
+            const displayCurrency = selectedCurrency === 'ALL' ? 'TL (Yaklaşık)' : selectedCurrency;
+
+            let highestYearAmount = -Infinity; 
+            let highestYearVal = '-';
+            let totalAmountForAllYearsForAverage = 0; 
+            let totalPaidLastYear = 0; 
+            let totalPaidPreviousYear = 0; 
+            let totalUnpaidNextYearForecast = 0; 
+            let yearCountForAverage = 0;
+
+            const sortedYears = [...years].sort((a, b) => a - b); 
+
+            sortedYears.forEach((year, index) => {
+                const yearEntry = yearlyData[year.toString()];
+                if (yearEntry && yearEntry.currencies) {
+                    yearCountForAverage++;
+                    let currentYearTotalAmount = 0; 
+                    let currentYearPaidAmount = 0;  
+                    let currentYearUnpaidAmount = 0; 
+
+                    if (selectedCurrency === 'ALL') {
+                        Object.keys(yearEntry.currencies).forEach(c => {
+                            const currencyData = yearEntry.currencies[c];
+                            let multiplier = 1;
+                            if (c === 'USD') multiplier = 30;
+                            if (c === 'EUR') multiplier = 32;
+                            currentYearTotalAmount += (currencyData.total || 0) * multiplier;
+                            currentYearPaidAmount += (currencyData.paid || 0) * multiplier;
+                            currentYearUnpaidAmount += (currencyData.unpaid || 0) * multiplier;
+                        });
+                    } else {
+                        const currencyData = yearEntry.currencies[selectedCurrency];
+                        if (currencyData) {
+                            currentYearTotalAmount = currencyData.total || 0;
+                            currentYearPaidAmount = currencyData.paid || 0;
+                            currentYearUnpaidAmount = currencyData.unpaid || 0;
+                        }
+                    }
+                    
+                    totalAmountForAllYearsForAverage += currentYearTotalAmount;
+
+                    if (currentYearTotalAmount > highestYearAmount) {
+                        highestYearAmount = currentYearTotalAmount;
+                        highestYearVal = year.toString();
+                    }
+
+                    if (index === sortedYears.length - 1) { 
+                        totalPaidLastYear = currentYearPaidAmount;
+                        totalUnpaidNextYearForecast = currentYearUnpaidAmount; 
+                    }
+                    if (index === sortedYears.length - 2) { 
+                        totalPaidPreviousYear = currentYearPaidAmount;
+                    }
+                }
+            });
+
+            const yearlyAverageCalculated = yearCountForAverage > 0 ? totalAmountForAllYearsForAverage / yearCountForAverage : 0;
+            highestYearEl.textContent = highestYearVal !== '-' ? `${highestYearVal} - ${formatCurrency(highestYearAmount)} ${displayCurrency}` : '-';
+            yearlyAverageEl.textContent = `${formatCurrency(yearlyAverageCalculated)} ${displayCurrency}`;
+            nextYearForecastEl.textContent = `${formatCurrency(totalUnpaidNextYearForecast)} ${displayCurrency}`;
+
+            let yearlyGrowthPercentage = 0;
+            if (totalPaidPreviousYear > 0) {
+                yearlyGrowthPercentage = ((totalPaidLastYear - totalPaidPreviousYear) / totalPaidPreviousYear) * 100;
+            } else if (totalPaidLastYear > 0) { 
+                yearlyGrowthPercentage = 100;
+            } else if (totalPaidLastYear === 0 && totalPaidPreviousYear === 0) { 
+                 yearlyGrowthPercentage = 0;
+            }
+
+            yearlyGrowthEl.textContent = `${yearlyGrowthPercentage.toFixed(1)}%`;
             
-            // Yıllık kartları güncelle
-            updateYearlyCards();
+            if (yearlyGrowthPercentage > 0.1) { 
+                trendIconEl.className = 'material-icons trend-positive';
+                trendIconEl.textContent = 'trending_up';
+            } else if (yearlyGrowthPercentage < -0.1) {
+                trendIconEl.className = 'material-icons trend-negative';
+                trendIconEl.textContent = 'trending_down';
+            } else {
+                trendIconEl.className = 'material-icons trend-neutral';
+                trendIconEl.textContent = 'trending_flat';
+            }
+            console.log("[updateYearlyCards] Kartlar güncellendi.");
+        }
+
+        // Yıllık Analiz Tablosunu Doldur
+        function populateYearlyTable() {
+            const tableContainer = document.getElementById('yearlyTableContainer'); 
+            if (!tableContainer) {
+                 console.error("[populateYearlyTable] Tablo konteyneri 'yearlyTableContainer' bulunamadı.");
+                 return;
+            }
+            tableContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Yıllık detay tablosu yükleniyor...</p>'; 
+
+            if (!window.statsData) {
+                 console.warn("[populateYearlyTable] window.statsData mevcut değil. Tablo doldurulmayacak.");
+                 tableContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Genel istatistik verisi bulunamadı.</p>';
+                 return;
+            }
+            if (!window.statsData.yearlyData || typeof window.statsData.yearlyData !== 'object') {
+                console.warn("[populateYearlyTable] window.statsData.yearlyData mevcut değil veya bir nesne değil. Tabloda veri gösterilmeyecek.", window.statsData.yearlyData);
+                tableContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Yıllık veri bulunamadı (yearlyData eksik veya hatalı).</p>';
+                return;
+            }
+            if (!window.statsData.years || !Array.isArray(window.statsData.years)) { 
+                console.warn("[populateYearlyTable] window.statsData.years mevcut değil veya bir dizi değil. Tablo boş olabilir veya veri gösterilmeyebilir.", window.statsData.years);
+                tableContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Yıllık veri bulunamadı (years listesi eksik veya hatalı).</p>';
+                return;
+            }
+
+            console.log("[populateYearlyTable] Dolduruluyor. yearlyData:", JSON.parse(JSON.stringify(window.statsData.yearlyData)), "years:", window.statsData.years);
+
+            const { yearlyData, years } = window.statsData;
+            
+            if (years.length === 0) {
+                console.log("[populateYearlyTable] 'years' dizisi boş. Gösterilecek yıllık detay yok.");
+                tableContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Gösterilecek yıllık detay bulunmamaktadır.</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.className = 'detail-table';
+            const thead = table.createTHead();
+            const tbody = table.createTBody();
+            const headerRow = thead.insertRow();
+            ['Yıl', 'Toplam TL', 'Ödenen TL', 'Beklenen TL', 'Toplam USD', 'Ödenen USD', 'Beklenen USD', 'Toplam EUR', 'Ödenen EUR', 'Beklenen EUR'].forEach(text => {
+                const th = document.createElement('th');
+                th.textContent = text;
+                headerRow.appendChild(th);
+            });
+
+            const sortedYears = [...years].sort((a,b) => b-a); 
+            let dataFoundForTable = false;
+
+            sortedYears.forEach(year => {
+                const yearKey = year.toString();
+                const yearEntry = yearlyData[yearKey];
+                const row = tbody.insertRow();
+                row.insertCell().textContent = year;
+
+                let tlTotal = 0, tlPaid = 0, tlUnpaid = 0;
+                let usdTotal = 0, usdPaid = 0, usdUnpaid = 0;
+                let eurTotal = 0, eurPaid = 0, eurUnpaid = 0;
+
+                if (yearEntry && yearEntry.currencies) {
+                    dataFoundForTable = true; // Bu yıl için veri bulundu olarak işaretle
+                    const currencies = yearEntry.currencies;
+                    if (currencies.TL) {
+                        tlTotal = currencies.TL.total || 0;
+                        tlPaid = currencies.TL.paid || 0;
+                        tlUnpaid = currencies.TL.unpaid || 0;
+                    }
+                    if (currencies.USD) {
+                        usdTotal = currencies.USD.total || 0;
+                        usdPaid = currencies.USD.paid || 0;
+                        usdUnpaid = currencies.USD.unpaid || 0;
+                    }
+                    if (currencies.EUR) {
+                        eurTotal = currencies.EUR.total || 0;
+                        eurPaid = currencies.EUR.paid || 0;
+                        eurUnpaid = currencies.EUR.unpaid || 0;
+                    }
+                }
+                
+                row.insertCell().textContent = formatCurrency(tlTotal);
+                row.insertCell().textContent = formatCurrency(tlPaid);
+                row.insertCell().textContent = formatCurrency(tlUnpaid);
+                row.insertCell().textContent = formatCurrency(usdTotal);
+                row.insertCell().textContent = formatCurrency(usdPaid);
+                row.insertCell().textContent = formatCurrency(usdUnpaid);
+                row.insertCell().textContent = formatCurrency(eurTotal);
+                row.insertCell().textContent = formatCurrency(eurPaid);
+                row.insertCell().textContent = formatCurrency(eurUnpaid);
+            });
+            
+            if (!dataFoundForTable) { // Eğer döngü boyunca hiçbir yıl için veri bulunamadıysa
+                 console.log("[populateYearlyTable] Sıralı yıl listesindeki hiçbir yıl için veri bulunamadı.");
+                 tableContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Gösterilecek yıllık detay bulunmamaktadır.</p>';
+            } else {
+                tableContainer.appendChild(table);
+                console.log("[populateYearlyTable] Tablo başarıyla dolduruldu.");
+            }
         }
 
         // Durum analizi grafiği oluştur
         function createStatusChart() {
             const ctx = document.getElementById('statusChart').getContext('2d');
             
-            // Önceki grafiği temizle
-            if (window.statusChart) {
+            if (window.statusChart && typeof window.statusChart.destroy === 'function') {
                 window.statusChart.destroy();
+                window.statusChart = null;
             }
             
-            // Veri kontrolü
             if (!window.statsData) {
-                console.error("İstatistik verileri bulunamadı");
+                console.warn("Durum analizi için istatistik verileri bulunamadı");
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.textAlign = 'center';
+                ctx.fillText('Durum analizi için veri bulunamadı.', ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
             
-            // Durum verilerini oluştur
             const paidCount = window.statsData.paidCount || 0;
             const unpaidCount = window.statsData.unpaidCount || 0;
             
-            // Eğer iki değer de 0 ise dummy veri ekle
-            let displayPaidCount = paidCount;
-            let displayUnpaidCount = unpaidCount;
-            
+            // Eğer her ikisi de 0 ise grafik boş görünecek, bu genelde istenen bir durumdur.
+            // Eğer 0 olduğunda bile bir şey göstermek isteniyorsa (örn: "Veri Yok" dilimi),
+            // `datasets.data` içine [0,0] yerine özel bir değer ve label eklenebilir.
             if (paidCount === 0 && unpaidCount === 0) {
-                displayPaidCount = 1; // Dummy veri
-                displayUnpaidCount = 0;
+                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                 ctx.textAlign = 'center';
+                 ctx.fillText('Ödeme durumu için işlem bulunmuyor.', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                 return;
             }
-            
+
             window.statusChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
                     labels: ['Ödendi', 'Ödenmedi'],
                     datasets: [{
-                        data: [displayPaidCount, displayUnpaidCount],
+                        data: [paidCount, unpaidCount], // Gerçek değerler
                         backgroundColor: [
                             'rgba(76, 175, 80, 0.7)',
                             'rgba(239, 83, 80, 0.7)'
@@ -2867,20 +3408,19 @@
                         },
                         title: {
                             display: true,
-                            text: 'Ödeme Durumuna Göre Müvekkil Sayısı'
+                            text: 'Ödeme Durumuna Göre İşlem Sayısı' 
                         },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     let label = context.label || '';
+                                    const total = context.dataset.data.reduce((a,b) => a+b, 0);
+                                    const value = context.parsed || 0;
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
                                     if (label) {
                                         label += ': ';
                                     }
-                                    if (context.parsed !== null) {
-                                        const count = context.label === 'Ödendi' ? paidCount : unpaidCount;
-                                        const percentage = Math.round((count / (paidCount + unpaidCount)) * 100) || 0;
-                                        label += `${count} müvekkil (${percentage}%)`;
-                                    }
+                                    label += `${value} işlem (${percentage}%)`;
                                     return label;
                                 }
                             }
@@ -2891,13 +3431,13 @@
         }
 
         // Özet sekmesini detaylı verilerle doldur
-        function populateSummaryTab() {
-            if (!window.statsData) return;
+        function populateSummaryTab(data) {
+            if (!data) return;
 
-            const { currencyTotals, highestPayment, overdueCount, expectedPaymentsByYear, totalInstallments, paidInstallments, clientCount } = window.statsData;
+            const { currencyTotals, highestPayment, overdueCount, expectedPaymentsByYear, totalInstallments, paidInstallments, clientCount, paidCount } = data; // paidCount eklendi
 
-            // Ana TRY kartları zaten generateStats içinde güncelleniyor.
-            document.getElementById('expectedNextYear').textContent = `${formatCurrency(currencyTotals.TRY.expectedNextYear)} TRY`;
+            // Ana TL kartları zaten generateStats içinde güncelleniyor.
+            document.getElementById('expectedNextYear').textContent = `${formatCurrency(currencyTotals.TL.expectedNextYear)} TL`; // TRY -> TL olarak düzeltildi
             document.getElementById('highestPaymentInfo').textContent = `${highestPayment.clientName} - ${formatCurrency(highestPayment.amount)} ${highestPayment.currency} (${highestPayment.date})`;
             document.getElementById('overdueCount').textContent = overdueCount;
             const avgInstallments = clientCount > 0 ? (totalInstallments / clientCount).toFixed(1) : 0;
@@ -2921,7 +3461,7 @@
             const thead = table.createTHead();
             const tbody = table.createTBody();
             const headerRow = thead.insertRow();
-            ['Yıl', 'TRY', 'USD', 'EUR'].forEach(text => {
+            ['Yıl', 'TL', 'USD', 'EUR'].forEach(text => { // TRY -> TL olarak güncellendi
                 const th = document.createElement('th');
                 th.textContent = text;
                 headerRow.appendChild(th);
@@ -2931,49 +3471,10 @@
             sortedYears.forEach(year => {
                 const row = tbody.insertRow();
                 row.insertCell().textContent = year;
-                row.insertCell().textContent = formatCurrency(expectedPaymentsByYear[year].TRY || 0) + ' TRY';
+                row.insertCell().textContent = formatCurrency(expectedPaymentsByYear[year].TL || 0) + ' TL'; // TRY -> TL olarak güncellendi
                 row.insertCell().textContent = formatCurrency(expectedPaymentsByYear[year].USD || 0) + ' USD';
                 row.insertCell().textContent = formatCurrency(expectedPaymentsByYear[year].EUR || 0) + ' EUR';
             });
-            tableContainer.appendChild(table);
-        }
-
-        // Aylık Analiz Tablosunu Doldur
-        function populateMonthlyTable() {
-            if (!window.statsData || !window.statsData.monthlyData) return;
-            const { monthlyData } = window.statsData;
-            const year = document.getElementById('monthlyYearFilter').value;
-            const tableContainer = document.getElementById('monthly-tab').querySelector('.detail-table-container');
-            if (!tableContainer) return; // Eğer tablo için container yoksa çık
-
-            tableContainer.innerHTML = '';
-            const table = document.createElement('table');
-            table.className = 'detail-table';
-            const thead = table.createTHead();
-            const tbody = table.createTBody();
-            const headerRow = thead.insertRow();
-            ['Ay', 'Toplam TL', 'Ödenen TL', 'Beklenen TL', 'Toplam USD', 'Ödenen USD', 'Beklenen USD', 'Toplam EUR', 'Ödenen EUR', 'Beklenen EUR'].forEach(text => {
-                const th = document.createElement('th');
-                th.textContent = text;
-                headerRow.appendChild(th);
-            });
-
-            const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-            for (let i = 0; i < 12; i++) {
-                const monthKey = `${year}-${String(i + 1).padStart(2, '0')}`;
-                const data = monthlyData[monthKey] || { currencies: { TL: {}, USD: {}, EUR: {} } }; // Veri yoksa boş obje
-                const row = tbody.insertRow();
-                row.insertCell().textContent = months[i];
-                row.insertCell().textContent = formatCurrency(data.currencies.TL.total || 0);
-                row.insertCell().textContent = formatCurrency(data.currencies.TL.paid || 0);
-                row.insertCell().textContent = formatCurrency(data.currencies.TL.unpaid || 0);
-                row.insertCell().textContent = formatCurrency(data.currencies.USD.total || 0);
-                row.insertCell().textContent = formatCurrency(data.currencies.USD.paid || 0);
-                row.insertCell().textContent = formatCurrency(data.currencies.USD.unpaid || 0);
-                row.insertCell().textContent = formatCurrency(data.currencies.EUR.total || 0);
-                row.insertCell().textContent = formatCurrency(data.currencies.EUR.paid || 0);
-                row.insertCell().textContent = formatCurrency(data.currencies.EUR.unpaid || 0);
-            }
             tableContainer.appendChild(table);
         }
 
@@ -3051,78 +3552,102 @@
         let expectedPaymentsChartInstance = null; // Grafik örneğini takip etmek için
 
         function createExpectedPaymentsByYearChart() {
-            // Gerekli verilerin varlığını kontrol et
-            if (!window.statsData || !window.statsData.expectedPaymentsByYear) {
-                console.log("Yıllara göre beklenen ödeme verisi bulunamadı.");
+            const canvasElement = document.getElementById('expectedPaymentsByYearChart'); 
+            if (!canvasElement) {
+                console.warn("[createExpectedPaymentsByYearChart] Canvas elementi bulunamadı.");
+                return; 
+            }
+            const ctx = canvasElement.getContext('2d');
+
+            if (expectedPaymentsChartInstance && typeof expectedPaymentsChartInstance.destroy === 'function') {
+                expectedPaymentsChartInstance.destroy();
+                expectedPaymentsChartInstance = null;
+            }
+
+            if (!window.statsData || !window.statsData.expectedPaymentsByYear || Object.keys(window.statsData.expectedPaymentsByYear).length === 0) {
+                console.log("Yıllara göre beklenen ödeme verisi bulunamadı veya boş.");
+                ctx.clearRect(0, 0, canvasElement.width, canvasElement.height); 
+                ctx.textAlign = 'center';
+                ctx.fillText('Ödenmemiş beklenen ödeme verisi bulunmuyor.', canvasElement.width / 2, canvasElement.height / 2);
                 return; 
             }
 
             const expectedData = window.statsData.expectedPaymentsByYear;
-            // Yılları sayısal olarak sırala
             const years = Object.keys(expectedData).map(Number).sort((a, b) => a - b); 
             
-            // Sadece TL tutarlarını al
-            const amountsTL = years.map(year => expectedData[year.toString()]['TL'] || 0); 
-            // İsteğe bağlı: Gerekirse USD/EUR eklemek veya dönüştürmek için mantık ekle
+            const amountsTL = years.map(year => (expectedData[year.toString()] && expectedData[year.toString()]['TL']) || 0); 
+            const amountsUSD = years.map(year => (expectedData[year.toString()] && expectedData[year.toString()]['USD']) || 0); 
+            const amountsEUR = years.map(year => (expectedData[year.toString()] && expectedData[year.toString()]['EUR']) || 0); 
 
-            const ctx = document.getElementById('expectedPaymentsByYearChart')?.getContext('2d');
-            if (!ctx) {
-                console.error("expectedPaymentsByYearChart canvas bulunamadı!");
-                return;
-            }
-
-            // Varsa önceki grafik örneğini yok et
-            if (expectedPaymentsChartInstance) {
-                expectedPaymentsChartInstance.destroy();
-            }
-
-            // formatCurrency fonksiyonunun varlığını kontrol et
             const formatFunc = typeof formatCurrency === 'function' ? formatCurrency : (val) => val;
 
-            // Grafik oluşturma
             expectedPaymentsChartInstance = new Chart(ctx, {
-                type: 'bar', // Çubuk grafik
+                type: 'bar', 
                 data: {
-                    labels: years, // X ekseni etiketleri (yıllar)
-                    datasets: [{
-                        label: 'Beklenen Ödeme (TL)', // Veri seti etiketi
-                        data: amountsTL, // Y ekseni verileri (tutarlar)
-                        backgroundColor: 'rgba(244, 67, 54, 0.7)', // Kırmızı (ödenmemiş)
-                        borderColor: 'rgba(211, 47, 47, 1)',  // Koyu Kırmızı
-                        borderWidth: 1
-                    }]
+                    labels: years, 
+                    datasets: [
+                        {
+                            label: 'TL', 
+                            data: amountsTL, 
+                            backgroundColor: 'rgba(244, 67, 54, 0.7)', 
+                            borderColor: 'rgba(211, 47, 47, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'USD', 
+                            data: amountsUSD, 
+                            backgroundColor: 'rgba(33, 150, 243, 0.7)', 
+                            borderColor: 'rgba(25, 118, 210, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'EUR', 
+                            data: amountsEUR, 
+                            backgroundColor: 'rgba(76, 175, 80, 0.7)', 
+                            borderColor: 'rgba(56, 142, 60, 1)',
+                            borderWidth: 1
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Grafiğin kapsayıcıya sığmasına izin ver
+                    maintainAspectRatio: false, 
                     scales: {
-                        y: { // Y ekseni ayarları
-                            beginAtZero: true, // Sıfırdan başla
+                        y: { 
+                            beginAtZero: true,
                             ticks: {
-                                // Tutarları formatlamak için callback
                                 callback: function(value) { 
-                                    return formatFunc(value) + ' TL'; 
+                                    return formatFunc(value); 
                                 }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Tutar'
+                            }
+                        },
+                        x: {
+                             title: {
+                                display: true,
+                                text: 'Yıl'
                             }
                         }
                     },
                     plugins: {
-                        title: { // Başlık ekle
+                        title: { 
                             display: true,
-                            text: 'Yıllara Göre Beklenen Ödenmemiş TL Ödemeleri',
+                            text: 'Yıllara Göre Beklenen Ödenmemiş Ödemeler',
                             font: { size: 14 }
                         },
-                        legend: { display: false }, // Tek veri seti olduğu için açıklamayı gizle
-                        tooltip: { // Fare üzerine gelince çıkan ipucu ayarları
+                        legend: { display: true, position: 'top' }, 
+                        tooltip: { 
                             callbacks: {
-                                // İpucu etiketini formatla
                                 label: function(context) {
                                     let label = context.dataset.label || '';
                                     if (label) {
                                         label += ': ';
                                     }
                                     if (context.parsed.y !== null) {
-                                        label += formatFunc(context.parsed.y) + ' TL'; 
+                                        label += formatFunc(context.parsed.y) + ' ' + context.dataset.label; 
                                     }
                                     return label;
                                 }
@@ -3131,8 +3656,299 @@
                     }
                 }
             });
-            console.log("Yıllara göre beklenen ödemeler grafiği oluşturuldu.");
+            console.log("Yıllara göre beklenen ödemeler grafiği oluşturuldu/güncellendi.");
         }
         // *** BİTTİ: Yeni Fonksiyon ***
+
+        // EKSİK FONKSİYON TANIMLARI EKLENİYOR
+        function createCurrencyCharts() {
+            if (!window.statsData || !window.statsData.currencyTotals) {
+                console.warn("[createCurrencyCharts] Para birimi istatistik verileri bulunamadı.");
+                // Grafik alanlarını temizle ve mesaj göster
+                const ctxDist = document.getElementById('currencyDistributionChart')?.getContext('2d');
+                const ctxStatus = document.getElementById('currencyStatusChart')?.getContext('2d');
+                if (ctxDist) {
+                    ctxDist.clearRect(0, 0, ctxDist.canvas.width, ctxDist.canvas.height);
+                    ctxDist.textAlign = 'center';
+                    ctxDist.fillText('Dağılım grafiği için veri yok.', ctxDist.canvas.width / 2, ctxDist.canvas.height / 2);
+                }
+                if (ctxStatus) {
+                    ctxStatus.clearRect(0, 0, ctxStatus.canvas.width, ctxStatus.canvas.height);
+                    ctxStatus.textAlign = 'center';
+                    ctxStatus.fillText('Durum grafiği için veri yok.', ctxStatus.canvas.width / 2, ctxStatus.canvas.height / 2);
+                }
+                return;
+            }
+
+            const { currencyTotals } = window.statsData;
+            const currencies = Object.keys(currencyTotals).filter(c => currencyTotals[c] && (currencyTotals[c].total > 0 || currencyTotals[c].transactions > 0)); // Sadece işlem görmüş para birimleri
+
+            // 1. Para Birimi Dağılım Grafiği (Toplam Alacaklara Göre - TL Bazında Yaklaşık)
+            const ctxDistribution = document.getElementById('currencyDistributionChart').getContext('2d');
+            if (window.currencyDistributionChartInstance) {
+                window.currencyDistributionChartInstance.destroy();
+            }
+
+            const distributionLabels = [];
+            const distributionData = [];
+            const distributionColors = [];
+            const currencyColorMap = {
+                'TL': 'rgba(33, 150, 243, 0.7)',  // Mavi
+                'USD': 'rgba(76, 175, 80, 0.7)',  // Yeşil
+                'EUR': 'rgba(255, 152, 0, 0.7)', // Turuncu
+                'OTHER': 'rgba(158, 158, 158, 0.7)' // Gri
+            };
+
+            currencies.forEach(currency => {
+                let totalInTL = currencyTotals[currency].total;
+                // USD ve EUR'yu yaklaşık TL'ye çevir (varsayımsal kurlar)
+                if (currency === 'USD') totalInTL *= 30; 
+                if (currency === 'EUR') totalInTL *= 32;
+                
+                distributionLabels.push(currency);
+                distributionData.push(totalInTL);
+                distributionColors.push(currencyColorMap[currency] || currencyColorMap['OTHER']);
+            });
+            
+            if (distributionData.every(val => val === 0)) {
+                 ctxDistribution.clearRect(0, 0, ctxDistribution.canvas.width, ctxDistribution.canvas.height);
+                 ctxDistribution.textAlign = 'center';
+                 ctxDistribution.fillText('Para birimi dağılımı için veri yok.', ctxDistribution.canvas.width / 2, ctxDistribution.canvas.height / 2);
+            } else {
+                window.currencyDistributionChartInstance = new Chart(ctxDistribution, {
+                    type: 'doughnut',
+                    data: {
+                        labels: distributionLabels,
+                        datasets: [{
+                            data: distributionData,
+                            backgroundColor: distributionColors,
+                            borderColor: distributionColors.map(color => color.replace('0.7', '1')),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: { display: true, text: 'Para Birimi Dağılımı (Toplam Alacak - Yaklaşık TL)' },
+                            legend: { position: 'top' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) label += ': ';
+                                        // Orijinal tutarı ve para birimini göstermek daha iyi olabilir.
+                                        // Ancak pasta grafik yüzdelerle çalıştığı için TL çevrimi yapıldı.
+                                        // Şimdilik TL karşılığını gösteriyoruz.
+                                        if (context.parsed !== null) {
+                                            label += formatCurrency(context.parsed) + ' TL (Yaklaşık)';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Para Birimi Durum Grafiği (Ödenen vs Ödenmemiş)
+            const ctxStatus = document.getElementById('currencyStatusChart').getContext('2d');
+            if (window.currencyStatusChartInstance) {
+                window.currencyStatusChartInstance.destroy();
+            }
+
+            const statusLabels = currencies;
+            const paidData = currencies.map(c => currencyTotals[c].paid);
+            const unpaidData = currencies.map(c => currencyTotals[c].unpaid);
+
+            if (paidData.every(val => val === 0) && unpaidData.every(val => val === 0) ) {
+                 ctxStatus.clearRect(0, 0, ctxStatus.canvas.width, ctxStatus.canvas.height);
+                 ctxStatus.textAlign = 'center';
+                 ctxStatus.fillText('Para birimi durumu için veri yok.', ctxStatus.canvas.width / 2, ctxStatus.canvas.height / 2);
+            } else {
+                window.currencyStatusChartInstance = new Chart(ctxStatus, {
+                    type: 'bar',
+                    data: {
+                        labels: statusLabels,
+                        datasets: [
+                            {
+                                label: 'Ödenen',
+                                data: paidData,
+                                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Ödenmemiş',
+                                data: unpaidData,
+                                backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Tutar' }, ticks: { callback: formatCurrency }},
+                            x: { title: { display: true, text: 'Para Birimi' }}
+                        },
+                        plugins: {
+                            title: { display: true, text: 'Para Birimi Bazında Ödeme Durumları' },
+                            legend: { position: 'top' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) label += ': ';
+                                        if (context.parsed.y !== null) {
+                                            label += formatCurrency(context.parsed.y) + ' ' + context.label;
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Para Birimi Detay Tablosunu Doldur
+        function populateCurrencyTable() {
+            const tableContainer = document.getElementById('currencyTableContainer');
+            if (!tableContainer) {
+                console.error("[populateCurrencyTable] Tablo konteyneri 'currencyTableContainer' bulunamadı.");
+                return;
+            }
+            tableContainer.innerHTML = '';
+
+            if (!window.statsData || !window.statsData.currencyTotals) {
+                console.warn("[populateCurrencyTable] Para birimi istatistik verileri bulunamadı.");
+                tableContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Para birimi detay verisi bulunmamaktadır.</p>';
+                return;
+            }
+
+            const { currencyTotals } = window.statsData;
+            const currencies = Object.keys(currencyTotals).filter(c => currencyTotals[c] && (currencyTotals[c].total > 0 || currencyTotals[c].transactions > 0));
+
+            if (currencies.length === 0) {
+                tableContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Gösterilecek para birimi detayı bulunmamaktadır.</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.className = 'detail-table';
+            const thead = table.createTHead();
+            const tbody = table.createTBody();
+            const headerRow = thead.insertRow();
+            ['Para Birimi', 'Toplam Alacak', 'Ödenen Tutar', 'Beklenen Tutar', 'İşlem Sayısı'].forEach(text => {
+                const th = document.createElement('th');
+                th.textContent = text;
+                headerRow.appendChild(th);
+            });
+
+            currencies.forEach(currency => {
+                const data = currencyTotals[currency];
+                const row = tbody.insertRow();
+                row.insertCell().textContent = currency;
+                row.insertCell().textContent = formatCurrency(data.total || 0);
+                row.insertCell().textContent = formatCurrency(data.paid || 0);
+                row.insertCell().textContent = formatCurrency(data.unpaid || 0);
+                row.insertCell().textContent = data.transactions || 0;
+            });
+            tableContainer.appendChild(table);
+        }
+
+        // Tahsilat Trendi Grafiğini Oluştur
+        function createCollectionTrendChart() {
+            const ctx = document.getElementById('collectionTrendChart')?.getContext('2d');
+            if (!ctx) {
+                console.warn("[createCollectionTrendChart] Tahsilat trendi için canvas bulunamadı.");
+                return;
+            }
+            if (window.collectionTrendChartInstance) {
+                window.collectionTrendChartInstance.destroy();
+            }
+
+            if (!window.statsData || !window.statsData.monthlyData) { // Aylık ödenen verilerini kullanacağız
+                console.warn("[createCollectionTrendChart] Tahsilat trendi için aylık veri bulunamadı.");
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.textAlign = 'center';
+                ctx.fillText('Tahsilat trendi için veri yok.', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+
+            const { monthlyData, years } = window.statsData;
+            const sortedYears = [...years].sort((a,b) => a-b); // Yılları sırala
+            
+            const labels = []; // YYYY-AA formatında
+            const paidDataTL = []; // Sadece TL ödemeleri veya tümü TL'ye çevrilmiş
+            let dataFound = false;
+
+            sortedYears.forEach(year => {
+                for (let month = 1; month <= 12; month++) {
+                    const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+                    const monthEntry = monthlyData[monthKey];
+                    let monthPaidAmountTL = 0;
+
+                    if (monthEntry && monthEntry.currencies) {
+                        dataFound = true;
+                        // Tüm para birimlerindeki ödenenleri TL'ye çevirerek topla
+                        Object.keys(monthEntry.currencies).forEach(currency => {
+                            const currencyData = monthEntry.currencies[currency];
+                            let multiplier = 1;
+                            if (currency === 'USD') multiplier = 30;
+                            if (currency === 'EUR') multiplier = 32;
+                            monthPaidAmountTL += (currencyData.paid || 0) * multiplier;
+                        });
+                    }
+                     // Sadece veri olan ayları ekleyebiliriz veya tüm ayları 0 ile gösterebiliriz.
+                     // Şimdilik, içinde bulunduğumuz yıla kadar tüm ayları gösterelim.
+                    if (dataFound || (year <= new Date().getFullYear())) { // Eğer geçmişte veri varsa veya mevcut/geçmiş bir yılsa etiketi ekle
+                        labels.push(monthKey);
+                        paidDataTL.push(monthPaidAmountTL);
+                    }
+                }
+            });
+            
+            // Eğer hiç veri bulunamadıysa grafiği boş göster
+            if (!dataFound || paidDataTL.every(val => val === 0)) {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.textAlign = 'center';
+                ctx.fillText('Tahsilat trendi için veri bulunamadı.', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+
+            window.collectionTrendChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Aylık Tahsilat (Yaklaşık TL)',
+                        data: paidDataTL,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'Tutar (Yaklaşık TL)' }, ticks: { callback: formatCurrency }},
+                        x: { title: { display: true, text: 'Dönem (Yıl-Ay)' }}
+                    },
+                    plugins: {
+                        title: { display: true, text: 'Aylık Tahsilat Trendi' },
+                        legend: { display: false } // Tek dataset olduğu için legend gereksiz olabilir
+                    }
+                }
+            });
+        }
+
     </script>
 {% endblock %}
