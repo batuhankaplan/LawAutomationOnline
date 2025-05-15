@@ -1,1 +1,3 @@
-Flask 
+Flask
+beautifulsoup4
+Flask-Migrate 

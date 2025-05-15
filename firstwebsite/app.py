@@ -654,89 +654,38 @@ def log_activity(activity_type, description, user_id, case_id=None, related_anno
 def anasayfa():
     # Kullanıcı giriş yapmamışsa login sayfasına yönlendir
     if not current_user.is_authenticated:
-        return redirect(url_for('login'))
+        # landing.html dosyasında duyurular bölümü olmadığı için buraya eklemeyeceğiz.
+        return render_template('landing.html', title="Anasayfa")
+
+    # Giriş yapmış kullanıcı için ana sayfa içeriği
+    user_activities = ActivityLog.query.filter_by(user_id=current_user.id).order_by(ActivityLog.timestamp.desc()).limit(10).all()
+    upcoming_events = CalendarEvent.query.filter(
+        CalendarEvent.user_id == current_user.id,
+        CalendarEvent.start_datetime >= datetime.utcnow()
+    ).order_by(CalendarEvent.start_datetime.asc()).limit(5).all()
     
-    # Kullanıcı giriş yapmış ama onaylanmamışsa
-    if not current_user.is_approved and not current_user.is_admin:
-        flash('Hesabınız henüz onaylanmamış. Lütfen yönetici onayını bekleyin.', 'warning')
-        logout_user()
-        return redirect(url_for('login'))
-    
-    # Duyuruları al - Sadece gerekli sütunları seç
-    # announcements = Announcement.query.all() # Eski sorgu
-    announcements = db.session.query(Announcement.id, Announcement.title, Announcement.content).all()
-    
-    # Dosya türlerine göre sayıları hesapla
-    hukuk_count = CaseFile.query.filter_by(file_type='hukuk').count()
-    ceza_count = CaseFile.query.filter_by(file_type='ceza').count()
-    icra_count = CaseFile.query.filter_by(file_type='icra').count()
-    
-    # Toplam dosya sayısı
-    total_count = hukuk_count + ceza_count + icra_count
-    
-    # Son aktiviteleri al (son 5)
-    activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all()
-    
-    # Toplam aktivite sayısını hesapla
-    total_activities = ActivityLog.query.count()
-    
-    # Yaklaşan duruşmaları SADECE takvimden al
-    today = datetime.now().date()
-    
-    # Sadece takvimden duruşmaları al (hem bağlı hem bağımsız olan tüm duruşma ve e-duruşma etkinlikleri)
-    upcoming_hearings = CalendarEvent.query.filter(
-        CalendarEvent.date >= today,
-        CalendarEvent.event_type.in_(['durusma', 'e-durusma'])
-    ).order_by(CalendarEvent.date, CalendarEvent.time).limit(4).all()
-    
-    # Toplam duruşma sayısını al
-    total_hearings = CalendarEvent.query.filter(
-        CalendarEvent.date >= today,
-        CalendarEvent.event_type.in_(['durusma', 'e-durusma'])
-    ).count()
-    
-    # Kullanıcı yetkilerini kontrol et
-    is_admin = current_user.is_admin
-    user_permissions = current_user.permissions if current_user.permissions else {}
-    takvim_goruntule = user_permissions.get('takvim_goruntule', False) or is_admin
-    
-    # Debug mesajları
-    print(f"Kullanıcı admin mi: {is_admin}")
-    print(f"Kullanıcı yetkileri: {user_permissions}")
-    print(f"Takvim görüntüleme yetkisi: {takvim_goruntule}")
-    
-    # Aktif dosya sayısını hesapla (status=Aktif olan dosyalar)
-    total_active_cases = CaseFile.query.filter_by(status='Aktif').count()
-    
-    # Adliye istatistiklerini hesapla
-    courthouse_stats = db.session.query(
-        CaseFile.courthouse, 
-        func.count(CaseFile.id).label('total_cases')
-    ).filter(
-        CaseFile.courthouse != None,
-        CaseFile.courthouse != "Uygulanmaz",
-        CaseFile.file_type.in_(['hukuk', 'ceza', 'savcilik', 'icra'])
-    ).group_by(CaseFile.courthouse).order_by(desc('total_cases')).limit(6).all()
-    
-    # Adliye istatistiklerini sözlük listesine dönüştür
-    courthouse_stats_list = [
-        {'courthouse': stat.courthouse, 'total_cases': stat.total_cases} 
-        for stat in courthouse_stats
-    ]
-    
-    return render_template('anasayfa.html',
+    # Duyuruları al (örneğin son 5 duyuru)
+    announcements = Announcement.query.order_by(Announcement.created_at.desc()).limit(5).all()
+
+    user_cases = CaseFile.query.filter_by(user_id=current_user.id).all()
+    total_cases = len(user_cases)
+    active_cases = sum(1 for case in user_cases if case.status == 'Aktif')
+    pending_cases = sum(1 for case in user_cases if case.status == 'Beklemede')
+    closed_cases = sum(1 for case in user_cases if case.status == 'Kapalı')
+
+    # Ödeme istatistikleri (opsiyonel, gerekirse eklenebilir)
+    # total_payments_this_month = db.session.query(func.sum(Payment.amount)).filter(...).scalar()
+
+    return render_template('anasayfa.html', 
+                           title="Anasayfa", 
+                           user_activities=user_activities,
+                           upcoming_events=upcoming_events,
                            announcements=announcements,
-                           hukuk_count=hukuk_count,
-                           ceza_count=ceza_count,
-                           icra_count=icra_count,
-                           total_count=total_count,
-                           total_active_cases=total_active_cases,
-                           activities=activities, 
-                           total_activities=total_activities,
-                           upcoming_hearings=upcoming_hearings,
-                           total_hearings=total_hearings,
-                           courthouse_stats=courthouse_stats_list,
-                           can_view_calendar=takvim_goruntule)
+                           total_cases=total_cases,
+                           active_cases=active_cases,
+                           pending_cases=pending_cases,
+                           closed_cases=closed_cases
+                           )
 
 # Daha fazla aktivite yüklemek için yeni endpoint
 @app.route('/load_more_activities/<int:offset>')
@@ -3892,7 +3841,7 @@ def parse_tarifeler():
             if ek_not_txt:
                 item["ek_not"] = ek_not_txt
             
-            kategori_obj["items"].append(item)
+            kategori_obj["items"].append(item) # Girinti düzeltildi
 
     except FileNotFoundError:
         logging.error(f"Hata: Tarife dosyası bulunamadı: {filepath}")
@@ -3901,7 +3850,7 @@ def parse_tarifeler():
         import traceback
         logging.error(f"Hata: Tarife dosyası okunurken/işlenirken hata: {e}\\n{traceback.format_exc()}")
         return {"error": f"Tarife dosyası okunurken/işlenirken hata: {e}"}
-
+    
     return tarifeler
 
 @app.route('/api/tarifeler')
@@ -3925,39 +3874,47 @@ def kaydet_kaplan_danismanlik_tarife():
 
         base_dir = os.path.dirname(os.path.abspath(__file__))
         filepath = os.path.join(base_dir, '..', 'tarifeler.txt')
-
-        lines = []
-        with open(filepath, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-
-        start_marker = "KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ START\\n"
-        end_marker = "KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ END\\n"
         
+        lines = []
+        if os.path.exists(filepath):
+            with open(filepath, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+        else: # Dosya yoksa, uyarı ver ve boş bir dosya gibi davran
+            logging.warning(f"Tarife dosyası bulunamadı: {filepath}. Yeni dosya oluşturulacak.")
+
+        start_marker_content = "KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ START"
+        end_marker_content = "KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ END"
+        
+        # JSON'u string'e çevirirken satır başlarına dikkat et, her satır düzgünce \n ile bitsin.
+        # json.dumps indent=2 ile zaten satır sonlarında \n kullanır.
         new_content_str = json.dumps(new_kaplan_data, ensure_ascii=False, indent=2)
 
         output_lines = []
         in_block = False
         block_written = False
 
-        for line in lines:
-            if line.strip() == start_marker.strip():
+        for line_in_file in lines:
+            stripped_line = line_in_file.strip()
+            if stripped_line == start_marker_content:
                 in_block = True
-                output_lines.append(start_marker)
-                output_lines.append(new_content_str + "\\n") # JSON içeriğini yaz
-                output_lines.append(end_marker)
+                output_lines.append(start_marker_content + '\n') # Satır sonunu ekle
+                # JSON içeriğini yazarken, her satırının sonunda zaten \n olduğundan emin ol.
+                # json.dumps(indent=2) bunu genellikle yapar.
+                output_lines.append(new_content_str + '\n') 
+                output_lines.append(end_marker_content + '\n')   # Satır sonunu ekle
                 block_written = True
-            elif line.strip() == end_marker.strip() and in_block:
+            elif stripped_line == end_marker_content and in_block:
                 in_block = False
-                # Zaten yukarıda end_marker eklendi, burada bir şey yapma
+                # Blok zaten yazıldı, bu satırı atla
             elif not in_block:
-                output_lines.append(line)
+                output_lines.append(line_in_file) # Orijinal satır sonunu koru
         
-        if not block_written: # Eğer dosya içinde blok hiç bulunamadıysa, sona ekle
-            if output_lines and not output_lines[-1].endswith("\\n"):
-                 output_lines.append("\\n") # Önceki satırın sonuna newline ekle
-            output_lines.append(start_marker)
-            output_lines.append(new_content_str + "\\n")
-            output_lines.append(end_marker)
+        if not block_written: # Eğer dosya içinde blok hiç bulunamadıysa veya dosya boşsa sona ekle
+            if output_lines and not output_lines[-1].endswith('\n'):
+                 output_lines.append('\n')
+            output_lines.append(start_marker_content + '\n')
+            output_lines.append(new_content_str + '\n')
+            output_lines.append(end_marker_content + '\n')
 
         with open(filepath, 'w', encoding='utf-8') as f:
             f.writelines(output_lines)

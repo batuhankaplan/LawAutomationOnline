@@ -43,6 +43,8 @@ document.addEventListener('DOMContentLoaded', function () {
             
             renderStaticTarifeler(data);
 
+            console.log("API'den gelen Kaplan Danışmanlık verisi:", data.kaplan_danismanlik_tarifesi);
+
             if (data.kaplan_danismanlik_tarifesi && typeof data.kaplan_danismanlik_tarifesi === 'object') {
                 kaplanDanismanlikTarifeData = JSON.parse(JSON.stringify(data.kaplan_danismanlik_tarifesi)); 
                 if (!kaplanDanismanlikTarifeData.kategoriler || !Array.isArray(kaplanDanismanlikTarifeData.kategoriler)) {
@@ -51,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 kaplanDanismanlikTarifeData = { kategoriler: [] };
             }
+            console.log("renderKaplanDanismanlikEditor öncesi kaplanDanismanlikTarifeData:", JSON.parse(JSON.stringify(kaplanDanismanlikTarifeData)));
             renderKaplanDanismanlikEditor();
 
         } catch (error) {

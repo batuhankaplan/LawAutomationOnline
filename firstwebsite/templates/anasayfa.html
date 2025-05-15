@@ -16,6 +16,10 @@
                 <div class="announcement-item">
                     <div class="announcement-title">{{ announcement.title }}</div>
                     <div class="announcement-text">{{ announcement.content }}</div>
+                    <div class="announcement-meta">
+                        <i class="material-icons">access_time</i>
+                        <span>{{ announcement.created_at.strftime('%d %B %Y, %H:%M') }}</span>
+                    </div>
                 </div>
                 {% else %}
                 <div class="no-data">Henüz duyuru bulunmuyor.</div>
@@ -330,6 +334,20 @@
 .announcement-text {
     font-size: 0.85rem;
     color: #666;
+}
+
+.announcement-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 5px;
+}
+
+.announcement-meta i {
+    font-size: 16px;
+    color: var(--primary-color);
 }
 
 /* Son İşlemler */

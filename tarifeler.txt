@@ -135,7 +135,7 @@ ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_31|KVKK Dönüşüm ve Uyum Proje/
 ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_32|Türkiye'de Oturum İzni Alınması|110000|Sabit|TL||
 ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_33|Türkiye'de Çalışma İzni Alınması|110000|Sabit|TL||
 ISTBARO_2025|J- Diğer Hukuki Yardımlar|IB_J_34|İnsan Hakları Tazminat Komisyonunda takip edilen işler|60000|Sabit|TL|'den az olmamak üzere dava değerinin %16'sı|
-ISTBARO_2025|Genel Not|IB_GN_1|Çizelgede yazılı olmayan dava, takip ve hukuki yardımlar için işin özelliği gözetilerek benzeri işlere göre ücret belirlenebilir.||Bilgi|||
+ISTBARO_2025|Genel Not|IB_GN_1|Çizelgede yazılı olmayan dava, takip ve hukuki yardımlar için işin özelliği gözetilerek benzeri işlere göre ücret belirlenebilir.|-|Bilgi|
 
 
 # --- TBB Avukatlık Asgari Ücret Tarifesi 2024-2025 (Güncellenmiş Liste) ---
@@ -169,9 +169,9 @@ TBB_2025|İkinci Kısım - Birinci Bölüm: Maktu Ücrete Bağlı Hukuki Yardım
 TBB_2025|İkinci Kısım - Birinci Bölüm: Maktu Ücrete Bağlı Hukuki Yardımlar|TBB_2_1_4a|Vergi Mahkemelerinde takip edilen dava ve işler için (Duruşmasız ise)|18000|Maktu|TL||
 TBB_2025|İkinci Kısım - Birinci Bölüm: Maktu Ücrete Bağlı Hukuki Yardımlar|TBB_2_1_4b|Vergi Mahkemelerinde takip edilen dava ve işler için (Duruşmalı ise)|36000|Maktu|TL||
 TBB_2025|İkinci Kısım - Birinci Bölüm: Maktu Ücrete Bağlı Hukuki Yardımlar|TBB_2_1_5|Tüketici Mahkemelerinde görülen kredi taksitlerinin veya faizinin uyarlanması davaları için|14000|Maktu|TL||
-TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_21a|Danıştay’da ilk derecede görülen davalar için (Duruşmasız ise)|28000|Maktu|TL||
-TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_21b|Danıştay’da ilk derecede görülen davalar için (Duruşmalı ise)|56000|Maktu|TL||
-TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_22|Yargıtay, Danıştay ve Sayıştay’da temyiz yolu ile görülen işlerin duruşması için|28000|Maktu|TL||
+TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_21a|Danıştay'da ilk derecede görülen davalar için (Duruşmasız ise)|28000|Maktu|TL||
+TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_21b|Danıştay'da ilk derecede görülen davalar için (Duruşmalı ise)|56000|Maktu|TL||
+TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_22|Yargıtay, Danıştay ve Sayıştay'da temyiz yolu ile görülen işlerin duruşması için|28000|Maktu|TL||
 TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_23|Uyuşmazlık Mahkemesindeki davalar için|30000|Maktu|TL||
 TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_24a|Anayasa Mahkemesinde görülen dava ve işler için (Yüce Divan sıfatı ile bakılan davalar)|90000|Maktu|TL||
 TBB_2025|İkinci Kısım - İkinci Bölüm: Konusu Para Olmayan Hukuki Yardımlar|TBB_2_2_24bDRMSZ|Anayasa Mahkemesinde görülen dava ve işler için (Bireysel başvuru - Duruşmasız işlerde)|30000|Maktu|TL||
@@ -185,7 +185,7 @@ TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen
 TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_6|Sonra gelen 2.000.000,00 TL için|5|Yüzdelik|%||
 TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_7|Sonra gelen 2.400.000,00 TL için|3|Yüzdelik|%||
 TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_8|Sonra gelen 2.800.000,00 TL için|2|Yüzdelik|%||
-TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_9|11.600.000,00 TL’dan yukarısı için|1|Yüzdelik|%||
+TBB_2025|Üçüncü Kısım: Konusu Para Olan veya Para ile Değerlendirilebilen Hukuki Yardımlar|TBB_3_9|11.600.000,00 TL'dan yukarısı için|1|Yüzdelik|%||
 
 # --- Kaplan Hukuk Bürosu Asgari Ücret Tarifesi (Örnekler - Manuel Belirlenecek) ---
 KAPLAN_OZEL|Danışmanlık|KH_DNS_01|Ticari Şirketlere Kapsamlı Hukuki Danışmanlık Paketi (Aylık)|30000|Aylık|TL/Ay|Minimum 6 ay sözleşmeli|Acil Durum Müdahalesi (Ayda 2 Kez);5000;SABIT_EKLE|Sözleşme İnceleme (Ekstra 5 Adet);3000;SABIT_EKLE
@@ -193,3 +193,26 @@ KAPLAN_OZEL|Dava|KH_DV_01|Marka Hakkına Tecavüz Davası|60000|Sabit|TL|Dava de
 KAPLAN_OZEL|Sözleşme Hazırlama|KH_SZL_01|Kapsamlı Franchise Sözleşmesi Hazırlama|45000|Sabit|TL||Yabancı Dilde Çeviri;15000;SABIT_EKLE|Noter Masrafı Karşılama;2000;SABIT_EKLE
 KAPLAN_OZEL|Ceza Hukuku|KH_CZ_01|Ekonomik Suçlar Kapsamında Şüpheli Müdafiliği (Soruşturma Aşaması)|70000|Sabit|TL||Haftasonu Mesai Farkı;10000;SABIT_EKLE
 KAPLAN_OZEL|Ceza Hukuku|KH_CZ_02|Ekonomik Suçlar Kapsamında Sanık Müdafiliği (Kovuşturma Aşaması)|120000|Sabit|TL||Uzman Mütalaası Alma;25000;SABIT_EKLE
+KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ START
+{
+  "details": "Expecting property name enclosed in double quotes: line 1 column 2 (char 1)",
+  "error": "JSON parse hatası",
+  "kategoriler": [
+    {
+      "id": "kategori_1747315164094_xnrlz",
+      "kategoriAdi": "asdgasdg",
+      "sira": 1,
+      "hizmetler": [
+        {
+          "id": "hizmet_1747315166486_7g1dc",
+          "hizmetAdi": "adsgadgsa",
+          "temelUcret": "12341234",
+          "ekNot": "asdgasdg",
+          "ekstralar": [],
+          "sira": 1
+        }
+      ]
+    }
+  ]
+}
+KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ END
