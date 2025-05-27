@@ -1,10 +1,21 @@
 document.addEventListener('DOMContentLoaded', function () {
     const tarifeApiUrl = '/api/tarifeler';
     const tarifeTabContent = document.getElementById('tarifeTabContent');
+    
+    // Kaplan Danışmanlık için yeni DOM elementleri
+    const kaplanDanismanlikListeContainer = document.getElementById('kaplan-danismanlik-liste-container');
     const kaplanDanismanlikEditorContainer = document.getElementById('kaplan-danismanlik-editor-container');
+    const kaplanDanismanlikEditorContent = document.getElementById('kaplan-danismanlik-editor-content'); // Editörün içeriğinin render edileceği yer
+    
+    // Yeni Buton Grupları ve Butonlar
+    const kaplanDuzenleBtnGroup = document.getElementById('kaplan-danismanlik-duzenle-btn-group');
+    const kaplanDuzenleBtn = document.getElementById('kaplan-danismanlik-duzenle-btn'); // Bu artık alttaki büyük buton
+    const kaplanKaydetBtnGroup = document.getElementById('kaplan-danismanlik-kaydet-btn-group');
+    const kaplanIptalBtn = document.getElementById('kaplan-danismanlik-iptal-btn');
     const kaydetKaplanDanismanlikTarifeBtn = document.getElementById('kaydet-kaplan-danismanlik-tarife');
 
     let kaplanDanismanlikTarifeData = { kategoriler: [] };
+    let isKaplanEditModeActive = false; // Kaplan sekmesi için edit modu state'i
 
     const tarifeGrupMap = {
         "İstanbul Barosu": {
@@ -20,6 +31,38 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     
     const grupSiralama = ["İstanbul Barosu", "TBB"];
+
+    // Toast bildirimleri için yardımcı fonksiyon
+    function showToast(title, message, type = 'info') {
+        let toastContainer = document.getElementById('toastPlacement');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toastPlacement';
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '1055'; // Modal'ların üzerinde olması için
+            document.body.appendChild(toastContainer);
+        }
+
+        const toastId = 'toast-' + Date.now();
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-white bg-${type === 'danger' ? 'danger' : (type === 'success' ? 'success' : 'primary')} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <strong>${title}</strong> ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+        toast.show();
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
+    }
 
     function formatCurrency(amount, currency = 'TRY') {
         try {
@@ -41,9 +84,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             const data = await response.json();
             
-            renderStaticTarifeler(data);
-
-            console.log("API'den gelen Kaplan Danışmanlık verisi:", data.kaplan_danismanlik_tarifesi);
+            renderStaticTarifeler(data); // İstBaro ve TBB için
 
             if (data.kaplan_danismanlik_tarifesi && typeof data.kaplan_danismanlik_tarifesi === 'object') {
                 kaplanDanismanlikTarifeData = JSON.parse(JSON.stringify(data.kaplan_danismanlik_tarifesi)); 
@@ -53,16 +94,20 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 kaplanDanismanlikTarifeData = { kategoriler: [] };
             }
-            console.log("renderKaplanDanismanlikEditor öncesi kaplanDanismanlikTarifeData:", JSON.parse(JSON.stringify(kaplanDanismanlikTarifeData)));
-            renderKaplanDanismanlikEditor();
+            
+            // Edit moduna göre uygun Kaplan render fonksiyonunu çağır
+            renderKaplanDanismanlikSection();
 
         } catch (error) {
             console.error("Tarifeler yüklenirken hata oluştu:", error);
             if (tarifeTabContent) {
                 tarifeTabContent.innerHTML = '<div class="alert alert-danger" role="alert">Tarifeler yüklenirken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.</div>';
             }
-            if (kaplanDanismanlikEditorContainer) {
-                kaplanDanismanlikEditorContainer.innerHTML = '<div class="alert alert-danger" role="alert">Danışmanlık tarifesi editörü yüklenirken bir sorun oluştu.</div>';
+             if (kaplanDanismanlikListeContainer) {
+                kaplanDanismanlikListeContainer.innerHTML = '<div class="alert alert-danger" role="alert">Kaplan Hukuk Danışmanlık tarifesi yüklenirken bir sorun oluştu.</div>';
+            }
+            if (kaplanDanismanlikEditorContent) {
+                kaplanDanismanlikEditorContent.innerHTML = '<div class="alert alert-danger" role="alert">Danışmanlık tarifesi editörü yüklenirken bir sorun oluştu.</div>';
             }
         }
     }
@@ -173,10 +218,114 @@ document.addEventListener('DOMContentLoaded', function () {
         satirTr.appendChild(temelUcretTd);
         return satirTr;
     }
+    
+    // Kaplan Danışmanlık bölümünü yöneten ana fonksiyon
+    function renderKaplanDanismanlikSection() {
+        if (isKaplanEditModeActive) {
+            kaplanDanismanlikListeContainer.style.display = 'none';
+            kaplanDanismanlikEditorContainer.style.display = 'block';
+            kaplanDuzenleBtnGroup.style.display = 'none'; // "Tarifeyi Düzenle" buton grubunu gizle
+            kaplanKaydetBtnGroup.style.display = 'block'; // "Kaydet/İptal" buton grubunu göster
+            renderKaplanDanismanlikEditor();
+        } else {
+            kaplanDanismanlikListeContainer.style.display = 'block';
+            kaplanDanismanlikEditorContainer.style.display = 'none';
+            kaplanDuzenleBtnGroup.style.display = 'block'; // "Tarifeyi Düzenle" buton grubunu göster
+            kaplanKaydetBtnGroup.style.display = 'none'; // "Kaydet/İptal" buton grubunu gizle
+            renderKaplanDanismanlikStaticList();
+        }
+    }
+
+    // Kaplan Danışmanlık için Salt Okunur Liste Oluşturma Fonksiyonu
+    function renderKaplanDanismanlikStaticList() {
+        if (!kaplanDanismanlikListeContainer) return;
+        kaplanDanismanlikListeContainer.innerHTML = '';
+
+        if (!kaplanDanismanlikTarifeData || !kaplanDanismanlikTarifeData.kategoriler || kaplanDanismanlikTarifeData.kategoriler.length === 0) {
+            kaplanDanismanlikListeContainer.innerHTML = '<div class="alert alert-info">Henüz Kaplan Hukuk Danışmanlık için bir tarife eklenmemiş. Düzenle butonuna tıklayarak ekleyebilirsiniz.</div>';
+            return;
+        }
+
+        const mainTable = document.createElement('table');
+        mainTable.className = 'table table-striped table-hover tarife-tablosu kaplan-hukuk-tarife-tablosu';
+        
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        ["Hizmet Adı", "Temel Ücret"].forEach(colName => {
+            const th = document.createElement('th');
+            th.textContent = colName;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        mainTable.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        kaplanDanismanlikTarifeData.kategoriler.forEach(kategori => {
+            const kategoriBaslikTr = document.createElement('tr');
+            kategoriBaslikTr.className = 'tarife-kategori-baslik-satiri';
+            const kategoriBaslikTd = document.createElement('td');
+            kategoriBaslikTd.colSpan = 2;
+            kategoriBaslikTd.innerHTML = `<h3>${kategori.kategoriAdi || 'Kategorisiz'}</h3>`;
+            kategoriBaslikTr.appendChild(kategoriBaslikTd);
+            tbody.appendChild(kategoriBaslikTr);
+
+            if (kategori.hizmetler && kategori.hizmetler.length > 0) {
+                kategori.hizmetler.forEach(hizmet => {
+                    const satirTr = document.createElement('tr');
+                    
+                    const hizmetAdiTd = document.createElement('td');
+                    hizmetAdiTd.textContent = hizmet.hizmetAdi || 'N/A';
+                    satirTr.appendChild(hizmetAdiTd);
+
+                    const temelUcretTd = document.createElement('td');
+                    let ucretGosterim = hizmet.temelUcret ? formatCurrency(hizmet.temelUcret) : 'N/A';
+                    let ekNotGosterim = '';
+                    if (hizmet.ekNot) {
+                        ekNotGosterim = ` <span class="text-muted fst-italic">(${hizmet.ekNot})</span>`;
+                    }
+                    temelUcretTd.innerHTML = ucretGosterim + ekNotGosterim;
+                    satirTr.appendChild(temelUcretTd);
+
+                    tbody.appendChild(satirTr);
+
+                    // Ekstraları göster (varsa)
+                    if (hizmet.ekstralar && hizmet.ekstralar.length > 0) {
+                        const ekstralarSatirTr = document.createElement('tr');
+                        ekstralarSatirTr.className = 'kaplan-hukuk-ekstralar-satiri'; // Stil için sınıf
+                        const ekstralarTd = document.createElement('td');
+                        ekstralarTd.colSpan = 2; // Tüm genişliği kaplasın
+                        ekstralarTd.style.paddingLeft = '30px'; // Girinti için
+                        ekstralarTd.style.borderTop = 'none'; // Üstteki çizgiyle birleşmesin
+
+                        const ekstralarListesi = document.createElement('ul');
+                        ekstralarListesi.className = 'list-unstyled mb-0 small text-muted';
+                        hizmet.ekstralar.forEach(ekstra => {
+                            const li = document.createElement('li');
+                            li.innerHTML = `<strong>${ekstra.aciklama || 'Ekstra'}:</strong> ${ekstra.tutar ? formatCurrency(ekstra.tutar) : 'N/A'}`;
+                            ekstralarListesi.appendChild(li);
+                        });
+                        ekstralarTd.appendChild(ekstralarListesi);
+                        ekstralarSatirTr.appendChild(ekstralarTd);
+                        tbody.appendChild(ekstralarSatirTr);
+                    }
+                });
+            } else {
+                const bosHizmetTr = document.createElement('tr');
+                const bosHizmetTd = document.createElement('td');
+                bosHizmetTd.colSpan = 2; // Colspan 2'ye düşürüldü
+                bosHizmetTd.textContent = 'Bu kategoride hizmet bulunmamaktadır.';
+                bosHizmetTd.className = 'text-muted text-center p-3';
+                bosHizmetTr.appendChild(bosHizmetTd);
+                tbody.appendChild(bosHizmetTr);
+            }
+        });
+        mainTable.appendChild(tbody);
+        kaplanDanismanlikListeContainer.appendChild(mainTable);
+    }
 
     function renderKaplanDanismanlikEditor() {
-        if (!kaplanDanismanlikEditorContainer) return;
-        kaplanDanismanlikEditorContainer.innerHTML = '';
+        if (!kaplanDanismanlikEditorContent) return;
+        kaplanDanismanlikEditorContent.innerHTML = ''; // Önceki editör içeriğini temizle
         const fragment = document.createDocumentFragment();
 
         const yeniKategoriBtnWrapper = document.createElement('div');
@@ -198,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 fragment.appendChild(createCategoryElement(kategori, kategoriIndex));
             });
         }
-        kaplanDanismanlikEditorContainer.appendChild(fragment);
+        kaplanDanismanlikEditorContent.appendChild(fragment);
     }
 
     function createCategoryElement(kategori, kategoriIndex) {
@@ -262,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function () {
             hizmetler: []
         };
         kaplanDanismanlikTarifeData.kategoriler.push(newCategory);
-        renderKaplanDanismanlikEditor();
+        renderKaplanDanismanlikEditor(); // Sadece editör içini yeniden çiz
     }
 
     function handleDeleteCategory(kategoriIndex, kategoriId) {
@@ -270,7 +419,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (confirm(`"${kategoriAdi}" kategorisini ve içindeki tüm hizmetleri silmek istediğinizden emin misiniz?`)) {
             kaplanDanismanlikTarifeData.kategoriler.splice(kategoriIndex, 1);
             kaplanDanismanlikTarifeData.kategoriler.forEach((kat, idx) => kat.sira = idx + 1);
-            renderKaplanDanismanlikEditor();
+            renderKaplanDanismanlikEditor(); // Sadece editör içini yeniden çiz
         }
     }
 
@@ -281,6 +430,47 @@ document.addEventListener('DOMContentLoaded', function () {
 
         [kategoriler[kategoriIndex], kategoriler[newIndex]] = [kategoriler[newIndex], kategoriler[kategoriIndex]];
         kategoriler.forEach((kat, idx) => kat.sira = idx + 1);
+        renderKaplanDanismanlikEditor(); // Sadece editör içini yeniden çiz
+    }
+    
+    function handleAddNewService(kategoriIndex, kategoriId) {
+        const kategori = kaplanDanismanlikTarifeData.kategoriler[kategoriIndex];
+        if (!kategori) return;
+        if (!kategori.hizmetler) kategori.hizmetler = [];
+
+        const newServiceId = 'hizmet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+        const newService = {
+            id: newServiceId,
+            hizmetAdi: '',
+            temelUcret: '',
+            ekNot: '',
+            ekstralar: [],
+            sira: kategori.hizmetler.length + 1
+        };
+        kategori.hizmetler.push(newService);
+        renderKaplanDanismanlikEditor(); // Sadece editör içini yeniden çiz
+    }
+
+    function handleDeleteService(kategoriId, hizmetIndex, hizmetId) {
+         const kategori = kaplanDanismanlikTarifeData.kategoriler.find(k => k.id === kategoriId);
+         if (!kategori || !kategori.hizmetler) return;
+         const hizmetAdi = kategori.hizmetler[hizmetIndex].hizmetAdi || 'Bu hizmet';
+        if (confirm(`"${hizmetAdi}" hizmetini silmek istediğinizden emin misiniz?`)) {
+            kategori.hizmetler.splice(hizmetIndex, 1);
+            kategori.hizmetler.forEach((h, idx) => h.sira = idx + 1);
+            renderKaplanDanismanlikEditor(); // Sadece editör içini yeniden çiz
+        }
+    }
+
+    function handleMoveService(kategoriId, hizmetIndex, direction) {
+        const kategori = kaplanDanismanlikTarifeData.kategoriler.find(k => k.id === kategoriId);
+        if (!kategori || !kategori.hizmetler) return;
+        const hizmetler = kategori.hizmetler;
+        const newIndex = hizmetIndex + direction;
+        if (newIndex < 0 || newIndex >= hizmetler.length) return;
+
+        [hizmetler[hizmetIndex], hizmetler[newIndex]] = [hizmetler[newIndex], hizmetler[hizmetIndex]];
+        hizmetler.forEach((h, idx) => h.sira = idx + 1);
         renderKaplanDanismanlikEditor();
     }
 
@@ -360,70 +550,6 @@ document.addEventListener('DOMContentLoaded', function () {
         hizmetDiv.append(hizmetAdiRow, temelUcretRow, ekNotRow, ekstralarWrapper, hizmetKontrolleri);
         return hizmetDiv;
     }
-    
-    function createLabelCol(text) {
-        const col = document.createElement('div');
-        col.className = 'col-md-3 col-form-label fw-semibold small';
-        col.textContent = text;
-        return col;
-    }
-
-    function createInputCol() {
-        const col = document.createElement('div');
-        col.className = 'col-md-9';
-        return col;
-    }
-
-    function createTextInput(value, placeholder, onChangeCallback) {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'form-control form-control-sm';
-        input.value = value;
-        input.placeholder = placeholder;
-        input.addEventListener('input', (e) => onChangeCallback(e.target.value));
-        return input;
-    }
-    
-    function handleAddNewService(kategoriIndex, kategoriId) {
-        const kategori = kaplanDanismanlikTarifeData.kategoriler[kategoriIndex];
-        if (!kategori) return;
-        if (!kategori.hizmetler) kategori.hizmetler = [];
-
-        const newServiceId = 'hizmet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-        const newService = {
-            id: newServiceId,
-            hizmetAdi: '',
-            temelUcret: '',
-            ekNot: '',
-            ekstralar: [],
-            sira: kategori.hizmetler.length + 1
-        };
-        kategori.hizmetler.push(newService);
-        renderKaplanDanismanlikEditor(); 
-    }
-
-    function handleDeleteService(kategoriId, hizmetIndex, hizmetId) {
-         const kategori = kaplanDanismanlikTarifeData.kategoriler.find(k => k.id === kategoriId);
-         if (!kategori || !kategori.hizmetler) return;
-         const hizmetAdi = kategori.hizmetler[hizmetIndex].hizmetAdi || 'Bu hizmet';
-        if (confirm(`"${hizmetAdi}" hizmetini silmek istediğinizden emin misiniz?`)) {
-            kategori.hizmetler.splice(hizmetIndex, 1);
-            kategori.hizmetler.forEach((h, idx) => h.sira = idx + 1);
-            renderKaplanDanismanlikEditor();
-        }
-    }
-
-    function handleMoveService(kategoriId, hizmetIndex, direction) {
-        const kategori = kaplanDanismanlikTarifeData.kategoriler.find(k => k.id === kategoriId);
-        if (!kategori || !kategori.hizmetler) return;
-        const hizmetler = kategori.hizmetler;
-        const newIndex = hizmetIndex + direction;
-        if (newIndex < 0 || newIndex >= hizmetler.length) return;
-
-        [hizmetler[hizmetIndex], hizmetler[newIndex]] = [hizmetler[newIndex], hizmetler[hizmetIndex]];
-        hizmetler.forEach((h, idx) => h.sira = idx + 1);
-        renderKaplanDanismanlikEditor();
-    }
 
     function createExtraElement(ekstra, hizmetId, ekstraIndex) {
         const ekstraDiv = document.createElement('div');
@@ -450,45 +576,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return ekstraDiv;
     }
 
-    function handleAddNewExtra(kategoriId, hizmetIndex, hizmetId) {
-        const kategori = kaplanDanismanlikTarifeData.kategoriler.find(k => k.id === kategoriId);
-        if (!kategori || !kategori.hizmetler || !kategori.hizmetler[hizmetIndex]) return;
-
-        const hizmet = kategori.hizmetler[hizmetIndex];
-        if (!hizmet.ekstralar) {
-            hizmet.ekstralar = [];
-        }
-
-        const newExtraId = 'ekstra_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-        const newExtra = {
-            id: newExtraId,
-            aciklama: '',
-            tutar: ''
-        };
-        hizmet.ekstralar.push(newExtra);
-        renderKaplanDanismanlikEditor();
-    }
-
-    function handleDeleteExtra(hizmetId, ekstraIndex, ekstraId) {
-        let foundAndDeleted = false;
-        kaplanDanismanlikTarifeData.kategoriler.forEach(kategori => {
-            const hizmet = kategori.hizmetler ? kategori.hizmetler.find(h => h.id === hizmetId) : null;
-            if (hizmet && hizmet.ekstralar) {
-                const ekstra = hizmet.ekstralar[ekstraIndex];
-                if (ekstra && ekstra.id === ekstraId) {
-                    const ekstraAciklama = ekstra.aciklama || 'Bu ekstra';
-                     if (confirm(`"${ekstraAciklama}" adlı ekstrayı silmek istediğinizden emin misiniz?`)) {
-                        hizmet.ekstralar.splice(ekstraIndex, 1);
-                        foundAndDeleted = true;
-                     }
-                }
-            }
-        });
-        if (foundAndDeleted) {
-            renderKaplanDanismanlikEditor();
-        }
-    }
-
     function createIconButton(iconClass, onClick, title = '', btnClass = 'btn-secondary', disabled = false) {
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -500,34 +587,35 @@ document.addEventListener('DOMContentLoaded', function () {
         return btn;
     }
     
+    function createLabelCol(text) {
+        const col = document.createElement('div');
+        col.className = 'col-md-3 col-form-label fw-semibold small';
+        col.textContent = text;
+        return col;
+    }
+
+    function createInputCol() {
+        const col = document.createElement('div');
+        col.className = 'col-md-9';
+        return col;
+    }
+
+    function createTextInput(value, placeholder, onChangeCallback) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control form-control-sm';
+        input.value = value;
+        input.placeholder = placeholder;
+        input.addEventListener('input', (e) => onChangeCallback(e.target.value));
+        return input;
+    }
+
     async function handleSaveKaplanDanismanlikTarife() {
         if (!kaydetKaplanDanismanlikTarifeBtn) return;
-        
-        const originalButtonText = kaydetKaplanDanismanlikTarifeBtn.innerHTML;
         kaydetKaplanDanismanlikTarifeBtn.disabled = true;
-        kaydetKaplanDanismanlikTarifeBtn.innerHTML = 
-            `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            Kaydediliyor...`;
+        kaydetKaplanDanismanlikTarifeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Kaydediliyor...';
 
-        kaplanDanismanlikTarifeData.kategoriler.forEach((kat, katIndex) => {
-            if (!kat.id) kat.id = 'kategori_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            kat.sira = katIndex + 1;
-            if (kat.hizmetler) {
-                kat.hizmetler.forEach((hiz, hizIndex) => {
-                    if (!hiz.id) hiz.id = 'hizmet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                    hiz.sira = hizIndex + 1;
-                    if (hiz.ekstralar) {
-                        hiz.ekstralar.forEach(eks => {
-                            if (!eks.id) eks.id = 'ekstra_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                        });
-                    } else {
-                        hiz.ekstralar = [];
-                    }
-                });
-            } else {
-                kat.hizmetler = [];
-            }
-        });
+        console.log("Kaydedilecek Kaplan Danışmanlık Tarife Verisi:", JSON.parse(JSON.stringify(kaplanDanismanlikTarifeData)));
 
         try {
             const response = await fetch('/api/kaydet_kaplan_danismanlik_tarife', {
@@ -541,29 +629,106 @@ document.addEventListener('DOMContentLoaded', function () {
             const result = await response.json();
 
             if (response.ok && result.success) {
-                alert('Kaplan Hukuk Danışmanlık Ücret Tarifesi başarıyla kaydedildi!');
-                fetchTarifeler(); 
+                showToast('Başarılı!', 'Kaplan Hukuk Danışmanlık tarifesi başarıyla kaydedildi.', 'success');
+                isKaplanEditModeActive = false; 
+                await fetchTarifeler(); // Sadece fetchTarifeler çağrılacak, o zaten UI'ı güncelleyecek.
             } else {
-                alert("Tarife kaydedilirken bir hata oluştu: " + (result.error || 'Bilinmeyen sunucu hatası'));
+                showToast('Hata!', `Tarife kaydedilemedi: ${result.error || 'Bilinmeyen bir hata oluştu.'}`, 'danger');
             }
         } catch (error) {
-            alert("Tarife kaydedilirken bir ağ hatası veya istemci tarafı hatası oluştu: " + error.message);
+            console.error('Tarife kaydetme hatası:', error);
+            showToast('Hata!', 'Tarife kaydedilirken bir ağ hatası oluştu.', 'danger');
         } finally {
             kaydetKaplanDanismanlikTarifeBtn.disabled = false;
-            kaydetKaplanDanismanlikTarifeBtn.innerHTML = originalButtonText;
+            kaydetKaplanDanismanlikTarifeBtn.innerHTML = '<i class="fas fa-save me-2"></i>Değişiklikleri Kaydet';
         }
+    }
+    
+    // Event Listeners for Kaplan Section Buttons
+    if (kaplanDuzenleBtn) {
+        kaplanDuzenleBtn.addEventListener('click', () => {
+            isKaplanEditModeActive = true; // Düzenleme moduna geç
+            renderKaplanDanismanlikSection();
+        });
+    }
+
+    if (kaplanIptalBtn) {
+        kaplanIptalBtn.addEventListener('click', () => {
+            isKaplanEditModeActive = false;
+            // Son kaydedilen veriyi tekrar yüklemek için fetchTarifeler iyi bir seçenek
+            // Bu, kullanıcı değişiklik yaptıysa ama kaydetmediyse, onları geri alır.
+            fetchTarifeler(); // Bu renderKaplanDanismanlikSection'ı tetikleyecek ve doğru moda geçirecek
+        });
     }
 
     if (kaydetKaplanDanismanlikTarifeBtn) {
         kaydetKaplanDanismanlikTarifeBtn.addEventListener('click', handleSaveKaplanDanismanlikTarife);
     }
 
-    fetchTarifeler();
+    fetchTarifeler(); // Initial fetch
     
     const kaplanTabButton = document.getElementById('kaplan-danismanlik-tab');
     if(kaplanTabButton) {
         kaplanTabButton.addEventListener('shown.bs.tab', function (event) {
-            // fetchTarifeler zaten en güncel veriyi alıp render ediyor.
+            // Sekme değiştiğinde, Kaplan bölümünün doğru modda (liste veya editör) render edilmesi için
+            // fetchTarifeler() çağırılabilir veya doğrudan renderKaplanDanismanlikSection()
+            // Eğer veri zaten güncelse ve sadece görünümü değiştirmek istiyorsak:
+            renderKaplanDanismanlikSection();
         });
+    }
+
+    function handleAddNewExtra(kategoriId, hizmetIndex, hizmetId) {
+        const kategori = kaplanDanismanlikTarifeData.kategoriler.find(k => k.id === kategoriId);
+        if (!kategori || !kategori.hizmetler) {
+            console.error("Ekstra eklenirken kategori bulunamadı veya kategoride hizmetler dizisi yok:", kategoriId);
+            return;
+        }
+    
+        const hizmet = kategori.hizmetler[hizmetIndex];
+        if (!hizmet || hizmet.id !== hizmetId) {
+            console.error("Ekstra eklenirken hizmet bulunamadı veya hizmet ID eşleşmedi:", kategoriId, hizmetIndex, hizmetId);
+            if (!hizmet) return; 
+        }
+    
+        if (!hizmet.ekstralar) {
+            hizmet.ekstralar = [];
+        }
+    
+        const newExtraId = 'ekstra_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const newExtra = {
+            id: newExtraId,
+            aciklama: '',
+            tutar: '',
+        };
+        hizmet.ekstralar.push(newExtra);
+        renderKaplanDanismanlikEditor();
+    }
+
+    function handleDeleteExtra(hizmetId, ekstraIndex, ekstraId) {
+        let hizmetBulundu = null;
+        // Kategori ve hizmeti bulmak için daha basit bir yol:
+        const kategori = kaplanDanismanlikTarifeData.kategoriler.find(kat => 
+            kat.hizmetler && kat.hizmetler.some(h => h.id === hizmetId)
+        );
+        if (kategori) {
+            hizmetBulundu = kategori.hizmetler.find(h => h.id === hizmetId);
+        }
+    
+        if (!hizmetBulundu || !hizmetBulundu.ekstralar) {
+            console.error("Ekstra silinirken hizmet bulunamadı veya ekstralar dizisi yok:", hizmetId);
+            return;
+        }
+    
+        const ekstra = hizmetBulundu.ekstralar[ekstraIndex];
+        if (!ekstra || ekstra.id !== ekstraId) {
+            console.error("Ekstra silinirken ID eşleşmedi veya ekstra bulunamadı", hizmetId, ekstraIndex, ekstraId);
+            if(!ekstra) return;
+        }
+        
+        const ekstraAciklamasi = ekstra.aciklama || 'Bu ekstra';
+        if (confirm(`"${ekstraAciklamasi}" ekstrasını silmek istediğinizden emin misiniz?`)) {
+            hizmetBulundu.ekstralar.splice(ekstraIndex, 1);
+            renderKaplanDanismanlikEditor();
+        }
     }
 }); 

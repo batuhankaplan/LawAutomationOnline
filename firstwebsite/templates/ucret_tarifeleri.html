@@ -24,6 +24,14 @@
     .tarifeler-page-content .tab-content {
         padding-top: 20px;
     }
+    /* Başlangıçta düzenleme arayüzü ve butonlarını gizle */
+    #kaplan-danismanlik-editor-container,
+    #kaplan-danismanlik-kaydet-btn-group {
+        display: none;
+    }
+    #kaplan-danismanlik-liste-container {
+        display: block;
+    }
 </style>
 {% endblock %}
 
@@ -57,15 +65,26 @@
             </div>
         </div>
         <div class="tab-pane fade" id="kaplan-danismanlik-content" role="tabpanel" aria-labelledby="kaplan-danismanlik-tab">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4>Kaplan Hukuk Danışmanlık Ücret Tarifesi (Düzenlenebilir)</h4>
-                <button class="btn btn-success" id="kaydet-kaplan-danismanlik-tarife"><i class="fas fa-save me-2"></i>Değişiklikleri Kaydet</button>
+            <div id="kaplan-danismanlik-liste-container">
+                <div class="alert alert-info">Tarife listesi yükleniyor...</div>
             </div>
-            <p class="text-muted small">Bu bölümdeki tarifeleri aşağıdan yönetebilirsiniz. Yeni kategoriler (Dava Türü), hizmetler ve ekstralar ekleyebilir, mevcutları düzenleyebilir, silebilir ve sıralayabilirsiniz.</p>
-            <hr>
+
             <div id="kaplan-danismanlik-editor-container">
-                <!-- Düzenleme arayüzü buraya dinamik olarak yüklenecek -->
-                <div class="alert alert-info">Düzenleme arayüzü yükleniyor... Eğer tarife boşsa, yeni kategori ekleme seçeneği sunulacaktır.</div>
+                 <p class="text-muted small">Bu bölümdeki tarifeleri aşağıdan yönetebilirsiniz. Yeni kategoriler (Dava Türü), hizmetler ve ekstralar ekleyebilir, mevcutları düzenleyebilir, silebilir ve sıralayabilirsiniz.</p>
+                 <hr>
+                <div id="kaplan-danismanlik-editor-content">
+                    <div class="alert alert-info">Düzenleme arayüzü yükleniyor...</div>
+                </div>
+            </div>
+
+            <!-- Buton Grupları -->
+            <div class="mt-4 text-end" id="kaplan-danismanlik-duzenle-btn-group">
+                <button class="btn btn-primary btn-lg" id="kaplan-danismanlik-duzenle-btn"><i class="fas fa-edit me-2"></i>Tarifeyi Düzenle</button>
+            </div>
+
+            <div class="mt-4 text-end" id="kaplan-danismanlik-kaydet-btn-group">
+                <button class="btn btn-secondary btn-lg me-2" id="kaplan-danismanlik-iptal-btn"><i class="fas fa-times me-2"></i>Düzenlemeyi İptal Et</button>
+                <button class="btn btn-success btn-lg" id="kaydet-kaplan-danismanlik-tarife"><i class="fas fa-save me-2"></i>Değişiklikleri Kaydet</button>
             </div>
         </div>
     </div>

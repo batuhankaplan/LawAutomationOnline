@@ -658,33 +658,56 @@ def anasayfa():
         return render_template('landing.html', title="Anasayfa")
 
     # Giriş yapmış kullanıcı için ana sayfa içeriği
-    user_activities = ActivityLog.query.filter_by(user_id=current_user.id).order_by(ActivityLog.timestamp.desc()).limit(10).all()
-    upcoming_events = CalendarEvent.query.filter(
-        CalendarEvent.user_id == current_user.id,
-        CalendarEvent.start_datetime >= datetime.utcnow()
-    ).order_by(CalendarEvent.start_datetime.asc()).limit(5).all()
+    activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all() # Limit 10'dan 5'e düşürüldü
+    total_activities = ActivityLog.query.count() # Tüm aktivitelerin sayısını al
+    upcoming_hearings = CalendarEvent.query.filter(
+        db.func.datetime(CalendarEvent.date, CalendarEvent.time) >= datetime.utcnow(),
+        CalendarEvent.event_type.in_(['durusma', 'e-durusma']),
+        CalendarEvent.is_completed == False
+    ).order_by(CalendarEvent.date.asc(), CalendarEvent.time.asc()).limit(5).all()
+    total_hearings = CalendarEvent.query.filter(CalendarEvent.event_type.in_(['durusma', 'e-durusma'])).count() # Tüm duruşmaların sayısını al
     
     # Duyuruları al (örneğin son 5 duyuru)
     announcements = Announcement.query.order_by(Announcement.created_at.desc()).limit(5).all()
 
-    user_cases = CaseFile.query.filter_by(user_id=current_user.id).all()
+    user_cases = CaseFile.query.all() # Kullanıcı filtresi kaldırıldı
     total_cases = len(user_cases)
-    active_cases = sum(1 for case in user_cases if case.status == 'Aktif')
+    total_active_cases = sum(1 for case in user_cases if case.status == 'Aktif') 
     pending_cases = sum(1 for case in user_cases if case.status == 'Beklemede')
     closed_cases = sum(1 for case in user_cases if case.status == 'Kapalı')
+
+    # Dosya türüne göre istatistikler
+    hukuk_count = sum(1 for case in user_cases if case.file_type and case.file_type.lower() == 'hukuk')
+    ceza_count = sum(1 for case in user_cases if case.file_type and case.file_type.lower() == 'ceza')
+    icra_count = sum(1 for case in user_cases if case.file_type and case.file_type.lower() == 'icra')
+
+    # Adliye istatistikleri
+    courthouse_stats_dict = {}
+    for case in user_cases:
+        if case.courthouse and case.courthouse.strip().lower() not in ['', 'uygulanmaz']:
+            courthouse_stats_dict[case.courthouse] = courthouse_stats_dict.get(case.courthouse, 0) + 1
+    courthouse_stats = [{'courthouse': k, 'total_cases': v} for k, v in courthouse_stats_dict.items()]
+
 
     # Ödeme istatistikleri (opsiyonel, gerekirse eklenebilir)
     # total_payments_this_month = db.session.query(func.sum(Payment.amount)).filter(...).scalar()
 
     return render_template('anasayfa.html', 
                            title="Anasayfa", 
-                           user_activities=user_activities,
-                           upcoming_events=upcoming_events,
+                           activities=activities, # Kullanıcı filtresi kaldırıldı
+                           total_activities=total_activities, # Şablona gönder
+                           upcoming_hearings=upcoming_hearings, # Kullanıcı filtresi kaldırıldı
                            announcements=announcements,
+                           total_hearings=total_hearings, # Şablona gönder
+                           user_cases=user_cases, # Dosya istatistikleri için eklendi
                            total_cases=total_cases,
-                           active_cases=active_cases,
+                           total_active_cases=total_active_cases, # active_cases -> total_active_cases
                            pending_cases=pending_cases,
-                           closed_cases=closed_cases
+                           closed_cases=closed_cases,
+                           hukuk_count=hukuk_count, # Eklendi
+                           ceza_count=ceza_count,   # Eklendi
+                           icra_count=icra_count,   # Eklendi
+                           courthouse_stats=courthouse_stats # Eklendi
                            )
 
 # Daha fazla aktivite yüklemek için yeni endpoint
@@ -1039,7 +1062,7 @@ def dosya_sorgula():
         client_name = request.form.get('client-name')
         status = request.form.get('status')
         
-        # Sorguyu başlat
+        # Sorguyu başlat (Kullanıcı filtresi kaldırıldı)
         query = CaseFile.query
         
         # Filtreler
@@ -3749,82 +3772,80 @@ def direct_view_udf(document_id):
         return f"UDF dosyası görüntülenirken hata oluştu: {str(e)}", 500
 
 def parse_tarifeler():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    filepath = os.path.join(base_dir, '..', 'tarifeler.txt')
-    # JS tarafının beklediği anahtarlar: "İstanbul Barosu", "TBB"
-    tarifeler = { 
-        "İstanbul Barosu": [], 
-        "TBB": [], 
-        "kaplan_danismanlik_tarifesi": None 
+    filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tarifeler.txt')
+    
+    # Varsayılan olarak boş ve geçerli bir yapı
+    tarifeler = {
+        "İstanbul Barosu": [],
+        "TBB": [],
+        "kaplan_danismanlik_tarifesi": {"kategoriler": []}
     }
     
-    # tarifeler.txt'deki grup isimlerini JS'in beklediği isimlere map'lemek için
     grup_map = {
         "ISTBARO_2025": "İstanbul Barosu",
         "TBB_2025": "TBB"
-        # Eski KAPLAN_OZEL grubu artık parse edilmeyecek, JSON ile yönetiliyor.
     }
-
-    in_kaplan_danismanlik_json_block = False
-    kaplan_danismanlik_json_str = ""
 
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             lines = f.readlines()
 
-        for line_num, line_content in enumerate(lines):
-            line_content = line_content.strip()
+        kaplan_danismanlik_json_str = ""
+        in_kaplan_danismanlik_json_block = False
 
-            if not line_content or line_content.startswith("#"): # Boş satırları ve yorumları atla
-                continue
+        for line_num, line_content_raw in enumerate(lines):
+            line_content = line_content_raw.strip()
 
             if line_content.startswith("KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ START"):
                 in_kaplan_danismanlik_json_block = True
-                kaplan_danismanlik_json_str = "" 
+                kaplan_danismanlik_json_str = ""  # Bloğa girildiğinde önceki içeriği sıfırla
                 continue
             elif line_content.startswith("KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ END"):
                 in_kaplan_danismanlik_json_block = False
                 if kaplan_danismanlik_json_str:
                     try:
-                        tarifeler["kaplan_danismanlik_tarifesi"] = json.loads(kaplan_danismanlik_json_str)
+                        parsed_json = json.loads(kaplan_danismanlik_json_str)
+                        if isinstance(parsed_json, dict) and "kategoriler" in parsed_json and isinstance(parsed_json["kategoriler"], list):
+                            tarifeler["kaplan_danismanlik_tarifesi"] = parsed_json
+                        else:
+                            logging.warning(
+                                f"Kaplan Danışmanlık JSON formatı beklenmiyor (kategoriler listesi yok) tarifeler.txt okunurken. Satır: ~{line_num}. "
+                                f"İçerik başlangıcı: {kaplan_danismanlik_json_str[:200]}..."
+                            )
+                            # Varsayılan boş değer zaten atanmış durumda
                     except json.JSONDecodeError as e:
-                        logging.error(f"Hata: Kaplan Danışmanlık JSON parse edilemedi: {e} (Satır aralığı yaklaşık {line_num})\\nİçerik: {kaplan_danismanlik_json_str[:200]}...")
-                        tarifeler["kaplan_danismanlik_tarifesi"] = {"error": "JSON parse hatası", "details": str(e)}
-                kaplan_danismanlik_json_str = ""
+                        logging.error(
+                            f"Kaplan Danışmanlık JSON parse edilemedi tarifeler.txt okunurken: {e}. Satır: ~{line_num}. "
+                            f"İçerik başlangıcı: {kaplan_danismanlik_json_str[:200]}..."
+                        )
+                        # Varsayılan boş değer zaten atanmış durumda
+                kaplan_danismanlik_json_str = "" # Bloğun sonunda string'i temizle
                 continue
 
             if in_kaplan_danismanlik_json_block:
-                kaplan_danismanlik_json_str += line_content + "\\n" # JSON \n karakterlerini korumak için string'e eklerken \\n kullanıldı, json.loads için sorun olmamalı.
+                kaplan_danismanlik_json_str += line_content_raw # Orijinal satırları (newline dahil) birleştir
                 continue
 
-            # Statik tarifeler için (ISTBARO, TBB) pipe (|) ile ayrılmış formatı işle
+            # START/END bloğu dışındaki satırlar (Yorumlar ve boş satırlar hariç)
+            if not line_content or line_content.startswith("#"):
+                continue
+
             parts = [part.strip() for part in line_content.split('|')]
-            
-            # Minimum beklenen sütun sayısı (TarifeGrubu, Kategori, HizmetKodu, HizmetAdi, TemelUcret, UcretTuru, Birim)
-            # EkNot opsiyonel olduğu için 7 veya 8 olabilir.
-            if len(parts) < 7: 
-                logging.warning(f"Uyarı: Satır {line_num + 1} yetersiz bölüm içeriyor ({len(parts)}), atlanıyor: {line_content}")
+            if len(parts) < 7:
+                logging.warning(f"Uyarı: Satır {line_num + 1} ({filepath}) yetersiz bölüm içeriyor ({len(parts)}), atlanıyor: {line_content}")
                 continue
 
-            tarife_grubu_txt = parts[0]
-            kategori_adi_txt = parts[1]
-            # hizmet_kodu_txt = parts[2] # Şimdilik kullanılmıyor
-            hizmet_adi_txt = parts[3]
-            temel_ucret_txt = parts[4]
-            # ucret_turu_txt = parts[5] # Şimdilik kullanılmıyor, JS'de temel_ucret'ten parse ediliyor.
-            birim_txt = parts[6] if parts[6] else None # Boş birim None olsun
-            ek_not_txt = parts[7] if len(parts) > 7 and parts[7] else None
+            tarife_grubu_txt, kategori_adi_txt, _, hizmet_adi_txt, temel_ucret_txt, _, birim_txt, *ek_not_parts = parts
+            ek_not_txt = ek_not_parts[0] if ek_not_parts and ek_not_parts[0] else None
             
             current_group_key = grup_map.get(tarife_grubu_txt)
             if not current_group_key:
-                logging.warning(f"Uyarı: Satır {line_num + 1}'deki tarife grubu '{tarife_grubu_txt}' tanınmıyor, atlanıyor.")
+                # KAPLAN_OZEL satırları artık START/END bloğunda JSON olarak yönetildiği için burada işlenmemeli.
+                if tarife_grubu_txt.upper() != 'KAPLAN_OZEL':
+                     logging.warning(f"Uyarı: Satır {line_num + 1} ({filepath})'deki tarife grubu '{tarife_grubu_txt}' tanınmıyor, atlanıyor.")
                 continue
 
-            kategori_obj = None
-            for kat_existing in tarifeler[current_group_key]:
-                if kat_existing["kategori"] == kategori_adi_txt:
-                    kategori_obj = kat_existing
-                    break
+            kategori_obj = next((kat for kat in tarifeler[current_group_key] if kat["kategori"] == kategori_adi_txt), None)
             
             if kategori_obj is None:
                 kategori_obj = {"kategori": kategori_adi_txt, "items": []}
@@ -3832,89 +3853,96 @@ def parse_tarifeler():
 
             item = {
                 "hizmet_adi": hizmet_adi_txt,
-                "temel_ucret": temel_ucret_txt, 
+                "temel_ucret": temel_ucret_txt,
                 "original_ucret_str": temel_ucret_txt # JS'nin parse etmesi için orijinal string
             }
-            # Birim 'TL' ise veya boşsa JS tarafı TRY olarak algılayacak, farklıysa ekleyelim.
             if birim_txt and birim_txt.upper() not in ["TL", "TRY", ""]:
                 item["birim"] = birim_txt
             if ek_not_txt:
                 item["ek_not"] = ek_not_txt
             
-            kategori_obj["items"].append(item) # Girinti düzeltildi
+            kategori_obj["items"].append(item)
 
     except FileNotFoundError:
         logging.error(f"Hata: Tarife dosyası bulunamadı: {filepath}")
-        return {"error": "Tarife dosyası bulunamadı"}
     except Exception as e:
         import traceback
-        logging.error(f"Hata: Tarife dosyası okunurken/işlenirken hata: {e}\\n{traceback.format_exc()}")
-        return {"error": f"Tarife dosyası okunurken/işlenirken hata: {e}"}
+        logging.error(f"Hata: Tarife dosyası okunurken/işlenirken genel bir hata oluştu ({filepath}): {e}\\n{traceback.format_exc()}")
     
     return tarifeler
 
 @app.route('/api/tarifeler')
 def api_tarifeler():
     data = parse_tarifeler()
-    if "error" in data:
-        return jsonify(data), 500
+    # parse_tarifeler artık her zaman bir dict döndürdüğü için error kontrolüne gerek yok,
+    # en kötü ihtimalle boş tarifeler döner.
     return jsonify(data)
 
 @app.route('/api/kaydet_kaplan_danismanlik_tarife', methods=['POST'])
 @login_required
-# @permission_required('tarife_yonetimi') # Gerekirse eklenecek bir yetki
 def kaydet_kaplan_danismanlik_tarife():
-    if not current_user.is_admin: # Şimdilik sadece adminler değiştirebilsin
+    if not current_user.is_admin: 
         return jsonify({"success": False, "error": "Yetkiniz yok."}), 403
 
     try:
         new_kaplan_data = request.get_json()
-        if not new_kaplan_data or "kategoriler" not in new_kaplan_data:
-            return jsonify({"success": False, "error": "Geçersiz veri formatı."}), 400
+        if not isinstance(new_kaplan_data, dict) or "kategoriler" not in new_kaplan_data or not isinstance(new_kaplan_data["kategoriler"], list):
+            logging.error(f"Geçersiz Kaplan Danışmanlık tarife verisi alındı: {new_kaplan_data}")
+            return jsonify({"success": False, "error": "Geçersiz veri formatı. 'kategoriler' listesi içeren bir JSON objesi bekleniyor."}), 400
 
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        filepath = os.path.join(base_dir, '..', 'tarifeler.txt')
+        filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tarifeler.txt')
         
-        lines = []
+        raw_lines = []
         if os.path.exists(filepath):
             with open(filepath, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-        else: # Dosya yoksa, uyarı ver ve boş bir dosya gibi davran
+                raw_lines = f.readlines()
+        else: 
             logging.warning(f"Tarife dosyası bulunamadı: {filepath}. Yeni dosya oluşturulacak.")
 
-        start_marker_content = "KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ START"
-        end_marker_content = "KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ END"
+        start_marker = "KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ START"
+        end_marker = "KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ END"
         
-        # JSON'u string'e çevirirken satır başlarına dikkat et, her satır düzgünce \n ile bitsin.
-        # json.dumps indent=2 ile zaten satır sonlarında \n kullanır.
-        new_content_str = json.dumps(new_kaplan_data, ensure_ascii=False, indent=2)
+        new_json_content_str = json.dumps(new_kaplan_data, ensure_ascii=False, indent=2)
 
         output_lines = []
-        in_block = False
-        block_written = False
+        start_index = -1
+        end_index = -1
 
-        for line_in_file in lines:
-            stripped_line = line_in_file.strip()
-            if stripped_line == start_marker_content:
-                in_block = True
-                output_lines.append(start_marker_content + '\n') # Satır sonunu ekle
-                # JSON içeriğini yazarken, her satırının sonunda zaten \n olduğundan emin ol.
-                # json.dumps(indent=2) bunu genellikle yapar.
-                output_lines.append(new_content_str + '\n') 
-                output_lines.append(end_marker_content + '\n')   # Satır sonunu ekle
-                block_written = True
-            elif stripped_line == end_marker_content and in_block:
-                in_block = False
-                # Blok zaten yazıldı, bu satırı atla
-            elif not in_block:
-                output_lines.append(line_in_file) # Orijinal satır sonunu koru
+        for i, line_raw in enumerate(raw_lines):
+            line_stripped = line_raw.strip()
+            if line_stripped == start_marker:
+                start_index = i
+            elif line_stripped == end_marker and start_index != -1: # START daha önce bulunduysa
+                end_index = i
+                break # İlk tam bloğu bulduk, işlemi bitir
         
-        if not block_written: # Eğer dosya içinde blok hiç bulunamadıysa veya dosya boşsa sona ekle
+        if start_index != -1: # START marker'ı bulundu
+            # START'a kadar olan kısmı al
+            output_lines.extend(raw_lines[:start_index])
+            
+            # Yeni bloğu ekle
+            output_lines.append(start_marker + '\n')
+            output_lines.append(new_json_content_str + '\n')
+            output_lines.append(end_marker + '\n')
+            
+            if end_index != -1: # Hem START hem END bulundu (normal durum)
+                # END'den sonraki kısmı ekle
+                output_lines.extend(raw_lines[end_index + 1:])
+            else: # Sadece START bulundu, END yok (hatalı dosya veya tek START marker'ı vardı)
+                logging.warning(f"Tarife dosyasında ('{filepath}') '{start_marker}' bulundu ancak takip eden bir '{end_marker}' bulunamadı. Mevcut START sonrası atlanacak.")
+                # Bu durumda, eski START sonrasını almamak, veri kaybını önleyebilir veya 
+                # kullanıcının amacına göre farklı bir strateji izlenebilir.
+                # Şimdilik, eski START sonrasını atlayıp yeni bloğu yazdık.
+        else: # START marker'ı hiç bulunamadı, tüm eski içeriği koru ve bloğu sona ekle
+            output_lines = list(raw_lines) # Tüm eski satırları al
             if output_lines and not output_lines[-1].endswith('\n'):
+                output_lines.append('\n')
+            elif not output_lines and raw_lines: # Dosya sadece boş satırlardan oluşuyorsa
                  output_lines.append('\n')
-            output_lines.append(start_marker_content + '\n')
-            output_lines.append(new_content_str + '\n')
-            output_lines.append(end_marker_content + '\n')
+            
+            output_lines.append(start_marker + '\n')
+            output_lines.append(new_json_content_str + '\n')
+            output_lines.append(end_marker + '\n')
 
         with open(filepath, 'w', encoding='utf-8') as f:
             f.writelines(output_lines)
@@ -3922,14 +3950,9 @@ def kaydet_kaplan_danismanlik_tarife():
         log_activity("Tarife Güncelleme", f"Kaplan Hukuk Danışmanlık Ücret Tarifesi güncellendi.", current_user.id)
         return jsonify({"success": True, "message": "Kaplan Hukuk Danışmanlık Tarifesi başarıyla güncellendi."})
 
-    except FileNotFoundError:
-        return jsonify({"success": False, "error": "Tarife dosyası bulunamadı."}), 500
-    except json.JSONDecodeError:
-        return jsonify({"success": False, "error": "Gönderilen JSON verisi hatalı."}), 400
-    except Exception as e:
-        logging.error(f"Kaplan Danışmanlık Tarifesi kaydedilirken hata: {e}", exc_info=True)
+    except Exception as e: 
+        logging.error(f"Kaplan Danışmanlık Tarifesi kaydedilirken genel bir hata oluştu: {e}", exc_info=True)
         return jsonify({"success": False, "error": f"Sunucu hatası: {str(e)}"}), 500
-
 
 @app.route('/ucret-tarifeleri')
 @login_required # Eğer kullanıcı girişi gerekiyorsa bu decorator'ı kullanın
