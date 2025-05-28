@@ -868,6 +868,8 @@ def odemeler():
         flash('Ödeme görüntüleme yetkiniz bulunmamaktadır.', 'error')
         return redirect(url_for('anasayfa'))
         
+    today_date_str = datetime.now().strftime('%Y-%m-%d') # Bugünün tarihini YYYY-MM-DD formatında al
+
     if request.method == 'POST':
         if not current_user.has_permission('odeme_ekle'):
             flash('Ödeme ekleme yetkiniz bulunmamaktadır.', 'error')
@@ -942,7 +944,7 @@ def odemeler():
         return jsonify({'success': True})
     
     clients = Client.query.all()
-    return render_template('odemeler.html', clients=clients)
+    return render_template('odemeler.html', clients=clients, today_date=today_date_str) # today_date'i template'e gönder
 
 @app.route('/update_client/<int:client_id>', methods=['POST'])
 @login_required
@@ -998,19 +1000,23 @@ def update_client(client_id):
                     return jsonify({'success': False, 'error': 'Geçersiz son ödeme tarihi formatı'})
             else:
                 client.due_date = None
-                
-            client.status = data['status']
+            
+            # Status alanını güvenli bir şekilde al ve güncelle
+            new_status = data.get('status')
+            if new_status is not None:
+                client.status = new_status
+            
             client.description = data.get('description', '')
 
             # Ödeme durumu değiştiyse log kaydı ekle
-            if old_status != data['status']:
+            if old_status != new_status:
                 log = ActivityLog(
                     activity_type='odeme_guncelleme',
                     description=f'Ödeme durumu güncellendi: {client.name} {client.surname}',
                     details={
                         'musteri': f'{client.name} {client.surname}',
                         'eski_durum': old_status,
-                        'yeni_durum': data['status'],
+                        'yeni_durum': new_status,
                         'tutar': f'{client.amount} {client.currency}'
                     },
                     user_id=current_user.id,
@@ -3967,6 +3973,42 @@ def ucret_tarifeleri_page():
     profile_image_url = url_for('static', filename='profile_pics/' + user.profile_image) if user.profile_image else url_for('static', filename='profile_pics/default.jpg')
     
     return render_template('ucret_tarifeleri.html', title="Ücret Tarifeleri", profile_image_url=profile_image_url, current_user=current_user)
+
+@app.route('/api/odeme_detay/<int:client_id>')
+@login_required
+def get_odeme_detay(client_id):
+    client = Client.query.get(client_id)
+    if not client:
+        return jsonify({'error': 'Ödeme kaydı bulunamadı'}), 404
+
+    # Payment modelindeki doğru alan adlarını kullanıyoruz:
+    # Tarih için: date
+    # Tutar için: amount
+    taksitler = Payment.query.filter_by(client_id=client.id).order_by(Payment.date.asc()).all() 
+    
+    odeme_gecmisi_data = []
+    for taksit in taksitler:
+        odeme_gecmisi_data.append({
+            'tarih': taksit.date.strftime('%Y-%m-%d') if taksit.date else None,
+            'tutar': taksit.amount, 
+            'aciklama': "Ödeme Kaydı" # Payment modelinde özel bir açıklama alanı olmadığı için genel bir ifade
+        })
+
+    data = {
+        'id': client.id,
+        'name': client.name,
+        'surname': client.surname,
+        'tc': client.tc,
+        'amount': client.amount, 
+        'currency': client.currency,
+        'installments': client.installments, 
+        'registration_date': client.registration_date.strftime('%Y-%m-%d') if client.registration_date else None,
+        'due_date': client.due_date.strftime('%Y-%m-%d') if client.due_date else None,
+        'status': client.status,
+        'description': client.description, 
+        'odeme_gecmisi': odeme_gecmisi_data
+    }
+    return jsonify(data)
 
 if __name__ == '__main__':
     with app.app_context():

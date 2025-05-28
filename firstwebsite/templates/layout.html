@@ -665,7 +665,7 @@
                             if (data.length > 0) {
                                 searchResults.innerHTML = data.map(result => `
                                     <div class="search-result-item" onclick="handleSearchResult('${result.source}', ${result.id})">
-                                        <span class="result-type">${result.type}</span>
+                                        <span class="result-type">${result.source === 'client' ? 'Müvekkil' : result.type}</span>
                                         <span class="result-title">${result.title}</span>
                                     </div>
                                 `).join('');
@@ -695,8 +695,22 @@
             // Dosya sorgula sayfasına git ve detayları göster
             window.location.href = `/dosya_sorgula?show_details=${id}`;
         } else if (source === 'client') {
-            // Müşteri detaylarına git
-            window.location.href = `/musteri_detay/${id}`;
+            // Müvekkil detaylarını göster - ödemeler sayfasında modal olarak göster
+            window.location.href = `/odemeler`;
+            
+            // Sayfa yüklendikten sonra ilgili müvekkilin detay modalını açmak için
+            localStorage.setItem('openClientDetailId', id);
+            
+            // Eğer zaten ödemeler sayfasındaysak, storage event tetiklenmeyeceği için
+            // manuel olarak kontrol edelim
+            if (window.location.pathname === '/odemeler') {
+                setTimeout(() => {
+                    const viewBtn = document.querySelector(`.view-btn[data-payment-id="${id}"]`);
+                    if (viewBtn) {
+                        viewBtn.click();
+                    }
+                }, 500);
+            }
         }
     }
 

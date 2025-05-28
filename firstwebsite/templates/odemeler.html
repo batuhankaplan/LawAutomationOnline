@@ -45,7 +45,7 @@
             </div>
             <div class="input-group">
                 <label for="registration_date">Borç Kayıt Tarihi</label>
-                <input type="date" id="registration_date" name="registration_date">
+                <input type="date" id="registration_date" name="registration_date" value="{{ today_date if today_date else '' }}">
             </div>
             <div class="input-group">
                 <label for="due_date">Son Ödeme Tarihi</label>
@@ -97,8 +97,9 @@
                     </td>
                     <td>
                         <div class="action-buttons">
-                            <button class="edit-btn" onclick="openEditModal(this)">
-                                <i class="material-icons">edit</i>
+                            <button class="view-btn" title="Detayları Görüntüle" 
+                                    data-payment-id="{{ client.id }}">
+                                <i class="material-icons">visibility</i>
                             </button>
                             <button class="delete-btn" onclick="deletePayment(this)">
                                 <i class="material-icons">delete</i>
@@ -190,8 +191,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary close-btn">İptal</button>
-                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <button type="submit" class="btn btn-primary" id="saveEditBtn">Kaydet</button>
+                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Kapat</button>
                 </div>
             </form>
         </div>
@@ -685,7 +686,7 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            /* z-index: 1000; */ /* Bootstrap'in kendi z-index'ini kullanmasına izin ver */
             left: 0;
             top: 0;
             width: 100%;
@@ -928,24 +929,55 @@
         }
 
         .stats-btn {
+            margin-left: auto; /* Butonu sağa yasla */
+            background-color: #4CAF50; /* Yeşil arka plan */
+            color: white; /* Beyaz ikon */
+            border: none;
+            border-radius: 50%; /* Tamamen yuvarlak */
+            width: 40px; /* Genişlik */
+            height: 40px; /* Yükseklik */
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
-            background-color: #2196F3;
-            color: white;
-            border: none;
-            border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
-            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        .stats-btn:hover {
+            background-color: #367c39; /* Hoverda koyu yeşil */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
-        .stats-btn:hover {
-            background-color: #1976D2;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 8px rgba(0,0,0,0.3);
+        .action-buttons .view-btn {
+            background-color: #17a2b8; /* Info mavisi */
+            color: white;
+        }
+        .action-buttons .view-btn:hover {
+            background-color: #138496;
+        }
+
+        #odemeDetayModalBody .detail-group {
+            margin-bottom: 1rem;
+        }
+        #odemeDetayModalBody .detail-label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 0.3rem;
+        }
+        #odemeDetayModalBody .detail-value {
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 0.25rem;
+            border: 1px solid #e9ecef;
+            word-wrap: break-word;
+        }
+        #odemeDetayModalBody .status-paid {
+            color: #28a745;
+            font-weight: bold;
+        }
+        #odemeDetayModalBody .status-unpaid {
+            color: #dc3545;
+            font-weight: bold;
         }
 
         .sort-icon {
@@ -1498,10 +1530,153 @@
             font-size: 1.1rem;
             font-weight: 600;
         }
+
+        /* Göz ikonunun rengini ve görünürlüğünü belirginleştir */
+        .action-buttons .view-btn {
+            background-color: #17a2b8; /* Info mavisi - Zaten tanımlı olmalı, emin olalım */
+            /* color: white; Bu satır ikona doğrudan uygulanacağı için kaldırılabilir veya kalabilir */
+        }
+
+        .action-buttons .view-btn .material-icons {
+            color: white;   /* İkon rengi beyaz */
+            opacity: 1;     /* İkonun tamamen görünür olmasını sağla */
+        }
+
+        /* odemeler.html - Göz ikonu için daha spesifik stil */
+        body .content .table-container .data-table .action-buttons .view-btn {
+            background-color: transparent !important; /* Arka planı kaldır */
+            box-shadow: none !important;
+            border: none !important;
+            padding: 0.4rem !important;
+        }
+
+        body .content .table-container .data-table .action-buttons .view-btn .material-icons {
+            color: #007bff !important; /* Mavi renk */
+            opacity: 1 !important;
+            font-size: 1.2rem !important;
+        }
+
+        body .content .table-container .data-table .action-buttons .view-btn:hover .material-icons {
+            color: #0056b3 !important; /* Hover durumunda koyu mavi */
+        }
+
+        /* Ödeme Detay Modalını en üste taşı */
+        #paymentDetailModal {
+            z-index: 1060 !important; /* Diğer bootstrap modallarının ve backdrop'un üzerinde olmalı */
+        }
+
+        /* Yeni Ödeme Detayları Modal Stilleri - Basitleştirilmiş */
+        #paymentDetailModal .modal-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 1rem 1.5rem;
+        }
+        
+        #paymentDetailModal .modal-title {
+            color: #343a40;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        #paymentDetailModal .modal-body {
+            padding: 1.5rem;
+            background-color: #fff;
+        }
+        
+        /* Detay tablo stilleri */
+        .payment-detail-table {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .payment-detail-table th {
+            width: 40%;
+            text-align: left;
+            padding: 0.5rem;
+            font-weight: 600;
+            color: #495057;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        
+        .payment-detail-table td {
+            width: 60%;
+            text-align: left;
+            padding: 0.5rem;
+            color: #212529;
+            border: 1px solid #dee2e6;
+        }
+        
+        .payment-detail-section {
+            margin-bottom: 1.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            overflow: hidden;
+        }
+        
+        .payment-detail-section h6 {
+            margin: 0;
+            padding: 0.75rem;
+            background-color: #e9ecef;
+            font-weight: 600;
+            color: #343a40;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .status-paid {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+        }
+        
+        .status-unpaid {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+        }
+
+        /* Modal içeriğinin taşması durumunda düzgün görünmesi */
+        #paymentDetailModal .modal-body {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        #paymentDetailModal .modal-footer {
+            position: sticky;
+            bottom: 0;
+            background-color: #fff;
+            border-top: 1px solid #dee2e6;
+            z-index: 1;
+        }
     </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Diğer özel modalları başlangıçta gizle (önlem olarak)
+            const editModalElement = document.getElementById('editModal');
+            if (editModalElement) editModalElement.style.display = 'none';
+            const statsModalElement = document.getElementById('statsModal');
+            if (statsModalElement) statsModalElement.style.display = 'none';
+
+            // LocalStorage'dan açılması gereken bir müvekkil ID'si var mı kontrol et
+            const clientIdToOpen = localStorage.getItem('openClientDetailId');
+            if (clientIdToOpen) {
+                // ID'yi kullandıktan sonra localStorage'dan temizle
+                localStorage.removeItem('openClientDetailId');
+                
+                // İlgili müvekkilin detay butonunu bul ve tıkla
+                setTimeout(() => {
+                    const viewBtn = document.querySelector(`.view-btn[data-payment-id="${clientIdToOpen}"]`);
+                    if (viewBtn) {
+                        viewBtn.click();
+                    }
+                }, 500);
+            }
+
             // Ödeme formunu dinle
             const paymentForm = document.getElementById('paymentForm');
             if (paymentForm) {
@@ -1516,38 +1691,38 @@
             if (editForm) {
                 editForm.onsubmit = function(event) {
                     event.preventDefault();
-                    updateClient();
+                    const clientIdToUpdate = document.getElementById('editClientId').value;
+                    window.updateClient(clientIdToUpdate);
                 };
             }
             
             // Modal kapatma butonları için event listener'lar ekle
-            const editModal = document.getElementById('editModal');
-            if (editModal) {
-                const closeBtn = editModal.querySelector('.close');
-                const closeModalBtn = editModal.querySelector('.btn-secondary');
+            if (editModalElement) { 
+                const closeBtn = editModalElement.querySelector('.close');
+                const closeModalBtn = editModalElement.querySelector('.btn-secondary');
                 
                 if (closeBtn) {
                     closeBtn.addEventListener('click', function() {
-                        editModal.style.display = 'none';
+                        editModalElement.style.display = 'none';
                     });
                 }
                 
                 if (closeModalBtn) {
                     closeModalBtn.addEventListener('click', function() {
-                        editModal.style.display = 'none';
+                        editModalElement.style.display = 'none';
                     });
                 }
                 
                 // Modalın dışına tıklandığında kapanması için
                 window.addEventListener('click', function(event) {
-                    if (event.target === editModal) {
-                        editModal.style.display = 'none';
+                    if (event.target === editModalElement) {
+                        editModalElement.style.display = 'none';
                     }
                 });
 
                 // Düzenleme Modalı içindeki Ödeme Durumu geçiş anahtarını dinle
-                const editStatusCheckbox = editModal.querySelector('#editStatus');
-                const statusTextSpan = editModal.querySelector('.status-text'); // Daha spesifik seçici
+                const editStatusCheckbox = editModalElement.querySelector('#editStatus');
+                const statusTextSpan = editModalElement.querySelector('.status-text'); // Daha spesifik seçici
                 
                 if (editStatusCheckbox && statusTextSpan) {
                     editStatusCheckbox.addEventListener('change', function() {
@@ -1693,6 +1868,19 @@
                     }
                 });
             });
+
+            // Ödeme Detay Modal'ı açıldığında içeriği yükle
+            // const odemeDetayModalElement = document.getElementById('odemeDetayModal'); // ESKİ EVENT LISTENER SİLİNDİ
+            // if (odemeDetayModalElement) {
+            //     odemeDetayModalElement.addEventListener('shown.bs.modal', async function (event) {
+            //         // Tetikleyici butonu al (event.relatedTarget)
+            //         const button = event.relatedTarget;
+            //         if (button) {
+            //             const paymentId = button.getAttribute('data-payment-id');
+            //             await loadPaymentDetails(paymentId); 
+            //         }
+            //     });
+            // }
         });
 
         function deletePayment(button) {
@@ -1765,59 +1953,6 @@
             .catch(error => {
                 console.error('Error:', error);
                 alert('Ödeme kaydedilemedi: ' + error);
-            });
-        }
-
-        // Yeni basitleştirilmiş ödeme güncelleme fonksiyonu
-        function updateClient() {
-            const clientId = document.getElementById('editClientId').value;
-            const statusCheckbox = document.getElementById('editStatus');
-            const paymentStatus = statusCheckbox.checked ? 'Ödendi' : 'Ödenmedi';
-            
-            // Tutar değerini al
-            const amountInput = document.getElementById('editAmount');
-            let amountValue = amountInput.value.trim();
-            
-            // Basit sayısal kontrol
-            if (amountValue === '' || isNaN(parseFloat(amountValue))) {
-                alert('Lütfen geçerli bir sayı girin.');
-                return;
-            }
-            
-            const data = {
-                name: document.getElementById('editName').value,
-                surname: document.getElementById('editSurname').value,
-                tc: document.getElementById('editTc').value,
-                amount: amountValue, // Değeri olduğu gibi gönder
-                currency: document.getElementById('editCurrency').value,
-                installments: parseInt(document.getElementById('editInstallments').value),
-                registration_date: document.getElementById('editRegistrationDate').value,
-                due_date: document.getElementById('editDueDate').value,
-                status: paymentStatus,
-                description: document.getElementById('editDescription').value
-            };
-            
-            fetch(`/update_client/${clientId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Modal'ı kapat
-                    document.getElementById('editModal').style.display = 'none';
-                    
-                    // Sayfayı yenile
-                    window.location.reload();
-                } else {
-                    alert('Güncelleme başarısız: ' + (data.error || 'Bilinmeyen bir hata oluştu'));
-                }
-            })
-            .catch(error => {
-                alert('Güncelleme sırasında bir hata oluştu: ' + error.message);
             });
         }
 
@@ -3950,5 +4085,436 @@
             });
         }
 
+        // Yeni Ödeme Detayları Modalını Yönetmek İçin Event Listener
+        document.querySelectorAll('.view-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                console.log("[.view-btn Click] View button clicked for paymentId:", this.getAttribute('data-payment-id'));
+                
+                // Diğer modalları kesin olarak gizle (önlem olarak)
+                const editModalElement = document.getElementById('editModal');
+                if (editModalElement) editModalElement.style.display = 'none';
+                const statsModalElement = document.getElementById('statsModal');
+                if (statsModalElement) statsModalElement.style.display = 'none';
+                
+                // Modal'ı göster
+                const paymentId = this.getAttribute('data-payment-id');
+                
+                // API'den detayları yükle
+                const modalBody = document.getElementById('odemeDetayModalBody');
+                const modalLabel = document.getElementById('paymentDetailModalLabel');
+                
+                if (!modalBody) {
+                    console.error("Modal body elemanı bulunamadı: odemeDetayModalBody");
+                    return;
+                }
+                
+                // Yükleniyor animasyonu göster
+                modalBody.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Yükleniyor...</span></div></div>';
+                
+                // Modal'ı göster
+                const paymentDetailModal = new bootstrap.Modal(document.getElementById('paymentDetailModal'));
+                // Modalın data-current-payment-id özelliğini ayarla
+                document.getElementById('paymentDetailModal').setAttribute('data-current-payment-id', paymentId);
+                paymentDetailModal.show();
+                
+                // API'den verileri çek
+                fetch(`/api/odeme_detay/${paymentId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("API yanıtı:", data);
+                        
+                        if (data.error) {
+                            modalBody.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                            return;
+                        }
+                        
+                        // Başlık güncelleme
+                        if (modalLabel) {
+                            modalLabel.textContent = `Ödeme Detayları: ${data.name || 'N/A'} ${data.surname || ''}`;
+                        }
+                        
+                        // Para birimi düzeltme (TL -> TRY)
+                        let displayCurrency = data.currency || 'TL';
+                        if (displayCurrency.toUpperCase() === 'TL') {
+                            displayCurrency = 'TRY';
+                        }
+                        
+                        // İçerik oluşturma - Basit tablo yapısı
+                        let html = '';
+                        
+                        // Müvekkil Bilgileri Bölümü
+                        html += `
+                        <div class="payment-detail-section">
+                            <h6>Müvekkil Bilgileri</h6>
+                            <table class="payment-detail-table">
+                                <tr>
+                                    <th>Ad Soyad</th>
+                                    <td>${data.name || '-'} ${data.surname || ''}</td>
+                                </tr>
+                                <tr>
+                                    <th>TC Kimlik No</th>
+                                    <td>${data.tc || '-'}</td>
+                                </tr>
+                            </table>
+                        </div>`;
+                        
+                        // Borç Bilgileri Bölümü
+                        html += `
+                        <div class="payment-detail-section">
+                            <h6>Borç Bilgileri</h6>
+                            <table class="payment-detail-table">
+                                <tr>
+                                    <th>Tutar</th>
+                                    <td>${parseFloat(data.amount || 0).toLocaleString('tr-TR', {
+                                        style: 'currency',
+                                        currency: displayCurrency
+                                    })}</td>
+                                </tr>
+                                <tr>
+                                    <th>Taksit Sayısı</th>
+                                    <td>${data.installments || '1'}</td>
+                                </tr>
+                                <tr>
+                                    <th>Borç Kayıt Tarihi</th>
+                                    <td>${data.registration_date || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <th>Son Ödeme Tarihi</th>
+                                    <td>${data.due_date || '-'}</td>
+                                </tr>
+                            </table>
+                        </div>`;
+                        
+                        // Durum ve Açıklama Bölümü
+                        html += `
+                        <div class="payment-detail-section">
+                            <h6>Durum ve Açıklama</h6>
+                            <table class="payment-detail-table">
+                                <tr>
+                                    <th>Ödeme Durumu</th>
+                                    <td>${data.status === 'Ödendi' 
+                                        ? '<span class="status-paid">Ödendi</span>' 
+                                        : '<span class="status-unpaid">Ödenmedi</span>'}</td>
+                                </tr>
+                                <tr>
+                                    <th>Açıklama</th>
+                                    <td>${data.description || 'Açıklama bulunmuyor.'}</td>
+                                </tr>
+                            </table>
+                        </div>`;
+                        
+                        // Ödeme Geçmişi Bölümü (varsa)
+                        if (data.payment_history && data.payment_history.length > 0) {
+                            html += `
+                            <div class="payment-detail-section">
+                                <h6>Ödeme Geçmişi</h6>
+                                <table class="payment-detail-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tarih</th>
+                                            <th>Tutar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                            
+                            data.payment_history.forEach(payment => {
+                                html += `
+                                        <tr>
+                                            <td>${payment.date || '-'}</td>
+                                            <td>${parseFloat(payment.amount || 0).toLocaleString('tr-TR', {
+                                                style: 'currency',
+                                                currency: displayCurrency
+                                            })}</td>
+                                        </tr>`;
+                            });
+                            
+                            html += `
+                                    </tbody>
+                                </table>
+                            </div>`;
+                        }
+                        
+                        modalBody.innerHTML = html;
+                        console.log("Modal içeriği güncellendi");
+                        
+                        // Düzenle butonuna olay dinleyici ekle
+                        const editBtn = document.getElementById('detailsEditBtn');
+                        if (editBtn) {
+                            // Eski event listener'ları temizle
+                            const newEditBtn = editBtn.cloneNode(true);
+                            editBtn.parentNode.replaceChild(newEditBtn, editBtn);
+                            
+                            // Yeni event listener ekle
+                            newEditBtn.addEventListener('click', function() {
+                                console.log("Düzenle butonuna tıklandı, paymentId:", paymentId);
+                                
+                                // Mevcut modalı kapat
+                                const detailModalInstance = bootstrap.Modal.getInstance(document.getElementById('paymentDetailModal'));
+                                if (detailModalInstance) {
+                                    detailModalInstance.hide();
+                                    console.log("Detay modalı kapatıldı");
+                                } else {
+                                    console.error("Detay modal instance bulunamadı!");
+                                }
+                                
+                                // Düzenleme modalını aç ve doldur
+                                editModalElement.style.display = 'block';
+                                console.log("Düzenleme modalı açıldı");
+                                
+                                // Uygun satırı bul - Hem data-client-id hem de data-id özniteliklerini kontrol et
+                                let targetRow = document.querySelector(`tr[data-client-id="${paymentId}"]`);
+                                if (!targetRow) {
+                                    // data-client-id bulunamadıysa data-id'yi dene
+                                    targetRow = document.querySelector(`tr[data-id="${paymentId}"]`);
+                                    console.log("data-id ile satır bulundu:", targetRow ? "Evet" : "Hayır");
+                                } else {
+                                    console.log("data-client-id ile satır bulundu");
+                                }
+                                
+                                if (!targetRow) {
+                                    console.error("Müvekkil satırı bulunamadı! Satır ID:", paymentId);
+                                    alert("Müvekkil satırı bulunamadı! Lütfen sayfayı yenileyip tekrar deneyin.");
+                                    return;
+                                }
+                                
+                                // Form alanlarını doldur
+                                document.getElementById('editClientId').value = paymentId;
+                                document.getElementById('editName').value = targetRow.cells[0].textContent.trim();
+                                document.getElementById('editSurname').value = targetRow.cells[1].textContent.trim();
+                                document.getElementById('editTc').value = targetRow.cells[2].textContent.trim();
+                                
+                                // Tutar ve para birimi
+                                const amountText = targetRow.cells[3].textContent.trim();
+                                const amountParts = amountText.split(' ');
+                                document.getElementById('editAmount').value = amountParts[0] || '';
+                                if (amountParts.length > 1) {
+                                    document.getElementById('editCurrency').value = amountParts[amountParts.length - 1];
+                                }
+                                
+                                document.getElementById('editInstallments').value = targetRow.cells[4].textContent.trim();
+                                
+                                // Tarihler
+                                const regDateText = targetRow.cells[5].textContent.trim();
+                                if (regDateText && regDateText !== '-') {
+                                    const dateParts = regDateText.split('.');
+                                    if (dateParts.length === 3) {
+                                        document.getElementById('editRegistrationDate').value = 
+                                            `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+                                    }
+                                }
+                                
+                                const dueDateText = targetRow.cells[6].textContent.trim();
+                                if (dueDateText && dueDateText !== '-') {
+                                    const dateParts = dueDateText.split('.');
+                                    if (dateParts.length === 3) {
+                                        document.getElementById('editDueDate').value = 
+                                            `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+                                    }
+                                }
+                                
+                                // Status değeri
+                                const isPaid = targetRow.cells[7].textContent.trim().includes('Ödendi');
+                                const editStatusCheckbox = document.getElementById('editStatus');
+                                const statusTextSpan = editModalElement.querySelector('.status-text');
+                                
+                                if (editStatusCheckbox) editStatusCheckbox.checked = isPaid;
+                                if (statusTextSpan) statusTextSpan.textContent = isPaid ? 'Ödendi' : 'Ödenmedi';
+                                
+                                // Açıklama
+                                const description = targetRow.getAttribute('data-description');
+                                document.getElementById('editDescription').value = 
+                                    description === 'None' || !description ? '' : description;
+                                
+                                // Form submit işlemi
+                                const editForm = document.getElementById('editForm');
+                                if (editForm) {
+                                    editForm.onsubmit = function(event) {
+                                        event.preventDefault();
+                                        const clientIdToUpdate = document.getElementById('editClientId').value;
+                                        window.updateClient(clientIdToUpdate);
+                                    };
+                                }
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Ödeme detayları yüklenirken hata:", error);
+                        modalBody.innerHTML = `<div class="alert alert-danger">Ödeme detayları yüklenirken bir hata oluştu: ${error.message}</div>`;
+                    });
+            });
+        });
+
+        // Yeni yardımcı fonksiyon
+        function newCreateDetailGroup(title, items, customHtmlContent = '') {
+            let groupHtml = `<div class="detail-section">
+                            <h6 class="detail-section-title">${title}</h6>
+                            <div class="detail-section-content">`;
+            if (items.length > 0) {
+                groupHtml += '<dl>'; // dl elementinden class="row" kaldırıldı
+                items.forEach(item => {
+                    // dt ve dd'den col-sm-* sınıfları kaldırıldı, detail-item div'i eklendi
+                    groupHtml += `<div class="detail-item">
+                                     <dt>${item.label}:</dt>
+                                     <dd>${item.value}</dd>
+                                 </div>`;
+                });
+                groupHtml += '</dl>';
+            }
+            if (customHtmlContent) {
+                groupHtml += `<div class="mt-2">${customHtmlContent}</div>`;
+            }
+            groupHtml += '   </div>\n                      </div>';
+            return groupHtml;
+        }
+
+        // Diğer event listener'lar ve fonksiyonlar burada kalacak (savePayment, updateClient, openEditModal, deletePayment, generateStats vb.)
+        window.savePayment = savePayment;
+        window.updateClient = updateClient;
+        window.openEditModal = openEditModal;
+        window.deletePayment = deletePayment;
+        // generateStats ve ilgili fonksiyonlar burada tanımlı olmalı
+        // ...
+
+        // Ödeme düzenlemesi tamamlandıktan sonra tekrar detay modalını açmak için
+        async function updateClient(client_id) {
+            const form = document.getElementById('editForm');
+            const formData = new FormData(form);
+            
+            // Form verilerini JSON'a dönüştür
+            const data = {};
+            formData.forEach((value, key) => {
+                if (key === 'amount') {
+                    // Tutar alanında TL, € veya $ sembollerini ve binlik ayırıcıları kaldır
+                    data[key] = value.replace(/[^\d,.]/g, '').replace(/\./g, '').replace(',', '.');
+                } else {
+                    data[key] = value;
+                }
+            });
+
+            // Ödeme durumunu manuel olarak al ve ekle
+            const editStatusCheckbox = document.getElementById('editStatus');
+            if (editStatusCheckbox) {
+                data['status'] = editStatusCheckbox.checked ? 'Ödendi' : 'Ödenmedi';
+            }
+            
+            try {
+                const response = await fetch(`/update_client/${client_id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Düzenleme modalını kapat
+                    closeModal();
+                    
+                    // İlgili satırı güncelle
+                    let row = document.querySelector(`tr[data-client-id="${client_id}"]`);
+                    if (!row) {
+                        // data-client-id bulunamadıysa data-id'yi dene
+                        row = document.querySelector(`tr[data-id="${client_id}"]`);
+                    }
+                    
+                    if (row) {
+                        row.querySelector('td:nth-child(1)').textContent = data.name;
+                        row.querySelector('td:nth-child(2)').textContent = data.surname;
+                        row.querySelector('td:nth-child(3)').textContent = data.tc;
+                        
+                        // Para birimini belirle
+                        let currencySymbol = '';
+                        if (data.currency === 'TL') currencySymbol = 'TL';
+                        else if (data.currency === 'USD') currencySymbol = 'USD';
+                        else if (data.currency === 'EUR') currencySymbol = 'EUR';
+                        
+                        row.querySelector('td:nth-child(4)').textContent = `${parseFloat(data.amount).toFixed(1)} ${currencySymbol}`;
+                        row.querySelector('td:nth-child(5)').textContent = data.installments;
+                        
+                        // Durum güncelleme
+                        const statusCell = row.querySelector('td:nth-child(8)');
+                        if (statusCell) {
+                            const statusButton = statusCell.querySelector('button');
+                            if (statusButton) {
+                                if (data.status === 'Ödendi') {
+                                    statusButton.className = 'odendi-btn';
+                                    statusButton.textContent = 'Ödendi';
+                                } else {
+                                    statusButton.className = 'odenmedi-btn';
+                                    statusButton.textContent = 'Ödenmedi';
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Başarı mesajı göster
+                    alert('Müvekkil bilgileri güncellendi');
+                    
+                    // Sayfa yenilenmeden detay modalını aç
+                    setTimeout(() => {
+                        const viewBtn = document.querySelector(`.view-btn[data-payment-id="${client_id}"]`);
+                        if (viewBtn) {
+                            viewBtn.click();
+                        }
+                    }, 500); // Kısa bir gecikme ekleyerek UI'nin güncellenmesine zaman tanıyoruz
+                    
+                } else {
+                    alert('Hata: ' + (result.error || 'Güncelleme sırasında bir hata oluştu'));
+                }
+            } catch (error) {
+                console.error('Güncelleme hatası:', error);
+                alert('Hata: Sunucu iletişim hatası');
+            }
+        }
+
+        // Modal kapatma fonksiyonu
+        function closeModal() {
+            // Normal modalı kapat
+            const editModalElement = document.getElementById('editModal');
+            if (editModalElement) {
+                editModalElement.style.display = 'none';
+            }
+            
+            // Bootstrap modalını kapat
+            const detailModalElement = document.getElementById('paymentDetailModal');
+            if (detailModalElement) {
+                const detailModalInstance = bootstrap.Modal.getInstance(detailModalElement);
+                if (detailModalInstance) {
+                    detailModalInstance.hide();
+                }
+            }
+        }
+
     </script>
+
+    <!-- YENİ ÖDEME DETAY MODALI -->
+    <div class="modal fade" id="paymentDetailModal" tabindex="-1" aria-labelledby="paymentDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentDetailModalLabel">Ödeme Detayları</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body" id="odemeDetayModalBody">
+                    <!-- İçerik JavaScript ile doldurulacak -->
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="detailsEditBtn">Düzenle</button>
+                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
