@@ -223,6 +223,7 @@
             <div class="form-container">
                 <!-- Giriş Formu -->
                 <form id="loginForm" class="{% if not show_register %}active{% endif %}" action="{{ url_for('login') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <h2 class="form-title">Giriş Yap</h2>
                     <div class="form-group">
                         <label for="login-email">E-posta</label>
@@ -240,6 +241,7 @@
 
                 <!-- Kayıt Formu -->
                 <form id="registerForm" class="register-form" {% if not show_register %}style="display: none;"{% endif %} method="POST" action="{{ url_for('register') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <h2 class="form-title">Kayıt Ol</h2>
                     <div class="form-group">
                         <label for="username">Kullanıcı Adı</label>

@@ -10,6 +10,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/universalviewer@4.0.0/dist/uv.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/universalviewer@4.0.0/dist/uv.css">
+    <script>
+        // Global CSRF Token
+        const CSRF_TOKEN = "{{ csrf_token() }}";
+    </script>
     <style>
     /* Font size classes */
     html.font-size-small {
@@ -450,7 +454,7 @@
                 <li><a href="{{ url_for('takvim') }}"><i class="material-icons">calendar_today</i>Takvim</a></li>
                 {% endif %}
                 
-                <!-- Dosyalarım menüsü -->
+                <!-- Dosyalarım menüsü ve Formlar/Dilekçeler menüsünün yerini değiştireceğiz -->
                 {% if current_user.has_permission('dosya_sorgula') or current_user.has_permission('dosya_ekle') %}
                 <li class="has-submenu">
                     <a href="#" class="menu-trigger">
@@ -470,6 +474,23 @@
                     </ul>
                 </li>
                 {% endif %}
+                
+                <!-- Formlar/Dilekçeler menüsü -->
+                <li class="has-submenu">
+                    <a href="#" class="menu-trigger">
+                        <div class="menu-left">
+                            <i class="material-icons">description</i>
+                            <span>Formlar/Dilekçeler</span>
+                        </div>
+                        <i class="material-icons menu-arrow">chevron_right</i>
+                    </a>
+                    <ul class="submenu">
+                        <li><a href="{{ url_for('ornek_dilekceler') }}"><i class="material-icons">article</i>Dilekçe Şablonları</a></li>
+                        <li><a href="{{ url_for('isci_gorusme') }}"><i class="material-icons">assignment_ind</i>İşçi Görüşme Formu</a></li>
+                        <li><a href="{{ url_for('ornek_sozlesme_formu') }}"><i class="material-icons">request_quote</i>Avukatlık Sözleşmesi</a></li>
+                        {# <li><a href="{{ url_for('kayitli_ornek_sozlesmeler_sayfasi') }}"><i class="material-icons">save</i>Kayıtlı Sözleşmeler</a></li> #}
+                    </ul>
+                </li>
                 
                 <!-- Hesaplamalar menüsü -->
                 {% if current_user.has_permission('faiz_hesaplama') or current_user.has_permission('harc_hesaplama') or 
@@ -503,8 +524,6 @@
                 </li>
                 {% endif %}
                 
-                <!-- İşçi Görüşme Formu -->
-                <li><a href="{{ url_for('isci_gorusme') }}"><i class="material-icons">description</i>İşçi Görüşme Formu</a></li>
                 <li>
                     <a href="{{ url_for('ucret_tarifeleri_page') }}" {% if request.endpoint == 'ucret_tarifeleri_page' %}class="active"{% endif %}><i class="fas fa-file-invoice-dollar"></i>Ücret Tarifeleri</a>
                 </li>

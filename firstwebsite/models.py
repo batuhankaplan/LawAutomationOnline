@@ -352,3 +352,39 @@ class IsciGorusmeTutanagi(db.Model):
                     pass
                     
         return result
+
+class DilekceKategori(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ad = db.Column(db.String(100), nullable=False, unique=True)
+    dilekceler = db.relationship('OrnekDilekce', backref='kategori', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<DilekceKategori {self.ad}>'
+
+class OrnekDilekce(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ad = db.Column(db.String(255), nullable=False)
+    dosya_yolu = db.Column(db.String(500), nullable=False) # Gerçek dosya sistemindeki adı
+    yuklenme_tarihi = db.Column(db.DateTime, default=datetime.utcnow)
+    kategori_id = db.Column(db.Integer, db.ForeignKey('dilekce_kategori.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    user = db.relationship('User', backref=db.backref('yukledigi_ornek_dilekceler', lazy=True))
+
+    def __repr__(self):
+        return f'<OrnekDilekce {self.ad}>'
+
+# Yeni eklenecek model
+class OrnekSozlesme(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sozlesme_adi = db.Column(db.String(255), nullable=False, unique=True) # Kullanıcının verdiği ad
+    muvekkil_adi = db.Column(db.String(255), nullable=True) # Formdan alınacak
+    sozlesme_tarihi = db.Column(db.Date, nullable=True) # Formdan alınacak
+    icerik_json = db.Column(db.Text, nullable=False)  # Sözleşmenin pdfmake formatındaki JSON içeriği
+    olusturulma_tarihi = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    user = db.relationship('User', backref=db.backref('olusturdugu_ornek_sozlesmeler', lazy=True))
+
+    def __repr__(self):
+        return f'<OrnekSozlesme {self.sozlesme_adi}>'

@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
 from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -13,7 +17,8 @@ from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
 import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi
+from flask_wtf.csrf import CSRFProtect # CSRF Koruması için eklendi
+from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi, DilekceKategori, OrnekDilekce, OrnekSozlesme
 import uuid
 from PIL import Image
 from functools import wraps
@@ -175,6 +180,11 @@ app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads/'
+app.config['ORNEK_DILEKCE_UPLOAD_FOLDER'] = os.path.join(app.config['UPLOAD_FOLDER'], 'ornek_dilekceler') # Yeni eklendi
+# CSRF için WTF_CSRF_ENABLED=True (varsayılan olarak True'dur ama açıkça belirtmek iyi olabilir)
+app.config['WTF_CSRF_ENABLED'] = True
+# SECRET_KEY zaten yukarıda tanımlı, CSRF için de kullanılır.
+
 app.config['MAIL_SERVER'] = 'smtp-mail.outlook.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -184,6 +194,7 @@ app.config['MAIL_PASSWORD'] = 'your_mail_password'
 db.init_app(app)
 migrate = Migrate(app, db)
 mail = Mail(app)
+csrf = CSRFProtect(app) # CSRF korumasını başlat
 
 # Login manager setup
 login_manager = LoginManager()
@@ -327,6 +338,9 @@ admin.add_view(ActivityLogView(ActivityLog, db.session, name='İşlem Kayıtlar�
 admin.add_view(SecureModelView(WorkerInterview, db.session, name='İşçi Görüşme (Eski)'))
 admin.add_view(SecureModelView(IsciGorusmeTutanagi, db.session, name='İşçi Görüşme Tutanağı'))
 admin.add_view(SecureModelView(Notification, db.session, name='Bildirimler'))
+admin.add_view(SecureModelView(DilekceKategori, db.session, name='Örnek Dilekçe Kategorileri')) # Örnek Dilekçe Kategori için Admin View
+admin.add_view(SecureModelView(OrnekDilekce, db.session, name='Örnek Dilekçeler')) # Örnek Dilekçeler için Admin View
+admin.add_view(SecureModelView(OrnekSozlesme, db.session, name='Örnek Sözleşmeler')) # Yeni eklendi
 
 # --- End Flask-Admin Setup ---
 
@@ -4009,6 +4023,435 @@ def get_odeme_detay(client_id):
         'odeme_gecmisi': odeme_gecmisi_data
     }
     return jsonify(data)
+
+@login_required
+@permission_required('isci_gorusme_sil')
+def delete_isci_gorusme_form(form_id):
+    form = IsciGorusmeTutanagi.query.get_or_404(form_id)
+    db.session.delete(form)
+    db.session.commit()
+    # Aktivite loglama
+    log_activity(
+        activity_type='İşçi Görüşme Formu Silindi',
+        description=f'{form.name} adlı işçi görüşme formu silindi.',
+        user_id=current_user.id
+    )
+    return jsonify(success=True)
+
+@app.route('/ornek_dilekceler')
+@login_required
+# @permission_required('ornek_dilekceler_goruntule') # İzinleri daha sonra ekleyebilirsiniz
+def ornek_dilekceler():
+    return render_template('ornek_dilekceler.html')
+
+@app.route('/ornek_sozlesme_formu')
+@login_required
+# @permission_required('ornek_sozlesme_formu_goruntule') # İzinleri daha sonra ekleyebilirsiniz
+def ornek_sozlesme_formu():
+    return render_template('ornek_sozlesme_formu.html')
+
+@app.route('/kayitli_ornek_sozlesmeler')
+@login_required
+# @permission_required('kayitli_ornek_sozlesmeleri_goruntule') # İzin eklenebilir
+def kayitli_ornek_sozlesmeler_sayfasi():
+    return render_template('kayitli_sozlesmeler.html')
+
+# --- Örnek Sözleşme Kaydetme ve Listeleme API Route'ları ---
+@app.route('/api/ornek_sozlesmeler/kaydet', methods=['POST'])
+@login_required
+# @permission_required('ornek_sozlesme_kaydet') # İzin eklenebilir
+def api_ornek_sozlesme_kaydet():
+    data = request.get_json()
+    if not data or not data.get('sozlesme_adi') or not data.get('icerik_json') or not data.get('muvekkil_adi') or not data.get('sozlesme_tarihi_str'):
+        return jsonify({'success': False, 'message': 'Eksik veri: Sözleşme adı, içerik, müvekkil adı ve sözleşme tarihi gereklidir.'}), 400
+
+    sozlesme_adi = data['sozlesme_adi'].strip()
+    if not sozlesme_adi:
+        return jsonify({'success': False, 'message': 'Sözleşme adı boş olamaz.'}), 400
+
+    if OrnekSozlesme.query.filter_by(sozlesme_adi=sozlesme_adi, user_id=current_user.id).first():
+        return jsonify({'success': False, 'message': 'Bu adla zaten bir sözleşmeniz mevcut. Farklı bir ad seçin.'}), 400
+    
+    try:
+        sozlesme_tarihi_dt = datetime.strptime(data['sozlesme_tarihi_str'], '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Geçersiz sözleşme tarihi formatı. YYYY-AA-GG şeklinde olmalıdır.'}), 400
+
+    try:
+        yeni_sozlesme = OrnekSozlesme(
+            sozlesme_adi=sozlesme_adi,
+            muvekkil_adi=data['muvekkil_adi'],
+            sozlesme_tarihi=sozlesme_tarihi_dt,
+            icerik_json=json.dumps(data['icerik_json']), # pdfmake içeriğini JSON string olarak sakla
+            user_id=current_user.id
+        )
+        db.session.add(yeni_sozlesme)
+        db.session.commit()
+        log_activity(
+            activity_type='Örnek Sözleşme Kaydedildi',
+            description=f'Yeni örnek sözleşme sisteme kaydedildi: {yeni_sozlesme.sozlesme_adi}',
+            user_id=current_user.id
+        )
+        return jsonify({'success': True, 'message': 'Sözleşme başarıyla kaydedildi.', 'sozlesme_id': yeni_sozlesme.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/ornek_sozlesmeler/kayitli', methods=['GET'])
+@login_required
+# @permission_required('kayitli_ornek_sozlesmeleri_goruntule') # İzin eklenebilir
+def api_kayitli_ornek_sozlesmeleri_listele():
+    try:
+        # Sadece mevcut kullanıcının sözleşmelerini listele
+        sozlesmeler = OrnekSozlesme.query.filter_by(user_id=current_user.id).order_by(OrnekSozlesme.olusturulma_tarihi.desc()).all()
+        return jsonify({
+            'success': True, 
+            'sozlesmeler': [{
+                'id': s.id, 
+                'sozlesme_adi': s.sozlesme_adi, 
+                'muvekkil_adi': s.muvekkil_adi,
+                'sozlesme_tarihi': s.sozlesme_tarihi.strftime('%d.%m.%Y') if s.sozlesme_tarihi else 'Belirtilmemiş',
+                'olusturulma_tarihi': s.olusturulma_tarihi.strftime('%d.%m.%Y %H:%M')
+            } for s in sozlesmeler]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/ornek_sozlesmeler/kayitli/<int:sozlesme_id>', methods=['GET'])
+@login_required
+# @permission_required('kayitli_ornek_sozlesmeleri_goruntule') # İzin eklenebilir
+def api_kayitli_ornek_sozlesme_detay(sozlesme_id):
+    try:
+        sozlesme = OrnekSozlesme.query.filter_by(id=sozlesme_id, user_id=current_user.id).first_or_404()
+        return jsonify({
+            'success': True, 
+            'sozlesme': {
+                'id': sozlesme.id, 
+                'sozlesme_adi': sozlesme.sozlesme_adi, 
+                'muvekkil_adi': sozlesme.muvekkil_adi,
+                'sozlesme_tarihi': sozlesme.sozlesme_tarihi.strftime('%Y-%m-%d') if sozlesme.sozlesme_tarihi else None, # Form için YYYY-AA-GG
+                'icerik_json': json.loads(sozlesme.icerik_json), # JSON string'i parse et
+                'olusturulma_tarihi': sozlesme.olusturulma_tarihi.strftime('%d.%m.%Y %H:%M')
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/ornek_sozlesmeler/kayitli/<int:sozlesme_id>', methods=['DELETE'])
+@login_required
+# @permission_required('kayitli_ornek_sozlesme_sil') # İzin eklenebilir
+def api_kayitli_ornek_sozlesme_sil(sozlesme_id):
+    try:
+        sozlesme = OrnekSozlesme.query.filter_by(id=sozlesme_id, user_id=current_user.id).first_or_404()
+        sozlesme_adi_log = sozlesme.sozlesme_adi
+        db.session.delete(sozlesme)
+        db.session.commit()
+        log_activity(
+            activity_type='Örnek Sözleşme Silindi',
+            description=f'Kaydedilmiş örnek sözleşme silindi: {sozlesme_adi_log}',
+            user_id=current_user.id
+        )
+        return jsonify({'success': True, 'message': 'Sözleşme başarıyla silindi.'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# --- Örnek Sözleşme Kaydetme ve Listeleme API Route'ları SONU ---
+
+# --- Örnek Dilekçe Kategori API Route'ları ---
+@app.route('/api/dilekce_kategorileri', methods=['POST'])
+@login_required
+# @permission_required('ornek_dilekce_kategori_ekle') # İzin eklenebilir
+def api_dilekce_kategori_ekle():
+    data = request.get_json()
+    if not data or not data.get('ad'):
+        return jsonify({'success': False, 'message': 'Kategori adı gerekli.'}), 400
+    
+    kategori_adi = data['ad'].strip()
+    if not kategori_adi:
+        return jsonify({'success': False, 'message': 'Kategori adı boş olamaz.'}), 400
+
+    if DilekceKategori.query.filter_by(ad=kategori_adi).first():
+        return jsonify({'success': False, 'message': 'Bu kategori adı zaten mevcut.'}), 400
+    
+    try:
+        yeni_kategori = DilekceKategori(ad=kategori_adi)
+        db.session.add(yeni_kategori)
+        db.session.commit()
+        log_activity(
+            activity_type='Örnek Dilekçe Kategorisi Eklendi',
+            description=f'Yeni örnek dilekçe kategorisi eklendi: {yeni_kategori.ad}',
+            user_id=current_user.id
+        )
+        return jsonify({'success': True, 'kategori': {'id': yeni_kategori.id, 'ad': yeni_kategori.ad}}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/dilekce_kategorileri', methods=['GET'])
+@login_required
+# @permission_required('ornek_dilekce_kategori_goruntule') # İzin eklenebilir
+def api_dilekce_kategorileri_listele():
+    try:
+        kategoriler = DilekceKategori.query.order_by(DilekceKategori.ad).all()
+        return jsonify({'success': True, 'kategoriler': [{'id': kat.id, 'ad': kat.ad} for kat in kategoriler]})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/dilekce_kategorileri/<int:kategori_id>', methods=['DELETE'])
+@login_required
+# @permission_required('ornek_dilekce_kategori_sil') # İzin eklenebilir
+def api_dilekce_kategori_sil(kategori_id):
+    try:
+        kategori = DilekceKategori.query.get_or_404(kategori_id)
+        
+        if OrnekDilekce.query.filter_by(kategori_id=kategori_id).first():
+            return jsonify({'success': False, 'message': 'Bu kategoriye ait dilekçeler bulunduğu için silinemez. Önce dilekçeleri silin veya başka bir kategoriye taşıyın.'}), 400
+
+        kategori_adi = kategori.ad
+        db.session.delete(kategori)
+        db.session.commit()
+        log_activity(
+            activity_type='Örnek Dilekçe Kategorisi Silindi',
+            description=f'Örnek dilekçe kategorisi silindi: {kategori_adi}',
+            user_id=current_user.id
+        )
+        return jsonify({'success': True, 'message': 'Kategori başarıyla silindi.'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+# --- Örnek Dilekçe Kategori API Route'ları SONU ---
+
+# --- Örnek Dilekçe CRUD API Route'ları ---
+@app.route('/api/ornek_dilekceler', methods=['POST'])
+@login_required
+# @permission_required('ornek_dilekce_ekle') # İzin eklenebilir
+def api_ornek_dilekce_ekle():
+    if 'dilekceDosyasi' not in request.files:
+        return jsonify({'success': False, 'message': 'Dosya seçilmedi.'}), 400
+    
+    file = request.files['dilekceDosyasi']
+    kategori_id = request.form.get('kategoriId')
+    dilekce_adi = request.form.get('dilekceAdi', file.filename) # İsim verilmezse dosya adını kullan
+
+    if not kategori_id:
+        return jsonify({'success': False, 'message': 'Kategori seçilmedi.'}), 400
+    
+    if not dilekce_adi.strip(): # Dosya adı da boş gelebilir diye kontrol
+        dilekce_adi = file.filename # Eğer kullanıcı boş yollarsa yine dosya adını kullan
+        if not dilekce_adi.strip(): # Dosya adı da boşsa hata ver
+             return jsonify({'success': False, 'message': 'Dilekçe adı boş olamaz.'}), 400
+
+
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'Geçerli bir dosya seçilmedi.'}), 400
+
+    if not allowed_file(file.filename): # ALLOWED_EXTENSIONS'ı kullan
+        return jsonify({'success': False, 'message': 'Geçersiz dosya türü.'}), 400
+        
+    try:
+        kategori = DilekceKategori.query.get(kategori_id)
+        if not kategori:
+            return jsonify({'success': False, 'message': 'Kategori bulunamadı.'}), 404
+
+        # Dosya adını güvenli hale getir ve benzersiz yap
+        original_filename = secure_filename(dilekce_adi)
+        file_ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
+        # Eğer kullanıcı uzantısız bir isim girdiyse, orijinal dosyanın uzantısını ekle
+        if not file_ext and '.' in file.filename:
+            original_filename += '.' + file.filename.rsplit('.', 1)[1].lower()
+        
+        # Benzersiz dosya adı oluştur (kategori adı ve zaman damgası ile)
+        # Örn: ihtarnameler_1700000000_ornek_ihtar.docx
+        benzersiz_dosya_adi_on_eki = secure_filename(kategori.ad.replace(' ', '_').lower())
+        benzersiz_dosya_adi = f"{benzersiz_dosya_adi_on_eki}_{int(pytime.time())}_{original_filename}"
+        
+        # Yükleme klasörünü oluştur (eğer yoksa)
+        upload_klasoru = app.config['ORNEK_DILEKCE_UPLOAD_FOLDER']
+        os.makedirs(upload_klasoru, exist_ok=True)
+        
+        file_path = os.path.join(upload_klasoru, benzersiz_dosya_adi)
+        file.save(file_path)
+
+        yeni_dilekce = OrnekDilekce(
+            ad=original_filename, # Kullanıcının verdiği veya orijinal dosya adı
+            dosya_yolu=benzersiz_dosya_adi, # Kaydedilen benzersiz ad
+            kategori_id=kategori_id,
+            user_id=current_user.id
+        )
+        db.session.add(yeni_dilekce)
+        db.session.commit()
+        
+        log_activity(
+            activity_type='Örnek Dilekçe Eklendi',
+            description=f'Yeni örnek dilekçe eklendi: {yeni_dilekce.ad} (Kategori: {kategori.ad})',
+            user_id=current_user.id
+        )
+        return jsonify({
+            'success': True, 
+            'dilekce': {
+                'id': yeni_dilekce.id, 
+                'ad': yeni_dilekce.ad, 
+                'kategori': kategori.ad, 
+                'kategori_id': kategori.id,
+                'tarih': yeni_dilekce.yuklenme_tarihi.strftime('%d.%m.%Y')
+            }
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        # Hata durumunda yüklenen dosyayı silmeyi deneyebiliriz
+        if 'file_path' in locals() and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except:
+                pass # Silme hatasını yoksay
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/ornek_dilekceler', methods=['GET'])
+@login_required
+# @permission_required('ornek_dilekce_goruntule') # İzin eklenebilir
+def api_ornek_dilekceleri_listele():
+    kategori_id_filter = request.args.get('kategoriId')
+    try:
+        query = OrnekDilekce.query.join(DilekceKategori).options(db.joinedload(OrnekDilekce.kategori))
+        if kategori_id_filter:
+            query = query.filter(OrnekDilekce.kategori_id == kategori_id_filter)
+        
+        dilekceler = query.order_by(OrnekDilekce.yuklenme_tarihi.desc()).all()
+        
+        return jsonify({
+            'success': True, 
+            'dilekceler': [{
+                'id': d.id, 
+                'ad': d.ad, 
+                'kategori': d.kategori.ad,
+                'kategori_id': d.kategori_id,
+                'dosya_yolu': d.dosya_yolu, # Önizleme ve indirme için eklendi
+                'tarih': d.yuklenme_tarihi.strftime('%d.%m.%Y')
+            } for d in dilekceler]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/ornek_dilekceler/<int:dilekce_id>/indir', methods=['GET'])
+@login_required
+# @permission_required('ornek_dilekce_indir') # İzin eklenebilir
+def api_ornek_dilekce_indir(dilekce_id):
+    try:
+        dilekce = OrnekDilekce.query.get_or_404(dilekce_id)
+        return send_from_directory(
+            app.config['ORNEK_DILEKCE_UPLOAD_FOLDER'],
+            dilekce.dosya_yolu,
+            as_attachment=True,
+            download_name=dilekce.ad # İndirilirken görünecek dosya adı
+        )
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/ornek_dilekceler/<int:dilekce_id>/onizle', methods=['GET'])
+@login_required
+# @permission_required('ornek_dilekce_onizle') # İzin eklenebilir
+def api_ornek_dilekce_onizle(dilekce_id):
+    try:
+        dilekce = OrnekDilekce.query.get_or_404(dilekce_id)
+        filepath = os.path.join(app.config['ORNEK_DILEKCE_UPLOAD_FOLDER'], dilekce.dosya_yolu)
+        if not os.path.exists(filepath):
+            return jsonify({'success': False, 'message': 'Dosya bulunamadı.'}), 404
+        
+        # TODO: Daha gelişmiş önizleme (PDF dönüşümü vs.) eklenebilir.
+        # Şimdilik sadece dosya yolunu döndürüyoruz, frontend mimetype'a göre handle edebilir.
+        # Veya doğrudan send_file ile gönderebiliriz.
+        # Güvenlik açısından doğrudan dosya yolunu client'a vermek yerine send_file daha iyi.
+        return send_file(filepath, mimetype=None) # Mimetype None olunca tarayıcı kendi belirler
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/ornek_dilekceler/<int:dilekce_id>', methods=['DELETE'])
+@login_required
+# @permission_required('ornek_dilekce_sil') # İzin eklenebilir
+def api_ornek_dilekce_sil(dilekce_id):
+    try:
+        dilekce = OrnekDilekce.query.get_or_404(dilekce_id)
+        dosya_yolu = os.path.join(app.config['ORNEK_DILEKCE_UPLOAD_FOLDER'], dilekce.dosya_yolu)
+        dilekce_adi = dilekce.ad
+        kategori_adi = dilekce.kategori.ad
+
+        db.session.delete(dilekce)
+        # Veritabanından silme başarılı olursa dosyayı da sil
+        if os.path.exists(dosya_yolu):
+            try:
+                os.remove(dosya_yolu)
+            except OSError as e:
+                # Dosya silme hatasını logla ama işlemi durdurma (belki dosya açık vs.)
+                print(f"Örnek dilekçe dosyası silinirken hata (id: {dilekce_id}, path: {dosya_yolu}): {e}")
+                # db.session.rollback() # Eğer dosya silinemezse işlemi geri almak istenirse
+                # return jsonify({'success': False, 'message': f'Dosya silinemedi: {e}'}), 500
+        
+        db.session.commit() # Dosya silme başarılı olmasa bile DB değişikliğini commit et
+        log_activity(
+            activity_type='Örnek Dilekçe Silindi',
+            description=f'Örnek dilekçe silindi: {dilekce_adi} (Kategori: {kategori_adi})',
+            user_id=current_user.id
+        )
+        return jsonify({'success': True, 'message': 'Dilekçe başarıyla silindi.'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/ornek_dilekceler/<int:dilekce_id>/duzenle_ad', methods=['PUT']) # POST yerine PUT daha uygun
+@login_required
+# @permission_required('ornek_dilekce_duzenle') # İzin eklenebilir
+def api_ornek_dilekce_ad_duzenle(dilekce_id):
+    data = request.get_json()
+    if not data or not data.get('yeni_ad'):
+        return jsonify({'success': False, 'message': 'Yeni ad gerekli.'}), 400
+    
+    yeni_ad = data['yeni_ad'].strip()
+    if not yeni_ad:
+        return jsonify({'success': False, 'message': 'Yeni ad boş olamaz.'}), 400
+
+    try:
+        dilekce = OrnekDilekce.query.get_or_404(dilekce_id)
+        eski_ad = dilekce.ad
+        
+        # Yeni adı güvenli hale getir ve uzantısını koru
+        guvenli_yeni_ad = secure_filename(yeni_ad)
+        original_ext = dilekce.ad.rsplit('.', 1)[1].lower() if '.' in dilekce.ad else ''
+        yeni_ad_ext = guvenli_yeni_ad.rsplit('.', 1)[1].lower() if '.' in guvenli_yeni_ad else ''
+
+        if original_ext and not yeni_ad_ext: # Kullanıcı uzantısız yeni ad girdiyse
+            guvenli_yeni_ad += '.' + original_ext
+        elif yeni_ad_ext and original_ext and yeni_ad_ext != original_ext: # Farklı uzantı girdiyse, orijinali koru
+             # Ya da hata ver: return jsonify({'success': False, 'message': 'Dosya uzantısı değiştirilemez.'}), 400
+             guvenli_yeni_ad = guvenli_yeni_ad.rsplit('.',1)[0] + '.' + original_ext
+
+
+        dilekce.ad = guvenli_yeni_ad
+        db.session.commit()
+        
+        log_activity(
+            activity_type='Örnek Dilekçe Adı Güncellendi',
+            description=f'Örnek dilekçe adı güncellendi: "{eski_ad}" -> "{dilekce.ad}" (Kategori: {dilekce.kategori.ad})',
+            user_id=current_user.id
+        )
+        return jsonify({
+            'success': True, 
+            'message': 'Dilekçe adı başarıyla güncellendi.',
+            'dilekce': {
+                'id': dilekce.id, 
+                'ad': dilekce.ad, 
+                'kategori': dilekce.kategori.ad,
+                'kategori_id': dilekce.kategori_id,
+                'dosya_yolu': dilekce.dosya_yolu,
+                'tarih': dilekce.yuklenme_tarihi.strftime('%d.%m.%Y')
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+# --- Örnek Dilekçe CRUD API Route'ları SONU ---
 
 if __name__ == '__main__':
     with app.app_context():

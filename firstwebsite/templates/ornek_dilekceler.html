@@ -1,0 +1,886 @@
+{% extends "layout.html" %}
+
+{% block title %}Örnek Dilekçeler{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-light p-4 rounded shadow-sm">
+                <h1 class="display-5 mb-2"><i class="material-icons align-middle me-2" style="font-size: 36px;">description</i>Örnek Dilekçeler</h1>
+                <p class="text-muted lead">Bu sayfada örnek dilekçeleri yönetebilirsiniz. Kategori ekleyebilir, dilekçe yükleyebilir, mevcut dilekçeleri listeleyebilir, düzenleyebilir, indirebilir, önizleyebilir ve silebilirsiniz.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Kategori Yönetimi -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-light">
+                    <h2 class="h5 mb-0 text-primary"><i class="material-icons align-middle me-2">category</i>Kategori Yönetimi</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group mb-3">
+                        <input type="text" id="yeniKategoriAdi" class="form-control form-control-lg" placeholder="Yeni Kategori Adı" style="min-width: 200px;">
+                        <button class="btn btn-outline-primary btn-lg" type="button" onclick="kategoriEkle()">
+                            <i class="material-icons align-middle">add</i> Ekle
+                        </button>
+                    </div>
+                    <h3 class="h5 mt-4 mb-3">Mevcut Kategoriler</h3>
+                    <div id="kategoriListesi" class="row row-cols-1 row-cols-md-3 g-2">
+                        <!-- Kategoriler buraya dinamik olarak eklenecek -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dilekçe Yükleme -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-light">
+                    <h2 class="h5 mb-0 text-success"><i class="material-icons align-middle me-2">upload_file</i>Dilekçe Yükle</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="dilekceDosyasi" class="form-label fw-bold">Dilekçe Dosyası Seçin</label>
+                            <input class="form-control form-control-lg" type="file" id="dilekceDosyasi" style="min-width: 300px;">
+                        <div class="form-text text-muted">Kabul edilen formatlar: DOC, DOCX, PDF, TXT</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dilekceKategorisi" class="form-label fw-bold">Kategori Seçin</label>
+                        <select id="dilekceKategorisi" class="form-select form-select-lg" style="min-width: 300px; width: 100%;">
+                            <!-- Kategoriler buraya dinamik olarak eklenecek -->
+                            <option selected value="">Kategori Seçiniz...</option>
+                        </select>
+                    </div>
+                    <div class="d-grid">
+                        <button class="btn btn-outline-success btn-lg" onclick="dilekceYukle()">
+                            <i class="material-icons align-middle me-2">cloud_upload</i>Yükle
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dilekçe Listesi -->
+    <div class="row mt-2">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h2 class="h5 mb-0 text-info"><i class="material-icons align-middle me-2">list</i>Dilekçeler</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <label for="listelenecekKategori" class="form-label fw-bold">Listelenecek Kategoriyi Seçin:</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">
+                                <i class="material-icons">filter_list</i>
+                            </span>
+                            <select id="listelenecekKategori" class="form-select form-select-lg" onchange="dilekceleriListele(this.value)" style="min-width: 300px; width: 100%;">
+                                <option selected value="">Tüm Kategoriler</option>
+                                <!-- Kategoriler buraya dinamik olarak eklenecek -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" class="fw-bold">Dilekçe Adı</th>
+                                    <th scope="col" class="fw-bold">Kategori</th>
+                                    <th scope="col" class="fw-bold">Yüklenme Tarihi</th>
+                                    <th scope="col" class="fw-bold text-center">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dilekceTablosuBody">
+                                <!-- Dilekçeler buraya dinamik olarak eklenecek -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modallar (Örnek) -->
+<!-- Önizleme Modalı -->
+<div class="modal fade" id="onizlemeModal" tabindex="-1" aria-labelledby="onizlemeModalLabel" aria-hidden="true" style="z-index: 1060;">
+  <div class="modal-dialog modal-xl" style="max-width: 95%; width: 95%; height: 90vh;">
+    <div class="modal-content" style="height: 90vh;">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title text-dark" id="onizlemeModalLabel"><i class="material-icons align-middle me-2">visibility</i>Dilekçe Önizleme</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0" style="height: calc(90vh - 130px);">
+        <iframe id="onizlemeFrame" src="" style="width:100%; height:100%; z-index: 1070;" frameborder="0"></iframe>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Silme Onay Modalı -->
+<div class="modal fade" id="silOnayModal" tabindex="-1" aria-labelledby="silOnayModalLabel" aria-hidden="true" style="z-index: 1080;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title text-danger" id="silOnayModalLabel"><i class="material-icons align-middle me-2">warning</i>Silme Onayı</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Bu öğeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+        <input type="hidden" id="silinecekOgeId">
+        <input type="hidden" id="silinecekOgeTuru">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+        <button type="button" class="btn btn-outline-danger" onclick="onaylaSil()">
+            <i class="material-icons align-middle me-1">delete</i>Sil
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // const csrfToken = "{{ csrf_token() }}"; // Bu satırı kaldırıyoruz, global CSRF_TOKEN kullanılacak.
+
+    // Kategori Fonksiyonları
+    async function kategoriEkle() {
+        const yeniKategoriAdi = document.getElementById('yeniKategoriAdi').value;
+        if (!yeniKategoriAdi.trim()) {
+            alert('Kategori adı boş olamaz.');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/dilekce_kategorileri', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN // Global CSRF_TOKEN'ı kullan
+                },
+                body: JSON.stringify({ ad: yeniKategoriAdi.trim() })
+            });
+            const result = await response.json();
+            if (result.success) {
+                document.getElementById('yeniKategoriAdi').value = '';
+                // Başarı bildirimi göster
+                showToast('Başarılı', 'Kategori başarıyla eklendi.', 'success');
+                kategorileriListele();
+            } else {
+                // Hata bildirimi göster
+                showToast('Hata', 'Kategori eklenirken hata: ' + result.message, 'error');
+            }
+        } catch (error) {
+            console.error('Kategori ekleme hatası:', error);
+            // Hata bildirimi göster
+            showToast('Hata', 'Kategori eklenirken bir ağ hatası oluştu.', 'error');
+        }
+    }
+
+    async function kategorileriListele() {
+        console.log('Kategoriler listeleniyor...');
+        try {
+            const response = await fetch('/api/dilekce_kategorileri');
+            const result = await response.json();
+
+            if (!result.success) {
+                showToast('Hata', 'Kategoriler getirilirken hata: ' + result.message, 'error');
+                return;
+            }
+            const kategoriler = result.kategoriler || [];
+
+            const kategoriListesiDiv = document.getElementById('kategoriListesi');
+            const dilekceKategorisiSelect = document.getElementById('dilekceKategorisi');
+            const listelenecekKategoriSelect = document.getElementById('listelenecekKategori');
+
+            kategoriListesiDiv.innerHTML = ''; 
+            dilekceKategorisiSelect.innerHTML = '<option selected value="">Kategori Seçiniz...</option>'; 
+            listelenecekKategoriSelect.innerHTML = '<option selected value="">Tüm Kategoriler</option>';
+
+            if (kategoriler.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'col-12 text-center text-muted';
+                div.innerHTML = '<i class="material-icons">info</i> Henüz kategori eklenmemiş.';
+                kategoriListesiDiv.appendChild(div);
+            } else {
+                kategoriler.forEach(kat => {
+                    const div = document.createElement('div');
+                    div.className = 'col';
+                    const card = document.createElement('div');
+                    card.className = 'card border-0 shadow-sm h-100';
+                    
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'd-flex justify-content-between align-items-center p-2';
+                    cardBody.innerHTML = `<span><i class="material-icons align-middle me-2 text-secondary">folder</i>${kat.ad}</span>`;
+                    
+                    const silButton = document.createElement('button');
+                    silButton.className = 'btn btn-sm btn-outline-secondary';
+                    silButton.innerHTML = '<i class="material-icons">delete</i>';
+                    silButton.onclick = () => kategoriSil(kat.id, kat.ad);
+                    cardBody.appendChild(silButton);
+                    card.appendChild(cardBody);
+                    div.appendChild(card);
+                    kategoriListesiDiv.appendChild(div);
+
+                    const optionDilekce = document.createElement('option');
+                    optionDilekce.value = kat.id;
+                    optionDilekce.textContent = kat.ad;
+                    dilekceKategorisiSelect.appendChild(optionDilekce);
+
+                    const optionListele = document.createElement('option');
+                    optionListele.value = kat.id;
+                    optionListele.textContent = kat.ad;
+                    listelenecekKategoriSelect.appendChild(optionListele.cloneNode(true));
+                });
+            }
+            console.log('Kategoriler yüklendi.');
+        } catch (error) {
+            console.error('Kategorileri listeleme hatası:', error);
+            showToast('Hata', 'Kategoriler getirilirken bir ağ hatası oluştu.', 'error');
+        }
+    }
+
+    function kategoriSil(kategoriId, kategoriAdi) {
+        const silOnayModalEl = document.getElementById('silOnayModal');
+        const silOnayModal = bootstrap.Modal.getInstance(silOnayModalEl) || new bootstrap.Modal(silOnayModalEl);
+        document.getElementById('silinecekOgeId').value = kategoriId;
+        document.getElementById('silinecekOgeTuru').value = 'kategori';
+        const modalBody = silOnayModalEl.querySelector('.modal-body');
+        if (modalBody) {
+            // Mevcut metin düğümünü veya ilk çocuğu güncelle
+            let textNode = modalBody.firstChild;
+            while(textNode && textNode.nodeType !== Node.TEXT_NODE) {
+                textNode = textNode.firstChild; // Daha derine inebilir
+            }
+            if (textNode) {
+                 textNode.textContent = `"${kategoriAdi}" kategorisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. `;
+            } else {
+                // Fallback eğer metin düğümü bulunamazsa
+                modalBody.insertBefore(document.createTextNode(`"${kategoriAdi}" kategorisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. `), modalBody.firstChild);
+            }
+        }
+        silOnayModal.show();
+    }
+
+    // Dilekçe Fonksiyonları
+    async function dilekceYukle() {
+        const dosyaInput = document.getElementById('dilekceDosyasi');
+        const kategoriSelect = document.getElementById('dilekceKategorisi');
+        const dilekceAdiInput = document.getElementById('yeniDilekceAdi'); // Opsiyonel dilekce adı için
+        const dosya = dosyaInput.files[0];
+        const kategoriId = kategoriSelect.value;
+        const dilekceAdi = dilekceAdiInput ? dilekceAdiInput.value.trim() : '';
+
+
+        if (!dosya) {
+            showToast('Uyarı', 'Lütfen bir dosya seçin.', 'warning');
+            return;
+        }
+        if (!kategoriId || kategoriId === '') { // Kategori seçili olmalı
+            showToast('Uyarı', 'Lütfen bir kategori seçin.', 'warning');
+            return;
+        }
+
+        // Yükleme başladı bildirimi
+        showToast('Bilgi', 'Dilekçe yükleniyor...', 'info');
+
+        const formData = new FormData();
+        formData.append('dilekceDosyasi', dosya);
+        formData.append('kategoriId', kategoriId);
+        if (dilekceAdi) { // Sadece doluysa gönder
+            formData.append('dilekceAdi', dilekceAdi);
+        }
+
+        console.log('Dilekçe yükleniyor...');
+        try {
+            const response = await fetch('/api/ornek_dilekceler', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': CSRF_TOKEN 
+                },
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                showToast('Başarılı', 'Dilekçe başarıyla yüklendi.', 'success');
+                dilekceleriListele(kategoriId); // Yükleme sonrası listeyi güncelle
+                dosyaInput.value = ''; 
+                kategoriSelect.value = ''; 
+                if(dilekceAdiInput) dilekceAdiInput.value = '';
+            } else {
+                showToast('Hata', 'Dilekçe yüklenirken hata: ' + result.message, 'error');
+            }
+        } catch (error) {
+            console.error('Dilekçe yükleme hatası:', error);
+            showToast('Hata', 'Dilekçe yüklenirken bir ağ hatası oluştu.', 'error');
+        }
+    }
+
+    async function dilekceleriListele(kategoriId = null) {
+        console.log('Dilekçeler listeleniyor, Kategori ID:', kategoriId || 'Tümü');
+        let url = '/api/ornek_dilekceler';
+        if (kategoriId && kategoriId !== '') {
+            url += `?kategoriId=${kategoriId}`;
+        }
+
+        // Yükleniyor göster
+        const tabloBody = document.getElementById('dilekceTablosuBody');
+        tabloBody.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Yükleniyor...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Dilekçeler yükleniyor...</p>
+                </td>
+            </tr>
+        `;
+
+        try {
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (!result.success) {
+                showToast('Hata', 'Dilekçeler getirilirken hata: ' + result.message, 'error');
+                return;
+            }
+            const dilekceler = result.dilekceler || [];
+            tabloBody.innerHTML = '';
+
+            if (dilekceler.length === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 4;
+                td.className = 'text-center py-4 text-muted';
+                td.innerHTML = kategoriId ? 
+                    '<i class="material-icons" style="font-size: 48px;">folder_open</i><p>Bu kategoride henüz dilekçe bulunmamaktadır.</p>' : 
+                    '<i class="material-icons" style="font-size: 48px;">inbox</i><p>Henüz hiç dilekçe yüklenmemiş.</p>';
+                tr.appendChild(td);
+                tabloBody.appendChild(tr);
+                return;
+            }
+
+            dilekceler.forEach(dilekce => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="material-icons text-muted me-2">description</i>
+                            <div>${dilekce.ad}</div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">${dilekce.kategori}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="material-icons text-muted me-2">calendar_today</i>
+                            <div>${dilekce.tarih}</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex justify-content-center">
+                            <button class="btn btn-sm btn-outline-secondary mx-1" onclick="dilekceOnizle('${dilekce.id}', '${dilekce.ad}', '${dilekce.dosya_yolu}')">
+                                <i class="material-icons">visibility</i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary mx-1" onclick="dilekceIndir('${dilekce.id}')">
+                                <i class="material-icons">download</i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary mx-1" onclick="dilekceDuzenleAd('${dilekce.id}', '${dilekce.ad}')">
+                                <i class="material-icons">edit</i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary mx-1" onclick="dilekceSil('${dilekce.id}', '${dilekce.ad}')">
+                                <i class="material-icons">delete</i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tabloBody.appendChild(tr);
+            });
+            console.log('Dilekçeler yüklendi.');
+        } catch (error) {
+            console.error('Dilekçeleri listeleme hatası:', error);
+            showToast('Hata', 'Dilekçeler getirilirken bir ağ hatası oluştu.', 'error');
+            
+            // Hata durumunda mesaj göster
+            tabloBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center py-4">
+                        <i class="material-icons text-danger" style="font-size: 48px;">error</i>
+                        <p class="text-danger">Dilekçeler yüklenirken bir hata oluştu.</p>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="dilekceleriListele('${kategoriId}')">
+                            <i class="material-icons align-middle me-1">refresh</i> Yeniden Dene
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    async function dilekceOnizle(dilekceId, dilekceAdi, dosyaYolu) {
+        console.log('Önizlenecek dilekçe ID:', dilekceId, 'Dosya Yolu:', dosyaYolu);
+        
+        // Dosya uzantısını kontrol et
+        const uzanti = dosyaYolu.split('.').pop().toLowerCase();
+        
+        // Modal başlığını güncelle
+        document.getElementById('onizlemeModalLabel').innerHTML = `<i class="material-icons align-middle me-2">visibility</i>${dilekceAdi} - Önizleme`;
+        
+        // Önizleme frame'ini temizle ve yükleniyor animasyonu göster
+        const onizlemeFrame = document.getElementById('onizlemeFrame');
+        onizlemeFrame.src = "about:blank";
+        onizlemeFrame.style.background = 'url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzgiIGhlaWdodD0iMzgiIHZpZXdCb3g9IjAgMCAzOCAzOCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBzdHJva2U9IiM0Mjg1RjQiPgogICAgPGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj4KICAgICAgICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxIDEpIiBzdHJva2Utd2lkdGg9IjIiPgogICAgICAgICAgICA8Y2lyY2xlIHN0cm9rZS1vcGFjaXR5PSIuNSIgY3g9IjE4IiBjeT0iMTgiIHI9IjE4Ii8+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik0zNiAxOGMwLTkuOTQtOC4wNi0xOC0xOC0xOCI+CiAgICAgICAgICAgICAgICA8YW5pbWF0ZVRyYW5zZm9ybQogICAgICAgICAgICAgICAgICAgIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIKICAgICAgICAgICAgICAgICAgICB0eXBlPSJyb3RhdGUiCiAgICAgICAgICAgICAgICAgICAgZnJvbT0iMCAxOCAxOCIKICAgICAgICAgICAgICAgICAgICB0bz0iMzYwIDE4IDE4IgogICAgICAgICAgICAgICAgICAgIGR1cj0iMXMiCiAgICAgICAgICAgICAgICAgICAgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiLz4KICAgICAgICAgICAgPC9wYXRoPgogICAgICAgIDwvZz4KICAgIDwvZz4KPC9zdmc+") center center no-repeat';
+        
+        // Modal'ı göster
+        const onizlemeModal = new bootstrap.Modal(document.getElementById('onizlemeModal'));
+        onizlemeModal.show();
+        
+        try {
+            // Önce dilekçeyi indirme URL'ini al
+            const indirmeUrl = `/api/ornek_dilekceler/${dilekceId}/indir`;
+            
+            if (uzanti === 'pdf' || uzanti === 'txt') {
+                // PDF ve TXT için doğrudan onizle endpoint'ini kullan
+        setTimeout(() => {
+            onizlemeFrame.src = `/api/ornek_dilekceler/${dilekceId}/onizle`;
+        }, 100);
+            } 
+            else if (uzanti === 'udf') {
+                // UDF dosyalarını doğrudan viewer ile görüntüle - dosya detayları modalındaki yaklaşım
+                showUdfPreviewHelp(dilekceId, dilekceAdi, indirmeUrl);
+            } 
+            else if (['doc', 'docx'].includes(uzanti)) {
+                // Word dosyaları için Google Docs Viewer kullan
+                try {
+                    // Dosya URL'ini alıp tam URL oluştur
+                    // Not: API'niz dosya için dışarıdan erişilebilir URL sağlamalıdır
+                    const fullUrl = window.location.origin + indirmeUrl;
+                    const googleDocsViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fullUrl)}&embedded=true`;
+                    
+                    // Google Docs Viewer ile görüntüle
+                    setTimeout(() => {
+                        onizlemeFrame.src = googleDocsViewerUrl;
+                        
+                        // Eğer yüklenmezse hata göster
+                        onizlemeFrame.onerror = () => {
+                            showDocumentPreviewError(dilekceId, dilekceAdi, uzanti, indirmeUrl);
+                        };
+                    }, 100);
+                } catch (error) {
+                    console.error('Word önizleme hatası:', error);
+                    showDocumentPreviewError(dilekceId, dilekceAdi, uzanti, indirmeUrl);
+                }
+            } 
+            else {
+                // Diğer desteklenmeyen formatlar için bilgi mesajı
+                showDocumentPreviewError(dilekceId, dilekceAdi, uzanti, indirmeUrl);
+            }
+        } catch (error) {
+            console.error('Önizleme hatası:', error);
+            showDocumentPreviewError(dilekceId, dilekceAdi, uzanti, `/api/ornek_dilekceler/${dilekceId}/indir`);
+        }
+        
+        // İframe yüklendiğinde arka planı temizle
+        onizlemeFrame.onload = function() {
+            if (onizlemeFrame.src !== "about:blank") {
+            onizlemeFrame.style.background = 'none';
+            }
+        };
+    }
+
+    // UDF dosyaları için özel yardım mesajı - indirme URL'ini parametre olarak alıyor
+    function showUdfPreviewHelp(dilekceId, dilekceAdi, indirmeUrl) {
+        const onizlemeFrame = document.getElementById('onizlemeFrame');
+        onizlemeFrame.style.background = 'none';
+        onizlemeFrame.srcdoc = `
+            <html>
+            <head>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        text-align: center; 
+                        padding: 40px; 
+                        margin: 0;
+                        background-color: #f8f9fa;
+                        color: #333;
+                    }
+                    .container {
+                        max-width: 800px;
+                        margin: 0 auto;
+                        background: white;
+                        padding: 30px;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    }
+                    .icon { 
+                        font-size: 48px; 
+                        color: #3f51b5; 
+                        margin-bottom: 15px;
+                    }
+                    h2 {
+                        margin-top: 0;
+                        color: #333;
+                        font-size: 24px;
+                    }
+                    .info-box {
+                        background-color: #f0f7ff;
+                        border-left: 4px solid #3f51b5;
+                        padding: 15px;
+                        margin: 20px 0;
+                        text-align: left;
+                        border-radius: 4px;
+                    }
+                    ol {
+                        text-align: left;
+                        padding-left: 20px;
+                    }
+                    li {
+                        margin-bottom: 8px;
+                    }
+                    .btn {
+                        display: inline-block;
+                        padding: 10px 20px;
+                        margin: 10px 5px;
+                        background-color: #4285f4;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        text-decoration: none;
+                        transition: background-color 0.3s;
+                    }
+                    .btn:hover {
+                        background-color: #3367d6;
+                    }
+                    .material-icons {
+                        font-family: 'Material Icons';
+                        font-weight: normal;
+                        font-style: normal;
+                        font-size: 24px;
+                        display: inline-block;
+                        line-height: 1;
+                        text-transform: none;
+                        letter-spacing: normal;
+                        word-wrap: normal;
+                        white-space: nowrap;
+                        direction: ltr;
+                        vertical-align: middle;
+                        margin-right: 5px;
+                    }
+                </style>
+                <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+            </head>
+            <body>
+                <div class="container">
+                    <i class="material-icons icon">info</i>
+                    <h2>UDF Dosyası - ${dilekceAdi}</h2>
+                    
+                    <div class="info-box">
+                        <p><b>UDF (UYAP Doküman Formatı)</b> dosyaları, UYAP sistemine özgü belgelerdir ve özel UYAP Editör yazılımı ile açılmalıdır.</p>
+                        <p>Bu dosyayı görüntülemek için:</p>
+                        <ol>
+                            <li>Dosyayı indirin</li>
+                            <li>UYAP Editör programını açın (bilgisayarınızda yüklü değilse <a href="https://www.e-justice.gov.tr/indir" target="_blank">e-justice.gov.tr</a> adresinden edinebilirsiniz)</li>
+                            <li>İndirdiğiniz UDF dosyasını UYAP Editör ile açın</li>
+                        </ol>
+                    </div>
+                    
+                    <a href="${indirmeUrl}" class="btn" download>
+                        <i class="material-icons">download</i> UDF Dosyasını İndir
+                    </a>
+                </div>
+            </body>
+            </html>
+        `;
+    }
+
+    // Desteklenmeyen dosya formatları için hata mesajı - indirme URL'ini parametre olarak alıyor
+    function showDocumentPreviewError(dilekceId, dilekceAdi, uzanti, indirmeUrl) {
+        const onizlemeFrame = document.getElementById('onizlemeFrame');
+        onizlemeFrame.style.background = 'none';
+        onizlemeFrame.srcdoc = `
+            <html>
+            <head>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        text-align: center; 
+                        padding: 40px; 
+                        margin: 0;
+                        background-color: #f8f9fa;
+                        color: #333;
+                    }
+                    .container {
+                        max-width: 800px;
+                        margin: 0 auto;
+                        background: white;
+                        padding: 30px;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    }
+                    .icon { 
+                        font-size: 48px; 
+                        color: #757575; 
+                        margin-bottom: 15px;
+                    }
+                    h2 {
+                        margin-top: 0;
+                        color: #333;
+                        font-size: 24px;
+                    }
+                    .message {
+                        margin: 20px 0;
+                    }
+                    .btn {
+                        display: inline-block;
+                        padding: 10px 20px;
+                        margin: 10px 5px;
+                        background-color: #4285f4;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        text-decoration: none;
+                        transition: background-color 0.3s;
+                    }
+                    .btn:hover {
+                        background-color: #3367d6;
+                    }
+                    .material-icons {
+                        font-family: 'Material Icons';
+                        font-weight: normal;
+                        font-style: normal;
+                        font-size: 24px;
+                        display: inline-block;
+                        line-height: 1;
+                        text-transform: none;
+                        letter-spacing: normal;
+                        word-wrap: normal;
+                        white-space: nowrap;
+                        direction: ltr;
+                        vertical-align: middle;
+                        margin-right: 5px;
+                    }
+                </style>
+                <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+            </head>
+            <body>
+                <div class="container">
+                    <i class="material-icons icon">description</i>
+                    <h2>${dilekceAdi}</h2>
+                    
+                    <div class="message">
+                        <p>Bu dosya formatı (${uzanti.toUpperCase()}) için tarayıcıda önizleme desteklenmiyor.</p>
+                        <p>Dosyayı görüntülemek için lütfen indirip kendi bilgisayarınızda açın.</p>
+                    </div>
+                    
+                    <a href="${indirmeUrl}" class="btn" download>
+                        <i class="material-icons">download</i> Dosyayı İndir
+                    </a>
+                </div>
+            </body>
+            </html>
+        `;
+    }
+
+    function dilekceIndir(dilekceId) {
+        console.log('İndirilecek dilekçe ID:', dilekceId);
+        
+        // İndirme başladı bildirimi
+        showToast('Bilgi', 'Dilekçe indiriliyor...', 'info');
+        
+        // İndirme bağlantısı
+        window.location.href = `/api/ornek_dilekceler/${dilekceId}/indir`;
+    }
+
+    async function dilekceDuzenleAd(dilekceId, mevcutAd) {
+        console.log('Düzenlenecek dilekçe ID:', dilekceId);
+        
+        // Daha modern bir şekilde ad düzenleme - prompt yerine custom modal kullanılabilir
+        // Şimdilik prompt ile devam edelim
+        const yeniAd = prompt(`"${mevcutAd}" için yeni bir ad girin (uzantıyı koruyun veya dosya adınızdan emin olun):`, mevcutAd);
+        
+        if (yeniAd && yeniAd.trim() !== mevcutAd.trim()) {
+            // Güncelleme başladı bildirimi
+            showToast('Bilgi', 'Dilekçe adı güncelleniyor...', 'info');
+            
+            try {
+                const response = await fetch(`/api/ornek_dilekceler/${dilekceId}/duzenle_ad`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': CSRF_TOKEN
+                    },
+                    body: JSON.stringify({ yeni_ad: yeniAd.trim() })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Başarılı', 'Dilekçe adı başarıyla güncellendi.', 'success');
+                    dilekceleriListele(document.getElementById('listelenecekKategori').value);
+                } else {
+                    showToast('Hata', 'Dilekçe adı güncellenirken hata: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Dilekçe adı güncelleme hatası:', error);
+                showToast('Hata', 'Dilekçe adı güncellenirken bir ağ hatası oluştu.', 'error');
+            }
+        }
+    }
+
+    function dilekceSil(dilekceId, dilekceAdi) {
+        const silOnayModalEl = document.getElementById('silOnayModal');
+        const silOnayModal = bootstrap.Modal.getInstance(silOnayModalEl) || new bootstrap.Modal(silOnayModalEl);
+        document.getElementById('silinecekOgeId').value = dilekceId;
+        document.getElementById('silinecekOgeTuru').value = 'dilekce';
+        const modalBody = silOnayModalEl.querySelector('.modal-body');
+        if (modalBody) {
+             let textNode = modalBody.firstChild;
+            while(textNode && textNode.nodeType !== Node.TEXT_NODE && textNode.firstChild) { // Sadece ilk text node'u değil, iç içe elementlerdeki ilk text node'u bul
+                textNode = textNode.firstChild;
+            }
+            if (textNode && textNode.nodeType === Node.TEXT_NODE) { // Emin olalım ki bir text node
+                 textNode.textContent = `"${dilekceAdi}" adlı dilekçeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. `;
+            } else {
+                // Fallback eğer metin düğümü bulunamazsa veya yanlış türdeyse
+                const p = modalBody.querySelector('p'); // Ya da daha spesifik bir selektör
+                if(p) p.textContent = `"${dilekceAdi}" adlı dilekçeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. `;
+                else modalBody.insertBefore(document.createTextNode(`"${dilekceAdi}" adlı dilekçeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. `), modalBody.firstChild);
+            }
+        }
+        silOnayModal.show();
+    }
+
+    async function onaylaSil() {
+        const id = document.getElementById('silinecekOgeId').value;
+        const tur = document.getElementById('silinecekOgeTuru').value;
+        const silOnayModalEl = document.getElementById('silOnayModal');
+        const silOnayModal = bootstrap.Modal.getInstance(silOnayModalEl);
+
+        // İşlem başladı bildirimi
+        showToast('Bilgi', `${tur.charAt(0).toUpperCase() + tur.slice(1)} siliniyor...`, 'info');
+        
+        if (tur === 'kategori') {
+            console.log('Kategori silinecek, ID:', id);
+            try {
+                const response = await fetch(`/api/dilekce_kategorileri/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': CSRF_TOKEN 
+                    }
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Başarılı', 'Kategori başarıyla silindi.', 'success');
+                    kategorileriListele(); 
+                    dilekceleriListele(); 
+                } else {
+                    showToast('Hata', 'Kategori silinirken hata: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Kategori silme hatası:', error);
+                showToast('Hata', 'Kategori silinirken bir ağ hatası oluştu.', 'error');
+            }
+        } else if (tur === 'dilekce') {
+            console.log('Dilekçe silinecek, ID:', id);
+            try {
+                const response = await fetch(`/api/ornek_dilekceler/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': CSRF_TOKEN
+                    }
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Başarılı', 'Dilekçe başarıyla silindi.', 'success');
+                    dilekceleriListele(document.getElementById('listelenecekKategori').value); 
+                } else {
+                    showToast('Hata', 'Dilekçe silinirken hata: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Dilekçe silme hatası:', error);
+                showToast('Hata', 'Dilekçe silinirken bir ağ hatası oluştu.', 'error');
+            }
+        }
+        silOnayModal.hide();
+    }
+
+    // Toast Bildirimi Gösterme Fonksiyonu
+    function showToast(title, message, type = 'info') {
+        // Eğer toast container yoksa oluştur
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Toast elementini oluştur
+        const toastId = 'toast-' + Date.now();
+        const toastHtml = `
+            <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header ${type === 'success' ? 'bg-light text-success' : type === 'error' ? 'bg-light text-danger' : type === 'warning' ? 'bg-light text-warning' : 'bg-light text-primary'}">
+                    <i class="material-icons me-2 ${type === 'success' ? 'text-success' : type === 'error' ? 'text-danger' : type === 'warning' ? 'text-warning' : 'text-primary'}">
+                        ${type === 'success' ? 'check_circle' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info'}
+                    </i>
+                    <strong class="me-auto">${title}</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>
+        `;
+        
+        // Toast'u container'a ekle
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        
+        // Toast'u başlat
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, {
+            animation: true,
+            autohide: true,
+            delay: 5000
+        });
+        toast.show();
+        
+        // Belirli bir süre sonra DOM'dan kaldır
+        toastElement.addEventListener('hidden.bs.toast', function () {
+            toastElement.remove();
+        });
+    }
+
+    // Sayfa yüklendiğinde ilk listelemeleri yap
+    document.addEventListener('DOMContentLoaded', function () {
+        kategorileriListele();
+        dilekceleriListele(); // Başlangıçta tüm dilekçeleri listele
+        
+        // Enter tuşuna basıldığında kategori ekleme işlemini gerçekleştir
+        document.getElementById('yeniKategoriAdi').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                kategoriEkle();
+            }
+        });
+
+        // Sık kullanılan seçim kutularına daha iyi bir genişlik sağla
+        const genisElementler = document.querySelectorAll('#dilekceKategorisi, #listelenecekKategori');
+        genisElementler.forEach(element => {
+            element.style.minWidth = '100%';
+        });
+    });
+</script>
+{% endblock %} 
