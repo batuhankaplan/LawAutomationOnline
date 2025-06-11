@@ -735,7 +735,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // CSRF token gerekirse buraya eklenir
+                'X-CSRFToken': CSRF_TOKEN
             },
             body: JSON.stringify(formData)
         })
@@ -780,7 +780,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST', // veya DELETE, API endpoint'ine göre
                 headers: {
                     'Content-Type': 'application/json',
-                    // CSRF token
+                    'X-CSRFToken': CSRF_TOKEN
                 }
             })
             .then(response => {

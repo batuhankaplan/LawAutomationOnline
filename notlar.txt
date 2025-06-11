@@ -4,6 +4,7 @@ YAPILACAKLAR:
 3) IA Avukat sistemi.
 4) Yargıtay karar arama sistemi.
 5) Örnek dilekçelerden veya dosya detayları modalında kayıtlı belgelerin (udf,pdf,doc,docx gibi) içeriğinden yani içerdiği kelimerden arama yapılabilsin.
+6) Ödemeler sayfasındaki müvekkil ödeme listesi tablosu güncellenecek daha modern hale getirilecek.
 HATA VE BUGLAR:
 1) (mesela duyurulara bir duyuru ekliyorum, duyurular sayfasında "Duyuru eklendi" uyarısı gelmiyor). Tüm işem geri bildirimlerinin kontrolünü yapalım. duyuru eklendi(dosya eklendi/etkinlik eklendi(ödeme eklendi vs vs.))
 2) Anasayfada adliye istatistikleri 2 den fazla gösterince bug'a giriyor.
@@ -15,3 +16,4 @@ The requested URL was not found on the server. If you entered the URL manually p
 7) Ödeme istatistikleri sayfası şuan müvekkil ödeme listesinden yanlış veri alıyor. Buralardaki kodlamaları düzeltelim. Müvekkil ödeme listesindeki tutar 150 TL iken mesela Ödeme İstatistikleri sayfasında aynı tutar bi anda 1500 TL oluyor. Burada bir problem var bunu çöz. (anlaman için iki ayrı resim attım oradaki tutar farklılığını karşılaştırırsan anlarsın.
 8) Müvekkil Ödeme Listesindeki durum sütununda Ödendi Ödenmedi gösterimlerinde Hem yazı hem Çerçeve aynı renk olunca durumun görünmesi zorlaşıyor buna bir güncelleme yapalım.
 9) İşçi görüşme tutanağında İşten Ayrılma Nedeni/şekli kısmına yazılan metin mesajı pdf görüntülemede veya indirmede eksik gösteriliyor o box kesiliyor.
+10) Örnek dilekçeler sayfasında oluşturulan pdflerin içeriğinde hatalar var.

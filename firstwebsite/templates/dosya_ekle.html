@@ -160,20 +160,43 @@
 .input-group input,
 .input-group select {
     width: 100%;
-    padding: 6px 10px;
+    padding: 12px 16px;
     border: 1px solid #dee2e6;
-    border-radius: 4px;
-    font-size: 0.9rem;
+    border-radius: 8px;
+    font-size: 1rem;
     color: #2c3e50;
     background: white;
-    height: 32px;
+    height: 48px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.input-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    background-color: white;
+    padding-right: 40px;
+    min-height: 48px;
+    line-height: 1.5;
+}
+
+.input-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
 .input-group input:focus,
 .input-group select:focus {
     border-color: var(--primary-color);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
 }
 
 .search-button-container {
@@ -185,16 +208,16 @@
 }
 
 .btn {
-    padding: 6px 20px;
+    padding: 10px 25px;
     background: var(--primary-color);
     color: white;
     border: none;
-    border-radius: 4px;
-    font-size: 0.95rem;
+    border-radius: 6px;
+    font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    height: 32px;
+    height: 42px;
 }
 
 .btn:hover {
@@ -369,10 +392,23 @@ document.addEventListener('DOMContentLoaded', () => {
 function updateCourthouses() {
     const citySelect = document.getElementById('city');
     const courthouseSelect = document.getElementById('courthouse');
+    
+    if (!citySelect || !courthouseSelect) {
+        console.error('City veya courthouse select elementleri bulunamadı');
+        return;
+    }
+    
     const selectedCity = citySelect.value;
 
     // Önceki adliyeleri temizle
     courthouseSelect.innerHTML = '<option value="">Seçiniz</option>';
+
+    if (!selectedCity) {
+        courthouseSelect.innerHTML = '<option value="">Önce Şehir Seçiniz</option>';
+        return;
+    }
+
+    let courthousesAdded = false;
 
     // Eğer İstanbul seçiliyse, spesifik İstanbul adliyelerini ekle
     if (selectedCity === 'İstanbul') {
@@ -382,25 +418,28 @@ function updateCourthouses() {
             option.textContent = courthouse;
             courthouseSelect.appendChild(option);
         });
+        courthousesAdded = true;
     }
     
-    // Seçili şehir için adliyeleri ekle
-    if (selectedCity && allCourthousesData[selectedCity]) {
+    // Seçili şehir için adliyeleri ekle (allCourthousesData kontrol et)
+    if (selectedCity && allCourthousesData && allCourthousesData[selectedCity]) {
         allCourthousesData[selectedCity].forEach(courthouse => {
+            // İstanbul'da duplicate'leri önle
+            if (selectedCity === 'İstanbul' && istanbulSpecificCourthouses.includes(courthouse)) {
+                return;
+            }
             const option = document.createElement('option');
             option.value = courthouse;
             option.textContent = courthouse;
             courthouseSelect.appendChild(option);
         });
+        courthousesAdded = true;
     }
 
-    // Hiç adliye yoksa veya şehir seçilmediyse
-    if (courthouseSelect.options.length <= 1) {
-        if (selectedCity) {
-            courthouseSelect.innerHTML = '<option value="">Bu şehir için adliye bulunamadı</option>';
-        } else {
-            courthouseSelect.innerHTML = '<option value="">Önce Şehir Seçiniz</option>';
-        }
+    // Hiç adliye yoksa hata mesajı göster
+    if (!courthousesAdded || courthouseSelect.options.length <= 1) {
+        courthouseSelect.innerHTML = '<option value="">Bu şehir için adliye bulunamadı</option>';
+        console.warn(`${selectedCity} için adliye verisi bulunamadı`);
     }
 }
 
@@ -410,6 +449,11 @@ function handleFileTypeChange() {
     const departmentSelect = document.getElementById('department');
     const citySelect = document.getElementById('city');
     const courtNumberContainer = document.getElementById('court-number-container');
+
+    if (!fileTypeSelect || !courthouseSelect || !departmentSelect || !citySelect) {
+        console.error('Gerekli form elementleri bulunamadı');
+        return;
+    }
 
     const selectedFileType = fileTypeSelect.value.toLowerCase(); // büyük/küçük harf standardizasyonu
     const originalValue = fileTypeSelect.value; // Orijinal değeri de alalım
@@ -424,10 +468,12 @@ function handleFileTypeChange() {
                              originalValue === 'Savcılık' || originalValue === 'savcilik';
 
     // Debug için konsola yazdıralım
-    console.log("Seçilen dosya türü:", originalValue);
-    console.log("toLowerCase sonucu:", selectedFileType);
-    console.log("Şehir/Adliye devre dışı mı:", disableCourthouseAndCity);
-    console.log("Mahkeme devre dışı mı:", disableDepartment);
+    if (originalValue) {
+        console.log("Seçilen dosya türü:", originalValue);
+        console.log("toLowerCase sonucu:", selectedFileType);
+        console.log("Şehir/Adliye devre dışı mı:", disableCourthouseAndCity);
+        console.log("Mahkeme devre dışı mı:", disableDepartment);
+    }
 
     // Alanları etkinleştir/devre dışı bırak
     courthouseSelect.disabled = disableCourthouseAndCity;
@@ -550,6 +596,11 @@ function updateIcraDaireleri() {
     const courtNumberContainer = document.getElementById('court-number-container');
     const courtNumberSelect = document.getElementById('court-number');
     
+    if (!courtNumberContainer || !courtNumberSelect) {
+        console.error('Court number elementleri bulunamadı');
+        return;
+    }
+    
     // İcra daireleri listesini temizle
     courtNumberSelect.innerHTML = '<option value="">Seçiniz</option>';
     
@@ -569,6 +620,11 @@ function updateCourtNumbers(department) {
     const courtNumberContainer = document.getElementById('court-number-container');
     const courtNumberSelect = document.getElementById('court-number');
     
+    if (!courtNumberContainer || !courtNumberSelect) {
+        console.error('Court number elementleri bulunamadı');
+        return;
+    }
+    
     // İcra dairesi veya seçim boşsa mahkeme numarasını gizle
     if (!department || department === '' || department.includes('İcra Dairesi')) {
         courtNumberContainer.style.display = 'none';
@@ -587,6 +643,12 @@ function updateCourtNumbers(department) {
     // Adliye ve şehre göre mahkeme sayısını belirle
     const citySelect = document.getElementById('city');
     const courthouseSelect = document.getElementById('courthouse');
+    
+    if (!citySelect || !courthouseSelect) {
+        console.error('City veya courthouse select elementleri bulunamadı');
+        return;
+    }
+    
     const selectedCity = citySelect.value;
     const selectedCourthouse = courthouseSelect.value;
     

@@ -11,6 +11,7 @@
 
 <div class="inbox">
     <form method="POST" class="search-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="form-columns">
             <!-- Sol Sütun -->
             <div class="form-column">
@@ -92,14 +93,29 @@
     </form>
 </div>
 
-<table class="data-table">
+<table class="modern-table" id="casesTable">
     <thead>
         <tr>
-            <th>Dosya Türü</th>
-            <th>Yıl</th>
-            <th>Esas No</th>
-            <th>Müvekkil Adı</th>
-            <th>Durum</th>
+            <th class="sortable" data-sort="file_type">
+                Dosya Türü
+                <i class="sort-icon material-icons">swap_vert</i>
+            </th>
+            <th class="sortable" data-sort="year">
+                Yıl
+                <i class="sort-icon material-icons">swap_vert</i>
+            </th>
+            <th class="sortable" data-sort="case_number">
+                Esas No
+                <i class="sort-icon material-icons">swap_vert</i>
+            </th>
+            <th class="sortable" data-sort="client_name">
+                Müvekkil Adı
+                <i class="sort-icon material-icons">swap_vert</i>
+            </th>
+            <th class="sortable" data-sort="status">
+                Durum
+                <i class="sort-icon material-icons">swap_vert</i>
+            </th>
             <th>İşlemler</th>
         </tr>
     </thead>
@@ -706,6 +722,159 @@
     font-size: 20px;
 }
 
+/* Modern Tablo Stilleri */
+.modern-table {
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    overflow: hidden;
+    margin-top: 20px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.modern-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.modern-table th {
+    padding: 16px 20px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border: none;
+    position: relative;
+}
+
+.modern-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.modern-table th.sortable:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sort-icon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+}
+
+.modern-table th.sort-asc .sort-icon {
+    transform: translateY(-50%) rotate(180deg);
+    opacity: 1;
+}
+
+.modern-table th.sort-desc .sort-icon {
+    transform: translateY(-50%) rotate(0deg);
+    opacity: 1;
+}
+
+.modern-table tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.modern-table tbody tr:hover {
+    background-color: #f8fafc;
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.modern-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.modern-table td {
+    padding: 16px 20px;
+    vertical-align: middle;
+    border: none;
+    font-size: 14px;
+    color: #1e293b;
+}
+
+.case-type .main-type {
+    font-weight: 600;
+    color: #1e40af;
+    margin-bottom: 4px;
+}
+
+.case-type .sub-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.case-type .sub-details small {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.case-number {
+    font-weight: 600;
+    color: #059669;
+    font-family: 'Courier New', monospace;
+}
+
+.client-name {
+    font-weight: 500;
+    color: #374151;
+}
+
+.status-text {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-closed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn:hover {
+    background-color: #f1f5f9;
+    transform: scale(1.1);
+}
+
+.view-btn {
+    color: #3b82f6;
+}
+
+.delete-btn {
+    color: #ef4444;
+}
+
 /* Açıklama bölümü stilleri */
 .description-container {
     position: relative;
@@ -1055,6 +1224,9 @@
 {# <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.1.20/dist/docx-preview.min.js"></script> #}
 
 <script>
+// CSRF Token
+const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
 // Örnek Masraf Türleri (Bunları kendi türlerinizle değiştirin)
 const expenseTypes = [
     "Dava Harcı", "Vekalet Ücreti", "Posta Gideri", "Yol Gideri",
@@ -1949,14 +2121,16 @@ function saveChanges(caseId) {
         client_name: document.getElementById('editClientName').value,
         phone_number: document.getElementById('editPhoneNumber').value,
         status: document.getElementById('editStatus').value,
-        open_date: document.getElementById('editOpenDate').value,
+        // open_date alanını kaldırdık - sistem tarafından otomatik ayarlanır
         next_hearing: document.getElementById('editNextHearing').value || null,
         hearing_time: document.getElementById('editHearingTime').value || null,
         hearing_type: hearingType // Duruşma türünü ekledik
     };
 
+
+
     // Sadece müvekkil adı kontrolü yap
-    if (!data.client_name) {
+    if (!data.client_name || data.client_name.trim() === '') {
         alert('Lütfen müvekkil adını giriniz.');
         return;
     }
@@ -1964,7 +2138,8 @@ function saveChanges(caseId) {
     fetch(`/edit_case/${caseId}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         },
         body: JSON.stringify(data)
     })
@@ -1975,15 +2150,23 @@ function saveChanges(caseId) {
             return Promise.reject(new Error('Yetki hatası'));
         }
         
-        if (!response.ok) {
-            throw new Error('Sunucu hatası');
-        }
-        return response.json();
+        // Yanıtı JSON olarak parse et
+        return response.json().then(result => {
+            if (!response.ok) {
+                // Sunucudan gelen hata mesajını kullan
+                throw new Error(result.message || `Sunucu hatası (${response.status})`);
+            }
+            return result;
+        });
     })
     .then(result => {
         if (result.success) {
+            alert('Dosya başarıyla güncellendi!');
+            
             // Takvim senkronizasyonu için dosya durumunu ve duruşma türünü gönder
-            syncHearingToCalendar(caseId, data.next_hearing, data.hearing_time, data.status, hearingType);
+            if (data.next_hearing) {
+                syncHearingToCalendar(caseId, data.next_hearing, data.hearing_time, data.status, hearingType);
+            }
             
             closeEditModal();
             showDetails(caseId);
@@ -1992,7 +2175,7 @@ function saveChanges(caseId) {
         }
     })
     .catch(error => {
-        console.error('Hata:', error);
+        console.error('Dosya güncelleme hatası:', error);
         if (error.message !== 'Yetki hatası') {
             alert('Güncelleme sırasında bir hata oluştu: ' + error.message);
         }
@@ -2128,7 +2311,8 @@ function saveExpense() {
     fetch(`/add_expense/${currentCaseId}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         },
         body: JSON.stringify(data)
     })
@@ -2562,7 +2746,8 @@ function syncHearingToCalendar(caseId, hearingDate, hearingTime, status, hearing
     fetch('/sync_hearing_to_calendar', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         },
         body: JSON.stringify({
             case_id: caseId,
@@ -2590,7 +2775,8 @@ function deleteCase(caseId) {
         fetch(`/delete_case/${caseId}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             }
         })
         .then(response => {
@@ -2724,7 +2910,8 @@ function updateExpense() {
     fetch(`/update_expense/${expenseId}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         },
         body: JSON.stringify(data)
     })
@@ -2742,5 +2929,89 @@ function updateExpense() {
         alert('Masraf güncellenirken bir hata oluştu: ' + error.message);
     });
 }
+
+// Tablo Sıralama Fonksiyonları
+let currentSort = { column: '', direction: '' };
+
+function initializeTableSorting() {
+    const sortableHeaders = document.querySelectorAll('.sortable');
+    
+    sortableHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const sortColumn = this.getAttribute('data-sort');
+            sortTable(sortColumn);
+        });
+    });
+}
+
+function sortTable(column) {
+    const table = document.getElementById('casesTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Sıralama yönünü belirle
+    let direction = 'asc';
+    if (currentSort.column === column && currentSort.direction === 'asc') {
+        direction = 'desc';
+    }
+    
+    // Önceki sıralama ikonlarını temizle
+    document.querySelectorAll('.sortable').forEach(header => {
+        header.classList.remove('sort-asc', 'sort-desc');
+    });
+    
+    // Aktif header'ı işaretle
+    const activeHeader = document.querySelector(`[data-sort="${column}"]`);
+    activeHeader.classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+    
+    // Satırları sırala
+    rows.sort((a, b) => {
+        let aValue = getCellValue(a, column);
+        let bValue = getCellValue(b, column);
+        
+        // Numerik değerler için
+        if (column === 'year' || column === 'case_number') {
+            aValue = parseInt(aValue) || 0;
+            bValue = parseInt(bValue) || 0;
+        } else {
+            aValue = aValue.toLowerCase();
+            bValue = bValue.toLowerCase();
+        }
+        
+        if (direction === 'asc') {
+            return aValue > bValue ? 1 : (aValue < bValue ? -1 : 0);
+        } else {
+            return aValue < bValue ? 1 : (aValue > bValue ? -1 : 0);
+        }
+    });
+    
+    // Sıralanan satırları tbody'e geri ekle
+    rows.forEach(row => tbody.appendChild(row));
+    
+    // Mevcut sıralama durumunu kaydet
+    currentSort = { column, direction };
+}
+
+function getCellValue(row, column) {
+    switch(column) {
+        case 'file_type':
+            return row.querySelector('.main-type')?.textContent || '';
+        case 'year':
+            return row.cells[1]?.textContent || '';
+        case 'case_number':
+            return row.cells[2]?.textContent || '';
+        case 'client_name':
+            return row.cells[3]?.textContent || '';
+        case 'status':
+            return row.querySelector('.status-text')?.textContent || '';
+        default:
+            return '';
+    }
+}
+
+// Sayfa yüklendiğinde sıralama özelliğini başlat
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTableSorting();
+});
 </script>
 {% endblock %}

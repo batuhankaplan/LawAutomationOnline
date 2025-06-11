@@ -1,779 +1,1671 @@
 {% extends "layout.html" %}
 
-{% block title %}Avukatlık Sözleşmesi{% endblock %}
+{% block title %}Avukatlık Sözleşmeleri{% endblock %}
 
 {% block styles %}
 {{ super() }}
 <style>
-    .page-container {
+    /* Ana düzen */
+    .sozlesme-container {
         display: flex;
-        gap: 20px;
-        margin-top: 1rem;
+        flex-direction: column; /* Ana konteyneri dikey yaptık */
+        gap: 1.5rem;
+        padding: 1.5rem;
+        min-height: calc(100vh - 80px);
     }
-
-    .saved-contracts-section {
-        width: 350px; /* Sol bölümün genişliği */
-        min-width: 300px;
-        background-color: #f8f9fa;
-        padding: 20px;
+    
+    /* Form Paneli */
+    .sozlesme-form-panel {
+        width: 100%; /* Form panelini tam genişlik yaptık */
+        background-color: #ffffff;
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        height: calc(100vh - 150px); /* Yüksekliği ayarla */
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         display: flex;
         flex-direction: column;
-    }
-
-    .saved-contracts-section .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #e0e0e0;
-    }
-
-    .saved-contracts-section .section-header h2 {
-        font-size: 1.3rem;
-        margin: 0;
-        color: #333;
+        /* max-height: calc(100vh - 110px); // Artık bu kısıtlamaya gerek yok veya ayarlanabilir */
     }
     
-    .saved-contracts-section .section-header .new-contract-btn {
-        background-color: var(--primary-color);
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 5px;
+    .sozlesme-form-header {
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
     }
-
-    .saved-contracts-section .section-header .new-contract-btn:hover {
-        background-color: var(--hover-color);
+    
+    .sozlesme-form-content {
+        flex: 1;
+        overflow-y: auto; /* Form içeriği uzunsa scroll edilebilir */
+        padding: 1.5rem;
     }
-
-    .contracts-list {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding-right: 10px; /* Kaydırma çubuğu için boşluk */
-    }
-
-    .saved-contract-item {
-        background-color: #fff;
-        padding: 12px;
+    
+    .form-section {
+        background-color: #f8f9fa;
         border-radius: 6px;
-        margin-bottom: 10px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-
-    .saved-contract-item:hover {
-        background-color: #e9ecef;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
     }
     
-    .saved-contract-item.active {
-        background-color: var(--primary-light-color);
-        border-left: 4px solid var(--primary-color);
+    .form-section-header {
+        border-bottom: 1px solid #e9ecef;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
     }
 
-    .contract-info h3 {
+    /* Tablo Stilleri */
+    th[data-sort-key] {
+        cursor: pointer;
+    }
+    th[data-sort-key]:hover {
+        background-color: #e9ecef !important;
+    }
+    th .material-icons {
         font-size: 1rem;
-        margin-bottom: 3px;
-        color: #2c3e50;
+        vertical-align: middle;
+    }
+    .btn-group-sm .btn {
+        padding: 0.2rem 0.4rem;
+    }
+    .btn-group-sm .material-icons {
+        font-size: 1rem;
     }
 
-    .contract-info p {
-        font-size: 0.8rem;
-        color: #6c757d;
-        margin: 0;
+    /* PDF Önizleme */
+    .pdf-viewer {
+        height: 100%; 
+        width: 100%;
+        background-color: #f5f5f5;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
     }
-
-    .contract-actions button {
-        background: none;
+    
+    .pdf-viewer iframe {
+        width: 100%;
+        height: 100%;
         border: none;
-        color: #555;
-        padding: 5px;
-        cursor: pointer;
-        font-size: 1.1rem;
-        margin-left: 5px;
     }
-    .contract-actions button:hover {
-        color: var(--primary-color);
+    
+    /* Modal Boyutlandırma ve z-index - Güçlendirilmiş */
+    #pdfOnizlemeModal {
+        padding: 0 !important;
+        margin: 0 !important;
     }
-    .contract-actions .delete-btn:hover {
-        color: var(--danger-color);
+    
+    #pdfOnizlemeModal .modal-dialog {
+        max-width: 100% !important;
+        width: 100% !important;
+        height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    #pdfOnizlemeModal .modal-content {
+        height: 100vh !important;
+        min-height: 100vh !important;
+        border-radius: 0 !important;
+        border: none !important;
+    }
+    
+    #pdfOnizlemeModal .modal-body {
+        padding: 0 !important;
+        height: calc(100vh - 130px) !important;
+        overflow: hidden !important;
+    }
+    
+    #pdfOnizlemeModal .pdf-viewer {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    
+    #pdfOnizlemeModal .pdf-viewer iframe {
+        width: 100% !important;
+        height: 100% !important;
+        border: none !important;
+    }
+    
+    /* Bootstrap modal override */
+    @media (min-width: 576px) {
+        .modal-dialog {
+            max-width: 100% !important;
+            margin: 0 !important;
+        }
+        
+        .modal-fullscreen {
+            width: 100vw !important;
+            max-width: none !important;
+            height: 100% !important;
+            margin: 0 !important;
+        }
     }
 
-    .contract-form-section {
-        flex-grow: 1;
-        padding: 20px;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        height: calc(100vh - 150px); /* Yüksekliği ayarla */
-        overflow-y: auto; /* Gerekirse kaydırma ekle */
+    .modal {
+        z-index: 1071 !important; 
+        background: transparent !important; 
+    }
+    .modal-backdrop { 
+        z-index: 1070 !important; 
+    }
+    .modal-backdrop.show { 
+        z-index: 1070 !important;
+    }
+
+    /* Yardımcı Stiller */
+    .loading-spinner-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        color: #6c757d;
     }
     
-    .no-contracts {
+    .empty-state {
         text-align: center;
-        color: #777;
-        padding: 20px;
+        padding: 2rem;
+        color: #6c757d;
+    }
+    .empty-state .material-icons {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Özel Geniş Modal */
+    .custom-wide-modal {
+        max-width: 96vw !important;
+        width: 96vw !important;
+        margin: 1rem auto !important;
+    }
+
+    .custom-wide-modal .modal-content {
+        min-height: calc(100vh - 2rem) !important;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    .custom-wide-modal .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border-bottom: none !important;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1.5rem 2rem !important;
+    }
+
+    .custom-wide-modal .modal-header .btn-close {
+        filter: invert(1) !important;
+    }
+
+    .custom-wide-modal .modal-body {
+        padding: 2rem 2.5rem !important;
+        max-height: calc(100vh - 200px) !important;
+        overflow-y: auto !important;
+    }
+
+    .custom-wide-modal .modal-footer {
+        padding: 1.5rem 2.5rem !important;
+        background: #f8f9fa !important;
+        border-top: 1px solid #dee2e6 !important;
+        border-radius: 0 0 12px 12px !important;
+    }
+
+    /* Form section'ları daha iyi görünüm */
+    .custom-wide-modal .form-section {
+        background: white !important;
+        border: 1px solid #e9ecef !important;
+        border-radius: 8px !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+    }
+
+    /* Responsive mobile davranış */
+    @media (max-width: 768px) {
+        .custom-wide-modal {
+            max-width: 100vw !important;
+            width: 100vw !important;
+            margin: 0 !important;
+        }
+        
+        .custom-wide-modal .modal-content {
+            height: 100vh !important;
+            border-radius: 0 !important;
+        }
+        
+        .custom-wide-modal .modal-body {
+            padding: 1rem !important;
+            max-height: calc(100vh - 160px) !important;
+        }
     }
     
-    /* Silme Onay Modalı (aynı z-index ile) */
-    #sozlesmeSilOnayModal {\n        z-index: 1080 !important; /* Modalın en üstte olmasını sağlar */\n    }\n\n</style>
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="page-container">
-    <!-- Sol Bölüm - Kayıtlı Sözleşmeler -->
-    <div class="saved-contracts-section">
-        <div class="section-header">
-            <h2><i class="material-icons align-middle me-1">folder_shared</i> Kayıtlı Sözleşmeler</h2>
-            <button class="new-contract-btn" onclick="yeniSozlesmeFormuAc()">
-                <i class="material-icons">add</i> Yeni
-            </button>
-        </div>
-        <div class="contracts-list" id="contractsList">
-            <!-- Kayıtlı sözleşmeler buraya yüklenecek -->
-            <p class="no-contracts">Yükleniyor...</p>
+<!-- Modal Stillerini Geçersiz Kılacak Özel CSS -->
+<style>
+/* Bu stiller tüm diğer CSS'leri geçersiz kılacak */
+#pdfOnizlemeModal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: 9999 !important;
+}
+
+#pdfOnizlemeModal .modal-dialog {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+}
+
+#pdfOnizlemeModal .modal-content {
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+#pdfOnizlemeModal .modal-body {
+    padding: 0 !important;
+    height: calc(100vh - 130px) !important;
+    overflow: hidden !important;
+}
+
+#pdfOnizlemeModal .pdf-viewer {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#pdfOnizlemeModal .pdf-viewer iframe {
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+}
+
+/* Bootstrap'ın varsayılan modal stillerini geçersiz kıl */
+@media (min-width: 576px) {
+    .modal-dialog.modal-fullscreen {
+        width: 100vw !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+}
+</style>
+
+<div class="container-fluid mt-4">
+    <!-- Sayfa Başlığı -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-light p-4 rounded shadow-sm">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="display-6 mb-2"><i class="material-icons align-middle me-2" style="font-size: 36px;">description</i>Avukatlık Sözleşmeleri</h1>
+                        <p class="text-muted lead mb-0">Avukatlık ücret sözleşmelerinizi yönetin, yeni sözleşme oluşturun.</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-success btn-lg" id="yeniSozlesmeModalBtn">
+                            <i class="material-icons align-middle me-2">add</i>Yeni Avukatlık Sözleşmesi
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Sağ Bölüm - Sözleşme Formu -->
-    <div class="contract-form-section" id="contractFormSection">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1 id="formBasligi">Avukatlık Ücret Sözleşmesi Formu</h1>
-            <span id="currentFormId" class="text-muted" style="font-size: 0.9rem;"></span>
-        </div>
-    <p>Aşağıdaki formu doldurarak avukatlık ücret sözleşmesini oluşturabilirsiniz.</p>
-    <form id="sozlesmeFormu" class="needs-validation" novalidate>
-            <input type="hidden" id="kayitliSozlesmeId"> <!-- Düzenlenen sözleşme ID'si için -->
-        <div class="row g-3">
-            <h4>Taraflar</h4>
-            <div class="col-md-6">
-                <label for="isSahibiAdi" class="form-label">İş Sahibi (Müvekkil) Adı Soyadı / Ünvanı</label>
-                <input type="text" class="form-control" id="isSahibiAdi" required>
-                <div class="invalid-feedback">
-                    Lütfen iş sahibi adını giriniz.
+    <!-- Kayıtlı Sözleşmeler Tablosu -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="material-icons align-middle me-2">list_alt</i> Kayıtlı Sözleşmeler</h5>
                 </div>
-            </div>
-            <div class="col-md-6">
-                <label for="isSahibiAdresi" class="form-label">İş Sahibi (Müvekkil) Adresi</label>
-                <textarea class="form-control" id="isSahibiAdresi" rows="3" required></textarea>
-                <div class="invalid-feedback">
-                    Lütfen iş sahibi adresini giriniz.
-                </div>
-            </div>
-
-            <hr class="my-4">
-            <h4>Sözleşme Detayları</h4>
-            <div class="col-12">
-                <label for="alinanIs" class="form-label">Madde 1) Avukatın Üzerine Aldığı İş (Açıklama)</label>
-                <textarea class="form-control" id="alinanIs" rows="3" required></textarea>
-                <div class="invalid-feedback">
-                    Lütfen avukatın üzerine aldığı işi açıklayınız.
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                    <label for="avukatlikUcreti" class="form-label">Madde 2) Avukatlık Ücreti</label>
-                    <input type="text" class="form-control" id="avukatlikUcreti" placeholder="Örn: 5000 TL veya Asgari Ücret Tarifesi" required>
-                <div class="invalid-feedback">
-                        Lütfen avukatlık ücretini giriniz.
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="kayitliSozlesmelerTablosu">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" style="cursor:pointer;" data-sort-key="muvekkil_adi">İş Sahibi <i class="material-icons align-middle">unfold_more</i></th>
+                                    <th scope="col" style="cursor:pointer;" data-sort-key="avukatlik_ucreti">Av. Ücreti <i class="material-icons align-middle">unfold_more</i></th>
+                                    <th scope="col" style="cursor:pointer;" data-sort-key="sozlesme_tarihi">Tarih <i class="material-icons align-middle">unfold_more</i></th>
+                                    <th scope="col" class="text-center">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sozlesmeTableBody">
+                                <!-- JS ile doldurulacak -->
+                            </tbody>
+                        </table>
                     </div>
-            </div>
-
-            <div class="col-md-6">
-                <label for="giderAvansi" class="form-label">Madde 5) Gider Avansı (TL)</label>
-                    <input type="number" class="form-control" id="giderAvansi" placeholder="Örn: 1000" step="any">
-                <div class="invalid-feedback">
-                    Lütfen geçerli bir gider avansı giriniz.
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <label for="gunlukUcret" class="form-label">Madde 5) Avukatın Bürodan Ayrı Kaldığı Günlük Ücret (TL)</label>
-                    <input type="number" class="form-control" id="gunlukUcret" placeholder="Örn: 500" step="any">
-                <div class="invalid-feedback">
-                    Lütfen geçerli bir günlük ücret giriniz.
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <label for="durusmaUcreti" class="form-label">Madde 5) Yargıtay/Danıştay Duruşma Ücreti (TL)</label>
-                    <input type="number" class="form-control" id="durusmaUcreti" placeholder="Örn: 2000" step="any">
-                <div class="invalid-feedback">
-                    Lütfen geçerli bir duruşma ücreti giriniz.
-                </div>
-            </div>
-            
-            <div class="col-md-6">
-                <label for="sozlesmeTarihi" class="form-label">Sözleşme Tarihi</label>
-                <input type="date" class="form-control" id="sozlesmeTarihi" required>
-                <div class="invalid-feedback">
-                    Lütfen sözleşme tarihini seçiniz.
+                    <div id="tabloYukleniyor" class="loading-spinner-container" style="display:none;">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-3">Sözleşmeler yükleniyor...</p>
+                    </div>
+                    <div id="tabloBos" class="empty-state" style="display:none;">
+                        <i class="material-icons">description_off</i>
+                        <p>Henüz kayıtlı bir sözleşme bulunmuyor.</p>
+                        <button class="btn btn-outline-primary" id="tabloBosBtnYeniEkle">
+                            <i class="material-icons align-middle me-2">add</i>İlk Sözleşmenizi Oluşturun
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <hr class="my-4">
-
-        <div class="d-flex justify-content-end">
-            <button class="btn btn-primary btn-lg" type="submit">Sözleşmeyi Oluştur ve Önizle</button>
-        </div>
-    </form>
     </div>
 </div>
 
-<div class="container mt-4 mb-4" id="onizlemeAlani" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1070; align-items: center; justify-content: center;">
-    <div style="background: white; padding: 25px; border-radius: 8px; width: 80%; max-width: 900px; height: 85vh; display: flex; flex-direction: column;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Sözleşme Önizleme</h2>
-            <button type="button" class="btn-close" onclick="kapatOnizleme()"></button>
+<!-- Sözleşme Formu Modal -->
+<div class="modal fade" id="sozlesmeFormModal" tabindex="-1" aria-labelledby="sozlesmeFormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xxl custom-wide-modal">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="sozlesmeFormModalLabel">
+                    <i class="material-icons align-middle me-2">description</i><span id="formBaslik">Yeni Avukatlık Sözleşmesi</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-4" id="formAltBaslik">Aşağıdaki formu doldurarak avukatlık ücret sözleşmesini oluşturabilirsiniz.</p>
+                
+                <form id="sozlesmeForm" class="needs-validation" novalidate>
+                    <input type="hidden" id="sozlesmeId">
+                    
+                    <!-- Taraflar Bölümü -->
+                    <div class="form-section mb-4">
+                        <div class="form-section-header mb-3">
+                            <h6 class="fw-bold"><i class="material-icons align-middle me-2 text-primary">people</i>Taraflar</h6>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="isSahibiAdi" class="form-label">İş Sahibi (Müvekkil) Adı Soyadı / Ünvanı</label>
+                                <input type="text" class="form-control" id="isSahibiAdi" required>
+                                <div class="invalid-feedback">Lütfen iş sahibi adını giriniz</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="isSahibiAdresi" class="form-label">İş Sahibi (Müvekkil) Adresi</label>
+                                <textarea class="form-control" id="isSahibiAdresi" rows="3" required></textarea>
+                                <div class="invalid-feedback">Lütfen iş sahibi adresini giriniz</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sözleşme Detayları -->
+                    <div class="form-section mb-4">
+                        <div class="form-section-header mb-3">
+                            <h6 class="fw-bold"><i class="material-icons align-middle me-2 text-primary">assignment</i>Sözleşme Detayları</h6>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="alinanIs" class="form-label">Madde 1) Avukatın Üzerine Aldığı İş (Açıklama)</label>
+                                <textarea class="form-control" id="alinanIs" rows="3" required></textarea>
+                                <div class="invalid-feedback">Lütfen avukatın üzerine aldığı işi açıklayınız</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="avukatlikUcreti" class="form-label">Madde 2) Avukatlık Ücreti</label>
+                                <input type="text" class="form-control" id="avukatlikUcreti" placeholder="Örn: 5000 TL" required>
+                                <div class="invalid-feedback">Lütfen avukatlık ücretini giriniz</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="sozlesmeTarihi" class="form-label">Sözleşme Tarihi</label>
+                                <input type="date" class="form-control" id="sozlesmeTarihi" required>
+                                <div class="invalid-feedback">Lütfen sözleşme tarihini seçiniz</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ücret ve Gider Bilgileri -->
+                    <div class="form-section mb-4">
+                        <div class="form-section-header mb-3">
+                            <h6 class="fw-bold"><i class="material-icons align-middle me-2 text-primary">payments</i>Ücret ve Gider Bilgileri</h6>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="giderAvansi" class="form-label">Madde 5) Gider Avansı (TL)</label>
+                                <input type="number" class="form-control" id="giderAvansi" placeholder="Örn: 1000">
+                                <div class="invalid-feedback">Lütfen geçerli bir gider avansı giriniz</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="gunlukUcret" class="form-label">Günlük Ücret (TL)</label>
+                                <input type="number" class="form-control" id="gunlukUcret" placeholder="Örn: 500">
+                                <div class="invalid-feedback">Lütfen geçerli bir günlük ücret giriniz</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="durusmaUcreti" class="form-label">Duruşma Ücreti (TL)</label>
+                                <input type="number" class="form-control" id="durusmaUcreti" placeholder="Örn: 2000">
+                                <div class="invalid-feedback">Lütfen geçerli bir duruşma ücreti giriniz</div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-outline-info" id="formSifirlaBtn">
+                    <i class="material-icons align-middle me-1" style="font-size: 1rem;">refresh</i> Formu Temizle
+                </button>
+                <button type="button" class="btn btn-primary" id="sozlesmeGuncelleBtn" style="display: none;">
+                    <i class="material-icons align-middle me-2">save</i>Değişiklikleri Kaydet
+                </button>
+                <button type="submit" form="sozlesmeForm" class="btn btn-success" id="sozlesmeOlusturBtn">
+                    <i class="material-icons align-middle me-2">preview</i>Oluştur ve Önizle
+                </button>
+            </div>
         </div>
-        <div id="pdfOnizleme" style="flex-grow: 1; border: 1px solid #ccc; padding: 15px; overflow-y: auto; white-space: pre-wrap; background-color: #f9f9f9;">
-        <!-- PDF veya metin önizlemesi buraya gelecek -->
     </div>
-    <div class="mt-3 d-flex justify-content-between">
-            <button class="btn btn-outline-secondary" id="indirPdfButonu" disabled>PDF İndir</button>
-            <button class="btn btn-outline-secondary" id="duzenleButonu">Formu Düzenle</button>
-            <button class="btn btn-outline-primary" id="kaydetButonu" disabled>Sisteme Kaydet</button>
+</div>
+
+<!-- PDF Önizleme Modal - Bootstrap Modal Kullanmıyoruz -->
+<div id="pdfOnizlemeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; background-color: #fff; overflow: hidden;">
+    <div style="width: 100%; height: 60px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+        <h5 style="margin: 0; font-size: 1.25rem;">
+            <i class="material-icons align-middle me-2">visibility</i>Sözleşme Önizleme
+        </h5>
+        <button type="button" id="modalCloseBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+    </div>
+    <div style="height: calc(100vh - 120px); width: 100%; padding: 0; overflow: hidden;">
+        <div id="pdfGoruntuleyici" style="width: 100%; height: 100%; background-color: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+            <div class="loading-spinner-container h-100">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-3">PDF oluşturuluyor...</p>
+            </div>
         </div>
+    </div>
+    <div style="height: 60px; border-top: 1px solid #dee2e6; display: flex; justify-content: flex-end; align-items: center; padding: 0 20px; gap: 10px;">
+        <button type="button" id="modalBackBtn" class="btn btn-outline-secondary">
+            <i class="material-icons align-middle me-1">arrow_back</i>Forma Dön
+        </button>
+        <button id="pdfIndirBtn" type="button" class="btn btn-primary" disabled>
+            <i class="material-icons align-middle me-1">download</i>PDF İndir
+        </button>
+        <button id="sozlesmeKaydetBtn" type="button" class="btn btn-success" disabled>
+            <i class="material-icons align-middle me-1">save</i>Sisteme Kaydet
+        </button>
     </div>
 </div>
 
 <!-- Silme Onay Modalı -->
-<div class="modal fade" id="sozlesmeSilOnayModal" tabindex="-1" aria-labelledby="sozlesmeSilOnayModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+<div class="modal fade" id="sozlesmeSilModal" tabindex="-1" aria-labelledby="sozlesmeSilModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="sozlesmeSilOnayModalLabel">Sözleşme Silme Onayı</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title" id="sozlesmeSilModalLabel">
+            <i class="material-icons align-middle me-2 text-danger">warning</i>Sözleşme Silme Onayı
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
       </div>
       <div class="modal-body">
-        Bu sözleşmeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+        <p id="sozlesmeSilMesaj">Bu sözleşmeyi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.</p>
         <input type="hidden" id="silinecekSozlesmeId">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-        <button type="button" class="btn btn-danger" onclick="onaylaSozlesmeSil()">Sil</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">İptal</button>
+        <button id="sozlesmeSilOnayBtn" type="button" class="btn btn-danger">
+            <i class="material-icons align-middle me-1">delete</i>Sil
+        </button>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Toast Bildirimleri -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
 {% endblock %}
 
 {% block scripts %}
 {{ super() }}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
 <script>
-    // Form doğrulama bootstrap
-    (function () {
-        'use strict'
-        var forms = document.querySelectorAll('.needs-validation')
-        Array.prototype.slice.call(forms)
-            .forEach(function (form) {
-                form.addEventListener('submit', function (event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault()
-                        event.stopPropagation()
-                    }
-                    form.classList.add('was-validated')
-                }, false)
-            })
-    })();
-
-    // Toast konteyner stil tanımı (z-index artırılmış)
-    document.addEventListener('DOMContentLoaded', function() {
-        let toastContainer = document.querySelector('.toast-container');
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-            toastContainer.style.zIndex = '1090'; // z-index\'i artır
-            document.body.appendChild(toastContainer);
-        }
-        kayitliSozlesmeleriListele(); // Sayfa yüklendiğinde kayıtlı sözleşmeleri listele
-        yeniSozlesmeFormuAc(); // Başlangıçta yeni form açık gelsin
-    });
-
-    const sozlesmeFormu = document.getElementById('sozlesmeFormu');
-    const onizlemeAlani = document.getElementById('onizlemeAlani');
-    const pdfOnizleme = document.getElementById('pdfOnizleme');
-    const indirPdfButonu = document.getElementById('indirPdfButonu');
-    const duzenleButonu = document.getElementById('duzenleButonu');
-    const kaydetButonu = document.getElementById('kaydetButonu');
-    const kayitliSozlesmeIdInput = document.getElementById('kayitliSozlesmeId');
-    const formBasligi = document.getElementById('formBasligi');
-    const currentFormIdSpan = document.getElementById('currentFormId');
-
-    let olusturulanPdfBelgesi = null; // PDF belgesini saklamak için
-    let aktifDuzenlenenSozlesmeId = null;
-
-
-    function kapatOnizleme() {
-        onizlemeAlani.style.display = 'none';
+    // CSRF Token kontrolü
+    if (typeof CSRF_TOKEN === 'undefined') {
+        console.warn("CSRF_TOKEN tanımlı değil. Güvenlik için layout.html kontrol edilmeli.");
+        const CSRF_TOKEN = "{{ csrf_token() }}";
     }
 
-    sozlesmeFormu.addEventListener('submit', async function(event) {
+    // Form yardımcı değişkenleri
+    let olusturulanPdfBelgesi = null;
+    let aktifSozlesmeId = null;
+    let allContractsData = []; // Sıralama için tüm sözleşme verilerini tutar
+    let sortState = {}; // Aktif sıralama durumunu tutar: { key: 'muvekkil_adi', order: 'asc' }
+    
+    // icerik_json'ı güvenli bir şekilde parse etmek için yardımcı fonksiyon
+    function getParsedIcerikJson(icerikJsonData, contractIdForLog = 'N/A') {
+        if (typeof icerikJsonData === 'string') {
+            try {
+                return JSON.parse(icerikJsonData);
+            } catch (e) {
+                console.error(`Failed to parse icerik_json for contract ID: ${contractIdForLog}`, e, "Raw data:", icerikJsonData);
+                return null; 
+            }
+        }
+        return icerikJsonData; // Zaten obje veya null/undefined ise olduğu gibi döndür
+    }
+
+    // Temel değişkenler
+    const sozlesmeForm = document.getElementById('sozlesmeForm');
+    const sozlesmeIdInput = document.getElementById('sozlesmeId');
+    const pdfOnizlemeModalElement = document.getElementById('pdfOnizlemeModal');
+    const pdfGoruntuleyici = document.getElementById('pdfGoruntuleyici');
+    const pdfIndirBtn = document.getElementById('pdfIndirBtn');
+    const sozlesmeKaydetBtn = document.getElementById('sozlesmeKaydetBtn');
+    const kayitliSozlesmelerTablosu = document.getElementById('kayitliSozlesmelerTablosu');
+    const kayitliSozlesmelerTbody = document.getElementById('kayitliSozlesmelerTbody');
+    const kayitliSozlesmelerYukleniyor = document.getElementById('kayitliSozlesmelerYukleniyor');
+    const kayitliSozlesmelerBos = document.getElementById('kayitliSozlesmelerBos');
+    const kayitliSozlesmelerHata = document.getElementById('kayitliSozlesmelerHata');
+    const sozlesmeSilModalElement = document.getElementById('sozlesmeSilModal');
+    const sozlesmeSilModal = new bootstrap.Modal(sozlesmeSilModalElement);
+    
+    // Özel modal kontrolleri
+    function openFullscreenPdfModal() {
+        pdfOnizlemeModalElement.style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Sayfa scrollunu engelle
+    }
+    
+    function closeFullscreenPdfModal() {
+        pdfOnizlemeModalElement.style.display = 'none';
+        document.body.style.overflow = ''; // Sayfa scrollunu serbest bırak
+    }
+    
+    // Global isimlendirme olarak fonksiyonları ekleyelim (diğer fonksiyonların calling pattern'i için)
+    window.openFullscreenModal = openFullscreenPdfModal;
+    window.closeFullscreenModal = closeFullscreenPdfModal;
+    
+    // Modal kapatma düğmelerine event listener ekle
+    document.getElementById('modalCloseBtn').addEventListener('click', closeFullscreenPdfModal);
+    document.getElementById('modalBackBtn').addEventListener('click', closeFullscreenPdfModal);
+    
+    // Modal referansları - MOVED TO DOMContentLoaded
+
+    // Sayfa yüklendiğinde
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOMContentLoaded fired - Initializing...");
+        
+        // Modal referanslarını buraya taşı
+        const sozlesmeFormModal = new bootstrap.Modal(document.getElementById('sozlesmeFormModal'), {
+            backdrop: 'static',
+            keyboard: false
+        });
+        
+        // Global erişim için
+        window.sozlesmeFormModal = sozlesmeFormModal;
+        
+        kayitliSozlesmeleriTabloyaListele();
+        document.getElementById('sozlesmeTarihi').valueAsDate = new Date();
+
+        // YENİ SÖZLEŞME MODAL BUTONLARI İÇİN EVENT LISTENERLAR
+        const yeniSozlesmeBtn = document.getElementById('yeniSozlesmeModalBtn');
+        if (yeniSozlesmeBtn) {
+            yeniSozlesmeBtn.addEventListener('click', function() {
+                console.log("Yeni sözleşme butonu tıklandı");
+                sozlesmeFormunuSifirla();
+                try {
+                    sozlesmeFormModal.show();
+                    setTimeout(() => {
+                        const firstInput = document.getElementById('isSahibiAdi');
+                        if (firstInput) firstInput.focus();
+                    }, 300);
+                } catch (error) {
+                    console.error('Modal açma hatası:', error);
+                    bildirimGoster('Hata', 'Modal açılırken bir hata oluştu.', 'error');
+                }
+            });
+        } else {
+            console.error('yeniSozlesmeModalBtn bulunamadı');
+        }
+
+        const tabloBosBtnYeniEkle = document.getElementById('tabloBosBtnYeniEkle');
+        if (tabloBosBtnYeniEkle) {
+            tabloBosBtnYeniEkle.addEventListener('click', function() {
+                console.log("Tablo boş yeni ekle butonu tıklandı");
+                sozlesmeFormunuSifirla();
+                try {
+                    sozlesmeFormModal.show();
+                    setTimeout(() => {
+                        const firstInput = document.getElementById('isSahibiAdi');
+                        if (firstInput) firstInput.focus();
+                    }, 300);
+                } catch (error) {
+                    console.error('Modal açma hatası:', error);
+                    bildirimGoster('Hata', 'Modal açılırken bir hata oluştu.', 'error');
+                }
+            });
+        }
+
+        // Form sıfırlama butonu
+        const formSifirlaBtn = document.getElementById('formSifirlaBtn');
+        if (formSifirlaBtn) {
+            formSifirlaBtn.addEventListener('click', function() {
+                sozlesmeFormunuSifirla();
+            });
+        }
+
+        // Sözleşme güncelleme butonu
+        const sozlesmeGuncelleBtn = document.getElementById('sozlesmeGuncelleBtn');
+        if (sozlesmeGuncelleBtn) {
+            sozlesmeGuncelleBtn.addEventListener('click', async function() {
+                if (!sozlesmeForm.checkValidity()) {
+                    sozlesmeForm.classList.add('was-validated');
+                    const ilkHataliAlan = sozlesmeForm.querySelector(':invalid');
+                    if (ilkHataliAlan) {
+                        ilkHataliAlan.focus();
+                        bildirimGoster('Uyarı', 'Lütfen tüm zorunlu alanları doldurun.', 'warning');
+                    }
+                    return;
+                }
+
+                const butonOrijinal = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Güncelleniyor...';
+
+                // Formdaki verileri toplayıp PDF oluştur ve kaydet
+                const formVerileri = {
+                    isSahibiAdi: document.getElementById('isSahibiAdi').value,
+                    isSahibiAdresi: document.getElementById('isSahibiAdresi').value,
+                    alinanIs: document.getElementById('alinanIs').value,
+                    avukatlikUcreti: document.getElementById('avukatlikUcreti').value,
+                    giderAvansi: document.getElementById('giderAvansi').value || '0',
+                    gunlukUcret: document.getElementById('gunlukUcret').value || '0',
+                    durusmaUcreti: document.getElementById('durusmaUcreti').value || '0',
+                    sozlesmeTarihi: document.getElementById('sozlesmeTarihi').value
+                };
+
+                const tarihParcalari = formVerileri.sozlesmeTarihi.split('-');
+                const formatliTarih = `${tarihParcalari[2]}.${tarihParcalari[1]}.${tarihParcalari[0]}`;
+                
+                // PDF içeriğini oluştur
+                const pdfBelgesi = sozlesmePdfIcerigiOlustur(formVerileri, formatliTarih);
+
+                const guncellenecekVeri = {
+                    muvekkil_adi: formVerileri.isSahibiAdi,
+                    sozlesme_tarihi_str: formVerileri.sozlesmeTarihi,
+                    icerik_json: pdfBelgesi
+                };
+
+                try {
+                    const response = await fetch(`/api/ornek_sozlesmeler/guncelle/${aktifSozlesmeId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': CSRF_TOKEN
+                        },
+                        body: JSON.stringify(guncellenecekVeri)
+                    });
+
+                    const sonuc = await response.json();
+                    if (sonuc.success) {
+                        bildirimGoster('Başarılı', 'Sözleşme başarıyla güncellendi.', 'success');
+                        sozlesmeFormModal.hide();
+                        kayitliSozlesmeleriTabloyaListele();
+                    } else {
+                        bildirimGoster('Hata', sonuc.message || 'Sözleşme güncellenirken bir hata oluştu.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Sözleşme güncelleme hatası:', error);
+                    bildirimGoster('Hata', 'Sözleşme güncellenirken bir ağ hatası oluştu.', 'error');
+                } finally {
+                    this.innerHTML = butonOrijinal;
+                    this.disabled = false;
+                }
+            });
+        }
+
+        // Tablo sıralama işlemleri
+        const headers = document.querySelectorAll('#kayitliSozlesmelerTablosu thead th[data-sort-key]');
+        headers.forEach(header => {
+            header.addEventListener('click', () => {
+                const sortKey = header.dataset.sortKey;
+                sortTableByColumn(sortKey);
+            });
+        });
+    });
+
+    sozlesmeForm.addEventListener('submit', async function(event) {
         event.preventDefault();
-        if (!sozlesmeFormu.checkValidity()) {
+        if (!sozlesmeForm.checkValidity()) {
             event.stopPropagation();
+            sozlesmeForm.classList.add('was-validated');
+            const ilkHataliAlan = sozlesmeForm.querySelector(':invalid');
+            if (ilkHataliAlan) {
+                ilkHataliAlan.focus();
+                bildirimGoster('Uyarı', 'Lütfen tüm zorunlu alanları doldurun.', 'warning');
+            }
             return;
         }
 
-        const formData = {
+        const formVerileri = {
             isSahibiAdi: document.getElementById('isSahibiAdi').value,
             isSahibiAdresi: document.getElementById('isSahibiAdresi').value,
             alinanIs: document.getElementById('alinanIs').value,
             avukatlikUcreti: document.getElementById('avukatlikUcreti').value,
-            giderAvansi: document.getElementById('giderAvansi').value || '0', // Boşsa 0
-            gunlukUcret: document.getElementById('gunlukUcret').value || '0', // Boşsa 0
-            durusmaUcreti: document.getElementById('durusmaUcreti').value || '0', // Boşsa 0
+            giderAvansi: document.getElementById('giderAvansi').value || '0',
+            gunlukUcret: document.getElementById('gunlukUcret').value || '0',
+            durusmaUcreti: document.getElementById('durusmaUcreti').value || '0',
             sozlesmeTarihi: document.getElementById('sozlesmeTarihi').value
         };
 
-        const tarihParcalari = formData.sozlesmeTarihi.split('-');
-        const formatliTarih = `${tarihParcalari[2]}/${tarihParcalari[1]}/${tarihParcalari[0]}`;
-
-        const sozlesmeMetni = `
-                        AVUKATLIK ÜCRET SÖZLEŞMESİ                                         
-
-İŞ SAHİBİ          : ${formData.isSahibiAdi}
-ADRESİ             : ${formData.isSahibiAdresi}
-                                              
-AVUKAT             : Av. Mustafa KAPLAN
-ADRESİ             : Güneşli Meydanı Cumhuriyet Cd. No.47                
-                   K.3 D.8 ( AKBANK ÜSTÜ )GÜNEŞLİ/İST.
-
-Yukarıda adı, soyadı (veya ünvanı) ile tebligata elverişli adresleri belirtilen taraflar arasında aşağıda yazılı şartlarla AVUKATLIK ÜCRET SÖZLEŞMESİ yapılmıştır. 
-Bu sözleşmede iş sahibi MÜVEKKİL ve işi üzerine alan AVUKAT diye adlandırılmıştır.
-
-MADDE 1) AVUKATIN ÜZERİNE ALDIĞI İŞ: 
-${formData.alinanIs}
-
-MADDE 2) Sözleşme konusu olan işten dolayı, Avukat'a ${formData.avukatlikUcreti} avukatlık ücreti ödenecektir.
-
-   Bu ücret Av. Mustafa KAPLAN'a ait Garanti Bankası Güneşli Şubesi TR930006200029500006684655 İban nolu hesaba ödenecektir.                     
-   Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. 
-   İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar. 
-
-MADDE 3) Tespit olunan ücret yalnız bu sözleşmede yazılı işin ve işlerin karşılığıdır. Bunlar dışında kalacak takipler ve bu işle ilgili bağlantılı bulunsa dahi karşı taraf veya üçüncü bir şahıs tarafından karşılıklı dava veya ayrı davalar şeklinde açılacak davalar bu sözleşme ücretin dışındadır.      
-
-Avukat, bu sözleşmeye göre peşin verilmesi gerekli ücret ve aşağıda yazılı gider avansı kendisine ödenmediği sürece işe başlamak zorunluluğunda değildir. 
-İş sahibi ile ilgili yapılacak hukuki, idari ve adli işlemlerden kaynaklanacak masraflar iş sahibine aittir.
-
-MADDE 4) Avukat üzerine aldığı işi kanun ve bu sözleşme hükümleri uyarınca sonuna kadar takip edecektir. 
-Avukat, verilen vekaletname ile başkasını tevkile yetkili bulunduğu takdirde, üzerine aldığı işi uygun göreceği diğer Avukatlarla birlikte takip edebileceği gibi, takibi tamamen onlara bırakabilecektir. Müvekkil de, Avukatın yazılı iznini almak şartı ile başka Avukatlara vekalet verebilir.   
-               Bu hallerde 1136 sayılı Kanunun 171 ve 172. Maddeleri hükmü uygulanır. 
-
-MADDE 5) İşin yapılması için gerekli bütün vergi, resim, harç gibi giderler müvekkile ait olup, Avukatın ilk isteminde Müvekkil tarafından Avukata veya merciine ödenmesi gerekir. 
-Verilen iş için yapılacak giderlerin tümü müvekkile aittir ve bu giderler ödenmedikçe Avukat işi yapmak zorunda değildir.    
-Yukarıda sayılan giderlerin Avukat tarafından yapılabilmesini Sağlamak için müvekkil, giderleri karşılayacak avansı Zamanında vermek zorunluluğundadır. Müvekkil bu iş için Avukata ${formData.giderAvansi}-TL gider avansını peşin olarak verecektir.    
-İş seyahati gerektiğinde uçak 1. mevki yataklı tarifesine göre tren, vapur ve bilet ücretleri müvekkil tarafından ücretten ayrı olarak ödenecektir. Bu giderler verilmeksizin Avukat seyahati yapmak zorunluluğunda değildir.  
-               Müvekkil yolculuk giderlerinden başka, Avukatın bürosundan ayrı kaldığı her gün için ${formData.gunlukUcret}-TL ödemeyi kabul etmiştir.  
-Yargıtay, Danıştay ve Vergi Temyiz Komisyonları huzurunda duruşma ayrı ücrete tabidir. Bu takdirde yukarıda sayılan yol giderlerinden başka Avukata ${formData.durusmaUcreti}-TL verilecektir. 
-Bu paralar peşin ödenmedikçe Avukat duruşmada bulunmak zorunda değildir.
- 
-MADDE 6) Müvekkilin bu sözleşmenin akdinden sonra vekalet vermemesi, dosyasını geri alması, Avukatın yazılı iznini almadan başka Avukatları teşrik etmesi veya bir başka Avukata işini vermesi, istenen giderleri ödememesi, iddia veya savunma için gerekli bilgi, belge ve delilleri vermemesi, değiştirdiği halde yeni adresini yazılı olarak bildirmeyip işin takibini bu suretle imkansız hale getirmesi, Avukatın rızası olmadan davanın veya alacağın takibinden kısmen veya tamamen vazgeçmesi, karşı taraf ile sulh olması veya karşı tarafı ibra etmesi veya haklı bir sebep yokken Avukatı engellediği durumlarda Avukat sözleşmeyi bozabilir. 
- 
-  Bu durumda sözleşmede belirtilen ücretin tamamı Avukatın ilk isteminde derhal ve bir defada ödenmesi gerekir.   
-
-MADDE 7) Yukarıda yazılı adres müvekkilin tebligat adresidir. Avukat tarafından bu adrese yapılacak bütün ihbar ve tebliğlerin şahsına yapılmış olduğunu kabul eder.
-
-Müvekkil adresini değiştirdiği takdirde yeni adresini Avukata derhal bildirmek zorundadır. Yukarıda yazılı adrese gönderilecek yazıların tebliğ edilmesinden ve yeni adresini bildirmemesinden doğacak sonuç 6. maddenin 2.fıkrasında yazılı olup, müvekkil bunları şimdiden kabul eder.
-
-MADDE 8) İş bu sözleşmenin süresi sözleşmenin imzalandığı tarihten itibaren 1 yıldır. Taraflar anlaşarak 1 yılın sonunda sözleşmeyi karşılıklı olarak feshetmezler ise Avukatlık ücreti 1(bir) yılın sonunda TEFE/TÜFE ortalaması alınarak resen artar.
-
-MADDE 9) İş bu sözleşmede açıklık bulunmayan durumlarda 1136 sayılı Avukatlık Kanunu hükümleri uygulanır. 
-
-MADDE 10) Bu sözleşmeden doğacak anlaşmazlıklarda yetkili mercii Bakırköy Mahkemeleri ve icra daireleridir.  
-                                                                    ${formatliTarih}
-
-    MÜVEKKİL                                             AVUKAT
-                                                                    Av. Mustafa KAPLAN
-        `;
-
-        pdfOnizleme.textContent = sozlesmeMetni;
-        onizlemeAlani.style.display = 'flex';
-        indirPdfButonu.disabled = false;
-        kaydetButonu.disabled = false;
+        pdfGoruntuleyici.innerHTML = '<div class="loading-spinner-container h-100"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">PDF oluşturuluyor...</p></div>';
+        // Form modalını kapat ve PDF modalını göster
+        if (window.sozlesmeFormModal) {
+            window.sozlesmeFormModal.hide();
+        }
+        openFullscreenPdfModal();
         
-        olusturulanPdfBelgesi = {
-            content: [
-                { text: 'AVUKATLIK ÜCRET SÖZLEŞMESİ', style: 'header', alignment: 'center' },
-                { text: '\n\n' },
-                {
-                    columns: [
-                        { width: '*', text: `İŞ SAHİBİ: ${formData.isSahibiAdi}\nADRESİ: ${formData.isSahibiAdresi}` },
-                        { width: '*', text: `AVUKAT: Av. Mustafa KAPLAN\nADRESİ: Güneşli Meydanı Cumhuriyet Cd. No.47 K.3 D.8 (AKBANK ÜSTÜ) GÜNEŞLİ/İST.` }
-                    ],
-                    columnGap: 20
-                },
-                { text: '\nYukarıda adı, soyadı (veya ünvanı) ile tebligata elverişli adresleri belirtilen taraflar arasında aşağıda yazılı şartlarla AVUKATLIK ÜCRET SÖZLEŞMESİ yapılmıştır. Bu sözleşmede iş sahibi MÜVEKKİL ve işi üzerine alan AVUKAT diye adlandırılmıştır.\n\n', style: 'paragraph' },
-                { text: `MADDE 1) AVUKATIN ÜZERİNE ALDIĞI İŞ: \n${formData.alinanIs}\n\n`, style: 'paragraph' },
-                { text: `MADDE 2) Sözleşme konusu olan işten dolayı, Avukat'a ${formData.avukatlikUcreti} avukatlık ücreti ödenecektir.\nBu ücret Av. Mustafa KAPLAN'a ait Garanti Bankası Güneşli Şubesi TR930006200029500006684655 İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.\n\n`, style: 'paragraph' },
-                { text: 'MADDE 3) Tespit olunan ücret yalnız bu sözleşmede yazılı işin ve işlerin karşılığıdır. Bunlar dışında kalacak takipler ve bu işle ilgili bağlantılı bulunsa dahi karşı taraf veya üçüncü bir şahıs tarafından karşılıklı dava veya ayrı davalar şeklinde açılacak davalar bu sözleşme ücretin dışındadır. Avukat, bu sözleşmeye göre peşin verilmesi gerekli ücret ve aşağıda yazılı gider avansı kendisine ödenmediği sürece işe başlamak zorunluluğunda değildir. İş sahibi ile ilgili yapılacak hukuki, idari ve adli işlemlerden kaynaklanacak masraflar iş sahibine aittir.\n\n', style: 'paragraph' },
-                { text: 'MADDE 4) Avukat üzerine aldığı işi kanun ve bu sözleşme hükümleri uyarınca sonuna kadar takip edecektir. Avukat, verilen vekaletname ile başkasını tevkile yetkili bulunduğu takdirde, üzerine aldığı işi uygun göreceği diğer Avukatlarla birlikte takip edebileceği gibi, takibi tamamen onlara bırakabilecektir. Müvekkil de, Avukatın yazılı iznini almak şartı ile başka Avukatlara vekalet verebilir. Bu hallerde 1136 sayılı Kanunun 171 ve 172. Maddeleri hükmü uygulanır.\n\n', style: 'paragraph' },
-                { text: `MADDE 5) İşin yapılması için gerekli bütün vergi, resim, harç gibi giderler müvekkile ait olup, Avukatın ilk isteminde Müvekkil tarafından Avukata veya merciine ödenmesi gerekir. Verilen iş için yapılacak giderlerin tümü müvekkile aittir ve bu giderler ödenmedikçe Avukat işi yapmak zorunda değildir. Yukarıda sayılan giderlerin Avukat tarafından yapılabilmesini Sağlamak için müvekkil, giderleri karşılayacak avansı Zamanında vermek zorunluluğundadır. Müvekkil bu iş için Avukata ${formData.giderAvansi}-TL gider avansını peşin olarak verecektir. İş seyahati gerektiğinde uçak 1. mevki yataklı tarifesine göre tren, vapur ve bilet ücretleri müvekkil tarafından ücretten ayrı olarak ödenecektir. Bu giderler verilmeksizin Avukat seyahati yapmak zorunluluğunda değildir. Müvekkil yolculuk giderlerinden başka, Avukatın bürosundan ayrı kaldığı her gün için ${formData.gunlukUcret}-TL ödemeyi kabul etmiştir. Yargıtay, Danıştay ve Vergi Temyiz Komisyonları huzurunda duruşma ayrı ücrete tabidir. Bu takdirde yukarıda sayılan yol giderlerinden başka Avukata ${formData.durusmaUcreti}-TL verilecektir. Bu paralar peşin ödenmedikçe Avukat duruşmada bulunmak zorunda değildir.\n\n`, style: 'paragraph' },
-                { text: 'MADDE 6) Müvekkilin bu sözleşmenin akdinden sonra vekalet vermemesi, dosyasını geri alması, Avukatın yazılı iznini almadan başka Avukatları teşrik etmesi veya bir başka Avukata işini vermesi, istenen giderleri ödememesi, iddia veya savunma için gerekli bilgi, belge ve delilleri vermemesi, değiştirdiği halde yeni adresini yazılı olarak bildirmeyip işin takibini bu suretle imkansız hale getirmesi, Avukatın rızası olmadan davanın veya alacağın takibinden kısmen veya tamamen vazgeçmesi, karşı taraf ile sulh olması veya karşı tarafı ibra etmesi veya haklı bir sebep yokken Avukatı engellediği durumlarda Avukat sözleşmeyi bozabilir. Bu durumda sözleşmede belirtilen ücretin tamamı Avukatın ilk isteminde derhal ve bir defada ödenmesi gerekir.\n\n', style: 'paragraph' },
-                { text: 'MADDE 7) Yukarıda yazılı adres müvekkilin tebligat adresidir. Avukat tarafından bu adrese yapılacak bütün ihbar ve tebliğlerin şahsına yapılmış olduğunu kabul eder. Müvekkil adresini değiştirdiği takdirde yeni adresini Avukata derhal bildirmek zorundadır. Yukarıda yazılı adrese gönderilecek yazıların tebliğ edilmesinden ve yeni adresini bildirmemesinden doğacak sonuç 6. maddenin 2.fıkrasında yazılı olup, müvekkil bunları şimdiden kabul eder.\n\n', style: 'paragraph' },
-                { text: 'MADDE 8) İş bu sözleşmenin süresi sözleşmenin imzalandığı tarihten itibaren 1 yıldır. Taraflar anlaşarak 1 yılın sonunda sözleşmeyi karşılıklı olarak feshetmezler ise Avukatlık ücreti 1(bir) yılın sonunda TEFE/TÜFE ortalaması alınarak resen artar.\n\n', style: 'paragraph' },
-                { text: 'MADDE 9) İş bu sözleşmede açıklık bulunmayan durumlarda 1136 sayılı Avukatlık Kanunu hükümleri uygulanır.\n\n', style: 'paragraph' },
-                { text: 'MADDE 10) Bu sözleşmeden doğacak anlaşmazlıklarda yetkili mercii Bakırköy Mahkemeleri ve icra daireleridir.\n\n', style: 'paragraph' },
-                { text: formatliTarih, alignment: 'right', style: 'paragraph' },
-                { text: '\n\n' },
-                {
-                    columns: [
-                        { width: '*', text: 'MÜVEKKİL\n\n\n___________________' },
-                        { width: '*', text: 'AVUKAT\n\n\nAv. Mustafa KAPLAN\n___________________', alignment: 'right' }
-                    ],
-                    columnGap: 20,
-                    style: 'signature'
-                }
-            ],
-            styles: {
-                header: {
-                    fontSize: 16,
-                    bold: true,
-                    margin: [0, 0, 0, 20] // bottom margin
-                },
-                paragraph: {
-                    fontSize: 10,
-                    alignment: 'justify',
-                    margin: [0, 5, 0, 5] // top/bottom margin for paragraphs
-                },
-                signature: {
-                    fontSize: 10,
-                    bold: true,
-                    margin: [0, 20, 0, 0] // top margin
-                }
-            },
-            defaultStyle: {
-                font: 'Roboto', // Varsayılan font
-                fontSize: 10
-            }
-        };
+        const tarihParcalari = formVerileri.sozlesmeTarihi.split('-');
+        const formatliTarih = `${tarihParcalari[2]}.${tarihParcalari[1]}.${tarihParcalari[0]}`;
         
-        pdfMake.fonts = {
-           Roboto: {
-             normal: 'Roboto-Regular.ttf',
-             bold: 'Roboto-Medium.ttf',
-             italics: 'Roboto-Italic.ttf',
-             bolditalics: 'Roboto-MediumItalic.ttf'
-           }
-        };
-    });
-
-    duzenleButonu.addEventListener('click', function() {
-        onizlemeAlani.style.display = 'none';
-        indirPdfButonu.disabled = true;
-        kaydetButonu.disabled = true;
-        olusturulanPdfBelgesi = null;
-    });
-
-    indirPdfButonu.addEventListener('click', function() {
-        if (olusturulanPdfBelgesi) {
-            try {
-                pdfMake.createPdf(olusturulanPdfBelgesi).download('Avukatlik_Ucret_Sozlesmesi.pdf');
-            } catch (error) {
-                console.error("PDF İndirme Hatası:", error);
-                showToast('Hata', 'PDF indirilirken bir hata oluştu. Lütfen konsolu kontrol edin.', 'error');
-            }
-        } else {
-            showToast('Uyarı', 'Önce sözleşmeyi oluşturup önizleyiniz.', 'warning');
-        }
-    });
-
-    kaydetButonu.addEventListener('click', async function() {
-        if (!olusturulanPdfBelgesi) {
-            showToast('Uyarı', 'Kaydedilecek bir sözleşme bulunamadı. Lütfen önce oluşturun.', 'warning');
-            return;
-        }
-
-        const isSahibiAdiValue = document.getElementById('isSahibiAdi').value.trim();
-        const sozlesmeTarihiValue = document.getElementById('sozlesmeTarihi').value;
-        let varsayilanSozlesmeAdi = `${isSahibiAdiValue.replace(/[^a-zA-Z0-9_]/g, '_')}_${sozlesmeTarihiValue}`;
-        
-        if(aktifDuzenlenenSozlesmeId) {
-             const aktifSozlesmeItem = document.querySelector(`.saved-contract-item[data-id="${aktifDuzenlenenSozlesmeId}"]`);
-             if(aktifSozlesmeItem) {
-                varsayilanSozlesmeAdi = aktifSozlesmeItem.querySelector('.contract-info h3').textContent;
-             }
-        }
-
-
-        const sozlesmeAdi = prompt("Sözleşmeye bir ad verin:", varsayilanSozlesmeAdi);
-        if (!sozlesmeAdi || !sozlesmeAdi.trim()) {
-            showToast('Uyarı', 'Sözleşme adı boş bırakılamaz.', 'warning');
-            return;
-        }
-
-        const muvekkilAdi = document.getElementById('isSahibiAdi').value;
-        const sozlesmeTarihiStr = document.getElementById('sozlesmeTarihi').value;
-
-        const kayitData = {
-            sozlesme_adi: sozlesmeAdi.trim(),
-            muvekkil_adi: muvekkilAdi,
-            sozlesme_tarihi_str: sozlesmeTarihiStr,
-            icerik_json: olusturulanPdfBelgesi
-        };
-
-        let url = '/api/ornek_sozlesmeler/kaydet';
-        let method = 'POST';
-
-        if (aktifDuzenlenenSozlesmeId) {
-            url = `/api/ornek_sozlesmeler/guncelle/${aktifDuzenlenenSozlesmeId}`;
-            method = 'PUT';
-        }
-
-
         try {
-            const response = await fetch(url, {
-                method: method,
+            olusturulanPdfBelgesi = sozlesmePdfIcerigiOlustur(formVerileri, formatliTarih);
+            setTimeout(() => {
+                try {
+                    pdfMake.createPdf(olusturulanPdfBelgesi).getDataUrl(function(dataUrl) {
+                        const iframe = document.createElement('iframe');
+                        iframe.src = dataUrl;
+                        // Tam ekran iframe stilleri
+                        iframe.style.width = '100%';
+                        iframe.style.height = '100%';
+                        iframe.style.border = 'none';
+                        iframe.style.margin = '0';
+                        iframe.style.padding = '0';
+                        iframe.style.display = 'block';
+                        
+                        pdfGoruntuleyici.innerHTML = '';
+                        pdfGoruntuleyici.appendChild(iframe);
+                        
+                        // PDF indirme ve kaydetme butonlarını aktifleştir
+                        document.getElementById('pdfIndirBtn').disabled = false;
+                        document.getElementById('sozlesmeKaydetBtn').disabled = false;
+                    });
+                } catch (pdfError) { 
+                    console.error('PDF önizleme hatası:', pdfError); 
+                    pdfOlusturmaHatasi(); 
+                }
+            }, 500);
+        } catch (error) { console.error('PDF verilerini hazırlama hatası:', error); pdfOlusturmaHatasi(); }
+    });
+    
+    pdfIndirBtn.addEventListener('click', function() {
+        if (olusturulanPdfBelgesi) {
+            const isSahibiAdi = document.getElementById('isSahibiAdi').value.trim();
+            const sozlesmeTarihi = document.getElementById('sozlesmeTarihi').value;
+            const tarihParcalari = sozlesmeTarihi.split('-');
+            const formatliTarih = `${tarihParcalari[2]}.${tarihParcalari[1]}.${tarihParcalari[0]}`;
+            
+            const dosyaAdi = `${isSahibiAdi}_Avukatlik_Ucret_Sozlesmesi_${formatliTarih.replace(/\./g, '_')}.pdf`;
+            
+            pdfMake.createPdf(olusturulanPdfBelgesi).download(dosyaAdi);
+        } else {
+            bildirimGoster('Hata', 'İndirilecek PDF belgesi bulunamadı.', 'error');
+        }
+    });
+
+    sozlesmeKaydetBtn.addEventListener('click', function() {
+        sozlesmeKaydet();
+    });
+    
+    // Sözleşme kayıt işlemi
+    async function sozlesmeKaydet() {
+        const formVerileri = {
+            isSahibiAdi: document.getElementById('isSahibiAdi').value,
+            isSahibiAdresi: document.getElementById('isSahibiAdresi').value,
+            alinanIs: document.getElementById('alinanIs').value,
+            avukatlikUcreti: document.getElementById('avukatlikUcreti').value,
+            giderAvansi: document.getElementById('giderAvansi').value || '0',
+            gunlukUcret: document.getElementById('gunlukUcret').value || '0',
+            durusmaUcreti: document.getElementById('durusmaUcreti').value || '0',
+            sozlesmeTarihi: document.getElementById('sozlesmeTarihi').value
+        };
+        
+        if (!olusturulanPdfBelgesi) {
+            bildirimGoster('Hata', 'Kaydedilecek PDF belgesi bulunamadı.', 'error');
+            return;
+        }
+        
+        try {
+            // Sunucuya gönderilecek verileri hazırla
+            const sozlesmeIdInput = document.getElementById('sozlesmeId');
+            const apiMethod = sozlesmeIdInput.value ? 'PUT' : 'POST';
+            const apiUrl = `/api/ornek_sozlesmeler${sozlesmeIdInput.value ? '/guncelle/' + sozlesmeIdInput.value : '/kaydet'}`;
+            
+            // PDF verilerini aktarmak için kullanılacak veriler
+            const kayitVerisi = {
+                muvekkil_adi: formVerileri.isSahibiAdi,
+                sozlesme_tarihi: formVerileri.sozlesmeTarihi,
+                icerik_json: olusturulanPdfBelgesi
+            };
+            
+            const response = await fetch(apiUrl, {
+                method: apiMethod,
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': CSRF_TOKEN
                 },
-                body: JSON.stringify(kayitData)
+                body: JSON.stringify(kayitVerisi)
             });
-            const result = await response.json();
-            if (result.success) {
-                showToast('Başarılı', result.message, 'success');
-                kaydetButonu.disabled = true; 
-                kapatOnizleme();
-                kayitliSozlesmeleriListele(); // Listeyi yenile
-                if (!aktifDuzenlenenSozlesmeId) { // Sadece yeni kayıtta formu temizle
-                    yeniSozlesmeFormuAc(); // Formu temizle ve yeniye odaklan
-                } else {
-                    // Güncelleme sonrası düzenleneni seçili bırak
-                    const guncellenenItem = document.querySelector(`.saved-contract-item[data-id="${aktifDuzenlenenSozlesmeId}"]`);
-                    if (guncellenenItem) {
-                        guncellenenItem.click(); // Tıklayarak formu tekrar yükle ve aktif et
-                    }
+            
+            const sonuc = await response.json();
+            if (sonuc.success) {
+                bildirimGoster('Başarılı', sonuc.message || 'Sözleşme başarıyla kaydedildi.', 'success');
+                // Modal kapat
+                closeFullscreenPdfModal();
+                sozlesmeFormModal.hide();
+                kayitliSozlesmeleriTabloyaListele();
+                if (apiMethod === 'POST' || (aktifSozlesmeId && parseInt(sozlesmeIdInput.value) !== aktifSozlesmeId )) { 
+                    sozlesmeFormunuSifirla();
                 }
             } else {
-                showToast('Hata', 'Sözleşme kaydedilirken hata: ' + result.message, 'error');
+                bildirimGoster('Hata', sonuc.message || 'Sözleşme kaydedilirken bir hata oluştu.', 'error');
             }
         } catch (error) {
-            console.error('Sözleşme kaydetme ağ hatası:', error);
-            showToast('Hata', 'Sözleşme kaydedilirken bir ağ hatası oluştu.', 'error');
+            console.error('Sözleşme kaydetme hatası:', error);
+            bildirimGoster('Hata', 'Sözleşme kaydedilirken bir hata oluştu: ' + error.message, 'error');
         }
-    });
+    }
 
-    // --- Kayıtlı Sözleşmeler Fonksiyonları ---
-    async function kayitliSozlesmeleriListele() {
-        const contractsListDiv = document.getElementById('contractsList');
-        contractsListDiv.innerHTML = '<p class="no-contracts">Yükleniyor...</p>';
+    // Kayıtlı sözleşmeleri tabloya listele
+    async function kayitliSozlesmeleriTabloyaListele() {
+        const tableBody = document.getElementById('sozlesmeTableBody');
+        const yukleniyorDiv = document.getElementById('tabloYukleniyor');
+        const tabloBosDiv = document.getElementById('tabloBos');
+
+        tableBody.innerHTML = ''; 
+        yukleniyorDiv.style.display = 'flex';
+        tabloBosDiv.style.display = 'none';
 
         try {
             const response = await fetch('/api/ornek_sozlesmeler/kayitli');
-            const result = await response.json();
+            if (!response.ok) throw new Error(`HTTP hata kodu: ${response.status}`);
+            const sonuc = await response.json();
+            yukleniyorDiv.style.display = 'none';
 
-            if (result.success && result.sozlesmeler) {
-                if (result.sozlesmeler.length === 0) {
-                    contractsListDiv.innerHTML = '<p class="no-contracts">Henüz kaydedilmiş sözleşme bulunmamaktadır.</p>';
-                    return;
+            if (sonuc.success && Array.isArray(sonuc.sozlesmeler)) {
+                allContractsData = sonuc.sozlesmeler;
+                console.log("Kayıtlı Sözleşmeler Listelendi:", JSON.stringify(allContractsData, null, 2)); // LOG 3
+                if (allContractsData.length === 0) {
+                    tabloBosDiv.style.display = 'block';
+                } else {
+                    // Başlangıçta sıralama olmadan render et
+                    renderTableRows(allContractsData); 
                 }
-                contractsListDiv.innerHTML = ''; // Temizle
-                result.sozlesmeler.forEach(sozlesme => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'saved-contract-item';
-                    itemDiv.dataset.id = sozlesme.id; // ID'yi data attribute olarak ekle
-                    itemDiv.innerHTML = `
-                        <div class="contract-info" onclick="sozlesmeDetaylariniYukle(${sozlesme.id})">
-                            <h3>${sozlesme.sozlesme_adi}</h3>
-                            <p>Müvekkil: ${sozlesme.muvekkil_adi} | Tarih: ${sozlesme.sozlesme_tarihi}</p>
-                        </div>
-                        <div class="contract-actions">
-                            <button onclick="sozlesmeDetaylariniYukle(${sozlesme.id}, true)" title="Önizle"><i class="material-icons">visibility</i></button>
-                            <button class="delete-btn" onclick="sozlesmeSilTetikle(${sozlesme.id}, '${sozlesme.sozlesme_adi.replace(/'/g, "\\\'")}')" title="Sil"><i class="material-icons">delete</i></button>
-                        </div>
-                    `;
-                    contractsListDiv.appendChild(itemDiv);
-                });
             } else {
-                contractsListDiv.innerHTML = `<p class="no-contracts text-danger">Sözleşmeler yüklenirken hata oluştu: ${result.message || 'Bilinmeyen bir hata.'}</p>`;
+                throw new Error('API yanıtı geçersiz format içeriyor.');
             }
         } catch (error) {
-            console.error("Kayıtlı sözleşmeleri listeleme hatası:", error);
-            contractsListDiv.innerHTML = '<p class="no-contracts text-danger">Sözleşmeler yüklenirken bir ağ hatası oluştu.</p>';
+            console.error('Sözleşme tablosu yükleme hatası:', error);
+            yukleniyorDiv.style.display = 'none';
+            tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Sözleşmeler yüklenirken bir hata oluştu: ${error.message}</td></tr>`;
         }
     }
-    
-    function yeniSozlesmeFormuAc() {
-        sozlesmeFormu.reset(); // Formu sıfırla
-        sozlesmeFormu.classList.remove('was-validated');
-        kayitliSozlesmeIdInput.value = ''; // Gizli ID alanını temizle
-        formBasligi.textContent = 'Yeni Avukatlık Ücret Sözleşmesi';
-        currentFormIdSpan.textContent = '';
-        aktifDuzenlenenSozlesmeId = null;
-        
-        // Tüm aktif işaretlerini kaldır
-        document.querySelectorAll('.saved-contract-item.active').forEach(item => {
-            item.classList.remove('active');
-        });
-        
-        // İsteğe bağlı: Bugünün tarihini otomatik ayarla
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('sozlesmeTarihi').value = today;
 
-        document.getElementById('isSahibiAdi').focus();
-    }
-    
-    document.querySelector('.new-contract-btn').addEventListener('click', yeniSozlesmeFormuAc);
+    function renderTableRows(contracts) {
+        const tableBody = document.getElementById('sozlesmeTableBody');
+        tableBody.innerHTML = '';
 
+        contracts.forEach(sozlesme => {
+            const row = tableBody.insertRow();
+            const isSahibiAdi = sozlesme.muvekkil_adi || 'N/A';
+            let avukatlikUcretiText = 'N/A';
+            let avukatlikUcretiValue = 0;
 
-    async function sozlesmeDetaylariniYukle(sozlesmeId, onizle = false) {
-        try {
-            const response = await fetch(`/api/ornek_sozlesmeler/kayitli/${sozlesmeId}`);
-            const result = await response.json();
+            const currentIcerikJson = getParsedIcerikJson(sozlesme.icerik_json, sozlesme.id);
 
-            if (result.success && result.sozlesme) {
-                const s = result.sozlesme;
-                kayitliSozlesmeIdInput.value = s.id;
-                aktifDuzenlenenSozlesmeId = s.id;
+            try {
+                // 1. Öncelikli olarak avukatlikUcretiRaw alanını kontrol et
+                if (currentIcerikJson && typeof currentIcerikJson.avukatlikUcretiRaw !== 'undefined' && currentIcerikJson.avukatlikUcretiRaw !== null && currentIcerikJson.avukatlikUcretiRaw.toString().trim() !== '') {
+                    avukatlikUcretiText = currentIcerikJson.avukatlikUcretiRaw.toString().trim();
+                }
+                // 2. Eğer avukatlikUcretiRaw yoksa veya boşsa, eski avukatlikUcreti alanını kontrol et
+                else if (currentIcerikJson && typeof currentIcerikJson.avukatlikUcreti !== 'undefined' && currentIcerikJson.avukatlikUcreti !== null && currentIcerikJson.avukatlikUcreti.toString().trim() !== '') {
+                    avukatlikUcretiText = currentIcerikJson.avukatlikUcreti.toString().trim();
+                }
+                // 3. Eğer hala N/A ise ve content varsa, content içinden çıkarmaya çalış
+                else if (currentIcerikJson && currentIcerikJson.content) {
+                    // MADDE 2 içinde avukatlık ücreti bilgisini ara
+                    const ucretMadde = currentIcerikJson.content.find(c =>
+                        c.text && typeof c.text === 'string' &&
+                        (c.text.includes("MADDE 2)") || c.text.includes("Avukat'a")) &&
+                        c.text.includes("avukatlık ücreti"));
 
-                document.getElementById('isSahibiAdi').value = s.muvekkil_adi || '';
-                document.getElementById('isSahibiAdresi').value = s.icerik_json.content.find(c => c.columns && c.columns[0].text.startsWith('İŞ SAHİBİ'))?.columns[0].text.split('ADRESİ: ')[1] || '';
-                document.getElementById('alinanIs').value = s.icerik_json.content.find(c => c.text && c.text.startsWith('MADDE 1)'))?.text.split('İŞ: \\n')[1]?.split('\\n\\n')[0] || '';
-                
-                let avukatlikUcretiStr = s.icerik_json.content.find(c => c.text && c.text.startsWith('MADDE 2)'))?.text.split("Avukat'a ")[1]?.split(' avukatlık ücreti ödenecektir.')[0] || '';
-                document.getElementById('avukatlikUcreti').value = avukatlikUcretiStr;
-
-                document.getElementById('giderAvansi').value = s.icerik_json.content.find(c => c.text && c.text.includes('-TL gider avansını'))?.text.split('Avukata ')[1]?.split('-TL gider avansını')[0] || '';
-                document.getElementById('gunlukUcret').value = s.icerik_json.content.find(c => c.text && c.text.includes('-TL ödemeyi kabul etmiştir.'))?.text.split('kaldığı her gün için ')[1]?.split('-TL ödemeyi kabul etmiştir.')[0] || '';
-                document.getElementById('durusmaUcreti').value = s.icerik_json.content.find(c => c.text && c.text.includes('başka Avukata '))?.text.split('başka Avukata ')[1]?.split('-TL verilecektir.')[0] || '';
-                document.getElementById('sozlesmeTarihi').value = s.sozlesme_tarihi || '';
-                
-                formBasligi.textContent = `Sözleşme: ${s.sozlesme_adi}`;
-                currentFormIdSpan.textContent = `(ID: ${s.id})`;
-                
-                // Aktif olanı işaretle
-                document.querySelectorAll('.saved-contract-item.active').forEach(item => item.classList.remove('active'));
-                const aktifItem = document.querySelector(`.saved-contract-item[data-id="${s.id}"]`);
-                if (aktifItem) aktifItem.classList.add('active');
-
-
-                if (onizle) {
-                    // PDF belgesini yeniden oluştur ve önizle
-                    olusturulanPdfBelgesi = s.icerik_json;
-                    pdfOnizleme.textContent = "PDF içeriği pdfmake formatında, metin önizlemesi için formun yeniden gönderilmesi gerekebilir."; // Veya PDF'i render et
-                    
-                    // PDFMake ile PDF'i oluşturup iframe'e src olarak verme veya open() ile açma
-                    // Şimdilik sadece pdfMake objesini saklıyoruz, "Sözleşmeyi Oluştur ve Önizle" butonu bunu kullanacak.
-                    // Veya doğrudan open ile açabiliriz:
-                    try {
-                        pdfMake.createPdf(olusturulanPdfBelgesi).getDataUrl((dataUrl) => {
-                            const iframe = document.createElement('iframe');
-                            iframe.src = dataUrl;
-                            iframe.style.width = '100%';
-                            iframe.style.height = '100%';
-                            iframe.style.border = 'none';
-                            pdfOnizleme.innerHTML = ''; // Önceki metni temizle
-                            pdfOnizleme.appendChild(iframe);
-                            onizlemeAlani.style.display = 'flex';
-                            indirPdfButonu.disabled = false;
-                            kaydetButonu.disabled = false; // Düzenleme modunda da kaydet aktif olabilir
-                        });
-                    } catch(e) {
-                         pdfOnizleme.textContent = "PDF önizlenirken hata oluştu. Lütfen formu göndererek metin önizlemesini deneyin.";
-                         onizlemeAlani.style.display = 'flex';
-                         indirPdfButonu.disabled = true;
-                         kaydetButonu.disabled = true;
+                    if (ucretMadde && ucretMadde.text) {
+                        const match = ucretMadde.text.match(/Avukat'a\\s*([^a-zA-Z]+?)\\s*avukatlık ücreti/i);
+                        if (match && match[1]) {
+                            avukatlikUcretiText = match[1].trim();
+                        } else {
+                            const altMatch = ucretMadde.text.match(/([0-9.,]+\\s*(?:TL|USD|EUR)?)\\s*avukatlık ücreti/i);
+                            if (altMatch && altMatch[1]) {
+                                avukatlikUcretiText = altMatch[1].trim();
+                            }
+                        }
                     }
                 }
 
-            } else {
-                showToast('Hata', `Sözleşme detayları alınırken hata: ${result.message || 'Bilinmeyen bir hata.'}`, 'error');
+                // Sayısal değer için parse işlemi
+                if (avukatlikUcretiText !== 'N/A') {
+                    const numericMatch = avukatlikUcretiText.match(/([0-9.,]+)/);
+                    if (numericMatch && numericMatch[1]) {
+                        avukatlikUcretiValue = parseFloat(numericMatch[1].replace(/\./g, '').replace(',', '.')) || 0;
+                    }
+                }
+            } catch (e) { 
+                console.error("RenderTableRows - Ücret parse/işleme hatası id " + sozlesme.id + ":", e); 
+                avukatlikUcretiText = 'Hata'; // Hata durumunda bunu göster
             }
-        } catch (error) {
-            console.error('Sözleşme detayı yükleme hatası:', error);
-            showToast('Hata', 'Sözleşme detayları yüklenirken bir ağ hatası oluştu.', 'error');
-        }
-    }
 
-    function sozlesmeSilTetikle(sozlesmeId, sozlesmeAdi) {
-        document.getElementById('silinecekSozlesmeId').value = sozlesmeId;
-        const modalBody = document.querySelector('#sozlesmeSilOnayModal .modal-body');
-        // Önceki metni silip yenisini ekle
-        while (modalBody.firstChild && modalBody.firstChild.nodeType !== Node.ELEMENT_NODE) {
-            modalBody.removeChild(modalBody.firstChild);
-        }
-        modalBody.insertBefore(document.createTextNode(`"${sozlesmeAdi}" adlı sözleşmeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`), modalBody.firstChild);
+            const tarih = sozlesme.sozlesme_tarihi || 'N/A'; 
 
-        const silOnayModal = new bootstrap.Modal(document.getElementById('sozlesmeSilOnayModal'));
-        silOnayModal.show();
-    }
+            row.insertCell().textContent = isSahibiAdi;
+            const ucretCell = row.insertCell();
+            ucretCell.textContent = avukatlikUcretiText; 
+            ucretCell.dataset.sortValue = avukatlikUcretiValue; 
 
-    async function onaylaSozlesmeSil() {
-        const sozlesmeId = document.getElementById('silinecekSozlesmeId').value;
-        const silOnayModalEl = document.getElementById('sozlesmeSilOnayModal');
-        const silOnayModalInstance = bootstrap.Modal.getInstance(silOnayModalEl);
-
-        try {
-            const response = await fetch(`/api/ornek_sozlesmeler/kayitli/${sozlesmeId}`, {
-                method: 'DELETE',
-                headers: { 'X-CSRFToken': CSRF_TOKEN }
-            });
-            const result = await response.json();
-            if (result.success) {
-                showToast('Başarılı', 'Sözleşme başarıyla silindi.', 'success');
-                kayitliSozlesmeleriListele(); // Listeyi yenile
-                yeniSozlesmeFormuAc(); // Formu temizle
+            const tarihCell = row.insertCell();
+            tarihCell.textContent = tarih; // "DD.MM.YYYY"
+            // Sıralama için YYYY-MM-DD formatında sakla
+            const tarihParts = tarih.split('.');
+            if (tarihParts.length === 3) {
+                tarihCell.dataset.sortValue = `${tarihParts[2]}-${tarihParts[1]}-${tarihParts[0]}`;
             } else {
-                showToast('Hata', 'Sözleşme silinirken hata: ' + result.message, 'error');
+                tarihCell.dataset.sortValue = tarih; // Hatalı formatta ise olduğu gibi bırak
             }
-        } catch (error) {
-            console.error('Sözleşme silme hatası:', error);
-            showToast('Hata', 'Sözleşme silinirken bir ağ hatası oluştu.', 'error');
-        }
-        if (silOnayModalInstance) {
-            silOnayModalInstance.hide();
-        }
-    }
 
-    // Toast Bildirimi Gösterme Fonksiyonu (ornek_dilekceler.html'den alındı, gerekirse oradan çağrılabilir)
-    function showToast(title, message, type = 'info') {
-        let toastContainer = document.querySelector('.toast-container');
-        if (!toastContainer) { // Eğer layout.html'de yoksa diye bir kontrol
-            toastContainer = document.createElement('div');
-            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-            toastContainer.style.zIndex = '1090';
-            document.body.appendChild(toastContainer);
-        }
-        
-        const toastId = 'toast-' + Date.now();
-        const toastHtml = `
-            <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
-                <div class="toast-header ${type === 'success' ? 'bg-success text-white' : type === 'error' ? 'bg-danger text-white' : type === 'warning' ? 'bg-warning text-dark' : 'bg-primary text-white'}">
-                    <i class="material-icons me-2">
-                        ${type === 'success' ? 'check_circle' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info'}
-                    </i>
-                    <strong class="me-auto">${title}</strong>
-                    <button type="button" class="btn-close ${type === 'warning' ? '' : 'btn-close-white'}" data-bs-dismiss="toast" aria-label="Close"></button>
+            const actionsCell = row.insertCell();
+            actionsCell.className = 'text-center';
+            actionsCell.innerHTML = `
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-sm btn-outline-dark" onclick="sozlesmeDetayiYukle(${sozlesme.id}, true)" title="Önizle"><i class="material-icons">visibility</i></button>
+                    <button type="button" class="btn btn-sm btn-outline-dark" onclick="sozlesmeDetayiYukle(${sozlesme.id}, false)" title="Düzenle"><i class="material-icons">edit</i></button>
+                    <button type="button" class="btn btn-sm btn-outline-dark" onclick="sozlesmeSilModalGoster(${sozlesme.id}, '${isSahibiAdi.replace(/'/g, "\\'")}')" title="Sil"><i class="material-icons">delete</i></button>
                 </div>
-                <div class="toast-body">
-                    ${message}
-                </div>
-            </div>
-        `;
-        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-        const toastElement = document.getElementById(toastId);
-        const toast = new bootstrap.Toast(toastElement);
-        toast.show();
-        toastElement.addEventListener('hidden.bs.toast', function () {
-            toastElement.remove();
+            `;
         });
     }
 
+    function sortTableByColumn(sortKey) {
+        const currentOrder = (sortState.key === sortKey && sortState.order === 'asc') ? 'desc' : 'asc';
+        sortState = { key: sortKey, order: currentOrder };
+
+        allContractsData.sort((a, b) => {
+            let valA, valB;
+
+            if (sortKey === 'muvekkil_adi') {
+                valA = a.muvekkil_adi?.toLowerCase() || '';
+                valB = b.muvekkil_adi?.toLowerCase() || '';
+            } else if (sortKey === 'sozlesme_tarihi') {
+                const dateA = (a.sozlesme_tarihi?.split('.').reverse().join('') || '').replace(/-/g, '');
+                const dateB = (b.sozlesme_tarihi?.split('.').reverse().join('') || '').replace(/-/g, '');
+                valA = dateA;
+                valB = dateB;
+            } else if (sortKey === 'avukatlik_ucreti') {
+                let feeA = 0;
+                let feeB = 0;
+                const icerikJsonA = getParsedIcerikJson(a.icerik_json, a.id);
+                const icerikJsonB = getParsedIcerikJson(b.icerik_json, b.id);
+
+                try {
+                    // A için ücret belirleme
+                    if (icerikJsonA && typeof icerikJsonA.avukatlikUcretiRaw !== 'undefined' && icerikJsonA.avukatlikUcretiRaw !== null && icerikJsonA.avukatlikUcretiRaw.toString().trim() !== '') {
+                        const textA = icerikJsonA.avukatlikUcretiRaw.toString().trim();
+                        const numericMatchA = textA.match(/([0-9.,]+)/);
+                        if (numericMatchA && numericMatchA[1]) {
+                            feeA = parseFloat(numericMatchA[1].replace(/\./g, '').replace(',', '.')) || 0;
+                        }
+                    } else if (icerikJsonA && typeof icerikJsonA.avukatlikUcreti !== 'undefined' && icerikJsonA.avukatlikUcreti !== null && icerikJsonA.avukatlikUcreti.toString().trim() !== '') {
+                        const textA = icerikJsonA.avukatlikUcreti.toString().trim();
+                        const numericMatchA = textA.match(/([0-9.,]+)/);
+                        if (numericMatchA && numericMatchA[1]) {
+                            feeA = parseFloat(numericMatchA[1].replace(/\./g, '').replace(',', '.')) || 0;
+                        }
+                    } else if (icerikJsonA && icerikJsonA.content) {
+                        const ucretMaddeA = icerikJsonA.content.find(c =>
+                            c.text && typeof c.text === 'string' &&
+                            (c.text.includes("MADDE 2)") || c.text.includes("Avukat'a")) &&
+                            c.text.includes("avukatlık ücreti"));
+                        if (ucretMaddeA && ucretMaddeA.text) {
+                            const matchA = ucretMaddeA.text.match(/([0-9.,]+)/);
+                            if (matchA && matchA[1]) {
+                                feeA = parseFloat(matchA[1].replace(/\./g, '').replace(',', '.')) || 0;
+                            }
+                        }
+                    }
+                } catch (e) { console.error('SortTable - Ücret A parse hatası', e); }
+                
+                try {
+                    // B için ücret belirleme
+                    if (icerikJsonB && typeof icerikJsonB.avukatlikUcretiRaw !== 'undefined' && icerikJsonB.avukatlikUcretiRaw !== null && icerikJsonB.avukatlikUcretiRaw.toString().trim() !== '') {
+                        const textB = icerikJsonB.avukatlikUcretiRaw.toString().trim();
+                        const numericMatchB = textB.match(/([0-9.,]+)/);
+                        if (numericMatchB && numericMatchB[1]) {
+                            feeB = parseFloat(numericMatchB[1].replace(/\./g, '').replace(',', '.')) || 0;
+                        }
+                    } else if (icerikJsonB && typeof icerikJsonB.avukatlikUcreti !== 'undefined' && icerikJsonB.avukatlikUcreti !== null && icerikJsonB.avukatlikUcreti.toString().trim() !== '') {
+                        const textB = icerikJsonB.avukatlikUcreti.toString().trim();
+                        const numericMatchB = textB.match(/([0-9.,]+)/);
+                        if (numericMatchB && numericMatchB[1]) {
+                            feeB = parseFloat(numericMatchB[1].replace(/\./g, '').replace(',', '.')) || 0;
+                        }
+                    } else if (icerikJsonB && icerikJsonB.content) {
+                        const ucretMaddeB = icerikJsonB.content.find(c =>
+                            c.text && typeof c.text === 'string' &&
+                            (c.text.includes("MADDE 2)") || c.text.includes("Avukat'a")) &&
+                            c.text.includes("avukatlık ücreti"));
+                        if (ucretMaddeB && ucretMaddeB.text) {
+                            const matchB = ucretMaddeB.text.match(/([0-9.,]+)/);
+                            if (matchB && matchB[1]) {
+                                feeB = parseFloat(matchB[1].replace(/\./g, '').replace(',', '.')) || 0;
+                            }
+                        }
+                    }
+                } catch (e) { console.error('SortTable - Ücret B parse hatası', e); }
+                
+                valA = feeA;
+                valB = feeB;
+            }
+
+            if (valA < valB) return currentOrder === 'asc' ? -1 : 1;
+            if (valA > valB) return currentOrder === 'asc' ? 1 : -1;
+            return 0;
+        });
+        renderTableRows(allContractsData);
+        updateSortIcons(sortKey, currentOrder);
+    }
+
+    function updateSortIcons(activeSortKey, order) {
+        document.querySelectorAll('#kayitliSozlesmelerTablosu thead th i').forEach(icon => {
+            icon.textContent = 'unfold_more';
+        });
+        const activeIcon = document.querySelector(`#kayitliSozlesmelerTablosu thead th[data-sort-key="${activeSortKey}"] i`);
+        if (activeIcon) {
+            activeIcon.textContent = order === 'asc' ? 'arrow_upward' : 'arrow_downward';
+        }
+    }
+    
+    async function sozlesmeDetayiYukle(sozlesmeId, onizle = false) {
+        document.querySelectorAll('#sozlesmeTableBody tr').forEach(row => row.classList.remove('table-active'));
+        const secilenSatir = document.querySelector(`#sozlesmeTableBody tr td button[onclick*="sozlesmeDetayiYukle(${sozlesmeId},"]`)?.closest('tr');
+        if (secilenSatir) secilenSatir.classList.add('table-active');
+
+        try {
+            const response = await fetch(`/api/ornek_sozlesmeler/kayitli/${sozlesmeId}`);
+            if (!response.ok) throw new Error(`HTTP hata kodu: ${response.status}`);
+            const sonuc = await response.json();
+            
+            if (sonuc.success && sonuc.sozlesme) {
+                const sozlesme = sonuc.sozlesme;
+                console.log("Sözleşme Detayı Yüklendi - Alınan Veri:", JSON.stringify(sozlesme, null, 2)); // LOG 4
+                sozlesmeIdInput.value = sozlesme.id;
+                aktifSozlesmeId = sozlesme.id;
+                
+                document.getElementById('isSahibiAdi').value = sozlesme.muvekkil_adi || '';
+                
+                const icerikJson = getParsedIcerikJson(sozlesme.icerik_json, sozlesme.id);
+
+                try {
+                    if (icerikJson) { 
+                        // Raw verilerden formu doldurmaya çalış (öncelikli)
+                        if (icerikJson.rawFormData) {
+                            // Raw form verilerinden doldur
+                            document.getElementById('isSahibiAdresi').value = icerikJson.rawFormData.isSahibiAdresi || '';
+                            document.getElementById('alinanIs').value = icerikJson.rawFormData.alinanIs || '';
+                            document.getElementById('avukatlikUcreti').value = icerikJson.rawFormData.avukatlikUcreti || '';
+                            document.getElementById('giderAvansi').value = icerikJson.rawFormData.giderAvansi || '';
+                            document.getElementById('gunlukUcret').value = icerikJson.rawFormData.gunlukUcret || '';
+                            document.getElementById('durusmaUcreti').value = icerikJson.rawFormData.durusmaUcreti || '';
+                        } else {
+                            // Fallback: PDF içeriğinden parse etmeye çalış
+                            // Avukatlık ücreti için önce avukatlikUcretiRaw'ı kontrol et
+                            let avUcretiForm = '';
+                            if (icerikJson.avukatlikUcretiRaw) {
+                                avUcretiForm = icerikJson.avukatlikUcretiRaw.toString().trim();
+                            }
+                            document.getElementById('avukatlikUcreti').value = avUcretiForm;
+
+                            // Diğer alanları PDF'den parse etmeye çalış
+                            if (icerikJson.content) {
+                                // İş sahibi adresi
+                                const adresColumn = icerikJson.content.find(c =>
+                                    c.columns && c.columns[0] && c.columns[0].text && c.columns[0].text.includes('ADRESİ:'));
+                                if (adresColumn && adresColumn.columns[0].text) {
+                                    const adresParts = adresColumn.columns[0].text.split('ADRESİ: ');
+                                    if (adresParts.length > 1) {
+                                        document.getElementById('isSahibiAdresi').value = adresParts[1];
+                                    }
+                                }
+
+                                // Alınan iş
+                                const isMadde = icerikJson.content.find(c =>
+                                    c.text && c.text.includes('MADDE 1)'));
+                                if (isMadde && isMadde.text) {
+                                    const isParts = isMadde.text.split('İŞ: ');
+                                    if (isParts.length > 1) {
+                                        const isMetni = isParts[1].split('\\n\\n')[0];
+                                        document.getElementById('alinanIs').value = isMetni.replace(/\\n/g, ' ').trim();
+                                    }
+                                }
+
+                                // Gider avansı
+                                const giderMadde = icerikJson.content.find(c =>
+                                    c.text && c.text.includes('gider avansını'));
+                                if (giderMadde && giderMadde.text) {
+                                    const giderMatch = giderMadde.text.match(/Avukata\\s+([^-]+)-TL gider avansını/);
+                                    if (giderMatch && giderMatch[1]) {
+                                        document.getElementById('giderAvansi').value = giderMatch[1].trim();
+                                    }
+                                }
+
+                                // Günlük ücret
+                                const gunlukMadde = icerikJson.content.find(c =>
+                                    c.text && c.text.includes('ödemeyi kabul etmiştir'));
+                                if (gunlukMadde && gunlukMadde.text) {
+                                    const gunlukMatch = gunlukMadde.text.match(/her gün için\\s+([^-]+)-TL ödemeyi/);
+                                    if (gunlukMatch && gunlukMatch[1]) {
+                                        document.getElementById('gunlukUcret').value = gunlukMatch[1].trim();
+                                    }
+                                }
+
+                                // Duruşma ücreti
+                                const durusmaMadde = icerikJson.content.find(c =>
+                                    c.text && c.text.includes('başka Avukata '));
+                                if (durusmaMadde && durusmaMadde.text) {
+                                    const durusmaMatch = durusmaMadde.text.match(/başka Avukata\\s+([^-]+)-TL verilecektir/);
+                                    if (durusmaMatch && durusmaMatch[1]) {
+                                        document.getElementById('durusmaUcreti').value = durusmaMatch[1].trim();
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        console.warn("icerikJson parse edilemediği için form alanları doldurulamadı, ID:", sozlesme.id);
+                    }
+                } catch (parseError) {
+                    console.error('Sözleşme içeriği (form için) ayrıştırma hatası:', parseError);
+                }
+                
+                document.getElementById('sozlesmeTarihi').value = sozlesme.sozlesme_tarihi_str || (sozlesme.sozlesme_tarihi ? sozlesme.sozlesme_tarihi.split('.').reverse().join('-') : '');
+
+                document.getElementById('formBaslik').textContent = 'Sözleşme Düzenle';
+                document.getElementById('formAltBaslik').textContent = `"${sozlesme.sozlesme_adi || sozlesme.muvekkil_adi}" (ID: ${sozlesme.id})`;
+                
+                // Düzenleme modunu ayarla
+                if (!onizle) {
+                    // Güncelleme butonu göster, oluşturma butonu gizle
+                    document.getElementById('sozlesmeGuncelleBtn').style.display = 'inline-block';
+                    document.getElementById('sozlesmeOlusturBtn').style.display = 'none';
+                    
+                    sozlesmeFormModal.show();
+                    setTimeout(() => document.getElementById('isSahibiAdi').focus(), 300);
+                }
+
+                if (onizle) {
+                    console.log("Önizleme modunda - PDF oluşturuluyor...");
+                    pdfGoruntuleyici.innerHTML = '<div class="loading-spinner-container h-100"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">PDF önizleme yükleniyor...</p></div>';
+                    
+                    // Modal'ı aç
+                    if (typeof openFullscreenPdfModal === 'function') {
+                        openFullscreenPdfModal();
+                    } else {
+                        // Bootstrap modal olarak aç
+                        const modal = new bootstrap.Modal(document.getElementById('pdfOnizlemeModal'));
+                        modal.show();
+                    }
+                    
+                    setTimeout(() => {
+                        try {
+                            const pdfBelgesi = getParsedIcerikJson(sozlesme.icerik_json, sozlesme.id);
+                            if (pdfBelgesi) {
+                                pdfMake.createPdf(pdfBelgesi).getDataUrl(function(dataUrl) {
+                                    const iframe = document.createElement('iframe');
+                                    iframe.src = dataUrl;
+                                    iframe.style.width = '100%';
+                                    iframe.style.height = '100%';
+                                    iframe.style.border = 'none';
+                                    iframe.style.margin = '0';
+                                    iframe.style.padding = '0';
+                                    iframe.style.display = 'block';
+                                    
+                                    pdfGoruntuleyici.innerHTML = '';
+                                    pdfGoruntuleyici.appendChild(iframe);
+                                    
+                                    // PDF indirme ve kaydetme butonlarını aktifleştir
+                                    document.getElementById('pdfIndirBtn').disabled = false;
+                                    document.getElementById('sozlesmeKaydetBtn').disabled = false;
+                                });
+                            } else {
+                                throw new Error('PDF içeriği bulunamadı');
+                            }
+                        } catch (pdfError) { 
+                            console.error('PDF önizleme hatası:', pdfError); 
+                            pdfGoruntuleyici.innerHTML = '<div class="text-center p-4"><i class="material-icons text-danger" style="font-size: 48px;">error</i><h4 class="mt-3">PDF Önizleme Hatası</h4><p>Dosya önizlenirken bir hata oluştu.</p></div>';
+                        }
+                    }, 500);
+                }
+            } else {
+                bildirimGoster('Hata', sonuc.message || 'Sözleşme detayları alınamadı.', 'error');
+            }
+        } catch (error) {
+            console.error('Sözleşme detayı yükleme hatası:', error);
+            bildirimGoster('Hata', `Sözleşme detayları yüklenirken bir hata oluştu: ${error.message}`, 'error');
+        }
+    }
+
+    function sozlesmeSilModalGoster(sozlesmeId, sozlesmeAdi) {
+        document.getElementById('silinecekSozlesmeId').value = sozlesmeId;
+        document.getElementById('sozlesmeSilMesaj').textContent = `"${sozlesmeAdi}" sözleşmesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`;
+        sozlesmeSilModal.show();
+    }
+    
+    document.getElementById('sozlesmeSilOnayBtn').addEventListener('click', async function() {
+        const silinecekId = document.getElementById('silinecekSozlesmeId').value;
+        const butonIcerik = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Siliniyor...';
+        try {
+            const response = await fetch(`/api/ornek_sozlesmeler/kayitli/${silinecekId}`, {
+                method: 'DELETE', headers: { 'X-CSRFToken': CSRF_TOKEN }
+            });
+            if (!response.ok) throw new Error(`HTTP hata kodu: ${response.status}`);
+            const sonuc = await response.json();
+            if (sonuc.success) {
+                bildirimGoster('Başarılı', sonuc.message || 'Sözleşme başarıyla silindi.', 'success');
+                sozlesmeSilModal.hide();
+                if (aktifSozlesmeId === parseInt(silinecekId)) {
+                    sozlesmeFormunuSifirla();
+                }
+                kayitliSozlesmeleriTabloyaListele();
+            } else {
+                bildirimGoster('Hata', sonuc.message || 'Sözleşme silinirken bir hata oluştu.', 'error');
+            }
+        } catch (error) {
+            console.error('Sözleşme silme hatası:', error);
+            bildirimGoster('Hata', `Sözleşme silinirken bir hata oluştu: ${error.message}`, 'error');
+        } finally {
+            this.innerHTML = butonIcerik; this.disabled = false;
+        }
+    });
+
+    function sozlesmeFormunuSifirla() {
+        sozlesmeForm.reset();
+        sozlesmeForm.classList.remove('was-validated');
+        sozlesmeIdInput.value = ''; 
+        aktifSozlesmeId = null;    
+        document.getElementById('formBaslik').textContent = 'Yeni Avukatlık Sözleşmesi';
+        document.getElementById('formAltBaslik').textContent = 'Aşağıdaki formu doldurarak avukatlık ücret sözleşmesini oluşturabilirsiniz.';
+        document.getElementById('sozlesmeTarihi').valueAsDate = new Date();
+        document.querySelectorAll('#sozlesmeTableBody tr.table-active').forEach(row => row.classList.remove('table-active'));
+        
+        // Butonları yeni oluşturma moduna ayarla
+        document.getElementById('sozlesmeGuncelleBtn').style.display = 'none';
+        document.getElementById('sozlesmeForm').querySelector('button[type="submit"]').style.display = 'inline-block';
+    }
+    
+    function pdfOlusturmaHatasi() {
+        pdfGoruntuleyici.innerHTML = `
+            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-danger">
+                <i class="material-icons" style="font-size: 4rem;">error_outline</i>
+                <h4 class="mt-3">PDF Oluşturulamadı</h4>
+                <p class="text-center">PDF oluşturma işlemi sırasında bir hata oluştu.</p>
+                <button class="btn btn-outline-secondary mt-3" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        `;
+        pdfIndirBtn.disabled = true; sozlesmeKaydetBtn.disabled = true;
+    }
+    
+    function bildirimGoster(baslik, mesaj, tip = 'info') {
+        const toastContainer = document.querySelector('.toast-container');
+        const toastId = `toast-${Date.now()}`;
+        const bgClass = tip === 'success' ? 'bg-success' : tip === 'warning' ? 'bg-warning' : tip === 'error' ? 'bg-danger' : 'bg-info';
+        const textClass = ['warning'].includes(tip) ? 'text-dark' : 'text-white';
+        const toastHtml = `
+            <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header ${bgClass} ${textClass}">
+                    <i class="material-icons me-2">${tip === 'success' ? 'check_circle' : tip === 'warning' ? 'warning' : tip === 'error' ? 'error' : 'info'}</i>
+                    <strong class="me-auto">${baslik}</strong>
+                    <button type="button" class="btn-close ${['warning'].includes(tip) ? '' : 'btn-close-white'}" data-bs-dismiss="toast" aria-label="Kapat"></button>
+                </div><div class="toast-body">${mesaj}</div></div>`;
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 5000 });
+        toast.show();
+        toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+    }
+
+    function sozlesmePdfIcerigiOlustur(formVerileri, formatliTarih) {
+        // Avukatlık ücretini doğrudan JSON'a ekle
+        const avukatlikUcretiHam = formVerileri.avukatlikUcreti.toString().trim(); // Trim eklendi
+        console.log("sozlesmePdfIcerigiOlustur - formVerileri.avukatlikUcreti:", formVerileri.avukatlikUcreti, "Ham:", avukatlikUcretiHam); // LOG 1
+
+        return {
+            avukatlikUcretiRaw: avukatlikUcretiHam, // Ham ücret metnini buraya ekliyoruz
+            rawFormData: formVerileri, // Form verilerini ham olarak sakla
+            content: [
+                { text: 'AVUKATLIK ÜCRET SÖZLEŞMESİ', style: 'header', alignment: 'center' },
+                { text: '\\n\\n' },
+                {
+                    columns: [
+                        { width: '*', text: `İŞ SAHİBİ: ${formVerileri.isSahibiAdi}\\nADRESİ: ${formVerileri.isSahibiAdresi}`},
+                        { width: '*', text: `AVUKAT: Av. Mustafa KAPLAN\\nADRESİ: Güneşli Meydanı Cumhuriyet Cd. No.47 K.3 D.8 (AKBANK ÜSTÜ) GÜNEŞLİ/İST.`}
+                    ], columnGap: 20
+                },
+                { text: '\\nYukarıda adı, soyadı (veya ünvanı) ile tebligata elverişli adresleri belirtilen taraflar arasında aşağıda yazılı şartlarla AVUKATLIK ÜCRET SÖZLEŞMESİ yapılmıştır. Bu sözleşmede iş sahibi MÜVEKKİL ve işi üzerine alan AVUKAT diye adlandırılmıştır.\\n\\n', style: 'paragraph'},
+                { text: `MADDE 1) AVUKATIN ÜZERİNE ALDIĞI İŞ: \\n${formVerileri.alinanIs}\\n\\n`, style: 'paragraph'},
+                { text: `MADDE 2) Sözleşme konusu olan işten dolayı, Avukat'a ${formVerileri.avukatlikUcreti} avukatlık ücreti ödenecektir.\\nBu ücret Av. Mustafa KAPLAN'a ait Garanti Bankası Güneşli Şubesi TR930006200029500006684655 İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.\\n\\n`, style: 'paragraph'},
+                { text: 'MADDE 3) Tespit olunan ücret yalnız bu sözleşmede yazılı işin ve işlerin karşılığıdır. Bunlar dışında kalacak takipler ve bu işle ilgili bağlantılı bulunsa dahi karşı taraf veya üçüncü bir şahıs tarafından karşılıklı dava veya ayrı davalar şeklinde açılacak davalar bu sözleşme ücretin dışındadır. Avukat, bu sözleşmeye göre peşin verilmesi gerekli ücret ve aşağıda yazılı gider avansı kendisine ödenmediği sürece işe başlamak zorunluluğunda değildir. İş sahibi ile ilgili yapılacak hukuki, idari ve adli işlemlerden kaynaklanacak masraflar iş sahibine aittir.\\n\\n', style: 'paragraph'},
+                { text: 'MADDE 4) Avukat üzerine aldığı işi kanun ve bu sözleşme hükümleri uyarınca sonuna kadar takip edecektir. Avukat, verilen vekaletname ile başkasını tevkile yetkili bulunduğu takdirde, üzerine aldığı işi uygun göreceği diğer Avukatlarla birlikte takip edebileceği gibi, takibi tamamen onlara bırakabilecektir. Müvekkil de, Avukatın yazılı iznini almak şartı ile başka Avukatlara vekalet verebilir. Bu hallerde 1136 sayılı Kanunun 171 ve 172. Maddeleri hükmü uygulanır.\\n\\n', style: 'paragraph'},
+                { text: `MADDE 5) İşin yapılması için gerekli bütün vergi, resim, harç gibi giderler müvekkile ait olup, Avukatın ilk isteminde Müvekkil tarafından Avukata veya merciine ödenmesi gerekir. Verilen iş için yapılacak giderlerin tümü müvekkile aittir ve bu giderler ödenmedikçe Avukat işi yapmak zorunda değildir. Yukarıda sayılan giderlerin Avukat tarafından yapılabilmesini Sağlamak için müvekkil, giderleri karşılayacak avansı Zamanında vermek zorunluluğundadır. Müvekkil bu iş için Avukata ${formVerileri.giderAvansi}-TL gider avansını peşin olarak verecektir. İş seyahati gerektiğinde uçak 1. mevki yataklı tarifesine göre tren, vapur ve bilet ücretleri müvekkil tarafından ücretten ayrı olarak ödenecektir. Bu giderler verilmeksizin Avukat seyahati yapmak zorunluluğunda değildir. Müvekkil yolculuk giderlerinden başka, Avukatın bürosundan ayrı kaldığı her gün için ${formVerileri.gunlukUcret}-TL ödemeyi kabul etmiştir. Yargıtay, Danıştay ve Vergi Temyiz Komisyonları huzurunda duruşma ayrı ücrete tabidir. Bu takdirde yukarıda sayılan yol giderlerinden başka Avukata ${formVerileri.durusmaUcreti}-TL verilecektir. Bu paralar peşin ödenmedikçe Avukat duruşmada bulunmak zorunda değildir.\\n\\n`, style: 'paragraph'},
+                { text: 'MADDE 6) Müvekkilin bu sözleşmenin akdinden sonra vekalet vermemesi, dosyasını geri alması, Avukatın yazılı iznini almadan başka Avukatları teşrik etmesi veya bir başka Avukata işini vermesi, istenen giderleri ödememesi, iddia veya savunma için gerekli bilgi, belge ve delilleri vermemesi, değiştirdiği halde yeni adresini yazılı olarak bildirmeyip işin takibini bu suretle imkansız hale getirmesi, Avukatın rızası olmadan davanın veya alacağın takibinden kısmen veya tamamen vazgeçmesi, karşı taraf ile sulh olması veya karşı tarafı ibra etmesi veya haklı bir sebep yokken Avukatı engellediği durumlarda Avukat sözleşmeyi bozabilir. Bu durumda sözleşmede belirtilen ücretin tamamı Avukatın ilk isteminde derhal ve bir defada ödenmesi gerekir.\\n\\n', style: 'paragraph'},
+                { text: 'MADDE 7) Yukarıda yazılı adres müvekkilin tebligat adresidir. Avukat tarafından bu adrese yapılacak bütün ihbar ve tebliğlerin şahsına yapılmış olduğunu kabul eder. Müvekkil adresini değiştirdiği takdirde yeni adresini Avukata derhal bildirmek zorundadır. Yukarıda yazılı adrese gönderilecek yazıların tebliğ edilmesinden ve yeni adresini bildirmemesinden doğacak sonuç 6. maddenin 2.fıkrasında yazılı olup, müvekkil bunları şimdiden kabul eder.\\n\\n', style: 'paragraph'},
+                { text: 'MADDE 8) İş bu sözleşmenin süresi sözleşmenin imzalandığı tarihten itibaren 1 yıldır. Taraflar anlaşarak 1 yılın sonunda sözleşmeyi karşılıklı olarak feshetmezler ise Avukatlık ücreti 1(bir) yılın sonunda TEFE/TÜFE ortalaması alınarak resen artar.\\n\\n', style: 'paragraph'},
+                { text: 'MADDE 9) İş bu sözleşmede açıklık bulunmayan durumlarda 1136 sayılı Avukatlık Kanunu hükümleri uygulanır.\\n\\n', style: 'paragraph'},
+                { text: 'MADDE 10) Bu sözleşmeden doğacak anlaşmazlıklarda yetkili mercii Bakırköy Mahkemeleri ve icra daireleridir.\\n\\n', style: 'paragraph'},
+                { text: formatliTarih, alignment: 'right', style: 'paragraph' },
+                { text: '\\n\\n' },
+                {
+                    columns: [
+                        { width: '*', text: 'MÜVEKKİL\\n\\n\\n___________________' },
+                        { width: '*', text: 'AVUKAT\\n\\n\\nAv. Mustafa KAPLAN\\n___________________', alignment: 'right' }
+                    ], columnGap: 20, style: 'signature'
+                }
+            ],
+            styles: {
+                header: { fontSize: 16, bold: true, margin: [0, 0, 0, 20] },
+                paragraph: { fontSize: 10, alignment: 'justify', margin: [0, 5, 0, 5] },
+                signature: { fontSize: 10, bold: true, margin: [0, 20, 0, 0] }
+            },
+            defaultStyle: { font: 'Roboto', fontSize: 10 }
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Bootstrap modal stillerini geçersiz kılmak için özel CSS kuralları ekle
+        const styleEl = document.createElement('style');
+        styleEl.type = 'text/css';
+        styleEl.innerHTML = `
+            #pdfOnizlemeModal {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                z-index: 9999 !important;
+            }
+
+            #pdfOnizlemeModal .modal-dialog {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 100% !important;
+                max-height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                transform: none !important;
+            }
+
+            #pdfOnizlemeModal .modal-content {
+                width: 100% !important;
+                height: 100% !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+            }
+
+            #pdfOnizlemeModal .modal-body {
+                padding: 0 !important;
+                height: calc(100vh - 130px) !important;
+                overflow: hidden !important;
+            }
+
+            #pdfOnizlemeModal .pdf-viewer {
+                width: 100% !important;
+                height: 100% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+
+            #pdfOnizlemeModal .pdf-viewer iframe {
+                width: 100% !important;
+                height: 100% !important;
+                border: none !important;
+            }
+
+            @media (min-width: 576px) {
+                .modal-dialog.modal-fullscreen {
+                    width: 100vw !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                }
+            }
+        `;
+        document.head.appendChild(styleEl);
+    });
+
+    // Özel modal kontrolü
+    document.addEventListener('DOMContentLoaded', function() {
+        // Bootstrap modal stillerini geçersiz kılmak için özel CSS kuralları ekle
+        const styleEl = document.createElement('style');
+        styleEl.type = 'text/css';
+        styleEl.innerHTML = `
+            .modal-backdrop {
+                opacity: 0.5 !important;
+            }
+            
+            #pdfOnizlemeModal {
+                display: none !important; /* Başlangıçta gizli olmalı */
+                opacity: 0 !important;
+                visibility: hidden !important;
+            }
+            
+            #pdfOnizlemeModal.show {
+                display: block !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+            
+            #pdfOnizlemeModal .modal-dialog {
+                transform: none !important;
+                transition: none !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                height: 100vh !important;
+            }
+            
+            #pdfOnizlemeModal .modal-content {
+                height: 100vh !important;
+                border: none !important;
+                border-radius: 0 !important;
+                width: 100% !important;
+            }
+            
+            #pdfOnizlemeModal .modal-body {
+                padding: 0 !important;
+                height: calc(100vh - 130px) !important;
+                overflow: hidden !important;
+            }
+        `;
+        document.head.appendChild(styleEl);
+        
+        // Özel modal açma fonksiyonu
+        window.openFullscreenModal = function() {
+            const modal = document.getElementById('pdfOnizlemeModal');
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop show';
+            document.body.appendChild(backdrop);
+            
+            modal.style.display = 'block';
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            document.body.style.paddingRight = '17px'; // Scrollbar genişliği
+        };
+        
+        // Özel modal kapatma fonksiyonu
+        window.closeFullscreenModal = function() {
+            const modal = document.getElementById('pdfOnizlemeModal');
+            const backdrop = document.querySelector('.modal-backdrop');
+            
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            if (backdrop) backdrop.remove();
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        };
+        
+        // Kapatma düğmesine event listener ekle
+        const closeButton = document.querySelector('#pdfOnizlemeModal .btn-close');
+        if (closeButton) {
+            closeButton.addEventListener('click', function() {
+                window.closeFullscreenModal();
+            });
+        }
+        
+        // Forma Dön düğmesine event listener ekle
+        const backButton = document.querySelector('#pdfOnizlemeModal .btn-outline-secondary');
+        if (backButton) {
+            backButton.addEventListener('click', function() {
+                window.closeFullscreenModal();
+            });
+        }
+        
+        // Sayfa yüklendiğinde modalı gizle
+        const modal = document.getElementById('pdfOnizlemeModal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        }
+    });
+
+    // Sayfa yüklendiğinde tabloyu yükle
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("Sayfa yüklendi - Tabloyu yüklüyor...");
+        kayitliSozlesmeleriTabloyaListele();
+        
+        // Periyodik olarak tabloyu yenile (30 saniyede bir)
+        setInterval(() => {
+            if (!document.querySelector('.modal.show')) { // Modal açık değilse yenile
+                kayitliSozlesmeleriTabloyaListele();
+            }
+        }, 30000);
+    });
+
+// Modal fonksiyonları düzeltmesi - Global seviyede
+window.sozlesmeGoster = function(sozlesmeId) {
+    console.log('Sözleşme gösteriliyor:', sozlesmeId);
+    
+    // Önce PDF'i oluştur
+    fetch(`/api/sozlesme_pdf/${sozlesmeId}`)
+        .then(response => {
+            if (!response.ok) throw new Error('PDF yüklenemedi: ' + response.status);
+            return response.text(); // PDF için blob yerine text kullan
+        })
+        .then(htmlContent => {
+            const modal = document.getElementById('pdfOnizlemeModal');
+            if (!modal) {
+                console.error('PDF modal bulunamadı');
+                return;
+            }
+            
+            const iframe = modal.querySelector('iframe');
+            if (!iframe) {
+                console.error('iframe bulunamadı');
+                return;
+            }
+            
+            // HTML içeriğini iframe'e yükle
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            iframe.src = url;
+            
+            // Modal'ı göster
+            const bootstrapModal = new bootstrap.Modal(modal);
+            bootstrapModal.show();
+            
+            // Modal kapandığında URL'yi temizle
+            modal.addEventListener('hidden.bs.modal', function() {
+                URL.revokeObjectURL(url);
+                iframe.src = '';
+            }, { once: true });
+        })
+        .catch(error => {
+            console.error('PDF yükleme hatası:', error);
+            alert('Sözleşme görüntülenirken bir hata oluştu: ' + error.message);
+        });
+};
+
+window.sozlesmeFormuGoster = function() {
+    console.log('Yeni sözleşme formu açılıyor...');
+    
+    try {
+        const modal = document.getElementById('sozlesmeFormModal');
+        if (!modal) {
+            console.error('Sözleşme form modalı bulunamadı!');
+            return;
+        }
+        
+        // Formu sıfırla
+        const form = modal.querySelector('#sozlesmeFormuElement');
+        if (form) {
+            form.reset();
+            // Gizli input varsa kaldır
+            const hiddenInput = form.querySelector('[name="sozlesme_id"]');
+            if (hiddenInput) {
+                hiddenInput.remove();
+            }
+        }
+        
+        // Bootstrap 5 modal instance oluştur
+        let modalInstance = bootstrap.Modal.getInstance(modal);
+        if (!modalInstance) {
+            modalInstance = new bootstrap.Modal(modal, {
+                keyboard: true,
+                backdrop: true
+            });
+        }
+        
+        modalInstance.show();
+        console.log('Modal gösterildi');
+    } catch (error) {
+        console.error('Modal açma hatası:', error);
+        alert('Form açılırken bir hata oluştu: ' + error.message);
+    }
+};
+        
+        // Modal'ı göster
+        modalInstance.show();
+        
+        console.log('Modal gösterildi');
+    } catch (error) {
+        console.error('Modal açma hatası:', error);
+        alert('Form açılırken bir hata oluştu: ' + error.message);
+    }
+}
+
+    // DOM yüklendiğinde modal tanımlarını düzelt
+    document.addEventListener('DOMContentLoaded', function() {
+        // Modal başlatma
+        const sozlesmeFormModal = document.getElementById('sozlesmeFormModal');
+        if (sozlesmeFormModal) {
+            window.sozlesmeFormModal = new bootstrap.Modal(sozlesmeFormModal, {
+                keyboard: true,
+                backdrop: 'static'
+            });
+        }
+        
+        const pdfOnizlemeModal = document.getElementById('pdfOnizlemeModal');
+        if (pdfOnizlemeModal) {
+            window.pdfOnizlemeModal = new bootstrap.Modal(pdfOnizlemeModal, {
+                keyboard: true,
+                backdrop: true
+            });
+        }
+        
+        // Tabloyu yükle
+        kayitliSozlesmeleriTabloyaListele();
+    });
 </script>
 {% endblock %} 
