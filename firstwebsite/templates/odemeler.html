@@ -12,6 +12,7 @@
 
     <div class="form-container">
         <form method="POST" id="paymentForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="input-group">
                 <label for="name">Ad</label>
                 <input type="text" id="name" name="name" required>
@@ -27,8 +28,8 @@
             <div class="input-group">
                 <label for="amount">Tutar</label>
                 <div style="display: flex; gap: 5px;">
-                    <input type="text" id="amount" name="amount" required style="flex: 1;" placeholder="Örn: 1000.50">
-                    <select id="currency" name="currency" required>
+                    <input type="text" id="amount" name="amount" required style="flex: 3; min-width: 150px;" placeholder="Örn: 1000.50">
+                    <select id="currency" name="currency" required style="flex: 1; max-width: 80px;">
                         <option value="TL">TL</option>
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
@@ -64,18 +65,71 @@
             </button>
             {% endif %}
         </div>
-        <table class="data-table">
-            <thead>
+        <table class="data-table modern-table">
+            <thead class="modern-header">
                 <tr>
-                    <th id="sort-name">Ad <i class="material-icons sort-icon">unfold_more</i></th>
-                    <th id="sort-surname">Soyad <i class="material-icons sort-icon">unfold_more</i></th>
-                    <th id="sort-tc">TC Kimlik No <i class="material-icons sort-icon">unfold_more</i></th>
-                    <th id="sort-amount">Tutar <i class="material-icons sort-icon">unfold_more</i></th>
-                    <th id="sort-installments">Taksit Sayısı <i class="material-icons sort-icon">unfold_more</i></th>
-                    <th id="sort-registration-date">Borç Tarihi <i class="material-icons sort-icon">unfold_more</i></th>
-                    <th id="sort-due-date">Son Ödeme Tarihi <i class="material-icons sort-icon">unfold_more</i></th>
-                    <th id="sort-status">Durum <i class="material-icons sort-icon">unfold_more</i></th>
-                    <th>İşlemler</th>
+                    <th id="sort-name" class="sortable-header">
+                        <div class="header-content">
+                            <i class="material-icons text-secondary me-1">person</i>
+                            <span>Ad</span>
+                            <i class="material-icons sort-icon">unfold_more</i>
+                        </div>
+                    </th>
+                    <th id="sort-surname" class="sortable-header">
+                        <div class="header-content">
+                            <i class="material-icons text-secondary me-1">person_outline</i>
+                            <span>Soyad</span>
+                            <i class="material-icons sort-icon">unfold_more</i>
+                        </div>
+                    </th>
+                    <th id="sort-tc" class="sortable-header">
+                        <div class="header-content">
+                            <i class="material-icons text-secondary me-1">badge</i>
+                            <span>TC Kimlik No</span>
+                            <i class="material-icons sort-icon">unfold_more</i>
+                        </div>
+                    </th>
+                    <th id="sort-amount" class="sortable-header">
+                        <div class="header-content">
+                            <i class="material-icons text-secondary me-1">payments</i>
+                            <span>Tutar</span>
+                            <i class="material-icons sort-icon">unfold_more</i>
+                        </div>
+                    </th>
+                    <th id="sort-installments" class="sortable-header">
+                        <div class="header-content">
+                            <i class="material-icons text-secondary me-1">schedule</i>
+                            <span>Taksit Sayısı</span>
+                            <i class="material-icons sort-icon">unfold_more</i>
+                        </div>
+                    </th>
+                    <th id="sort-registration-date" class="sortable-header">
+                        <div class="header-content">
+                            <i class="material-icons text-secondary me-1">event</i>
+                            <span>Borç Tarihi</span>
+                            <i class="material-icons sort-icon">unfold_more</i>
+                        </div>
+                    </th>
+                    <th id="sort-due-date" class="sortable-header">
+                        <div class="header-content">
+                            <i class="material-icons text-secondary me-1">event_note</i>
+                            <span>Son Ödeme Tarihi</span>
+                            <i class="material-icons sort-icon">unfold_more</i>
+                        </div>
+                    </th>
+                    <th id="sort-status" class="sortable-header">
+                        <div class="header-content">
+                            <i class="material-icons text-secondary me-1">info</i>
+                            <span>Durum</span>
+                            <i class="material-icons sort-icon">unfold_more</i>
+                        </div>
+                    </th>
+                    <th class="action-header">
+                        <div class="header-content">
+                            <i class="material-icons text-secondary me-1">settings</i>
+                            <span>İşlemler</span>
+                        </div>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -114,14 +168,18 @@
 
     <!-- Düzenleme Modalı -->
     <div id="editModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Ödeme Düzenle</h2>
-                <span class="close">&times;</span>
+        <div class="modal-content modern-edit-modal">
+            <div class="modal-header modern-edit-header">
+                <div class="modal-title-container">
+                    <i class="material-icons modal-icon">edit</i>
+                    <h2>Ödeme Düzenle</h2>
+                </div>
+                <span class="close modern-edit-close">&times;</span>
             </div>
             <form id="editForm">
                 <input type="hidden" id="editClientId" name="editClientId">
-                <div class="modal-body">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body modern-edit-body">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="editName">Ad</label>
@@ -190,9 +248,15 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary" id="saveEditBtn">Kaydet</button>
-                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Kapat</button>
+                <div class="modal-footer modern-edit-footer">
+                    <button type="submit" class="btn modern-save-btn" id="saveEditBtn">
+                        <i class="material-icons">save</i>
+                        Kaydet
+                    </button>
+                    <button type="button" class="btn modern-cancel-btn">
+                        <i class="material-icons">close</i>
+                        Kapat
+                    </button>
                 </div>
             </form>
         </div>
@@ -633,12 +697,13 @@
         /* Durum rozeti stilleri */
         .status-badge {
             display: inline-block;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 500;
             text-align: center;
-            min-width: 100px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            min-width: 70px;
+            font-size: 0.8rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
         
@@ -719,7 +784,7 @@
             to { transform: translateY(0); opacity: 1; }
         }
         
-        .modal-header {
+        #editModal .modal-header {
             padding: 20px 25px;
             border-bottom: 1px solid #eee;
             display: flex;
@@ -727,19 +792,19 @@
             align-items: center;
         }
         
-        .modal-header h2 {
+        #editModal .modal-header h2 {
             margin: 0;
             font-size: 1.5rem;
             color: #333;
             font-weight: 600;
         }
         
-        .modal-body {
+        #editModal .modal-body {
             padding: 25px;
             overflow-y: visible;
         }
         
-        .modal-footer {
+        #editModal .modal-footer {
             padding: 20px 25px;
             border-top: 1px solid #eee;
             display: flex;
@@ -956,29 +1021,221 @@
             background-color: #138496;
         }
 
-        #odemeDetayModalBody .detail-group {
-            margin-bottom: 1rem;
-        }
-        #odemeDetayModalBody .detail-label {
-            font-weight: bold;
-            color: #555;
-            margin-bottom: 0.3rem;
-        }
-        #odemeDetayModalBody .detail-value {
-            padding: 0.5rem;
-            background-color: #f8f9fa;
-            border-radius: 0.25rem;
-            border: 1px solid #e9ecef;
-            word-wrap: break-word;
-        }
-        #odemeDetayModalBody .status-paid {
-            color: #28a745;
-            font-weight: bold;
-        }
-        #odemeDetayModalBody .status-unpaid {
-            color: #dc3545;
-            font-weight: bold;
-        }
+        
+
+         /* Modern Edit Modal Styles */
+         .modern-edit-modal {
+             border: none;
+             border-radius: 16px;
+             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+             background: white;
+         }
+
+         .modern-edit-header {
+             background: linear-gradient(135deg, #2d313c 0%, #3c404d 100%);
+             color: white !important;
+             border-radius: 16px 16px 0 0;
+             border: none;
+             padding: 1.5rem 2rem;
+         }
+
+         .modern-edit-header h2 {
+             color: white !important;
+             margin: 0;
+             font-size: 1.5rem;
+             font-weight: 600;
+         }
+
+         .modern-edit-header .modal-icon {
+             color: white !important;
+             opacity: 0.9;
+         }
+
+         .modern-edit-close {
+             background: rgba(255, 255, 255, 0.1);
+             border: none;
+             border-radius: 50%;
+             color: white;
+             opacity: 0.8;
+             transition: all 0.3s ease;
+             width: 35px;
+             height: 35px;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             cursor: pointer;
+             font-size: 1.2rem;
+         }
+
+         .modern-edit-close:hover {
+             background: rgba(255, 255, 255, 0.2);
+             opacity: 1;
+             transform: scale(1.1);
+         }
+
+         .modern-edit-body {
+             padding: 2rem;
+             background: #f8f9fa;
+         }
+
+         .modern-edit-body .form-row {
+             display: flex;
+             gap: 1rem;
+             margin-bottom: 1.5rem;
+         }
+
+         .modern-edit-body .form-group {
+             flex: 1;
+         }
+
+         .modern-edit-body .form-group label {
+             color: #2d313c;
+             font-weight: 600;
+             margin-bottom: 0.5rem;
+             display: block;
+             font-size: 0.9rem;
+         }
+
+         .modern-edit-body .form-control {
+             border: 2px solid #e9ecef;
+             border-radius: 8px;
+             padding: 0.75rem;
+             transition: all 0.3s ease;
+             background: white;
+         }
+
+         .modern-edit-body .form-control:focus {
+             border-color: #2d313c;
+             box-shadow: 0 0 0 0.2rem rgba(45, 49, 60, 0.1);
+         }
+
+         .modern-edit-body .amount-input {
+             display: flex;
+             gap: 0.5rem;
+         }
+
+         .modern-edit-body .amount-input input {
+             flex: 3;
+             min-width: 150px;
+         }
+
+         .modern-edit-body .currency-select {
+             flex: 1;
+             max-width: 80px;
+         }
+
+         .modern-edit-body .toggle-container {
+             display: flex;
+             align-items: center;
+             gap: 1rem;
+             padding: 0.75rem 0;
+         }
+
+         .modern-edit-body .toggle-switch {
+             position: relative;
+             display: inline-block;
+             width: 60px;
+             height: 30px;
+         }
+
+         .modern-edit-body .toggle-switch input {
+             opacity: 0;
+             width: 0;
+             height: 0;
+         }
+
+         .modern-edit-body .toggle-switch label {
+             position: absolute;
+             cursor: pointer;
+             top: 0;
+             left: 0;
+             right: 0;
+             bottom: 0;
+             background-color: #ccc;
+             transition: .4s;
+             border-radius: 30px;
+         }
+
+         .modern-edit-body .toggle-switch label:before {
+             position: absolute;
+             content: "";
+             height: 22px;
+             width: 22px;
+             left: 4px;
+             bottom: 4px;
+             background-color: white;
+             transition: .4s;
+             border-radius: 50%;
+         }
+
+         .modern-edit-body .toggle-switch input:checked + label {
+             background-color: #28a745;
+         }
+
+         .modern-edit-body .toggle-switch input:checked + label:before {
+             transform: translateX(30px);
+         }
+
+         .modern-edit-body .status-text {
+             color: #495057;
+             font-weight: 600;
+             margin: 0;
+         }
+
+         .modern-edit-body .textarea-container textarea {
+             min-height: 100px;
+             resize: vertical;
+         }
+
+         .modern-edit-footer {
+             background: white;
+             border-top: 1px solid #e9ecef;
+             border-radius: 0 0 16px 16px;
+             padding: 1.5rem 2rem;
+             display: flex;
+             gap: 1rem;
+             justify-content: flex-end;
+         }
+
+         .modern-save-btn {
+             background: linear-gradient(135deg, #2d313c, #3c404d);
+             color: white !important;
+             border: none;
+             border-radius: 8px;
+             padding: 0.75rem 1.5rem;
+             font-weight: 600;
+             display: flex;
+             align-items: center;
+             gap: 0.5rem;
+             transition: all 0.3s ease;
+         }
+
+         .modern-save-btn:hover {
+             background: linear-gradient(135deg, #3c404d, #4a4e5b);
+             transform: translateY(-2px);
+             box-shadow: 0 5px 15px rgba(45, 49, 60, 0.3);
+             color: white !important;
+         }
+
+         .modern-cancel-btn {
+             background: #6c757d;
+             color: white;
+             border: none;
+             border-radius: 8px;
+             padding: 0.75rem 1.5rem;
+             font-weight: 600;
+             display: flex;
+             align-items: center;
+             gap: 0.5rem;
+             transition: all 0.3s ease;
+         }
+
+         .modern-cancel-btn:hover {
+             background: #5a6268;
+             transform: translateY(-2px);
+             box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+             color: white;
+         }
 
         .sort-icon {
             font-size: 16px;
@@ -1565,93 +1822,7 @@
             z-index: 1060 !important; /* Diğer bootstrap modallarının ve backdrop'un üzerinde olmalı */
         }
 
-        /* Yeni Ödeme Detayları Modal Stilleri - Basitleştirilmiş */
-        #paymentDetailModal .modal-header {
-            background-color: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-            padding: 1rem 1.5rem;
-        }
-        
-        #paymentDetailModal .modal-title {
-            color: #343a40;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-        
-        #paymentDetailModal .modal-body {
-            padding: 1.5rem;
-            background-color: #fff;
-        }
-        
-        /* Detay tablo stilleri */
-        .payment-detail-table {
-            width: 100%;
-            margin-bottom: 1rem;
-        }
-        
-        .payment-detail-table th {
-            width: 40%;
-            text-align: left;
-            padding: 0.5rem;
-            font-weight: 600;
-            color: #495057;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-        }
-        
-        .payment-detail-table td {
-            width: 60%;
-            text-align: left;
-            padding: 0.5rem;
-            color: #212529;
-            border: 1px solid #dee2e6;
-        }
-        
-        .payment-detail-section {
-            margin-bottom: 1.5rem;
-            border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
-            overflow: hidden;
-        }
-        
-        .payment-detail-section h6 {
-            margin: 0;
-            padding: 0.75rem;
-            background-color: #e9ecef;
-            font-weight: 600;
-            color: #343a40;
-            border-bottom: 1px solid #dee2e6;
-        }
-        
-        .status-paid {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-weight: 600;
-        }
-        
-        .status-unpaid {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-weight: 600;
-        }
 
-        /* Modal içeriğinin taşması durumunda düzgün görünmesi */
-        #paymentDetailModal .modal-body {
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-        
-        #paymentDetailModal .modal-footer {
-            position: sticky;
-            bottom: 0;
-            background-color: #fff;
-            border-top: 1px solid #dee2e6;
-            z-index: 1;
-        }
     </style>
 
     <script>
@@ -1699,7 +1870,7 @@
             // Modal kapatma butonları için event listener'lar ekle
             if (editModalElement) { 
                 const closeBtn = editModalElement.querySelector('.close');
-                const closeModalBtn = editModalElement.querySelector('.btn-secondary');
+                const closeModalBtn = editModalElement.querySelector('.modern-cancel-btn');
                 
                 if (closeBtn) {
                     closeBtn.addEventListener('click', function() {
@@ -1932,16 +2103,53 @@
                 return;
             }
             
-            // Form verisini oluştur
-            const formData = new FormData(formElement);
+            // CSRF token al - önce global değişkeni kontrol et, sonra form elemanını
+            let csrfTokenValue = '';
             
-            // Form verisini gönder - değerleri olduğu gibi bırakıyoruz
+            // Global CSRF_TOKEN değişkeni varsa kullan
+            if (typeof CSRF_TOKEN !== 'undefined') {
+                csrfTokenValue = CSRF_TOKEN;
+                console.log('Global CSRF Token kullanıldı');
+            } else {
+                // Form içinden CSRF token al
+                const csrfTokenElement = document.querySelector('input[name="csrf_token"]');
+                csrfTokenValue = csrfTokenElement ? csrfTokenElement.value : '';
+                console.log('Form CSRF Token kullanıldı');
+            }
+            
+            console.log('CSRF Token bulundu:', csrfTokenValue ? 'Evet' : 'Hayır');
+            console.log('CSRF Token değeri:', csrfTokenValue.substring(0, 10) + '...');
+            
+            // Form verisini manuel olarak oluştur
+            const formData = new FormData();
+            formData.append('name', document.getElementById('name').value);
+            formData.append('surname', document.getElementById('surname').value);
+            formData.append('tc', document.getElementById('tc').value);
+            formData.append('amount', document.getElementById('amount').value);
+            formData.append('currency', document.getElementById('currency').value);
+            formData.append('installments', document.getElementById('installments').value);
+            formData.append('registration_date', document.getElementById('registration_date').value);
+            formData.append('due_date', document.getElementById('due_date').value);
+            
+            // CSRF token ekle (eğer varsa)
+            if (csrfTokenValue) {
+                formData.append('csrf_token', csrfTokenValue);
+            }
+            
+            // Form verisini gönder
             fetch('/odemeler', {
                 method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfTokenValue
+                },
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('Response data:', data);
                 if (data.success) {
                     // Başarılı olduysa sayfayı yenile
                     window.location.reload();
@@ -1952,7 +2160,7 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Ödeme kaydedilemedi: ' + error);
+                alert('Ödeme kaydedilemedi: ' + error.message);
             });
         }
 
@@ -4085,292 +4293,7 @@
             });
         }
 
-        // Yeni Ödeme Detayları Modalını Yönetmek İçin Event Listener
-        document.querySelectorAll('.view-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                console.log("[.view-btn Click] View button clicked for paymentId:", this.getAttribute('data-payment-id'));
-                
-                // Diğer modalları kesin olarak gizle (önlem olarak)
-                const editModalElement = document.getElementById('editModal');
-                if (editModalElement) editModalElement.style.display = 'none';
-                const statsModalElement = document.getElementById('statsModal');
-                if (statsModalElement) statsModalElement.style.display = 'none';
-                
-                // Modal'ı göster
-                const paymentId = this.getAttribute('data-payment-id');
-                
-                // API'den detayları yükle
-                const modalBody = document.getElementById('odemeDetayModalBody');
-                const modalLabel = document.getElementById('paymentDetailModalLabel');
-                
-                if (!modalBody) {
-                    console.error("Modal body elemanı bulunamadı: odemeDetayModalBody");
-                    return;
-                }
-                
-                // Yükleniyor animasyonu göster
-                modalBody.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Yükleniyor...</span></div></div>';
-                
-                // Modal'ı göster
-                const paymentDetailModal = new bootstrap.Modal(document.getElementById('paymentDetailModal'));
-                // Modalın data-current-payment-id özelliğini ayarla
-                document.getElementById('paymentDetailModal').setAttribute('data-current-payment-id', paymentId);
-                paymentDetailModal.show();
-                
-                // API'den verileri çek
-                fetch(`/api/odeme_detay/${paymentId}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log("API yanıtı:", data);
-                        
-                        if (data.error) {
-                            modalBody.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
-                            return;
-                        }
-                        
-                        // Başlık güncelleme
-                        if (modalLabel) {
-                            modalLabel.textContent = `Ödeme Detayları: ${data.name || 'N/A'} ${data.surname || ''}`;
-                        }
-                        
-                        // Para birimi düzeltme (TL -> TRY)
-                        let displayCurrency = data.currency || 'TL';
-                        if (displayCurrency.toUpperCase() === 'TL') {
-                            displayCurrency = 'TRY';
-                        }
-                        
-                        // İçerik oluşturma - Basit tablo yapısı
-                        let html = '';
-                        
-                        // Müvekkil Bilgileri Bölümü
-                        html += `
-                        <div class="payment-detail-section">
-                            <h6>Müvekkil Bilgileri</h6>
-                            <table class="payment-detail-table">
-                                <tr>
-                                    <th>Ad Soyad</th>
-                                    <td>${data.name || '-'} ${data.surname || ''}</td>
-                                </tr>
-                                <tr>
-                                    <th>TC Kimlik No</th>
-                                    <td>${data.tc || '-'}</td>
-                                </tr>
-                            </table>
-                        </div>`;
-                        
-                        // Borç Bilgileri Bölümü
-                        html += `
-                        <div class="payment-detail-section">
-                            <h6>Borç Bilgileri</h6>
-                            <table class="payment-detail-table">
-                                <tr>
-                                    <th>Tutar</th>
-                                    <td>${parseFloat(data.amount || 0).toLocaleString('tr-TR', {
-                                        style: 'currency',
-                                        currency: displayCurrency
-                                    })}</td>
-                                </tr>
-                                <tr>
-                                    <th>Taksit Sayısı</th>
-                                    <td>${data.installments || '1'}</td>
-                                </tr>
-                                <tr>
-                                    <th>Borç Kayıt Tarihi</th>
-                                    <td>${data.registration_date || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <th>Son Ödeme Tarihi</th>
-                                    <td>${data.due_date || '-'}</td>
-                                </tr>
-                            </table>
-                        </div>`;
-                        
-                        // Durum ve Açıklama Bölümü
-                        html += `
-                        <div class="payment-detail-section">
-                            <h6>Durum ve Açıklama</h6>
-                            <table class="payment-detail-table">
-                                <tr>
-                                    <th>Ödeme Durumu</th>
-                                    <td>${data.status === 'Ödendi' 
-                                        ? '<span class="status-paid">Ödendi</span>' 
-                                        : '<span class="status-unpaid">Ödenmedi</span>'}</td>
-                                </tr>
-                                <tr>
-                                    <th>Açıklama</th>
-                                    <td>${data.description || 'Açıklama bulunmuyor.'}</td>
-                                </tr>
-                            </table>
-                        </div>`;
-                        
-                        // Ödeme Geçmişi Bölümü (varsa)
-                        if (data.payment_history && data.payment_history.length > 0) {
-                            html += `
-                            <div class="payment-detail-section">
-                                <h6>Ödeme Geçmişi</h6>
-                                <table class="payment-detail-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Tarih</th>
-                                            <th>Tutar</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                            
-                            data.payment_history.forEach(payment => {
-                                html += `
-                                        <tr>
-                                            <td>${payment.date || '-'}</td>
-                                            <td>${parseFloat(payment.amount || 0).toLocaleString('tr-TR', {
-                                                style: 'currency',
-                                                currency: displayCurrency
-                                            })}</td>
-                                        </tr>`;
-                            });
-                            
-                            html += `
-                                    </tbody>
-                                </table>
-                            </div>`;
-                        }
-                        
-                        modalBody.innerHTML = html;
-                        console.log("Modal içeriği güncellendi");
-                        
-                        // Düzenle butonuna olay dinleyici ekle
-                        const editBtn = document.getElementById('detailsEditBtn');
-                        if (editBtn) {
-                            // Eski event listener'ları temizle
-                            const newEditBtn = editBtn.cloneNode(true);
-                            editBtn.parentNode.replaceChild(newEditBtn, editBtn);
-                            
-                            // Yeni event listener ekle
-                            newEditBtn.addEventListener('click', function() {
-                                console.log("Düzenle butonuna tıklandı, paymentId:", paymentId);
-                                
-                                // Mevcut modalı kapat
-                                const detailModalInstance = bootstrap.Modal.getInstance(document.getElementById('paymentDetailModal'));
-                                if (detailModalInstance) {
-                                    detailModalInstance.hide();
-                                    console.log("Detay modalı kapatıldı");
-                                } else {
-                                    console.error("Detay modal instance bulunamadı!");
-                                }
-                                
-                                // Düzenleme modalını aç ve doldur
-                                editModalElement.style.display = 'block';
-                                console.log("Düzenleme modalı açıldı");
-                                
-                                // Uygun satırı bul - Hem data-client-id hem de data-id özniteliklerini kontrol et
-                                let targetRow = document.querySelector(`tr[data-client-id="${paymentId}"]`);
-                                if (!targetRow) {
-                                    // data-client-id bulunamadıysa data-id'yi dene
-                                    targetRow = document.querySelector(`tr[data-id="${paymentId}"]`);
-                                    console.log("data-id ile satır bulundu:", targetRow ? "Evet" : "Hayır");
-                                } else {
-                                    console.log("data-client-id ile satır bulundu");
-                                }
-                                
-                                if (!targetRow) {
-                                    console.error("Müvekkil satırı bulunamadı! Satır ID:", paymentId);
-                                    alert("Müvekkil satırı bulunamadı! Lütfen sayfayı yenileyip tekrar deneyin.");
-                                    return;
-                                }
-                                
-                                // Form alanlarını doldur
-                                document.getElementById('editClientId').value = paymentId;
-                                document.getElementById('editName').value = targetRow.cells[0].textContent.trim();
-                                document.getElementById('editSurname').value = targetRow.cells[1].textContent.trim();
-                                document.getElementById('editTc').value = targetRow.cells[2].textContent.trim();
-                                
-                                // Tutar ve para birimi
-                                const amountText = targetRow.cells[3].textContent.trim();
-                                const amountParts = amountText.split(' ');
-                                document.getElementById('editAmount').value = amountParts[0] || '';
-                                if (amountParts.length > 1) {
-                                    document.getElementById('editCurrency').value = amountParts[amountParts.length - 1];
-                                }
-                                
-                                document.getElementById('editInstallments').value = targetRow.cells[4].textContent.trim();
-                                
-                                // Tarihler
-                                const regDateText = targetRow.cells[5].textContent.trim();
-                                if (regDateText && regDateText !== '-') {
-                                    const dateParts = regDateText.split('.');
-                                    if (dateParts.length === 3) {
-                                        document.getElementById('editRegistrationDate').value = 
-                                            `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
-                                    }
-                                }
-                                
-                                const dueDateText = targetRow.cells[6].textContent.trim();
-                                if (dueDateText && dueDateText !== '-') {
-                                    const dateParts = dueDateText.split('.');
-                                    if (dateParts.length === 3) {
-                                        document.getElementById('editDueDate').value = 
-                                            `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
-                                    }
-                                }
-                                
-                                // Status değeri
-                                const isPaid = targetRow.cells[7].textContent.trim().includes('Ödendi');
-                                const editStatusCheckbox = document.getElementById('editStatus');
-                                const statusTextSpan = editModalElement.querySelector('.status-text');
-                                
-                                if (editStatusCheckbox) editStatusCheckbox.checked = isPaid;
-                                if (statusTextSpan) statusTextSpan.textContent = isPaid ? 'Ödendi' : 'Ödenmedi';
-                                
-                                // Açıklama
-                                const description = targetRow.getAttribute('data-description');
-                                document.getElementById('editDescription').value = 
-                                    description === 'None' || !description ? '' : description;
-                                
-                                // Form submit işlemi
-                                const editForm = document.getElementById('editForm');
-                                if (editForm) {
-                                    editForm.onsubmit = function(event) {
-                                        event.preventDefault();
-                                        const clientIdToUpdate = document.getElementById('editClientId').value;
-                                        window.updateClient(clientIdToUpdate);
-                                    };
-                                }
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Ödeme detayları yüklenirken hata:", error);
-                        modalBody.innerHTML = `<div class="alert alert-danger">Ödeme detayları yüklenirken bir hata oluştu: ${error.message}</div>`;
-                    });
-            });
-        });
 
-        // Yeni yardımcı fonksiyon
-        function newCreateDetailGroup(title, items, customHtmlContent = '') {
-            let groupHtml = `<div class="detail-section">
-                            <h6 class="detail-section-title">${title}</h6>
-                            <div class="detail-section-content">`;
-            if (items.length > 0) {
-                groupHtml += '<dl>'; // dl elementinden class="row" kaldırıldı
-                items.forEach(item => {
-                    // dt ve dd'den col-sm-* sınıfları kaldırıldı, detail-item div'i eklendi
-                    groupHtml += `<div class="detail-item">
-                                     <dt>${item.label}:</dt>
-                                     <dd>${item.value}</dd>
-                                 </div>`;
-                });
-                groupHtml += '</dl>';
-            }
-            if (customHtmlContent) {
-                groupHtml += `<div class="mt-2">${customHtmlContent}</div>`;
-            }
-            groupHtml += '   </div>\n                      </div>';
-            return groupHtml;
-        }
 
         // Diğer event listener'lar ve fonksiyonlar burada kalacak (savePayment, updateClient, openEditModal, deletePayment, generateStats vb.)
         window.savePayment = savePayment;
@@ -4385,6 +4308,35 @@
             const form = document.getElementById('editForm');
             const formData = new FormData(form);
             
+            // CSRF token'ı al
+            let csrfToken = null;
+            
+            // Global değişkenden al
+            if (typeof window.csrf_token !== 'undefined') {
+                csrfToken = window.csrf_token;
+                console.log('CSRF token global değişkenden alındı:', csrfToken);
+            }
+            
+            // Formdan al
+            const formCsrfInput = form.querySelector('input[name="csrf_token"]');
+            if (formCsrfInput && formCsrfInput.value) {
+                csrfToken = formCsrfInput.value;
+                console.log('CSRF token formdan alındı:', csrfToken);
+            }
+            
+            // Meta tag'den al
+            const metaCsrf = document.querySelector('meta[name="csrf-token"]');
+            if (metaCsrf && metaCsrf.content) {
+                csrfToken = metaCsrf.content;
+                console.log('CSRF token meta tagden alındı:', csrfToken);
+            }
+            
+            if (!csrfToken) {
+                console.error('CSRF token bulunamadı!');
+                alert('Güvenlik token\'ı bulunamadı. Sayfayı yenileyin.');
+                return;
+            }
+            
             // Form verilerini JSON'a dönüştür
             const data = {};
             formData.forEach((value, key) => {
@@ -4396,17 +4348,23 @@
                 }
             });
 
+            // CSRF token'ı ekle
+            data['csrf_token'] = csrfToken;
+
             // Ödeme durumunu manuel olarak al ve ekle
             const editStatusCheckbox = document.getElementById('editStatus');
             if (editStatusCheckbox) {
                 data['status'] = editStatusCheckbox.checked ? 'Ödendi' : 'Ödenmedi';
             }
             
+            console.log('Gönderilecek veri:', data);
+            
             try {
                 const response = await fetch(`/update_client/${client_id}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
                     },
                     body: JSON.stringify(data)
                 });
@@ -4492,29 +4450,598 @@
             }
         }
 
-    </script>
+        // YENİ BASİT VE GÜZEL ÖDEME DETAYLARI MODALI
+        document.querySelectorAll('.view-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const paymentId = this.getAttribute('data-payment-id');
+                showPaymentDetailModal(paymentId);
+            });
+        });
 
-    <!-- YENİ ÖDEME DETAY MODALI -->
-    <div class="modal fade" id="paymentDetailModal" tabindex="-1" aria-labelledby="paymentDetailModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="paymentDetailModalLabel">Ödeme Detayları</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
-                </div>
-                <div class="modal-body" id="odemeDetayModalBody">
-                    <!-- İçerik JavaScript ile doldurulacak -->
-                    <div class="text-center">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Yükleniyor...</span>
+        function showPaymentDetailModal(paymentId) {
+            fetch(`/api/odeme_detay/${paymentId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Hata: ' + data.error);
+                        return;
+                    }
+                    createSimpleModal(data, paymentId);
+                })
+                .catch(error => {
+                    console.error('Hata:', error);
+                    alert('Ödeme detayları yüklenirken bir hata oluştu.');
+                });
+        }
+
+        function createSimpleModal(data, paymentId) {
+            const oldModal = document.getElementById('paymentDetailModal');
+            if (oldModal) oldModal.remove();
+
+            let displayCurrency = data.currency || 'TL';
+            if (displayCurrency.toUpperCase() === 'TL') {
+                displayCurrency = 'TRY';
+            }
+
+            const modalHtml = `
+            <div class="modal fade" id="paymentDetailModal" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content modern-payment-modal">
+                        <div class="modal-header modern-payment-header">
+                            <div class="header-left">
+                                <div class="modal-icon">
+                                    <i class="material-icons">receipt_long</i>
+                                </div>
+                                <div class="header-text">
+                                    <h5 class="modal-title">Ödeme Detayları</h5>
+                                    <p class="modal-subtitle">Müvekkil bilgileri ve ödeme durumu</p>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Kapat">
+                                <i class="material-icons">close</i>
+                            </button>
+                        </div>
+                        <div class="modal-body modern-payment-body">
+                            <div class="payment-card main-card">
+                                <div class="card-header">
+                                    <div class="client-avatar">
+                                        <i class="material-icons">account_circle</i>
+                                    </div>
+                                    <div class="client-details">
+                                        <h6 class="client-name">${data.name || 'N/A'} ${data.surname || ''}</h6>
+                                        <p class="client-tc">TC: ${data.tc || '-'}</p>
+                                    </div>
+                                    <div class="payment-status-badge ${data.status === 'Ödendi' ? 'paid' : 'unpaid'}">
+                                        <i class="material-icons">${data.status === 'Ödendi' ? 'verified' : 'schedule'}</i>
+                                        <span>${data.status === 'Ödendi' ? 'Ödendi' : 'Bekliyor'}</span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="amount-section">
+                                        <div class="amount-label">Toplam Tutar</div>
+                                        <div class="amount-value">
+                                            ${parseFloat(data.amount || 0).toLocaleString('tr-TR', {
+                                                style: 'currency',
+                                                currency: displayCurrency
+                                            })}
+                                        </div>
+                                        <div class="installment-info">${data.installments || '1'} taksit</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="payment-card info-card">
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <div class="info-icon">
+                                            <i class="material-icons">event_note</i>
+                                        </div>
+                                        <div class="info-content">
+                                            <div class="info-label">Borç Kayıt Tarihi</div>
+                                            <div class="info-value">${data.registration_date || 'Belirtilmemiş'}</div>
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-icon">
+                                            <i class="material-icons">schedule</i>
+                                        </div>
+                                        <div class="info-content">
+                                            <div class="info-label">Son Ödeme Tarihi</div>
+                                            <div class="info-value">${data.due_date || 'Belirtilmemiş'}</div>
+                                        </div>
+                                    </div>
+                                    <div class="info-item full-width">
+                                        <div class="info-icon">
+                                            <i class="material-icons">description</i>
+                                        </div>
+                                        <div class="info-content">
+                                            <div class="info-label">Açıklama</div>
+                                            <div class="info-value description-text">${data.description || 'Bu ödeme için herhangi bir açıklama eklenmemiş.'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer modern-payment-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                <i class="material-icons">close</i>
+                                <span>Kapat</span>
+                            </button>
+                            <button type="button" class="btn btn-primary modern-edit-btn" onclick="editPayment('${paymentId}')">
+                                <i class="material-icons">edit</i>
+                                <span>Düzenle</span>
+                            </button>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="detailsEditBtn">Düzenle</button>
-                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Kapat</button>
-                </div>
-            </div>
-        </div>
-    </div>
+            </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('paymentDetailModal'));
+            modal.show();
+
+            document.getElementById('paymentDetailModal').addEventListener('hidden.bs.modal', function() {
+                this.remove();
+            });
+        }
+
+        function editPayment(paymentId) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('paymentDetailModal'));
+            if (modal) modal.hide();
+
+            const editModalElement = document.getElementById('editModal');
+            if (editModalElement) {
+                editModalElement.style.display = 'block';
+                let targetRow = document.querySelector(`tr[data-client-id="${paymentId}"]`);
+                if (!targetRow) {
+                    targetRow = document.querySelector(`tr[data-id="${paymentId}"]`);
+                }
+                if (targetRow) {
+                    fillEditForm(targetRow, paymentId);
+                }
+            }
+        }
+
+        function fillEditForm(targetRow, paymentId) {
+            document.getElementById('editClientId').value = paymentId;
+            document.getElementById('editName').value = targetRow.cells[0].textContent.trim();
+            document.getElementById('editSurname').value = targetRow.cells[1].textContent.trim();
+            document.getElementById('editTc').value = targetRow.cells[2].textContent.trim();
+
+            const amountText = targetRow.cells[3].textContent.trim();
+            const amountParts = amountText.split(' ');
+            document.getElementById('editAmount').value = amountParts[0] || '';
+            if (amountParts.length > 1) {
+                document.getElementById('editCurrency').value = amountParts[amountParts.length - 1];
+            }
+
+            document.getElementById('editInstallments').value = targetRow.cells[4].textContent.trim();
+
+            const regDateText = targetRow.cells[5].textContent.trim();
+            if (regDateText && regDateText !== '-') {
+                const dateParts = regDateText.split('.');
+                if (dateParts.length === 3) {
+                    document.getElementById('editRegistrationDate').value = 
+                        `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+                }
+            }
+
+            const dueDateText = targetRow.cells[6].textContent.trim();
+            if (dueDateText && dueDateText !== '-') {
+                const dateParts = dueDateText.split('.');
+                if (dateParts.length === 3) {
+                    document.getElementById('editDueDate').value = 
+                        `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+                }
+            }
+
+            const isPaid = targetRow.cells[7].textContent.trim().includes('Ödendi');
+            const editStatusCheckbox = document.getElementById('editStatus');
+            const statusTextSpan = document.querySelector('.status-text');
+            
+            if (editStatusCheckbox) editStatusCheckbox.checked = isPaid;
+            if (statusTextSpan) statusTextSpan.textContent = isPaid ? 'Ödendi' : 'Ödenmedi';
+
+            const description = targetRow.getAttribute('data-description');
+            document.getElementById('editDescription').value = 
+                description === 'None' || !description ? '' : description;
+        }
+
+    </script>
+
+
+
+    <style>
+    /* Modern Tablo Tasarımı */
+    .modern-table {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: none;
+    }
+
+    .modern-header {
+        background: linear-gradient(135deg, #2d313c 0%, #3c404d 100%);
+        color: white;
+    }
+
+    .modern-header th {
+        border: none;
+        padding: 1rem 0.75rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        letter-spacing: 0.5px;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.5rem;
+    }
+
+    .header-content i.material-icons {
+        font-size: 1.1rem;
+        opacity: 0.7;
+    }
+
+    .header-content .sort-icon {
+        margin-left: auto;
+        opacity: 0.5;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .sortable-header:hover .sort-icon {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    .sortable-header {
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .sortable-header:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .action-header .header-content {
+        justify-content: center;
+    }
+
+    /* Tablo satırları için modern stil */
+    .modern-table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .modern-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .modern-table tbody td {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+        border: none;
+    }
+
+    /* Input boyutları için ek stil */
+    .input-group input[type="text"]#amount {
+        min-width: 150px !important;
+        flex: 3 !important;
+    }
+
+    .input-group select#currency {
+        max-width: 80px !important;
+        flex: 1 !important;
+    }
+
+            /* MODERN ÖDEME MODAL CSS */
+        .modern-payment-modal {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .modern-payment-header {
+            background: linear-gradient(135deg, #2d313c 0%, #383e4a 100%);
+            border: none;
+            padding: 24px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .modal-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-icon .material-icons {
+            color: white;
+            font-size: 24px;
+        }
+
+        .header-text .modal-title {
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+        }
+
+        .modal-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.875rem;
+            margin: 0;
+        }
+
+        .modern-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        .modern-close .material-icons {
+            color: white;
+            font-size: 20px;
+        }
+
+        .modern-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        .modern-payment-body {
+            padding: 28px;
+            background: #f8f9fa;
+        }
+
+        .payment-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .main-card .card-header {
+            padding: 24px;
+            border-bottom: 1px solid #f1f3f4;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .client-avatar {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #e8f5e8, #f0f8ff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .client-avatar .material-icons {
+            color: #2d313c;
+            font-size: 32px;
+        }
+
+        .client-details {
+            flex: 1;
+        }
+
+        .client-name {
+            margin: 0 0 4px 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #2d313c;
+        }
+
+        .client-tc {
+            margin: 0;
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .payment-status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .payment-status-badge.paid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .payment-status-badge.unpaid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .payment-status-badge .material-icons {
+            font-size: 18px;
+        }
+
+        .main-card .card-body {
+            padding: 24px;
+        }
+
+        .amount-section {
+            text-align: center;
+        }
+
+        .amount-label {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .amount-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #2d313c;
+            margin-bottom: 6px;
+        }
+
+        .installment-info {
+            color: #6c757d;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .info-card {
+            padding: 24px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            gap: 12px;
+        }
+
+        .info-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .info-icon .material-icons {
+            color: #2d313c;
+            font-size: 20px;
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-label {
+            color: #6c757d;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            color: #2d313c;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .description-text {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #2d313c;
+            font-style: italic;
+        }
+
+        .modern-payment-footer {
+            background: white;
+            border: none;
+            padding: 20px 28px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .modern-payment-footer .btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .modern-edit-btn {
+            background: #2d313c !important;
+            border-color: #2d313c !important;
+        }
+
+        .modern-edit-btn:hover {
+            background: #3a4048 !important;
+            border-color: #3a4048 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(45, 49, 60, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .modern-payment-header {
+                padding: 20px;
+            }
+
+            .modern-payment-body {
+                padding: 20px;
+            }
+
+            .main-card .card-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 12px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .amount-value {
+                font-size: 1.5rem;
+            }
+
+            .modern-payment-footer {
+                padding: 20px;
+                flex-direction: column;
+            }
+        }
+    </style>
 {% endblock %}

@@ -1,12 +1,12 @@
 :root {
-    --primary-color: #1a1a2e;      /* Darker blue, closer to black */
+    --primary-color: #2d313c;      /* Main theme color */
     --secondary-color: #6c757d;    /* Grey */
     --accent-color: #6610f2;       /* Purple */
     --background-color: #f8f9fa;   /* Light grey background */
     --text-color: #212529;         /* Dark text */
     --text-light: #ffffff;         /* White text */
     --border-color: #dee2e6;       /* Light grey border */
-    --hover-color: #0b5ed7;        /* Hover effect */
+    --hover-color: #3c404d;        /* Hover effect - darker version of primary */
     --success-color: #198754;      /* Green */
     --warning-color: #ffc107;      /* Yellow */
     --danger-color: #dc3545;       /* Red */
@@ -1434,4 +1434,48 @@ input:checked + .slider:before {
 
 .search-button-container .btn:hover {
     background: var(--hover-color) !important;
+}
+
+/* Bootstrap Override - Mavi renkleri düzelt */
+.btn-primary {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: var(--hover-color) !important;
+    border-color: var(--hover-color) !important;
+    color: #ffffff !important;
+}
+
+.btn-outline-primary {
+    color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: #ffffff !important;
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.spinner-border.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.border-primary {
+    border-color: var(--primary-color) !important;
+}
+
+.bg-primary {
+    background-color: var(--primary-color) !important;
 }

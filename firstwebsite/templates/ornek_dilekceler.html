@@ -10,6 +10,26 @@
     /* Bu sayfaya özel stil ayarları buraya eklenebilir */
 }
 
+/* Sıralanabilir tablo stilleri */
+.sortable:hover {
+    background-color: #e9ecef !important;
+}
+
+.sortable .sort-icon {
+    transition: transform 0.2s ease;
+    color: #6c757d;
+}
+
+.sortable.asc .sort-icon {
+    transform: rotate(180deg);
+    color: #2d313c;
+}
+
+.sortable.desc .sort-icon {
+    transform: rotate(0deg);
+    color: #2d313c;
+}
+
 /* Toast stilleri sayfaya özel */
 .ornek-dilekceler-container .toast-container {
     position: fixed;
@@ -398,14 +418,14 @@ div.file-detail-modal[style*="flex"],
     </div>
 
     <!-- Dilekçe Listesi -->
-    <div class="row mt-2">
+    <div class="row">
         <div class="col-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-light">
-                    <h2 class="h5 mb-0 text-info"><i class="material-icons align-middle me-2">list</i>Dilekçeler</h2>
+            <div class="card shadow-sm" style="border: none !important;">
+                <div class="card-header bg-light" style="border-bottom: none !important;">
+                    <h2 class="h5 mb-0" style="color: #2d313c;"><i class="material-icons align-middle me-2">list</i>Dilekçeler</h2>
                 </div>
-                <div class="card-body">
-                    <div class="mb-4">
+                <div class="card-body" style="border-top: none !important;">
+                    <div class="mb-3">
                         <label for="listelenecekKategori" class="form-label fw-bold">Listelenecek Kategoriyi Seçin:</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light">
@@ -419,12 +439,18 @@ div.file-detail-modal[style*="flex"],
                     </div>
                     
                     <div class="table-responsive">
-                        <table class="table table-hover table-striped align-middle">
+                        <table class="table table-hover table-striped align-middle" id="dilekceTablosu">
                             <thead class="table-light">
                                 <tr>
-                                    <th scope="col" class="fw-bold">Dilekçe Adı</th>
-                                    <th scope="col" class="fw-bold">Kategori</th>
-                                    <th scope="col" class="fw-bold">Yüklenme Tarihi</th>
+                                    <th scope="col" class="fw-bold sortable" onclick="sortTable(0)" style="cursor: pointer; user-select: none;">
+                                        Dilekçe Adı <i class="material-icons sort-icon" style="font-size: 16px; vertical-align: middle;">unfold_more</i>
+                                    </th>
+                                    <th scope="col" class="fw-bold sortable" onclick="sortTable(1)" style="cursor: pointer; user-select: none;">
+                                        Kategori <i class="material-icons sort-icon" style="font-size: 16px; vertical-align: middle;">unfold_more</i>
+                                    </th>
+                                    <th scope="col" class="fw-bold sortable" onclick="sortTable(2)" style="cursor: pointer; user-select: none;">
+                                        Yüklenme Tarihi <i class="material-icons sort-icon" style="font-size: 16px; vertical-align: middle;">unfold_more</i>
+                                    </th>
                                     <th scope="col" class="fw-bold text-center">İşlemler</th>
                                 </tr>
                             </thead>
@@ -1168,6 +1194,95 @@ div.file-detail-modal[style*="flex"],
             showToast('Hata', 'İşlem sırasında bir hata oluştu', 'error');
         }
     };
+
+    // Tablo sıralama fonksiyonu
+    let sortDirection = {}; // Her sütun için sıralama yönünü takip et
+
+    function sortTable(columnIndex) {
+        const table = document.getElementById('dilekceTablosu');
+        const tbody = document.getElementById('dilekceTablosuBody');
+        const rows = Array.from(tbody.rows);
+        
+        // Boş tablo kontrolü
+        if (rows.length === 0 || (rows.length === 1 && rows[0].cells[0].colSpan > 1)) {
+            return;
+        }
+        
+        // Sıralama yönünü belirle
+        const currentDirection = sortDirection[columnIndex] || 'none';
+        let newDirection;
+        
+        if (currentDirection === 'none' || currentDirection === 'desc') {
+            newDirection = 'asc';
+        } else {
+            newDirection = 'desc';
+        }
+        
+        sortDirection[columnIndex] = newDirection;
+        
+        // Tüm başlık sınıflarını temizle
+        const headers = table.querySelectorAll('.sortable');
+        headers.forEach(header => {
+            header.classList.remove('asc', 'desc');
+            const icon = header.querySelector('.sort-icon');
+            if (icon) {
+                icon.textContent = 'unfold_more';
+            }
+        });
+        
+        // Aktif başlığı işaretle
+        const activeHeader = headers[columnIndex];
+        activeHeader.classList.add(newDirection);
+        const activeIcon = activeHeader.querySelector('.sort-icon');
+        if (activeIcon) {
+            activeIcon.textContent = newDirection === 'asc' ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
+        }
+        
+        // Satırları sırala
+        rows.sort((a, b) => {
+            let aVal, bVal;
+            
+            if (columnIndex === 0) { // Dilekçe Adı
+                aVal = a.cells[0].querySelector('div:last-child').textContent.trim().toLowerCase();
+                bVal = b.cells[0].querySelector('div:last-child').textContent.trim().toLowerCase();
+            } else if (columnIndex === 1) { // Kategori
+                aVal = a.cells[1].querySelector('.badge').textContent.trim().toLowerCase();
+                bVal = b.cells[1].querySelector('.badge').textContent.trim().toLowerCase();
+            } else if (columnIndex === 2) { // Yüklenme Tarihi
+                aVal = a.cells[2].querySelector('div:last-child').textContent.trim();
+                bVal = b.cells[2].querySelector('div:last-child').textContent.trim();
+                
+                // Tarihi çevir (dd.mm.yyyy formatından Date objesine)
+                const parseDate = (dateStr) => {
+                    const parts = dateStr.split('.');
+                    if (parts.length === 3) {
+                        return new Date(parts[2], parts[1] - 1, parts[0]);
+                    }
+                    return new Date(dateStr);
+                };
+                
+                aVal = parseDate(aVal);
+                bVal = parseDate(bVal);
+            }
+            
+            if (columnIndex === 2) { // Tarih karşılaştırması
+                if (newDirection === 'asc') {
+                    return aVal - bVal;
+                } else {
+                    return bVal - aVal;
+                }
+            } else { // String karşılaştırması
+                if (newDirection === 'asc') {
+                    return aVal.localeCompare(bVal, 'tr');
+                } else {
+                    return bVal.localeCompare(aVal, 'tr');
+                }
+            }
+        });
+        
+        // Sıralanmış satırları tabloya geri ekle
+        rows.forEach(row => tbody.appendChild(row));
+    }
 
     // Sayfa yüklendiğinde ilk listelemeleri yap
     document.addEventListener('DOMContentLoaded', function () {

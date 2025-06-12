@@ -5,6 +5,7 @@
 {% block content %}
     <div class="form-container">
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="input-group">
                 <label for="title">Başlık</label>
                 <input type="text" id="title" name="title" required>
@@ -79,14 +80,27 @@
             e.preventDefault();
             
             try {
+                // CSRF token al
+                let csrfToken = null;
+                const csrfInput = document.querySelector('input[name="csrf_token"]');
+                if (csrfInput && csrfInput.value) {
+                    csrfToken = csrfInput.value;
+                }
+                
+                if (!csrfToken) {
+                    throw new Error('CSRF token bulunamadı');
+                }
+                
                 const response = await fetch(`/duyuru_duzenle/${id}`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
                     },
                     body: JSON.stringify({
                         title: document.getElementById('editTitle').value,
-                        content: document.getElementById('editContent').value
+                        content: document.getElementById('editContent').value,
+                        csrf_token: csrfToken
                     })
                 });
                 
@@ -107,8 +121,27 @@
 
     function deleteAnnouncement(id) {
         if (confirm('Bu duyuruyu silmek istediğinize emin misiniz?')) {
+            // CSRF token al
+            let csrfToken = null;
+            const csrfInput = document.querySelector('input[name="csrf_token"]');
+            if (csrfInput && csrfInput.value) {
+                csrfToken = csrfInput.value;
+            }
+            
+            if (!csrfToken) {
+                alert('CSRF token bulunamadı. Sayfayı yenileyin.');
+                return;
+            }
+            
             fetch(`/duyuru_sil/${id}`, {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    csrf_token: csrfToken
+                })
             })
             .then(response => response.json())
             .then(result => {
