@@ -284,6 +284,71 @@
     padding: 20px;
 }
 
+/* Sadece alt modallar için animasyonlar */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+    to {
+        opacity: 1;
+        backdrop-filter: blur(8px);
+    }
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px) scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Sadece expense ve upload modalları için animasyonlar */
+.modal-content.expense-modal,
+.modal-content.upload-modal {
+    animation: modalSlideIn 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform-origin: center center;
+}
+
+/* Sadece expense ve upload modalları için hover efektleri */
+.modal-content.expense-modal:hover,
+.modal-content.upload-modal:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.2);
+}
+
+/* Masraf ve belge ekleme butonlarına özel animasyonlar */
+.modal-content.expense-modal .expense-group,
+.modal-content.upload-modal .detail-group {
+    animation: slideInUp 0.3s ease-out;
+    animation-fill-mode: both;
+}
+
+.modal-content.expense-modal .expense-group:nth-child(1) { animation-delay: 0.1s; }
+.modal-content.expense-modal .expense-group:nth-child(2) { animation-delay: 0.15s; }
+.modal-content.expense-modal .expense-group:nth-child(3) { animation-delay: 0.2s; }
+.modal-content.expense-modal .expense-group:nth-child(4) { animation-delay: 0.25s; }
+.modal-content.expense-modal .expense-group:nth-child(5) { animation-delay: 0.3s; }
+
+.modal-content.upload-modal .detail-group:nth-child(1) { animation-delay: 0.1s; }
+.modal-content.upload-modal .detail-group:nth-child(2) { animation-delay: 0.15s; }
+.modal-content.upload-modal .detail-group:nth-child(3) { animation-delay: 0.2s; }
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 .modal-content {
     background: white;
     width: 95%;
@@ -965,99 +1030,278 @@
     color: #dc3545;
 }
 
-/* Masraf ekleme modalı içeriğini güncelle */
-.modal-content expense-modal {
-    max-width: 800px;
+/* Masraf ve Belge Yükle Modalları - Sade Tasarım */
+.modal-content.expense-modal,
+.modal-content.upload-modal {
+    max-width: 600px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    background: white;
+}
+
+/* Sadece alt modallar (expense ve upload) için header tasarımı */
+.modal-content.expense-modal .modal-header,
+.modal-content.upload-modal .modal-header {
+    background: #f8fafc;
+    color: #374151;
+    padding: 20px 24px;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-content.expense-modal .modal-header h2,
+.modal-content.upload-modal .modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary-blue);
+}
+
+.modal-content.expense-modal .modal-header .close-btn,
+.modal-content.upload-modal .modal-header .close-btn {
+    background: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content.expense-modal .modal-header .close-btn:hover,
+.modal-content.upload-modal .modal-header .close-btn:hover {
+    background: #f1f5f9;
+    color: #374151;
+}
+
+.modal-content.expense-modal .modal-body,
+.modal-content.upload-modal .modal-body {
+    padding: 24px;
+    background: white;
+}
+
+.modal-content.expense-modal .modal-footer,
+.modal-content.upload-modal .modal-footer {
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-radius: 0 0 8px 8px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Sadece alt modalların butonları için sade tasarım */
+.modal-content.expense-modal .modal-footer .btn,
+.modal-content.upload-modal .modal-footer .btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-content.expense-modal .modal-footer .btn.secondary,
+.modal-content.upload-modal .modal-footer .btn.secondary {
+    background: white;
+    color: #6b7280;
+    border-color: #d1d5db;
+}
+
+.modal-content.expense-modal .modal-footer .btn.secondary:hover,
+.modal-content.upload-modal .modal-footer .btn.secondary:hover {
+    background: #f9fafb;
+    color: #374151;
+    border-color: #9ca3af;
+}
+
+.modal-content.expense-modal .modal-footer .btn.primary,
+.modal-content.upload-modal .modal-footer .btn.primary {
+    background: var(--primary-blue);
+    color: white;
+    border-color: var(--primary-blue);
+}
+
+.modal-content.expense-modal .modal-footer .btn.primary:hover,
+.modal-content.upload-modal .modal-footer .btn.primary:hover {
+    background: #2563eb;
+    border-color: #2563eb;
 }
 
 .expense-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    margin-bottom: 20px;
+    gap: 24px;
+    margin-bottom: 24px;
 }
 
 .expense-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
 }
 
 .expense-group.full-width {
     grid-column: 1 / -1;
 }
 
+.expense-group label,
+.detail-group label {
+    color: #374151;
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 6px;
+    display: block;
+}
+
+.expense-group input,
+.expense-group select,
+.expense-group textarea,
+.detail-group input,
+.detail-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+    background: white;
+    font-family: inherit;
+}
+
+.expense-group input:focus,
+.expense-group select:focus,
+.expense-group textarea:focus,
+.detail-group input:focus,
+.detail-group select:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+.expense-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.expense-group input[type="number"]::-webkit-outer-spin-button,
+.expense-group input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 .expense-type-wrapper {
     position: relative;
 }
 
+#otherExpenseType {
+    margin-top: 8px;
+    border-color: #facc15 !important;
+    background: #fefce8 !important;
+}
+
+#otherExpenseType:focus {
+    border-color: #eab308 !important;
+    box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.1) !important;
+}
+
 .amount-wrapper {
     position: relative;
-    display: flex;
-    align-items: center;
+}
+
+.amount-wrapper input {
+    padding-right: 32px !important;
 }
 
 .currency-symbol {
     position: absolute;
-    right: 10px;
-    color: #666;
+    right: 12px;
+    color: #6b7280;
+    font-weight: 500;
+    font-size: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
 }
 
 .status-toggle {
     position: relative;
-    width: 100%;
+    display: inline-block;
 }
 
 .toggle-input {
-    display: none;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
 }
 
 .toggle-label {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 5px 10px;
-    background: #f1f1f1;
-    border-radius: 20px;
-    cursor: pointer;
+    display: block;
+    width: 120px;
+    height: 36px;
+    background: #ef4444;
+    border-radius: 18px;
     position: relative;
-    transition: all 0.3s ease;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-input:checked + .toggle-label {
+    background: #10b981;
 }
 
 .toggle-label::before {
     content: '';
     position: absolute;
-    width: 50%;
-    height: 85%;
-    border-radius: 15px;
+    top: 2px;
+    left: 2px;
+    width: 32px;
+    height: 32px;
     background: white;
-    left: 3px;
-    transition: all 0.3s ease;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-input:checked + .toggle-label::before {
-    left: calc(50% - 3px);
-}
-
-.toggle-input:checked + .toggle-label {
-    background: var(--success-color);
-    color: white;
+    transform: translateX(84px);
 }
 
 .toggle-text-off,
 .toggle-text-on {
-    position: relative;
-    z-index: 1;
-    font-size: 0.9rem;
-    padding: 0 5px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    font-weight: 500;
+    color: white;
+    transition: opacity 0.3s ease;
+}
+
+.toggle-text-off {
+    right: 8px;
+    opacity: 1;
+}
+
+.toggle-text-on {
+    left: 8px;
+    opacity: 0;
 }
 
 .toggle-input:checked + .toggle-label .toggle-text-off {
-    color: rgba(255,255,255,0.5);
+    opacity: 0;
 }
 
-.toggle-input:not(:checked) + .toggle-label .toggle-text-on {
-    color: rgba(0,0,0,0.5);
+.toggle-input:checked + .toggle-label .toggle-text-on {
+    opacity: 1;
 }
 
 .preview-modal-content {
@@ -1146,6 +1390,115 @@
 .document-date {
     font-size: 0.85rem;
     color: #666;
+}
+
+/* Belge Yükle Modal Özel Tasarımları */
+.modal-content.upload-modal {
+    max-width: 600px;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.modal-content.upload-modal .modal-header h2::before {
+    content: '📎';
+    font-size: 1.2rem;
+}
+
+.detail-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.detail-group label {
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.detail-group label::before {
+    content: '•';
+    color: #3498db;
+    font-weight: bold;
+}
+
+.detail-group input,
+.detail-group select {
+    padding: 12px 16px;
+    border: 2px solid #e1e8ed;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+    font-family: inherit;
+}
+
+.detail-group input:focus,
+.detail-group select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.detail-group input[type="file"] {
+    border: 2px dashed #bdc3c7;
+    background: rgba(236, 240, 241, 0.3);
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.detail-group input[type="file"]:hover {
+    border-color: #3498db;
+    background: rgba(52, 152, 219, 0.05);
+}
+
+.detail-group input[type="file"]:focus {
+    border-style: solid;
+    border-color: #3498db;
+    background: rgba(52, 152, 219, 0.05);
+}
+
+/* Responsive Design İyileştirmeleri */
+@media (max-width: 768px) {
+    .expense-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .modal-content.expense-modal {
+        max-width: 95vw;
+        margin: 10px;
+        border-radius: 12px;
+    }
+    
+    .modal-header {
+        padding: 16px 20px;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .modal-footer {
+        padding: 16px 20px;
+        flex-direction: column;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+        min-width: auto;
+    }
 }
 
 /* İşlem butonları için stil güncellemesi */
@@ -1312,6 +1665,24 @@ document.addEventListener('DOMContentLoaded', function() {
     if (showDetailsId) {
         showDetails(showDetailsId);
     }
+    
+    // Modal dışına tıklama event handler'ı
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('fileDetailModal');
+        if (modal && modal.style.display === 'flex' && event.target === modal) {
+            closeDetailModal();
+        }
+    });
+    
+    // ESC tuşu ile modal kapatma
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const modal = document.getElementById('fileDetailModal');
+            if (modal && modal.style.display === 'flex') {
+                closeDetailModal();
+            }
+        }
+    });
 });
 
 function updateCourthouses() {
@@ -1717,6 +2088,13 @@ function closeDetailModal() {
     if (modal) {
         modal.style.display = 'none';
     }
+    
+    // URL'deki show_details parametresini temizle
+    const url = new URL(window.location);
+    url.searchParams.delete('show_details');
+    
+    // URL'yi güncelle (sayfa yeniden yüklenmeden)
+    window.history.replaceState({}, '', url);
 }
 
 // Düzenle butonu için fonksiyon
@@ -2166,7 +2544,7 @@ function saveChanges(caseId) {
     })
     .then(result => {
         if (result.success) {
-            alert('Dosya başarıyla güncellendi!');
+                            showGlobalNotification('Dosya başarıyla güncellendi!', 'success');
             
             // Takvim senkronizasyonu için dosya durumunu ve duruşma türünü gönder
             if (data.next_hearing) {
@@ -2339,7 +2717,7 @@ function saveExpense() {
 // Belge yükle butonu için fonksiyon
 function showUploadModal() {
     const uploadHtml = `
-        <div class="modal-content">
+        <div class="modal-content upload-modal">
             <div class="modal-header">
                 <h2>Belge Yükle</h2>
                 <button class="close-btn" onclick="closeUploadModal()">
@@ -2389,18 +2767,19 @@ function uploadDocument() {
     const documentName = document.getElementById('documentName');
     
     if (!documentType.value) {
-        alert('Lütfen belge türünü seçiniz.');
+        showGlobalNotification('Lütfen belge türünü seçiniz.', 'error');
         return;
     }
     
     if (!fileInput.files.length) {
-        alert('Lütfen bir belge seçiniz.');
+        showGlobalNotification('Lütfen bir belge seçiniz.', 'error');
         return;
     }
 
     const formData = new FormData();
     formData.append('document', fileInput.files[0]);
     formData.append('document_type', documentType.value);
+    formData.append('csrf_token', csrfToken);
     if (documentName.value) {
         formData.append('document_name', documentName.value);
     }
@@ -2412,6 +2791,7 @@ function uploadDocument() {
     .then(response => response.json())
     .then(result => {
         if (result.success) {
+            showGlobalNotification('Belge başarıyla yüklendi!', 'success');
             closeUploadModal();
             showDetails(currentCaseId);
         } else {
@@ -2420,7 +2800,7 @@ function uploadDocument() {
     })
     .catch(error => {
         console.error('Hata:', error);
-        alert('Belge yüklenirken bir hata oluştu: ' + error.message);
+        showGlobalNotification('Belge yüklenirken bir hata oluştu: ' + error.message, 'error');
     });
 }
 

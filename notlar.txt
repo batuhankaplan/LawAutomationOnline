@@ -1,19 +1,7 @@
 YAPILACAKLAR:
 1) Son gün uyarısı.
-2) Örnek dilekçe yükleme ve sorgulama sistemi eklenebilir.
-3) IA Avukat sistemi.
-4) Yargıtay karar arama sistemi.
-5) Örnek dilekçelerden veya dosya detayları modalında kayıtlı belgelerin (udf,pdf,doc,docx gibi) içeriğinden yani içerdiği kelimerden arama yapılabilsin.
-6) Ödemeler sayfasındaki müvekkil ödeme listesi tablosu güncellenecek daha modern hale getirilecek.
+2) IA Avukat sistemi.
+3) Yargıtay karar arama sistemi.
+4) Örnek dilekçelerden veya dosya detayları modalında kayıtlı belgelerin (udf,pdf,doc,docx gibi) içeriğinden yani içerdiği kelimerden arama yapılabilsin.
+
 HATA VE BUGLAR:
-1) (mesela duyurulara bir duyuru ekliyorum, duyurular sayfasında "Duyuru eklendi" uyarısı gelmiyor). Tüm işem geri bildirimlerinin kontrolünü yapalım. duyuru eklendi(dosya eklendi/etkinlik eklendi(ödeme eklendi vs vs.))
-2) Anasayfada adliye istatistikleri 2 den fazla gösterince bug'a giriyor.
-3) Search boxtan arama yapıp ilgili dosyanın detayları ekranı açıldıktan sonra o ekranı kapatsakta dosya sorgula ekranında arama yapınca otomatik o son dosya detayları ekranı açılıyor. Ayrıca eğer müşteri olan bir kayıta tıklarsak boş sayfaya atıyor.
-4) Search boxta kayıtlı ödeme ismiyle birini arayıp tıklatınca hatalı sayfaya atıyor. Hata: Not Found
-The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. (url:http://127.0.0.1:5000/musteri_detay/1) (Ödemeler ekranında bir detay sayfası ekleyelim search boxta aratınca da otomatik ödeme detaylarına atsın)
-5) Dosya detayları modalında masraflar ve belgeler belge ekle ve masraf ekle çalışmıyor. 
-6) İşçi görüşme tutanağında yazdır seçeneği çalışmıyor.
-7) Ödeme istatistikleri sayfası şuan müvekkil ödeme listesinden yanlış veri alıyor. Buralardaki kodlamaları düzeltelim. Müvekkil ödeme listesindeki tutar 150 TL iken mesela Ödeme İstatistikleri sayfasında aynı tutar bi anda 1500 TL oluyor. Burada bir problem var bunu çöz. (anlaman için iki ayrı resim attım oradaki tutar farklılığını karşılaştırırsan anlarsın.
-8) Müvekkil Ödeme Listesindeki durum sütununda Ödendi Ödenmedi gösterimlerinde Hem yazı hem Çerçeve aynı renk olunca durumun görünmesi zorlaşıyor buna bir güncelleme yapalım.
-9) İşçi görüşme tutanağında İşten Ayrılma Nedeni/şekli kısmına yazılan metin mesajı pdf görüntülemede veya indirmede eksik gösteriliyor o box kesiliyor.
-10) Örnek dilekçeler sayfasında oluşturulan pdflerin içeriğinde hatalar var.

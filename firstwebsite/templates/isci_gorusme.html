@@ -407,13 +407,16 @@
     /* İşten ayrılma nedeni için özel stil */
     #terminationReason {
         font-size: 7pt;
-        line-height: 1.2;
-        min-height: 0.5cm;
-        padding: 0.05cm;
+        line-height: 1.3;
+        min-height: 2.5cm !important;
+        height: 2.5cm !important;
+        padding: 0.1cm;
         white-space: pre-wrap;
         word-wrap: break-word;
-        height: auto !important;
         overflow: visible !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        border: 0.5pt solid #333 !important;
     }
     
     .form-container {
@@ -487,8 +490,18 @@
     .form-group:has(#terminationReason) {
         padding: 0.1cm;
         height: auto !important;
+        min-height: 3cm !important;
         overflow: visible !important;
         page-break-inside: avoid !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* İşten ayrılma nedeni input-item için özel stil */
+    .input-item:has(#terminationReason) {
+        min-height: 2.5cm !important;
+        height: auto !important;
+        overflow: visible !important;
     }
     
     /* Radio butonları için özel stil */
@@ -589,7 +602,7 @@
     font-size: 8pt !important;
     position: relative !important;
     box-sizing: border-box !important;
-    overflow: hidden !important; /* visible yerine hidden kullan */
+    overflow: visible !important; /* İçeriğin görünebilmesi için visible */
     page-break-after: avoid !important;
 }
 
@@ -621,7 +634,7 @@
     width: auto !important; /* Genişlik kontrolü ekle */
     max-width: 100% !important; /* Maksimum genişlik sınırlaması */
     box-sizing: border-box !important; /* Box modelini değiştir */
-    overflow: hidden !important; /* Taşmaları engelle */
+    overflow: visible !important; /* İçeriğin görünebilmesi için visible */
 }
 
 .pdf-mode .form-group h3 {
@@ -664,11 +677,16 @@
 .pdf-mode #address, 
 .pdf-mode #terminationReason,
 .pdf-mode #insuranceDate {
-    min-height: 40pt !important;
+    min-height: 50pt !important;
     height: auto !important;
     white-space: pre-wrap !important;
     word-wrap: break-word !important;
     overflow: visible !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border: 1px solid #ccc !important;
+    padding: 3pt !important;
 }
 
 .pdf-mode .signature-section {
@@ -1323,6 +1341,12 @@ input[type="text"][name$="Date"] {
             document.querySelector('.loading-text').textContent = 'Form kaydediliyor, lütfen bekleyin...';
         }
         
+        // CSRF token ekle
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (csrfToken) {
+            formData.append('csrf_token', csrfToken);
+        }
+        
         // Form verilerini sunucuya gönder
         fetch('/save_isci_gorusme', {
             method: 'POST',
@@ -1341,7 +1365,7 @@ input[type="text"][name$="Date"] {
             }
             
             if (data.success) {
-                alert('Form başarıyla kaydedildi!');
+                showGlobalNotification('Form başarıyla kaydedildi!', 'success');
                 loadSavedForms(); // Kaydedilen formları yeniden yükle
             } else {
                 alert('Form kaydedilirken bir hata oluştu: ' + data.error);
@@ -1585,7 +1609,7 @@ input[type="text"][name$="Date"] {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Form başarıyla silindi!');
+                    showGlobalNotification('Form başarıyla silindi!', 'success');
                     loadSavedForms(); // Kaydedilen formları yeniden yükle
                 } else {
                     alert('Form silinirken bir hata oluştu: ' + data.error);
@@ -1930,15 +1954,18 @@ input[type="text"][name$="Date"] {
         
         // Adres ve işten ayrılma nedeni için minimum yükseklik ayarla
         if (textarea.id === 'address' || textarea.id === 'terminationReason' || textarea.id === 'insuranceDate') {
+            // İşten ayrılma nedeni için daha büyük minimum yükseklik
+            const minHeight = textarea.id === 'terminationReason' ? 120 : 60;
+            
             // Sadece gerçek içerik varsa büyüt, boşluk tuşuna basınca büyütme
             const content = textarea.value.trim();
             if (content.length > 0) {
-                const minHeight = Math.max(60, scrollHeight);
-                textarea.style.height = minHeight + 'px';
-                textarea.style.minHeight = '60px'; // Minimum yükseklik sabit kalsın
+                const calculatedHeight = Math.max(minHeight, scrollHeight);
+                textarea.style.height = calculatedHeight + 'px';
+                textarea.style.minHeight = minHeight + 'px';
             } else {
-                textarea.style.height = '60px';
-                textarea.style.minHeight = '60px';
+                textarea.style.height = minHeight + 'px';
+                textarea.style.minHeight = minHeight + 'px';
             }
         } else {
             textarea.style.height = scrollHeight + 'px';

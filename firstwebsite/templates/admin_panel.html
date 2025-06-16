@@ -1674,7 +1674,7 @@ function approveUser(userId) {
             if (data.success) {
                 location.reload();
             } else {
-                alert(data.message || 'Bir hata oluştu');
+                showGlobalNotification(data.message || 'Bir hata oluştu', 'error');
             }
         });
     }
@@ -1693,7 +1693,7 @@ function rejectUser(userId) {
             if (data.success) {
                 location.reload();
             } else {
-                alert(data.message || 'Bir hata oluştu');
+                showGlobalNotification(data.message || 'Bir hata oluştu', 'error');
             }
         });
     }

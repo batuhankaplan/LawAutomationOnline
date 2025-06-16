@@ -2067,7 +2067,7 @@
                 }).then(response => response.json())
                   .then(data => {
                       if (data.success) {
-                          alert('Ödeme başarıyla silindi!');
+                          showGlobalNotification('Ödeme başarıyla silindi!', 'success');
                           row.remove();
                       } else {
                           alert('Silme işlemi başarısız: ' + (data.error || 'Bilinmeyen bir hata oluştu'));
@@ -4413,7 +4413,7 @@
                     }
                     
                     // Başarı mesajı göster
-                    alert('Müvekkil bilgileri güncellendi');
+                    showGlobalNotification('Müvekkil bilgileri güncellendi.', 'success');
                     
                     // Sayfa yenilenmeden detay modalını aç
                     setTimeout(() => {

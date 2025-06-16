@@ -704,11 +704,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Yetki kontrolü
          if (isEditing && !userPermissions.can_edit) {
-             alert('Etkinlik düzenleme yetkiniz yok.');
+             showGlobalNotification('Etkinlik düzenleme yetkiniz yok.', 'warning');
              return;
          }
          if (!isEditing && !userPermissions.can_add) {
-             alert('Etkinlik ekleme yetkiniz yok.');
+             showGlobalNotification('Etkinlik ekleme yetkiniz yok.', 'warning');
             return;
         }
         
@@ -761,19 +761,19 @@ document.addEventListener('DOMContentLoaded', function() {
              }
              renderCalendar(); // Takvimi yeniden çiz
              closeModal(eventModal);
-             alert(`Etkinlik başarıyla ${isEditing ? 'güncellendi' : 'kaydedildi'}.`);
+                             showGlobalNotification(`Etkinlik başarıyla ${isEditing ? 'güncellendi' : 'kaydedildi'}.`, 'success');
         })
         .catch(error => {
             console.error('Etkinlik kaydetme/güncelleme hatası:', error);
-            alert(`Bir hata oluştu: ${error.message}`);
+                          showGlobalNotification(`Bir hata oluştu: ${error.message}`, 'error');
         });
     });
 
     function deleteEvent(eventId, eventTitle) {
-        if (!userPermissions.can_delete) {
-             alert('Etkinlik silme yetkiniz yok.');
-             return;
-         }
+                  if (!userPermissions.can_delete) {
+              showGlobalNotification('Etkinlik silme yetkiniz yok.', 'warning');
+              return;
+          }
 
         if (confirm(`'${eventTitle}' başlıklı etkinliği silmek istediğinizden emin misiniz?`)) {
             fetch(`/delete_event/${eventId}`, {
@@ -798,14 +798,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     renderCalendar(); // Takvimi güncelle
                     closeModal(eventDetailModal); // Detay modalını kapat
-                    alert('Etkinlik başarıyla silindi.');
+                    showGlobalNotification('Etkinlik başarıyla silindi.', 'success');
                 } else {
                     throw new Error(data.error || 'Silme işlemi başarısız.');
                 }
             })
             .catch(error => {
                 console.error('Etkinlik silme hatası:', error);
-                alert(`Etkinlik silinirken bir hata oluştu: ${error.message}`);
+                showGlobalNotification(`Etkinlik silinirken bir hata oluştu: ${error.message}`, 'error');
             });
         }
     }

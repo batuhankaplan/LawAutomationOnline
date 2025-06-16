@@ -3351,6 +3351,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/upload_document/<int:case_id>', methods=['POST'])
+@csrf.exempt
 def upload_document(case_id):
     try:
         if 'document' not in request.files:
@@ -4303,12 +4304,23 @@ def worker_interview():
 @app.route('/save_isci_gorusme', methods=['POST'])
 @login_required
 @permission_required('isci_gorusme_ekle')
+@csrf.exempt
 def save_isci_gorusme():
     try:
+        print("Form kaydetme işlemi başlatılıyor...")
         form_data = request.form.to_dict()
+        print(f"Gelen form verileri: {form_data}")
+        
+        # Gerekli alanları kontrol et
+        required_fields = ['name', 'tcNo']
+        for field in required_fields:
+            if field not in form_data or not form_data[field].strip():
+                print(f"Gerekli alan eksik: {field}")
+                return jsonify({'success': False, 'error': f'{field} alanı zorunludur'}), 400
         
         # Tanık durumunu kontrol et
         witness_option = form_data.get('witnessOption', 'no')
+        print(f"Tanık seçeneği: {witness_option}")
         
         # Tarih alanlarını kontrol et - formatı değiştirmeden olduğu gibi kaydet
         date_fields = ['startDate', 'endDate']
@@ -4320,30 +4332,30 @@ def save_isci_gorusme():
                 dual_date_regex = r'^\d{2}\.\d{2}\.\d{4}/\d{2}\.\d{2}\.\d{4}$'
                 
                 if not (re.match(single_date_regex, date_str) or re.match(dual_date_regex, date_str)):
-                    return jsonify({'success': False, 'error': f'Geçersiz tarih formatı: {field}. Lütfen GG.AA.YYYY veya GG.AA.YYYY/GG.AA.YYYY formatında girin.'})
+                    print(f"Geçersiz tarih formatı: {field} = {date_str}")
+                    return jsonify({'success': False, 'error': f'Geçersiz tarih formatı: {field}. Lütfen GG.AA.YYYY veya GG.AA.YYYY/GG.AA.YYYY formatında girin.'}), 400
             else:
                 # Tarih alanı boş ise hata döndür
-                return jsonify({'success': False, 'error': f'{field} alanı boş olamaz'})
+                print(f"Tarih alanı boş: {field}")
+                return jsonify({'success': False, 'error': f'{field} alanı boş olamaz'}), 400
         
         # Form ID'si varsa güncelle, yoksa yeni kayıt oluştur
         form_id = form_data.get('id')
         if form_id:
+            print(f"Mevcut form güncelleniyor: {form_id}")
             form = IsciGorusmeTutanagi.query.get(int(form_id))
             if not form:
-                return jsonify({'success': False, 'error': 'Form bulunamadı'})
+                return jsonify({'success': False, 'error': 'Form bulunamadı'}), 404
         else:
+            print("Yeni form oluşturuluyor")
             form = IsciGorusmeTutanagi()
             form.user_id = current_user.id
         
         # Form verilerini modele aktar
         for key, value in form_data.items():
             if key != 'id' and hasattr(form, key):
-                # Tarih alanlarını string olarak sakla
-                if key in date_fields:
-                    # Tarih alanlarını string olarak bırak, dönüştürme yapma
-                    setattr(form, key, value)
-                else:
-                    setattr(form, key, value)
+                print(f"Ayarlanıyor: {key} = {value}")
+                setattr(form, key, value)
         
         # Tanık bilgilerini işle
         if witness_option == 'yes':
@@ -4371,18 +4383,25 @@ def save_isci_gorusme():
                 'count': len(witnesses),
                 'witnesses': witnesses
             })
+            print(f"Tanık bilgileri kaydedildi: {form.witnesses}")
         else:
             # Tanık seçeneği "yok" ise boş liste olarak ayarla
             form.witnesses = json.dumps({'count': 0, 'witnesses': []})
+            print("Tanık bilgisi yok olarak ayarlandı")
         
         # Veritabanına kaydet
+        print("Veritabanına kaydediliyor...")
         db.session.add(form)
         db.session.commit()
+        print("Form başarıyla kaydedildi")
         
         return jsonify({'success': True})
     except Exception as e:
         print(f"Form kaydetme hatası: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)})
+        import traceback
+        print(f"Hata detayı: {traceback.format_exc()}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/save_isci_gorusme_json', methods=['POST'])
 @login_required

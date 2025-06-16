@@ -859,12 +859,12 @@ document.getElementById('twoFactorAuth').addEventListener('change', function() {
         .then(data => {
             if (!data.success) {
                 this.checked = false;
-                alert(data.message || 'İki faktörlü doğrulama aktifleştirilemedi.');
+                                    showGlobalNotification(data.message || 'İki faktörlü doğrulama aktifleştirilemedi.', 'error');
             }
         })
         .catch(error => {
             this.checked = false;
-            alert('Bir hata oluştu.');
+                          showGlobalNotification('Bir hata oluştu.', 'error');
         });
     }
 });
@@ -883,7 +883,7 @@ document.getElementById('passwordForm').addEventListener('submit', function(e) {
     const confirmPassword = this.querySelector('input[name="confirm_password"]').value;
     
     if (newPassword !== confirmPassword) {
-        alert('Şifreler eşleşmiyor!');
+                    showGlobalNotification('Şifreler eşleşmiyor!', 'warning');
         return;
     }
     
@@ -913,15 +913,15 @@ function saveSettings() {
     .then(data => {
         if (data.success) {
             // Başarılı bildirim göster
-            alert('Ayarlar başarıyla kaydedildi!');
+            showGlobalNotification('Ayarlar başarıyla kaydedildi!', 'success');
         } else {
             // Hata bildirim göster
-            alert('Ayarlar kaydedilirken bir hata oluştu!');
+            showGlobalNotification('Ayarlar kaydedilirken bir hata oluştu!', 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Bir hata oluştu!');
+        showGlobalNotification('Bir hata oluştu!', 'error');
     });
 }
 </script>

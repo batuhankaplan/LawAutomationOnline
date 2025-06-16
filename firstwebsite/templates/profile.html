@@ -425,13 +425,13 @@ function previewImage(input) {
         const maxSize = 5 * 1024 * 1024; // 5MB
 
         if (file.size > maxSize) {
-            alert('Dosya boyutu çok büyük. Lütfen 5MB\'dan küçük bir dosya seçin.');
+            showGlobalNotification('Dosya boyutu çok büyük. Lütfen 5MB\'dan küçük bir dosya seçin.', 'warning');
             input.value = '';
             return;
         }
 
         if (!file.type.startsWith('image/')) {
-            alert('Lütfen geçerli bir resim dosyası seçin.');
+            showGlobalNotification('Lütfen geçerli bir resim dosyası seçin.', 'warning');
             input.value = '';
             return;
         }
@@ -489,14 +489,14 @@ document.getElementById('profile-form').addEventListener('submit', function(e) {
                     headerProfileImage.src = `${newImagePath}?t=${timestamp}`;
                 }
             }
-            alert('Profil başarıyla güncellendi');
+            showGlobalNotification('Profil başarıyla güncellendi.', 'success');
         } else {
             throw new Error(data.message || 'Profil güncellenirken bir hata oluştu');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert(error.message || 'Bir hata oluştu. Lütfen tekrar deneyin.');
+        showGlobalNotification(error.message || 'Bir hata oluştu. Lütfen tekrar deneyin.', 'error');
     })
     .finally(() => {
         isSubmitting = false;

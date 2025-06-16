@@ -4,7 +4,7 @@
 
 {% block content %}
     <div class="form-container">
-        <form method="POST">
+        <form method="POST" id="announcementForm">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="input-group">
                 <label for="title">Başlık</label>
@@ -107,12 +107,15 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    location.reload();
+                    showGlobalNotification('Duyuru başarıyla güncellendi.', 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
                 } else {
-                    alert('Duyuru düzenlenirken bir hata oluştu: ' + result.error);
+                    showGlobalNotification('Duyuru düzenlenirken bir hata oluştu: ' + result.error, 'error');
                 }
             } catch (error) {
-                alert('Bir hata oluştu: ' + error);
+                showGlobalNotification('Bir hata oluştu: ' + error, 'error');
             }
         };
         
@@ -129,7 +132,7 @@
             }
             
             if (!csrfToken) {
-                alert('CSRF token bulunamadı. Sayfayı yenileyin.');
+                showGlobalNotification('CSRF token bulunamadı. Sayfayı yenileyin.', 'error');
                 return;
             }
             
@@ -146,13 +149,16 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    location.reload();
+                    showGlobalNotification('Duyuru başarıyla silindi.', 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
                 } else {
-                    alert('Duyuru silinirken bir hata oluştu: ' + result.error);
+                    showGlobalNotification('Duyuru silinirken bir hata oluştu: ' + result.error, 'error');
                 }
             })
             .catch(error => {
-                alert('Bir hata oluştu: ' + error);
+                showGlobalNotification('Bir hata oluştu: ' + error, 'error');
             });
         }
     }
@@ -168,6 +174,58 @@
             modal.style.display = 'none';
         }
     }
+
+    // Duyuru ekleme formu için AJAX gönderimi
+    document.getElementById('announcementForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const title = formData.get('title');
+        const content = formData.get('content');
+        const csrfToken = formData.get('csrf_token');
+        
+        if (!title || !content) {
+            showGlobalNotification('Lütfen tüm alanları doldurun.', 'warning');
+            return;
+        }
+        
+        try {
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    title: title,
+                    content: content,
+                    csrf_token: csrfToken
+                })
+            });
+            
+            if (response.ok) {
+                showGlobalNotification('Duyuru başarıyla eklendi.', 'success');
+                this.reset(); // Formu temizle
+                // Sayfayı yenile
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                const result = await response.text();
+                if (result.includes('error') || result.includes('Error')) {
+                    showGlobalNotification('Duyuru eklenirken bir hata oluştu.', 'error');
+                } else {
+                    showGlobalNotification('Duyuru başarıyla eklendi.', 'success');
+                    this.reset();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            }
+        } catch (error) {
+            console.error('Duyuru ekleme hatası:', error);
+            showGlobalNotification('Bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+        }
+    });
     </script>
 
     <style>

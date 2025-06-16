@@ -354,15 +354,15 @@ function submitForm(event) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Mesajınız başarıyla gönderildi.');
+            showGlobalNotification('Mesajınız başarıyla gönderildi.', 'success');
             document.getElementById('contactForm').reset();
         } else {
-            alert('Mesaj gönderilirken bir hata oluştu: ' + data.message);
+            showGlobalNotification('Mesaj gönderilirken bir hata oluştu: ' + data.message, 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Mesaj gönderilirken bir hata oluştu.');
+        showGlobalNotification('Mesaj gönderilirken bir hata oluştu.', 'error');
     });
 
     return false;

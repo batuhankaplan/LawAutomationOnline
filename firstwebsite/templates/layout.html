@@ -612,6 +612,23 @@
                         {% endif %}
                     </div>
                 </header>
+                
+                <!-- Toast Bildirimleri için Container -->
+                <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11000;"></div>
+                
+                <!-- Flash Mesajları -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                {% for category, message in messages %}
+                                    showGlobalNotification('{{ message|safe }}', '{% if category == "error" %}error{% elif category == "success" %}success{% elif category == "warning" %}warning{% else %}info{% endif %}');
+                                {% endfor %}
+                            });
+                        </script>
+                    {% endif %}
+                {% endwith %}
+                
                 {% block content %}{% endblock %}
             </main>
             <footer class="site-footer">
@@ -749,6 +766,62 @@
             }
         });
     }
+
+    // Global Bildirim Sistemi
+    window.showGlobalNotification = function(mesaj, tip = 'info', baslik = '') {
+        try {
+            const toastContainer = document.querySelector('.toast-container');
+            if (!toastContainer) {
+                console.warn('Toast container bulunamadı, alert kullanılıyor:', mesaj);
+                alert(mesaj);
+                return;
+            }
+
+            const toastId = `toast-${Date.now()}`;
+            const bgClass = tip === 'success' ? 'bg-success' : tip === 'warning' ? 'bg-warning' : tip === 'error' ? 'bg-danger' : 'bg-info';
+            const textClass = ['warning'].includes(tip) ? 'text-dark' : 'text-white';
+            const icon = tip === 'success' ? 'check_circle' : tip === 'warning' ? 'warning' : tip === 'error' ? 'error' : 'info';
+
+            // Başlık belirleme
+            if (!baslik) {
+                baslik = tip === 'success' ? 'Başarılı' : tip === 'warning' ? 'Uyarı' : tip === 'error' ? 'Hata' : 'Bilgi';
+            }
+
+            const toastHtml = `
+                <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header ${bgClass} ${textClass}">
+                        <i class="material-icons me-2">${icon}</i>
+                        <strong class="me-auto">${baslik}</strong>
+                        <button type="button" class="btn-close ${['warning'].includes(tip) ? '' : 'btn-close-white'}" data-bs-dismiss="toast" aria-label="Kapat"></button>
+                    </div>
+                    <div class="toast-body">${mesaj}</div>
+                </div>`;
+
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.getElementById(toastId);
+
+            if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+                const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 5000 });
+                toast.show();
+                toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+            } else {
+                console.warn('Bootstrap Toast bulunamadı, manuel gösterim:', mesaj);
+                setTimeout(() => toastElement.remove(), 5000);
+            }
+        } catch (error) {
+            console.error('showGlobalNotification hatası:', error);
+            alert(mesaj);
+        }
+    };
+
+    // Eski fonksiyon adları için uyumluluk
+    window.bildirimGoster = window.showGlobalNotification;
+    window.showToast = function(baslik, mesaj, tip) {
+        window.showGlobalNotification(mesaj, tip, baslik);
+    };
+    window.showFlashMessage = function(mesaj, tip) {
+        window.showGlobalNotification(mesaj, tip);
+    };
     </script>
     {% block scripts %}{% endblock %}
 </body>
