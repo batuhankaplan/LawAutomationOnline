@@ -22,6 +22,7 @@ from models import db, User, ActivityLog, Client, Payment, Document, Notificatio
 import uuid
 from PIL import Image
 from functools import wraps
+from yargi_integration import yargi_integration
 from io import BytesIO
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -39,6 +40,9 @@ import shutil
 import mammoth
 import pdfkit
 import logging # Logging için eklendi
+
+# Logger yapılandırması
+logger = logging.getLogger(__name__)
 import traceback # traceback importu eklendi
 
 # Flask-Admin imports
@@ -6556,6 +6560,151 @@ def api_ornek_dilekce_ad_duzenle(dilekce_id):
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 # --- Örnek Dilekçe CRUD API Route'ları SONU ---
+
+# Yargı Kararları Arama Motoru Route'ları
+@app.route('/yargi_kararlari_arama')
+@login_required
+def yargi_kararlari_arama():
+    """Yargı kararları arama ana sayfası"""
+    return render_template('yargi_kararlari_arama.html')
+
+@app.route('/api/yargi_arama', methods=['POST'])
+@login_required
+@csrf.exempt
+def api_yargi_arama():
+    """Yargı kararları arama API endpoint'i"""
+    try:
+        print(f"API çağrısı alındı: {request.method}")  # Debug
+        data = request.get_json()
+        print(f"Alınan veri: {data}")  # Debug
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'Veri alınamadı.'
+            }), 400
+            
+        keyword = data.get('keyword', '')
+        court_type = data.get('court_type', 'all')
+        case_year = data.get('case_year', '')
+        decision_year = data.get('decision_year', '')
+        start_date = data.get('start_date', '')
+        end_date = data.get('end_date', '')
+        page_number = int(data.get('page_number', 1))
+        page_size = int(data.get('page_size', 10))
+        
+        print(f"Arama parametreleri: keyword={keyword}, court_type={court_type}")  # Debug
+        
+        # Arama servisini kullan
+        from yargi_integration import search_yargi_kararlari
+        
+        search_results = search_yargi_kararlari(
+            keyword=keyword,
+            court_type=court_type,
+            court_unit=data.get('court_unit', ''),
+            case_year=case_year,
+            decision_year=decision_year,
+            start_date=start_date,
+            end_date=end_date,
+            page_number=page_number,
+            page_size=page_size
+        )
+        
+        # Sonuçları JSON formatına çevir - doğrudan döndür
+        results_json = search_results
+        
+        # Aktivite logla
+        log_activity('yargi_arama', f'Yargı kararları arandı: {keyword}', current_user.id)
+        
+        return jsonify({
+            'success': True,
+            'data': results_json,
+            'pagination': results_json.get('pagination', {})
+        })
+        
+    except Exception as e:
+        logger.error(f"Yargı arama API hatası: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Arama işlemi sırasında bir hata oluştu.'
+        }), 500
+
+@app.route('/api/yargi_mahkeme_secenekleri')
+@login_required
+@csrf.exempt
+def api_yargi_mahkeme_secenekleri():
+    """Mahkeme seçeneklerini döndürür"""
+    try:
+        from yargi_integration import get_court_options
+        
+        options = get_court_options()
+        return jsonify(options)
+    except Exception as e:
+        logger.error(f"Mahkeme seçenekleri API hatası: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Mahkeme seçenekleri alınamadı.'
+        }), 500
+
+@app.route('/api/yargi_karar_metni', methods=['POST'])
+@login_required
+@csrf.exempt
+def api_yargi_karar_metni():
+    """Belirli bir kararın tam metnini getir"""
+    try:
+        data = request.get_json()
+        court_type = data.get('court_type')
+        document_id = data.get('document_id')
+        document_url = data.get('document_url')
+        
+        if not court_type or not document_id:
+            return jsonify({
+                'success': False,
+                'error': 'Mahkeme türü ve doküman ID gerekli'
+            }), 400
+        
+        logger.info(f"Karar metni istendi: court_type={court_type}, document_id={document_id}")
+        
+        from yargi_integration import get_document_content
+        
+        result = get_document_content(court_type, document_id, document_url)
+        
+        if result['success']:
+            response_data = {
+                'success': True,
+                'court_type': result['court_type'],
+                'source_url': result.get('source_url', '')
+            }
+            
+            # İçerik türüne göre response'u ayarla
+            if result.get('content_type') == 'pdf':
+                response_data.update({
+                    'content_type': 'pdf',
+                    'pdf_url': result.get('pdf_url', result.get('source_url', ''))
+                })
+            elif result.get('content'):
+                response_data.update({
+                    'content_type': 'text',
+                    'content': result['content']
+                })
+            elif result.get('redirect_url'):
+                response_data.update({
+                    'redirect_url': result['redirect_url']
+                })
+            
+            return jsonify(response_data)
+        else:
+            return jsonify({
+                'success': False,
+                'error': result['error']
+            }), 500
+        
+    except Exception as e:
+        logger.error(f"Karar metni alınırken hata: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 if __name__ == '__main__':
     with app.app_context():

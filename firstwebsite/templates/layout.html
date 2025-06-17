@@ -532,6 +532,10 @@
                     <a href="{{ url_for('ucret_tarifeleri_page') }}" {% if request.endpoint == 'ucret_tarifeleri_page' %}class="active"{% endif %}><i class="fas fa-file-invoice-dollar"></i>Ücret Tarifeleri</a>
                 </li>
                 
+                <li>
+                    <a href="{{ url_for('yargi_kararlari_arama') }}" {% if request.endpoint == 'yargi_kararlari_arama' %}class="active"{% endif %}><i class="material-icons">gavel</i>Yargı Kararları Arama</a>
+                </li>
+                
                 {% if current_user.has_permission('odeme_goruntule') %}
                 <li><a href="{{ url_for('odemeler') }}"><i class="material-icons">payment</i>Ödemeler</a></li>
                 {% endif %}

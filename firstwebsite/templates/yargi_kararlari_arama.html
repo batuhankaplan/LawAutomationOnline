@@ -1,0 +1,1277 @@
+{% extends "layout.html" %}
+
+{% block title %}Yargı Kararları Arama Motoru{% endblock %}
+
+{% block content %}
+<!-- jQuery kütüphanesi - Sayfa başında yükle -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Modern CSS Stilleri -->
+<style>
+.search-engine-container {
+    background: #f8f9fa;
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.search-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.search-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.search-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.search-body {
+    padding: 2.5rem;
+    background: white;
+}
+
+.modern-input {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.modern-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    background: white;
+}
+
+.modern-select {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 15px 20px;
+    font-size: 1rem;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.modern-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    background: white;
+}
+
+.search-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.clear-btn {
+    background: #6c757d;
+    border: none;
+    border-radius: 12px;
+    padding: 15px 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.clear-btn:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+    color: white;
+}
+
+.results-container {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-top: 2rem;
+}
+
+.results-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.results-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.results-count {
+    background: rgba(255,255,255,0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.sort-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.sort-label {
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.sort-select {
+    background: rgba(255,255,255,0.9);
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    color: #2c3e50;
+    min-width: 180px;
+}
+
+.results-body {
+    padding: 2rem;
+}
+
+.court-section {
+    margin-bottom: 2.5rem;
+}
+
+.court-title {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    border-left: 5px solid #667eea;
+}
+
+.court-title h5 {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.decision-card {
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.decision-card:hover {
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    border-color: #667eea;
+}
+
+.decision-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.decision-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.court-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.decision-summary {
+    color: #495057;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
+}
+
+.decision-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-view {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.btn-view:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+    color: white;
+}
+
+.btn-source {
+    background: #6c757d;
+    color: white;
+    border: none;
+}
+
+.btn-source:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+    color: white;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 3rem;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+.no-results, .error-message {
+    text-align: center;
+    padding: 3rem;
+    border-radius: 12px;
+}
+
+.advanced-search {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+/* Sayfalama Stilleri */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 0 0 15px 15px;
+    border-top: 1px solid #e9ecef;
+}
+
+.pagination-info {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-right: 1rem;
+}
+
+.pagination {
+    margin: 0;
+}
+
+.page-link {
+    border: none;
+    border-radius: 8px;
+    margin: 0 2px;
+    padding: 0.5rem 0.75rem;
+    color: #667eea;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.page-link:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.page-item.active .page-link {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white;
+    font-weight: 600;
+}
+
+.page-item.disabled .page-link {
+    background: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .search-header h1 {
+        font-size: 2rem;
+    }
+    
+    .results-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .sort-controls {
+        justify-content: center;
+    }
+    
+    .decision-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .pagination-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+</style>
+
+<div class="search-engine-container">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="search-card">
+                    <div class="search-header">
+                        <h1>
+                            <i class="fas fa-balance-scale me-3"></i>
+                            Yargı Kararları Arama Motoru
+                        </h1>
+                    </div>
+                    <div class="search-body">
+                        <!-- Arama Formu -->
+                        <form id="yargiAramaForm">
+                            <div class="row">
+                                <div class="col-12 mb-4">
+                                    <label for="keyword" class="form-label fw-bold text-dark mb-3">
+                                        <i class="fas fa-search me-2"></i>
+                                        Arama Kelimesi
+                                    </label>
+                                    <input type="text" class="form-control modern-input" id="keyword" 
+                                           placeholder="Aranacak kelime veya cümleyi girin..." required>
+                                    <div class="mt-2 text-muted small">
+                                        <strong>💡 Arama İpuçları:</strong>
+                                        <span class="d-block mt-1">
+                                            "Tam cümle" • kelime1+kelime2 • kelime*
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="courtType" class="form-label fw-bold text-dark">
+                                        <i class="fas fa-university me-2"></i>
+                                        Mahkeme Türü
+                                    </label>
+                                    <select class="form-select modern-select" id="courtType">
+                                        <option value="all">🏛️ Tüm Mahkemeler</option>
+                                        <option value="yargitay">⚖️ Yargıtay</option>
+                                        <option value="danistay">🏛️ Danıştay</option>
+                                        <option value="emsal">📚 Emsal (UYAP)</option>
+                                        <option value="anayasa">📜 Anayasa Mahkemesi</option>
+                                        <option value="uyusmazlik">⚖️ Uyuşmazlık Mahkemesi</option>
+                                        <option value="kik">🏢 Kamu İhale Kurumu</option>
+                                        <option value="rekabet">💼 Rekabet Kurumu</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="courtUnit" class="form-label fw-bold text-dark">
+                                        <i class="fas fa-building me-2"></i>
+                                        Daire/Kurul
+                                    </label>
+                                    <select class="form-select modern-select" id="courtUnit">
+                                        <option value="">Tümü</option>
+                                    </select>
+                                </div>
+                            </div>
+                        
+                            <!-- Gelişmiş Arama Seçenekleri -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="collapse" 
+                                            data-bs-target="#advancedSearch" aria-expanded="false">
+                                        <i class="fas fa-sliders-h me-2"></i>
+                                        Gelişmiş Arama Seçenekleri
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="collapse" id="advancedSearch">
+                                <div class="advanced-search mb-4">
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <label for="caseYear" class="form-label fw-bold text-dark">
+                                                <i class="fas fa-calendar-alt me-1"></i>
+                                                Esas Yılı
+                                            </label>
+                                            <input type="text" class="form-control modern-input" id="caseYear" 
+                                                   placeholder="2024" maxlength="4">
+                                        </div>
+                                        
+                                        <div class="col-md-3 mb-3">
+                                            <label for="decisionYear" class="form-label fw-bold text-dark">
+                                                <i class="fas fa-gavel me-1"></i>
+                                                Karar Yılı
+                                            </label>
+                                            <input type="text" class="form-control modern-input" id="decisionYear" 
+                                                   placeholder="2024" maxlength="4">
+                                        </div>
+                                        
+                                        <div class="col-md-3 mb-3">
+                                            <label for="startDate" class="form-label fw-bold text-dark">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                Başlangıç Tarihi
+                                            </label>
+                                            <input type="date" class="form-control modern-input" id="startDate">
+                                        </div>
+                                        
+                                        <div class="col-md-3 mb-3">
+                                            <label for="endDate" class="form-label fw-bold text-dark">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                Bitiş Tarihi
+                                            </label>
+                                            <input type="date" class="form-control modern-input" id="endDate">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12 text-center">
+                                    <button type="submit" class="search-btn me-3">
+                                        <i class="fas fa-search me-2"></i>
+                                        Arama Yap
+                                    </button>
+                                    <button type="button" class="clear-btn" id="clearForm">
+                                        <i class="fas fa-eraser me-2"></i>
+                                        Temizle
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Sonuçlar Bölümü -->
+                <div class="results-container" id="resultsSection" style="display: none;">
+                    <div class="results-header">
+                        <div class="d-flex align-items-center gap-3">
+                            <h2 class="results-title">
+                                <i class="fas fa-search-plus me-2"></i>
+                                Arama Sonuçları
+                            </h2>
+                            <span id="resultCount" class="results-count">0</span>
+                        </div>
+                        
+                        <div class="sort-controls">
+                            <span class="sort-label">📊 Sırala:</span>
+                            <select class="sort-select" id="sortBy">
+                                <option value="date_desc">📅 Tarihe Göre (Yeni → Eski)</option>
+                                <option value="date_asc">📅 Tarihe Göre (Eski → Yeni)</option>
+                                <option value="court_asc">🏛️ Mahkeme Türüne Göre</option>
+                                <option value="case_number">📋 Esas Numarasına Göre</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="results-body">
+                        <!-- Loading Spinner -->
+                        <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Aranıyor...</span>
+                            </div>
+                            <h5 class="mt-3 text-primary">Yargı kararları aranıyor...</h5>
+                            <p class="text-muted">Lütfen bekleyin, tüm mahkemeler taranıyor.</p>
+                        </div>
+                        
+                        <!-- Sonuçlar -->
+                        <div id="searchResults"></div>
+                        
+                        <!-- Hata Mesajı -->
+                        <div id="errorMessage" class="error-message alert alert-danger" style="display: none;">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <span id="errorText"></span>
+                        </div>
+                        
+                        <!-- Sonuç Bulunamadı -->
+                        <div id="noResults" class="no-results alert alert-info" style="display: none;">
+                            <i class="fas fa-search me-2"></i>
+                            <h5>Sonuç Bulunamadı</h5>
+                            <p class="mb-0">Arama kriterlerinize uygun sonuç bulunamadı. Lütfen farklı kelimeler deneyin.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Sayfalama -->
+                    <div class="pagination-container" id="paginationContainer" style="display: none;">
+                        <div class="pagination-info" id="paginationInfo"></div>
+                        <nav aria-label="Sayfa navigasyonu">
+                            <ul class="pagination" id="paginationList"></ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Karar Detayı Modal -->
+<div class="modal fade" id="decisionModal" tabindex="-1" aria-labelledby="decisionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="decisionModalLabel">
+                    <i class="fas fa-gavel me-2"></i>Karar Detayı
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="decisionContent">
+                    <!-- Karar içeriği buraya yüklenecek -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    let currentSearchParams = {};
+    let currentPage = 1;
+    let totalPages = 1;
+    let totalResults = 0;
+    
+    // Mahkeme seçeneklerini yükle
+    loadCourtOptions();
+    
+    // Form submit
+    $('#yargiAramaForm').on('submit', function(e) {
+        e.preventDefault();
+        currentPage = 1; // Yeni arama için sayfa 1'e dön
+        performSearch(1);
+    });
+    
+    // Form temizle
+    $('#clearForm').on('click', function() {
+        $('#yargiAramaForm')[0].reset();
+        hideResults();
+        currentSearchParams = {};
+        currentPage = 1;
+    });
+    
+    // Mahkeme türü değişince daire seçeneklerini güncelle
+    $('#courtType').on('change', function() {
+        const courtType = $(this).val();
+        updateCourtUnits(courtType);
+    });
+    
+    // Sıralama değişince sonuçları yeniden sırala
+    $('#sortBy').on('change', function() {
+        sortAndDisplayResults();
+    });
+    
+    function loadCourtOptions() {
+        $.ajax({
+            url: '/api/yargi_mahkeme_secenekleri',
+            method: 'GET',
+            success: function(data) {
+                window.courtOptions = data;
+                updateCourtUnits('all');
+            },
+            error: function(xhr, status, error) {
+                console.error('Mahkeme seçenekleri yüklenemedi:', error);
+            }
+        });
+    }
+    
+    function updateCourtUnits(courtType) {
+        const $courtUnit = $('#courtUnit');
+        $courtUnit.empty().append('<option value="">Tümü</option>');
+        
+        if (window.courtOptions && courtType !== 'all' && window.courtOptions[courtType]) {
+            window.courtOptions[courtType].forEach(function(unit) {
+                $courtUnit.append(`<option value="${unit.value}">${unit.text}</option>`);
+            });
+        }
+    }
+    
+    function performSearch(page = 1) {
+        const searchData = {
+            keyword: $('#keyword').val().trim(),
+            court_type: $('#courtType').val(),
+            court_unit: $('#courtUnit').val(),
+            case_year: $('#caseYear').val(),
+            decision_year: $('#decisionYear').val(),
+            start_date: $('#startDate').val(),
+            end_date: $('#endDate').val(),
+            page_number: page,
+            page_size: 20 // Sayfa başına 20 sonuç
+        };
+        
+        if (!searchData.keyword) {
+            alert('Lütfen arama kelimesi girin.');
+            return;
+        }
+        
+        currentSearchParams = searchData;
+        currentPage = page;
+        
+        console.log('API çağrısı alındı: POST');
+        console.log('Alınan veri:', searchData);
+        console.log(`Arama parametreleri: keyword=${searchData.keyword}, court_type=${searchData.court_type}`);
+        
+        showLoading();
+        
+        $.ajax({
+            url: '/api/yargi_arama',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(searchData),
+            success: function(response) {
+                hideLoading();
+                if (response && response.success) {
+                    window.currentResults = response.data;
+                    displayResults(response.data);
+                    updatePagination(response.pagination || {});
+                } else {
+                    showError(response?.error || 'Arama sırasında bir hata oluştu.');
+                }
+            },
+            error: function(xhr, status, error) {
+                hideLoading();
+                console.error('Arama hatası:', error);
+                showError(`Arama sırasında bir hata oluştu: ${error}`);
+            }
+        });
+    }
+    
+    function displayResults(data) {
+        const $container = $('#searchResults');
+        $container.empty();
+        
+        let hasResults = false;
+        
+        // Mahkeme adları
+        const courtNames = {
+            'yargitay': '⚖️ Yargıtay',
+            'danistay': '🏛️ Danıştay',
+            'emsal': '📚 Emsal (UYAP)',
+            'anayasa': '📜 Anayasa Mahkemesi',
+            'uyusmazlik': '⚖️ Uyuşmazlık Mahkemesi',
+            'kik': '🏢 Kamu İhale Kurumu',
+            'rekabet': '💼 Rekabet Kurumu'
+        };
+        
+        // Toplam sonuç sayısını API'den al
+        const totalCount = data.total_count || 0;
+        
+        // Her mahkeme türü için sonuçları göster
+        Object.keys(data).forEach(function(courtType) {
+            if (courtType === 'total_count' || courtType === 'pagination') return;
+            
+            const courtData = data[courtType];
+            if (courtData.decisions && courtData.decisions.length > 0) {
+                hasResults = true;
+                
+                const courtName = courtNames[courtType] || courtType;
+                
+                // Sadece mahkeme adını göster, ekstra sayaç yok
+                $container.append(`
+                    <div class="court-section">
+                        <div class="court-title">
+                            <h5>${courtName}</h5>
+                        </div>
+                    </div>
+                `);
+                
+                courtData.decisions.forEach(function(result) {
+                    appendResultItem($container, result, courtType);
+                });
+            }
+        });
+        
+        // Toplam sonuç sayısını güncelle - API'den gelen toplam sayıyı kullan
+        $('#resultCount').text(`${totalCount} sonuç`);
+        totalResults = totalCount;
+        
+        if (hasResults) {
+            showResults();
+        } else {
+            showNoResults();
+        }
+    }
+    
+    function appendResultItem($container, result, courtType) {
+        const resultHtml = `
+            <div class="decision-card" data-court-type="${courtType}" data-date="${result.decision_date}">
+                <div class="decision-title">${result.title}</div>
+                <div class="decision-meta">
+                    <div class="meta-item">
+                        <span class="court-badge">${result.court}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>${result.decision_date}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Esas: ${result.case_number}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-gavel"></i>
+                        <span>Karar: ${result.decision_number}</span>
+                    </div>
+                </div>
+                ${result.summary ? `<div class="decision-summary">${result.summary}</div>` : ''}
+                <div class="decision-actions">
+                    <button onclick="showDecisionDetail('${result.id}', '${result.title}', '${courtType}', '${result.document_url}')" class="action-btn btn-view">
+                        <i class="fas fa-file-text"></i>
+                        Karar Metnini Görüntüle
+                    </button>
+                    <a href="${result.document_url}" target="_blank" class="action-btn btn-source">
+                        <i class="fas fa-external-link-alt"></i>
+                        Kaynak
+                    </a>
+                </div>
+            </div>
+        `;
+        $container.append(resultHtml);
+    }
+    
+    function updatePagination(pagination) {
+        if (!pagination || !pagination.total_pages || pagination.total_pages <= 1) {
+            $('#paginationContainer').hide();
+            return;
+        }
+        
+        totalPages = pagination.total_pages;
+        const currentPageNum = pagination.current_page || currentPage;
+        const totalRecords = pagination.total_records || totalResults;
+        const pageSize = pagination.page_size || 20;
+        
+        // Sayfalama bilgisi
+        const startRecord = ((currentPageNum - 1) * pageSize) + 1;
+        const endRecord = Math.min(currentPageNum * pageSize, totalRecords);
+        $('#paginationInfo').text(`${startRecord}-${endRecord} / ${totalRecords} sonuç gösteriliyor`);
+        
+        // Sayfalama butonları
+        const $paginationList = $('#paginationList');
+        $paginationList.empty();
+        
+        // Önceki sayfa
+        const prevDisabled = currentPageNum <= 1 ? 'disabled' : '';
+        $paginationList.append(`
+            <li class="page-item ${prevDisabled}">
+                <a class="page-link" href="#" onclick="goToPage(${currentPageNum - 1})" aria-label="Önceki">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        `);
+        
+        // Sayfa numaraları
+        const startPage = Math.max(1, currentPageNum - 2);
+        const endPage = Math.min(totalPages, currentPageNum + 2);
+        
+        if (startPage > 1) {
+            $paginationList.append(`<li class="page-item"><a class="page-link" href="#" onclick="goToPage(1)">1</a></li>`);
+            if (startPage > 2) {
+                $paginationList.append(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+            }
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const activeClass = i === currentPageNum ? 'active' : '';
+            $paginationList.append(`
+                <li class="page-item ${activeClass}">
+                    <a class="page-link" href="#" onclick="goToPage(${i})">${i}</a>
+                </li>
+            `);
+        }
+        
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                $paginationList.append(`<li class="page-item disabled"><span class="page-link">...</span></li>`);
+            }
+            $paginationList.append(`<li class="page-item"><a class="page-link" href="#" onclick="goToPage(${totalPages})">${totalPages}</a></li>`);
+        }
+        
+        // Sonraki sayfa
+        const nextDisabled = currentPageNum >= totalPages ? 'disabled' : '';
+        $paginationList.append(`
+            <li class="page-item ${nextDisabled}">
+                <a class="page-link" href="#" onclick="goToPage(${currentPageNum + 1})" aria-label="Sonraki">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        `);
+        
+        $('#paginationContainer').show();
+    }
+    
+    function parseTurkishDate(dateStr) {
+        if (!dateStr || typeof dateStr !== 'string') {
+            return new Date(0); // Geçersiz veya boş tarihler için en eski tarihi döndür
+        }
+        const parts = dateStr.split('.');
+        if (parts.length === 3) {
+            // new Date(YIL, AY - 1, GÜN)
+            const year = parseInt(parts[2], 10);
+            const month = parseInt(parts[1], 10) - 1; // Ay 0'dan başlar
+            const day = parseInt(parts[0], 10);
+            if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+                return new Date(year, month, day);
+            }
+        }
+        // Eğer format farklıysa standart Date constructor'ını dene
+        const fallbackDate = new Date(dateStr);
+        return isNaN(fallbackDate) ? new Date(0) : fallbackDate;
+    }
+
+    function sortAndDisplayResults() {
+        if (!window.currentResults) {
+            return;
+        }
+        
+        const sortBy = $('#sortBy').val();
+        
+        let allResults = [];
+        Object.keys(window.currentResults).forEach(function(courtType) {
+            if (courtType === 'total_count' || courtType === 'pagination') return;
+            
+            const courtData = window.currentResults[courtType];
+            if (courtData.decisions && courtData.decisions.length > 0) {
+                courtData.decisions.forEach(function(decision) {
+                    decision.court_type = courtType;
+                    allResults.push(decision);
+                });
+            }
+        });
+        
+        allResults.sort(function(a, b) {
+            switch(sortBy) {
+                case 'date_desc':
+                    return parseTurkishDate(b.decision_date) - parseTurkishDate(a.decision_date);
+                case 'date_asc':
+                    return parseTurkishDate(a.decision_date) - parseTurkishDate(b.decision_date);
+                case 'court_asc':
+                    return (a.court || '').localeCompare(b.court || '', 'tr');
+                case 'case_number':
+                    return (a.case_number || '').localeCompare(b.case_number || '', 'tr', { numeric: true });
+                default:
+                    return 0;
+            }
+        });
+        
+        displaySortedResults(allResults);
+    }
+    
+    function displaySortedResults(results) {
+        const $container = $('#searchResults');
+        $container.empty();
+        
+        if (results.length === 0) {
+            showNoResults();
+            return;
+        }
+        
+        // Mahkeme türüne göre grupla
+        const groupedResults = {};
+        results.forEach(function(result) {
+            if (!groupedResults[result.court_type]) {
+                groupedResults[result.court_type] = [];
+            }
+            groupedResults[result.court_type].push(result);
+        });
+        
+        // Mahkeme adları
+        const courtNames = {
+            'yargitay': '⚖️ Yargıtay',
+            'danistay': '🏛️ Danıştay',
+            'emsal': '📚 Emsal (UYAP)',
+            'anayasa': '📜 Anayasa Mahkemesi',
+            'uyusmazlik': '⚖️ Uyuşmazlık Mahkemesi',
+            'kik': '🏢 Kamu İhale Kurumu',
+            'rekabet': '💼 Rekabet Kurumu'
+        };
+        
+        // Her grup için başlık ve sonuçları göster - ekstra sayaç olmadan
+        Object.keys(groupedResults).forEach(function(courtType) {
+            const courtName = courtNames[courtType] || courtType;
+            const courtResults = groupedResults[courtType];
+            
+            $container.append(`
+                <div class="court-section">
+                    <div class="court-title">
+                        <h5>${courtName}</h5>
+                    </div>
+                </div>
+            `);
+            
+            courtResults.forEach(function(result) {
+                appendResultItem($container, result, courtType);
+            });
+        });
+        
+        // Toplam sonuç sayısını korumalıyız - window.currentResults'dan al
+        if (window.currentResults && window.currentResults.total_count) {
+            $('#resultCount').text(`${window.currentResults.total_count} sonuç`);
+        }
+        
+        showResults();
+    }
+    
+    function showLoading() {
+        $('#loadingSpinner').show();
+        $('#resultsSection').show();
+        $('#searchResults, #errorMessage, #noResults, #paginationContainer').hide();
+    }
+    
+    function hideLoading() {
+        $('#loadingSpinner').hide();
+    }
+    
+    function showResults() {
+        $('#searchResults').show();
+        $('#errorMessage, #noResults').hide();
+    }
+    
+    function showNoResults() {
+        $('#noResults').show();
+        $('#searchResults, #errorMessage, #paginationContainer').hide();
+    }
+    
+    function showError(message) {
+        $('#errorText').text(message);
+        $('#errorMessage').show();
+        $('#searchResults, #noResults, #paginationContainer').hide();
+    }
+    
+    function hideResults() {
+        $('#resultsSection').hide();
+    }
+    
+    // Global fonksiyonlar
+    window.goToPage = function(page) {
+        if (page < 1 || page > totalPages || page === currentPage) {
+            return;
+        }
+        performSearch(page);
+        
+        // Sayfa başına kaydır
+        $('html, body').animate({
+            scrollTop: $('#resultsSection').offset().top - 100
+        }, 500);
+    };
+    
+    window.showDecisionDetail = function(documentId, title, courtType, documentUrl) {
+        console.log(`Karar metni isteniyor: ${courtType} - ${documentId}`);
+        
+        $('#decisionModal .modal-title').html(`<i class="fas fa-gavel me-2"></i>${title}`);
+        
+        // Loading state göster
+        $('#decisionContent').html(`
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Yükleniyor...</span>
+                </div>
+                <h5 class="mt-3 text-primary">Karar metni yükleniyor...</h5>
+                <p class="text-muted">Lütfen bekleyin, karar metni getiriliyor ve işleniyor.</p>
+                <div class="progress mt-3" style="height: 6px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        `);
+        
+        // Modal'ı hemen aç
+        $('#decisionModal').modal('show');
+        
+        // Karar metnini API'den yükle
+        $.ajax({
+            url: '/api/yargi_karar_metni',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                document_id: documentId,
+                court_type: courtType,
+                document_url: documentUrl
+            }),
+            timeout: 45000, // 45 saniye timeout
+            success: function(response) {
+                console.log('API yanıtı alındı:', response);
+                
+                if (response.success) {
+                    if (response.content_type === 'pdf') {
+                        // PDF içeriği için embed kullan
+                        $('#decisionContent').html(`
+                            <div class="alert alert-success mb-3">
+                                <i class="fas fa-file-pdf me-2"></i>
+                                <strong>Karar metni PDF olarak yüklendi</strong>
+                                <br>
+                                <small class="text-muted">Kaynak: ${response.source_url || documentUrl}</small>
+                            </div>
+                            <div class="pdf-container" style="height: 70vh; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                                <embed src="${response.pdf_url}" type="application/pdf" width="100%" height="100%" />
+                            </div>
+                            <div class="mt-3 text-center">
+                                <a href="${response.pdf_url}" target="_blank" class="btn btn-primary">
+                                    <i class="fas fa-external-link-alt me-1"></i>
+                                    Yeni Sekmede Aç
+                                </a>
+                                <a href="${response.pdf_url}" download class="btn btn-secondary ms-2">
+                                    <i class="fas fa-download me-1"></i>
+                                    İndir
+                                </a>
+                            </div>
+                        `);
+                    } else if (response.content && response.content.trim().length > 20) {
+                        // Metin içeriği - daha esnek minimum uzunluk kontrolü
+                        console.log('Metin içeriği bulundu, uzunluk:', response.content.length);
+                        $('#decisionContent').html(`
+                            <div class="alert alert-success mb-3">
+                                <i class="fas fa-file-text me-2"></i>
+                                <strong>Karar metni başarıyla yüklendi</strong>
+                                <br>
+                                <small class="text-muted">Kaynak: ${response.source_url || documentUrl}</small>
+                            </div>
+                            <div class="decision-text-content" style="max-height: 70vh; overflow-y: auto; background: #f8f9fa; padding: 25px; border-radius: 8px; border: 1px solid #e9ecef;">
+                                <div style="white-space: pre-wrap; font-family: 'Times New Roman', serif; font-size: 15px; line-height: 1.7; color: #333; text-align: justify;">
+                                    ${response.content.replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <button onclick="printDecisionContent()" class="btn btn-primary">
+                                    <i class="fas fa-print me-1"></i>
+                                    Yazdır
+                                </button>
+                                <button onclick="copyDecisionContent()" class="btn btn-secondary ms-2">
+                                    <i class="fas fa-copy me-1"></i>
+                                    Kopyala
+                                </button>
+                                <a href="${response.source_url}" target="_blank" class="btn btn-outline-primary ms-2">
+                                    <i class="fas fa-external-link-alt me-1"></i>
+                                    Kaynak Sayfayı Aç
+                                </a>
+                            </div>
+                        `);
+                    } else if (response.redirect_url) {
+                        // Yönlendirme durumu - içerik çekilemedi
+                        console.log('Yönlendirme URL\'si kullanılacak:', response.redirect_url);
+                        $('#decisionContent').html(`
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-external-link-alt me-2"></i>
+                                <h5>Karar Detayına Yönlendirme</h5>
+                                <p class="mb-3">Karar tam metnini görüntülemek için aşağıdaki bağlantıya tıklayın:</p>
+                                <a href="${response.redirect_url}" target="_blank" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-gavel me-2"></i>
+                                    ${getCourtDisplayName(courtType)} Karar Metnini Görüntüle
+                                </a>
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Karar metni otomatik olarak çekilemedi. Manuel olarak görüntüleyebilirsiniz.
+                                    </small>
+                                </div>
+                            </div>
+                        `);
+                    } else {
+                        // Bilinmeyen durum - debug bilgisi ekle
+                        console.log('Bilinmeyen durum - response:', response);
+                        $('#decisionContent').html(`
+                            <div class="alert alert-warning text-center">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <h5>İçerik Bulunamadı</h5>
+                                <p class="mb-3">Karar metni içeriği alınamadı.</p>
+                                <p class="mb-3"><small>Debug: Content type: ${response.content_type || 'undefined'}, Content length: ${response.content ? response.content.length : 'undefined'}</small></p>
+                                <a href="${response.source_url || documentUrl}" target="_blank" class="btn btn-primary">
+                                    <i class="fas fa-external-link-alt me-1"></i>
+                                    Kaynak Sayfayı Aç
+                                </a>
+                            </div>
+                        `);
+                    }
+                } else {
+                    // API hatası
+                    console.log('API hatası:', response.error);
+                    $('#decisionContent').html(`
+                        <div class="alert alert-danger text-center">
+                            <i class="fas fa-times-circle me-2"></i>
+                            <h5>Karar metni yüklenemedi</h5>
+                            <p class="mb-3">${response.error || 'Bilinmeyen hata oluştu'}</p>
+                            <a href="${documentUrl}" target="_blank" class="btn btn-primary">
+                                <i class="fas fa-external-link-alt me-1"></i>
+                                Kaynak Sayfayı Aç
+                            </a>
+                        </div>
+                    `);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX hatası:', status, error);
+                
+                let errorMessage = 'Karar metni yüklenirken hata oluştu';
+                let errorDetails = '';
+                
+                if (status === 'timeout') {
+                    errorMessage = 'İstek zaman aşımına uğradı';
+                    errorDetails = 'Sunucu yanıt vermedi. Lütfen tekrar deneyin.';
+                } else if (xhr.status === 404) {
+                    errorMessage = 'Karar metni bulunamadı';
+                    errorDetails = 'Belirtilen karar sistemde mevcut değil.';
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Sunucu hatası oluştu';
+                    errorDetails = 'Sistem geçici olarak kullanılamıyor.';
+                } else if (xhr.status === 0) {
+                    errorMessage = 'Bağlantı hatası';
+                    errorDetails = 'İnternet bağlantınızı kontrol edin.';
+                } else {
+                    errorDetails = `HTTP ${xhr.status}: ${error}`;
+                }
+                
+                $('#decisionContent').html(`
+                    <div class="alert alert-danger text-center">
+                        <i class="fas fa-times-circle me-2"></i>
+                        <h5>${errorMessage}</h5>
+                        <p class="mb-3">${errorDetails}</p>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <button onclick="showDecisionDetail('${documentId}', '${title}', '${courtType}', '${documentUrl}')" class="btn btn-outline-primary">
+                                <i class="fas fa-redo me-1"></i>
+                                Tekrar Dene
+                            </button>
+                            <a href="${documentUrl}" target="_blank" class="btn btn-primary">
+                                <i class="fas fa-external-link-alt me-1"></i>
+                                Kaynak Sayfayı Aç
+                            </a>
+                        </div>
+                    </div>
+                `);
+            }
+        });
+    };
+    
+    // Mahkeme görüntü adları
+    function getCourtDisplayName(courtType) {
+        const courtNames = {
+            'yargitay': 'Yargıtay',
+            'danistay': 'Danıştay', 
+            'emsal': 'UYAP Emsal',
+            'anayasa': 'Anayasa Mahkemesi',
+            'uyusmazlik': 'Uyuşmazlık Mahkemesi',
+            'kik': 'Kamu İhale Kurumu',
+            'rekabet': 'Rekabet Kurumu'
+        };
+        return courtNames[courtType] || courtType;
+    }
+    
+    // Yazdırma fonksiyonu
+    window.printDecisionContent = function() {
+        const content = $('.decision-text-content').html();
+        if (content) {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Karar Metni</title>
+                    <style>
+                        body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; margin: 2cm; }
+                        .header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid #000; padding-bottom: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h2>KARAR METNİ</h2>
+                    </div>
+                    ${content}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    };
+    
+    // Kopyalama fonksiyonu
+    window.copyDecisionContent = function() {
+        const content = $('.decision-text-content div').text();
+        if (content) {
+            navigator.clipboard.writeText(content).then(function() {
+                alert('Karar metni panoya kopyalandı!');
+            }).catch(function() {
+                // Fallback için eski yöntem
+                const textArea = document.createElement('textarea');
+                textArea.value = content;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Karar metni panoya kopyalandı!');
+            });
+        }
+    };
+});
+</script>
+
+<!-- Bootstrap JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% endblock %} 
