@@ -8,12 +8,13 @@ import html
 import re
 import tempfile
 import os
-from markitdown import MarkItDown
+# from markitdown import MarkItDown  # Temporarily disabled due to onnxruntime DLL issues
 
 from .models import (
     EmsalSearchRequest,
     EmsalDetailedSearchRequestData, 
     EmsalApiResponse,
+    EmsalApiResponseInnerData,
     EmsalDocumentMarkdown
 )
 
@@ -75,7 +76,28 @@ class EmsalApiClient:
             response = await self.http_client.post(endpoint, json=payload)
             response.raise_for_status()
             response_json_data = response.json()
-            logger.debug(f"EmsalApiClient: Raw API response from {endpoint}: {response_json_data}")
+            
+            # DEBUG: Raw response'u detaylı logla
+            logger.info(f"EmsalApiClient: Raw API response from {endpoint}: {response_json_data}")
+            logger.info(f"EmsalApiClient: Response keys: {list(response_json_data.keys()) if isinstance(response_json_data, dict) else 'Not a dict'}")
+            logger.info(f"EmsalApiClient: Response type: {type(response_json_data)}")
+            
+            # Response format'ını kontrol et
+            if isinstance(response_json_data, dict):
+                data_field = response_json_data.get("data")
+                logger.info(f"EmsalApiClient: 'data' field type: {type(data_field)}")
+                logger.info(f"EmsalApiClient: 'data' field value: {data_field}")
+                
+                if data_field is None:
+                    logger.warning("EmsalApiClient: 'data' field is None - API format may have changed")
+                    # Boş response döndür
+                    return EmsalApiResponse(
+                        data=EmsalApiResponseInnerData(
+                            data=[],
+                            recordsTotal=0,
+                            recordsFiltered=0
+                        )
+                    )
             
             api_response_parsed = EmsalApiResponse(**response_json_data)
 
@@ -90,6 +112,12 @@ class EmsalApiClient:
             raise
         except Exception as e:
             logger.error(f"EmsalApiClient: Error processing or validating Emsal search response from {endpoint}: {e}")
+            # DEBUG: Response'u yeniden logla
+            try:
+                response_json_data = response.json()
+                logger.error(f"EmsalApiClient: Failed response data: {response_json_data}")
+            except:
+                logger.error(f"EmsalApiClient: Could not parse response as JSON")
             raise
 
     def _clean_html_and_convert_to_markdown_emsal(self, html_content_from_api_data_field: str) -> Optional[str]:

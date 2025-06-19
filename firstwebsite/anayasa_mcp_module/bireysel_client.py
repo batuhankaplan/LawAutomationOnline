@@ -10,7 +10,7 @@ import re
 import tempfile
 import os
 from urllib.parse import urlencode, urljoin, quote
-from markitdown import MarkItDown
+# from markitdown import MarkItDown  # Temporarily disabled due to onnxruntime DLL issues
 import math # For math.ceil for pagination
 
 from .models import (

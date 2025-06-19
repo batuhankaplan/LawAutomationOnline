@@ -8,7 +8,7 @@ import html
 import re
 import io # For io.BytesIO
 from urllib.parse import urlencode, urljoin, quote, parse_qs, urlparse
-from markitdown import MarkItDown
+# from markitdown import MarkItDown  # Temporarily disabled due to onnxruntime DLL issues
 import math
 
 # pypdf for PDF processing (lighter alternative to PyMuPDF)

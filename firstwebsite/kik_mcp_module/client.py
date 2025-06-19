@@ -15,7 +15,7 @@ import urllib.parse
 import base64 # Base64 için
 import re
 import html as html_parser 
-from markitdown import MarkItDown 
+# from markitdown import MarkItDown  # Temporarily disabled due to onnxruntime DLL issues 
 import os
 import math 
 import tempfile

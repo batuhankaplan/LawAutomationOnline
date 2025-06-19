@@ -8,7 +8,7 @@ import html
 import re
 import tempfile
 import os
-from markitdown import MarkItDown
+# from markitdown import MarkItDown  # Temporarily disabled due to onnxruntime DLL issues
 
 from .models import (
     DanistayKeywordSearchRequest,

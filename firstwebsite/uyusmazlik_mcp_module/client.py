@@ -9,7 +9,7 @@ import html
 import re
 import tempfile
 import os
-from markitdown import MarkItDown
+# from markitdown import MarkItDown  # Temporarily disabled due to onnxruntime DLL issues
 from urllib.parse import urljoin, urlencode # urlencode for aiohttp form data
 
 from .models import (

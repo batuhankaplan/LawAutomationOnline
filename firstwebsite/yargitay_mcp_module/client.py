@@ -8,12 +8,13 @@ import html
 import re
 import tempfile
 import os
-from markitdown import MarkItDown
+# from markitdown import MarkItDown  # Temporarily disabled due to onnxruntime DLL issues
 
 from .models import (
     YargitayDetailedSearchRequest,
     YargitayApiSearchResponse,      
     YargitayApiDecisionEntry,
+    YargitayApiResponseInnerData,
     YargitayDocumentMarkdown,     
     CompactYargitaySearchResult 
 )
@@ -66,6 +67,28 @@ class YargitayOfficialApiClient:
             response.raise_for_status() # Raise an exception for HTTP 4xx or 5xx status codes
             response_json_data = response.json()
             
+            # DEBUG: Raw response'u detaylı logla
+            logger.info(f"YargitayOfficialApiClient: Raw API response: {response_json_data}")
+            logger.info(f"YargitayOfficialApiClient: Response keys: {list(response_json_data.keys()) if isinstance(response_json_data, dict) else 'Not a dict'}")
+            logger.info(f"YargitayOfficialApiClient: Response type: {type(response_json_data)}")
+            
+            # Response format'ını kontrol et
+            if isinstance(response_json_data, dict):
+                data_field = response_json_data.get("data")
+                logger.info(f"YargitayOfficialApiClient: 'data' field type: {type(data_field)}")
+                logger.info(f"YargitayOfficialApiClient: 'data' field value: {data_field}")
+                
+                if data_field is None:
+                    logger.warning("YargitayOfficialApiClient: 'data' field is None - API format may have changed")
+                    # Boş response döndür
+                    return YargitayApiSearchResponse(
+                        data=YargitayApiResponseInnerData(
+                            data=[],
+                            recordsTotal=0,
+                            recordsFiltered=0
+                        )
+                    )
+            
             # Validate and parse the response using Pydantic models
             api_response = YargitayApiSearchResponse(**response_json_data)
 
@@ -81,54 +104,53 @@ class YargitayOfficialApiClient:
             raise # Re-raise to be handled by the calling MCP tool
         except Exception as e: # Catches Pydantic ValidationErrors as well
             logger.error(f"YargitayOfficialApiClient: Error processing or validating detailed search response: {e}")
+            # DEBUG: Response'u yeniden logla
+            try:
+                response_json_data = response.json()
+                logger.error(f"YargitayOfficialApiClient: Failed response data: {response_json_data}")
+            except:
+                logger.error(f"YargitayOfficialApiClient: Could not parse response as JSON")
             raise
 
     def _convert_html_to_markdown(self, html_from_api_data_field: str) -> Optional[str]:
         """
         Takes raw HTML string (from Yargitay API 'data' field for a document),
-        pre-processes it, and converts it to Markdown using MarkItDown.
-        Returns only the Markdown string or None if conversion fails.
+        pre-processes it, and converts it to simple text format.
+        MarkItDown temporarily disabled due to onnxruntime DLL issues.
+        Returns cleaned text or None if conversion fails.
         """
         if not html_from_api_data_field:
             return None
 
-        # Pre-process HTML: unescape entities and fix common escaped sequences
-        # Based on user's original fix_html_content
-        processed_html = html.unescape(html_from_api_data_field)
-        processed_html = processed_html.replace('\\"', '"')
-        processed_html = processed_html.replace('\\r\\n', '\n')
-        processed_html = processed_html.replace('\\n', '\n')
-        processed_html = processed_html.replace('\\t', '\t')
-        
-        # MarkItDown often works best with a full HTML document structure.
-        # The Yargitay /getDokuman response already provides a full <html>...</html> string.
-        # If it were just a fragment, we might wrap it like:
-        # html_to_convert = f"<html><head><meta charset=\"UTF-8\"></head><body>{processed_html}</body></html>"
-        # But since it's already a full HTML string in "data":
-        html_to_convert = processed_html
-
-        markdown_output = None
-        temp_file_path = None
         try:
-            md_converter = MarkItDown() # Plugins disabled as per basic usage
+            # Pre-process HTML: unescape entities and fix common escaped sequences
+            processed_html = html.unescape(html_from_api_data_field)
+            processed_html = processed_html.replace('\\"', '"')
+            processed_html = processed_html.replace('\\r\\n', '\n')
+            processed_html = processed_html.replace('\\n', '\n')
+            processed_html = processed_html.replace('\\t', '\t')
             
-            # Write the HTML to a temporary file for MarkItDown to process
-            with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".html", encoding="utf-8") as tmp_html_file:
-                tmp_html_file.write(html_to_convert)
-                temp_file_path = tmp_html_file.name
+            # Use BeautifulSoup for basic HTML to text conversion
+            soup = BeautifulSoup(processed_html, 'html.parser')
             
-            conversion_result = md_converter.convert(temp_file_path)
-            markdown_output = conversion_result.text_content
+            # Remove script and style elements
+            for script in soup(["script", "style"]):
+                script.decompose()
             
-            logger.info("Successfully converted HTML to Markdown.")
+            # Get text and clean it up
+            text = soup.get_text()
+            
+            # Clean up whitespace
+            lines = (line.strip() for line in text.splitlines())
+            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+            text = ' '.join(chunk for chunk in chunks if chunk)
+            
+            logger.info("Successfully converted HTML to text (MarkItDown disabled).")
+            return text
 
         except Exception as e:
-            logger.error(f"Error during MarkItDown HTML to Markdown conversion: {e}")
-        finally:
-            if temp_file_path and os.path.exists(temp_file_path):
-                os.remove(temp_file_path) # Clean up the temporary file
-        
-        return markdown_output
+            logger.error(f"Error during HTML to text conversion: {e}")
+            return processed_html  # Return processed HTML as fallback
 
     async def get_decision_document_as_markdown(self, id: str) -> YargitayDocumentMarkdown:
         """
