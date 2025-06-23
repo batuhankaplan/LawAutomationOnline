@@ -1,7 +1,60 @@
 """
-Yargı MCP Flask Entegrasyonu
-Gerçek yargi-mcp projesindeki tüm modülleri Flask uygulamasına entegre eder.
+Unified Yargi Integration - Tüm yargı sistemi MCP'lerini birleştiren ana entegrasyon dosyası
+Bu dosya artık unified_mcp_modules.py dosyasından import yapar
 """
+
+# Yeni birleşik dosyadan import (absolute import)
+from unified_mcp_modules import (
+    # Anayasa
+    AnayasaMahkemesiApiClient,
+    AnayasaNormDenetimiSearchRequest,
+    AnayasaSearchResult,
+    AnayasaDocumentMarkdown,
+    AnayasaBireyselReportSearchRequest,
+    AnayasaBireyselReportSearchResult,
+    AnayasaBireyselBasvuruDocumentMarkdown,
+    
+    # Danıştay
+    DanistayApiClient,
+    DanistayKeywordSearchRequest,
+    DanistayDetailedSearchRequest,
+    DanistayApiResponse,
+    DanistayDocumentMarkdown,
+    
+    # Emsal
+    EmsalApiClient,
+    EmsalSearchRequest,
+    EmsalApiResponse,
+    EmsalDocumentMarkdown,
+    
+    # KIK
+    KikApiClient,
+    KikSearchRequest,
+    KikSearchResult,
+    KikDocumentMarkdown,
+    KikKararTipi,
+    
+    # Rekabet
+    RekabetKurumuApiClient,
+    RekabetKurumuSearchRequest,
+    RekabetSearchResult,
+    RekabetDocument,
+    
+    # Uyuşmazlık
+    UyusmazlikApiClient,
+    UyusmazlikSearchRequest,
+    UyusmazlikSearchResponse,
+    UyusmazlikDocumentMarkdown,
+    
+    # Yargıtay
+    YargitayOfficialApiClient,
+    YargitayDetailedSearchRequest,
+    YargitayApiSearchResponse,
+    YargitayDocumentMarkdown,
+    
+    # Logging
+    logger
+)
 
 import asyncio
 import logging
@@ -19,27 +72,8 @@ import time
 import html
 import json
 
-# MCP modüllerini import et
-from yargitay_mcp_module.client import YargitayOfficialApiClient
-from yargitay_mcp_module.models import YargitayDetailedSearchRequest
-
-from danistay_mcp_module.client import DanistayApiClient
-from danistay_mcp_module.models import DanistayKeywordSearchRequest
-
-from emsal_mcp_module.client import EmsalApiClient
-from emsal_mcp_module.models import EmsalSearchRequest
-
-from anayasa_mcp_module.client import AnayasaMahkemesiApiClient
-from anayasa_mcp_module.models import AnayasaNormDenetimiSearchRequest
-
-from uyusmazlik_mcp_module.client import UyusmazlikApiClient
-from uyusmazlik_mcp_module.models import UyusmazlikSearchRequest, UyusmazlikBolumEnum
-
-from kik_mcp_module.client import KikApiClient
-from kik_mcp_module.models import KikSearchRequest, KikKararTipi
-
-from rekabet_mcp_module.client import RekabetKurumuApiClient
-from rekabet_mcp_module.models import RekabetKurumuSearchRequest
+# MCP modülleri artık unified_mcp_modules'tan import ediliyor
+# Eski import'lar kaldırıldı
 
 logger = logging.getLogger(__name__)
 
@@ -814,6 +848,9 @@ class YargiFlaskIntegration:
             
             logger.info(f"Danıştay API arama yapılıyor: {keyword}")
             
+            # Arama kelimesini global değişkende sakla (modal için)
+            get_document_content._last_danistay_keyword = keyword
+            
             # API çağrısı yap
             api_response = await self.danistay_client.search_keyword_decisions(search_request)
             
@@ -836,7 +873,7 @@ class YargiFlaskIntegration:
                         case_number=esas_no,
                         decision_number=karar_no,
                         summary=f"Danıştay kararı: {keyword}"[:200],
-                        document_url=f"https://www.danistay.gov.tr/Karar/Detay/{decision_id}"
+                        document_url=f"https://karararama.danistay.gov.tr/Karar/Detay/{decision_id}"
                     )
                     flask_results.append(flask_result)
             
@@ -979,7 +1016,7 @@ class YargiFlaskIntegration:
                         case_number=decision.esasNo or "",
                         decision_number=decision.kararNo or "",
                         summary=f"Emsal kararı: {keyword}"[:200],
-                        document_url=f"https://www.uyap.gov.tr/Karar/Detay/{decision.id}"
+                        document_url=f"https://emsal.uyap.gov.tr/Karar/Detay/{decision.id}"
                     )
                     flask_results.append(flask_result)
             
@@ -1258,9 +1295,8 @@ class YargiFlaskIntegration:
                 # API başarısız, bireysel başvuru API'sini dene
                 try:
                     logger.info("Anayasa Mahkemesi bireysel başvuru API'si deneniyor...")
-                    from anayasa_mcp_module.models import AnayasaBireyselBasvuruSearchRequest
-                    
-                    bireysel_request = AnayasaBireyselBasvuruSearchRequest(
+                    # Bireysel başvuru için unified modülden import
+                    bireysel_request = AnayasaNormDenetimiSearchRequest(
                         keywords_all=[keyword] if keyword else [],
                         keywords_any=[],
                         keywords_exclude=[],
@@ -1268,9 +1304,9 @@ class YargiFlaskIntegration:
                         results_per_page=page_size
                     )
                     
-                    from anayasa_mcp_module.bireysel_client import AnayasaBireyselBasvuruClient
-                    bireysel_client = AnayasaBireyselBasvuruClient()
-                    api_response = await bireysel_client.search_decisions(bireysel_request)
+                    # Unified modüldeki client'ı kullan
+                    bireysel_client = AnayasaMahkemesiApiClient()
+                    api_response = await bireysel_client.search_norm_denetimi_decisions(bireysel_request)
                     
                     flask_results = []
                     if api_response.data and api_response.data.data:
@@ -1393,13 +1429,10 @@ class YargiFlaskIntegration:
         """Uyuşmazlık Mahkemesi API'sinde arama yapar - hızlı ve güvenilir"""
         
         try:
-            # UyusmazlikBolumEnum'dan doğru değeri kullan
-            from uyusmazlik_mcp_module.models import UyusmazlikBolumEnum
-            
             # Uyuşmazlık Mahkemesi arama parametrelerini hazırla
             search_request = UyusmazlikSearchRequest(
                 icerik=keyword,
-                bolum=UyusmazlikBolumEnum.TUMU,  # Tüm bölümlerde ara
+                bolum=None,  # Tüm bölümlerde ara
                 uyusmazlik_turu=None,
                 karar_sonuclari=[],
                 esas_yil="",
@@ -1542,9 +1575,6 @@ class YargiFlaskIntegration:
         """KİK API'sinde arama yapar - hızlı ve güvenilir"""
         
         try:
-            # KİK enum değerlerini kontrol et
-            from kik_mcp_module.models import KikKararTipi
-            
             # KİK arama parametrelerini hazırla
             search_request = KikSearchRequest(
                 karar_tipi=KikKararTipi.UYUSMAZLIK,  # Default olarak UYUSMAZLIK kullan
@@ -3241,6 +3271,10 @@ def get_court_options() -> Dict[str, List[Dict[str, str]]]:
 def get_document_content(court_type: str, document_id: str, document_url: str = None) -> Dict[str, Any]:
     """Belirli bir kararın tam içeriğini getir - MCP client'larının doğru fonksiyonlarını kullanarak"""
     try:
+        # Global attribute'lar için başlangıç değerleri
+        if not hasattr(get_document_content, '_last_danistay_keyword'):
+            get_document_content._last_danistay_keyword = ''
+            
         # Event loop oluştur
         try:
             loop = asyncio.get_event_loop()
@@ -3254,8 +3288,7 @@ def get_document_content(court_type: str, document_id: str, document_url: str = 
         logger.info(f"Doküman içeriği istendi: court_type={court_type}, document_id={document_id}")
         
         if court_type == "yargitay":
-            # Yargıtay için yeni client oluştur (event loop sorunu nedeniyle)
-            from yargitay_mcp_module.client import YargitayOfficialApiClient
+            # Yargıtay için unified modülden client oluştur (event loop sorunu nedeniyle)
             client = YargitayOfficialApiClient()
             
             try:
@@ -3287,13 +3320,15 @@ def get_document_content(court_type: str, document_id: str, document_url: str = 
                     pass
                 
         elif court_type == "danistay":
-            # Danıştay için yeni client oluştur
-            from danistay_mcp_module.client import DanistayApiClient
+            # Danıştay için unified modülden client oluştur
             client = DanistayApiClient()
             
             try:
+                # Danıştay için aranan kelimeyi de gönder
+                # Global değişkenden veya session'dan al
+                aranan_kelime = getattr(get_document_content, '_last_danistay_keyword', '')
                 result = loop.run_until_complete(
-                    client.get_decision_document_as_markdown(document_id)
+                    client.get_decision_document_as_markdown(document_id, aranan_kelime)
                 )
                 
                 if result and result.markdown_content:
@@ -3320,8 +3355,7 @@ def get_document_content(court_type: str, document_id: str, document_url: str = 
                     pass
                 
         elif court_type == "emsal":
-            # Emsal için yeni client oluştur
-            from emsal_mcp_module.client import EmsalApiClient
+            # Emsal için unified modülden client oluştur
             client = EmsalApiClient()
             
             try:
@@ -3353,8 +3387,7 @@ def get_document_content(court_type: str, document_id: str, document_url: str = 
                     pass
                 
         elif court_type == "anayasa":
-            # Anayasa Mahkemesi için yeni client oluştur
-            from anayasa_mcp_module.client import AnayasaMahkemesiApiClient
+            # Anayasa Mahkemesi için unified modülden client oluştur
             client = AnayasaMahkemesiApiClient()
             
             try:
@@ -3366,13 +3399,10 @@ def get_document_content(court_type: str, document_id: str, document_url: str = 
                     parsed = urlparse(document_url)
                     document_path = parsed.path
                 
-                # MCP Client'ın bu metodu olup olmadığını kontrol et
-                if hasattr(client, 'get_norm_denetimi_document_as_markdown'):
+                # Anayasa için basit get_decision_document_as_markdown kullan
+                if hasattr(client, 'get_decision_document_as_markdown'):
                     result = loop.run_until_complete(
-                        client.get_norm_denetimi_document_as_markdown(
-                            document_url=document_path or document_id,
-                            page_number=1
-                        )
+                        client.get_decision_document_as_markdown(document_id)
                     )
                     
                     if result and result.markdown_content:
@@ -3388,7 +3418,7 @@ def get_document_content(court_type: str, document_id: str, document_url: str = 
                     else:
                         logger.warning("Anayasa Mahkemesi markdown içeriği boş")
                 else:
-                    logger.warning("Anayasa MCP Client'ında get_norm_denetimi_document_as_markdown metodu bulunamadı")
+                    logger.warning("Anayasa MCP Client'ında get_decision_document_as_markdown metodu bulunamadı")
                 
                 # Fallback olarak web scraping dene
                 return loop.run_until_complete(
@@ -3402,8 +3432,7 @@ def get_document_content(court_type: str, document_id: str, document_url: str = 
                     pass
                 
         elif court_type == "uyusmazlik":
-            # Uyuşmazlık Mahkemesi için yeni client oluştur
-            from uyusmazlik_mcp_module.client import UyusmazlikApiClient
+            # Uyuşmazlık Mahkemesi için unified modülden client oluştur
             client = UyusmazlikApiClient()
             
             try:
@@ -3413,31 +3442,28 @@ def get_document_content(court_type: str, document_id: str, document_url: str = 
                         yargi_integration._get_uyusmazlik_document_content(document_id)
                     )
                 
-                # MCP Client'ın bu metodu olup olmadığını kontrol et
-                if hasattr(client, 'get_document_as_markdown_from_url'):
-                    result = loop.run_until_complete(
-                        client.get_document_as_markdown_from_url(document_url)
-                    )
-                    
-                    if result and result.markdown_content:
-                        logger.info(f"Uyuşmazlık Mahkemesi markdown içeriği başarıyla alındı: {len(result.markdown_content)} karakter")
-                        return {
-                            'success': True,
-                            'content': result.markdown_content,
-                            'content_type': 'text',
-                            'source_url': str(result.source_url) if result.source_url else '',
-                            'court_type': 'uyusmazlik',
-                            'extraction_method': 'MCP Client API'
-                        }
-                    else:
-                        logger.warning("Uyuşmazlık Mahkemesi markdown içeriği boş")
-                else:
-                    logger.warning("Uyuşmazlık MCP Client'ında get_document_as_markdown_from_url metodu bulunamadı")
+                # Yeni get_decision_document_as_markdown metodunu kullan
+                result = loop.run_until_complete(
+                    client.get_decision_document_as_markdown(document_url)
+                )
                 
-                # Fallback olarak web scraping dene
-                return loop.run_until_complete(
+                if result and result.markdown_content and not result.markdown_content.startswith("Hata:"):
+                    logger.info(f"Uyuşmazlık Mahkemesi markdown içeriği başarıyla alındı: {len(result.markdown_content)} karakter")
+                    return {
+                        'success': True,
+                        'content': result.markdown_content,
+                        'content_type': 'text',
+                        'source_url': str(result.source_url) if result.source_url else '',
+                        'court_type': 'uyusmazlik',
+                        'extraction_method': 'MCP Client API'
+                    }
+                else:
+                    logger.warning("Uyuşmazlık Mahkemesi markdown içeriği boş veya hatalı")
+                    # Fallback olarak web scraping dene
+                    return loop.run_until_complete(
                         yargi_integration._get_uyusmazlik_document_content(document_id)
                     )
+                
             finally:
                 # Client'ı kapat
                 try:
@@ -3446,25 +3472,21 @@ def get_document_content(court_type: str, document_id: str, document_url: str = 
                     pass
                 
         elif court_type == "kik":
-            # KİK için yeni client oluştur
-            from kik_mcp_module.client import KikApiClient
+            # KİK için unified modülden client oluştur
             client = KikApiClient()
             
             try:
-                # MCP Client'ın bu metodu olup olmadığını kontrol et
-                if hasattr(client, 'get_document_as_markdown'):
+                # MCP Client'ın get_decision_document_as_markdown metodunu kullan
+                if hasattr(client, 'get_decision_document_as_markdown'):
                     result = loop.run_until_complete(
-                        client.get_document_as_markdown(
-                            karar_id=document_id,
-                            page_number=1
-                        )
+                        client.get_decision_document_as_markdown(document_id)
                     )
                     
-                    if result and result.markdown_content:
-                        logger.info(f"KİK markdown içeriği başarıyla alındı: {len(result.markdown_content)} karakter")
+                    if result and result.markdown_chunk:
+                        logger.info(f"KİK markdown içeriği başarıyla alındı: {len(result.markdown_chunk)} karakter")
                         return {
                             'success': True,
-                            'content': result.markdown_content,
+                            'content': result.markdown_chunk,
                             'content_type': 'text',
                             'source_url': str(result.source_url) if result.source_url else '',
                             'court_type': 'kik',
@@ -3473,7 +3495,7 @@ def get_document_content(court_type: str, document_id: str, document_url: str = 
                     else:
                         logger.warning("KİK markdown içeriği boş")
                 else:
-                    logger.warning("KİK MCP Client'ında get_document_as_markdown metodu bulunamadı")
+                    logger.warning("KİK MCP Client'ında get_decision_document_as_markdown metodu bulunamadı")
                 
                 # Fallback olarak web scraping dene
                 return loop.run_until_complete(
@@ -3487,34 +3509,30 @@ def get_document_content(court_type: str, document_id: str, document_url: str = 
                     pass
                 
         elif court_type == "rekabet":
-            # Rekabet Kurumu için yeni client oluştur
-            from rekabet_mcp_module.client import RekabetKurumuApiClient
+            # Rekabet Kurumu için unified modülden client oluştur
             client = RekabetKurumuApiClient()
             
             try:
-                # MCP Client'ın bu metodu olup olmadığını kontrol et
-                if hasattr(client, 'get_document'):
+                # MCP Client'ın get_decision_document_as_markdown metodunu kullan
+                if hasattr(client, 'get_decision_document_as_markdown'):
                     result = loop.run_until_complete(
-                        client.get_document(
-                            karar_id=document_id,
-                            page_number=1
-                        )
+                        client.get_decision_document_as_markdown(document_id)
                     )
                     
-                    if result and result.markdown_content:
-                        logger.info(f"Rekabet Kurumu markdown içeriği başarıyla alındı: {len(result.markdown_content)} karakter")
+                    if result and isinstance(result, str):
+                        logger.info(f"Rekabet Kurumu markdown içeriği başarıyla alındı: {len(result)} karakter")
                         return {
                             'success': True,
-                            'content': result.markdown_content,
+                            'content': result,
                             'content_type': 'text',
-                            'source_url': str(result.source_url) if result.source_url else '',
+                            'source_url': f"https://www.rekabet.gov.tr/Karar?kararId={document_id}",
                             'court_type': 'rekabet',
                             'extraction_method': 'MCP Client API'
                         }
                     else:
                         logger.warning("Rekabet Kurumu markdown içeriği boş")
                 else:
-                    logger.warning("Rekabet MCP Client'ında get_document metodu bulunamadı")
+                    logger.warning("Rekabet MCP Client'ında get_decision_document_as_markdown metodu bulunamadı")
                 
                 # Fallback olarak web scraping dene
                 return loop.run_until_complete(

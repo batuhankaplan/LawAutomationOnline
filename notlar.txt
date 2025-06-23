@@ -1,7 +1,6 @@
 YAPILACAKLAR:
 1) Son gün uyarısı.
 2) IA Avukat sistemi.
-3) Yargıtay karar arama sistemi.
-4) Örnek dilekçelerden veya dosya detayları modalında kayıtlı belgelerin (udf,pdf,doc,docx gibi) içeriğinden yani içerdiği kelimerden arama yapılabilsin.
+3) Örnek dilekçelerden veya dosya detayları modalında kayıtlı belgelerin (udf,pdf,doc,docx gibi) içeriğinden yani içerdiği kelimerden arama yapılabilsin.
 
 HATA VE BUGLAR:
