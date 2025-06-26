@@ -153,21 +153,19 @@ header {
     align-items: center;
 }
 
-.datetime-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-color);
-    font-size: 0.9rem;
-}
-
 .datetime-text {
-    color: #666;
+    color: #666 !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .separator {
-    color: #ccc;
-    font-weight: 300;
+    color: #ccc !important;
+    font-weight: 300 !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 /* Cards */
@@ -409,9 +407,14 @@ input[type="file"] {
 
 /* Date and Time Boxes */
 .datetime-container {
-    display: flex;
-    gap: 10px;
-    margin-left: 20px;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-left: 20px !important;
+    color: var(--text-color) !important;
+    font-size: 0.9rem !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .datetime-box {

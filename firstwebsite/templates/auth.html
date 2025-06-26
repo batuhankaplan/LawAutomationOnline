@@ -209,8 +209,6 @@
     </style>
 </head>
 <body>
-    <!-- Toast Bildirimleri için Container -->
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11000;"></div>
     
     <div class="auth-container">
         <div class="auth-left">
@@ -331,50 +329,152 @@
     </div>
 
     <script>
-        // Global Bildirim Sistemi
+        // Global Bildirim Sistemi - Auth Sayfası için Özelleştirildi
         function showGlobalNotification(mesaj, tip = 'info', baslik = '') {
             try {
-                const toastContainer = document.querySelector('.toast-container');
-                if (!toastContainer) {
-                    console.warn('Toast container bulunamadı, alert kullanılıyor:', mesaj);
-                    alert(mesaj);
+                // Mesaj kontrolü - boş veya tip ile aynıysa gösterme
+                if (!mesaj || mesaj.trim() === '' || mesaj === tip || 
+                    mesaj === 'success' || mesaj === 'error' || mesaj === 'warning' || mesaj === 'info') {
+                    console.warn('Auth: Geçersiz mesaj, gösterilmiyor:', mesaj);
                     return;
                 }
 
-                const toastId = `toast-${Date.now()}`;
-                const bgClass = tip === 'success' ? 'bg-success' : tip === 'warning' ? 'bg-warning' : tip === 'error' ? 'bg-danger' : 'bg-info';
-                const textClass = ['warning'].includes(tip) ? 'text-dark' : 'text-white';
-                const icon = tip === 'success' ? 'check_circle' : tip === 'warning' ? 'warning' : tip === 'error' ? 'error' : 'info';
+                // Mevcut bildirimleri temizle
+                const existingToasts = document.querySelectorAll('.auth-notification-toast');
+                existingToasts.forEach(toast => toast.remove());
 
-                // Başlık belirleme
-                if (!baslik) {
-                    baslik = tip === 'success' ? 'Başarılı' : tip === 'warning' ? 'Uyarı' : tip === 'error' ? 'Hata' : 'Bilgi';
-                }
+                // Bildirim ID'si oluştur
+                const notificationId = `auth-notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                
+                // İkon seçimi
+                const icons = {
+                    'success': 'check_circle',
+                    'error': 'error',
+                    'warning': 'warning',
+                    'info': 'info'
+                };
+                const icon = icons[tip] || 'info';
 
-                const toastHtml = `
-                    <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="toast-header ${bgClass} ${textClass}">
-                            <i class="material-icons me-2">${icon}</i>
-                            <strong class="me-auto">${baslik}</strong>
-                            <button type="button" class="btn-close ${['warning'].includes(tip) ? '' : 'btn-close-white'}" data-bs-dismiss="toast" aria-label="Kapat"></button>
+                // Renk şeması - Auth sayfası için özelleştirildi
+                const colors = {
+                    'success': {
+                        bg: '#2d313b',
+                        border: '#2d313b',
+                        text: '#ffffff'
+                    },
+                    'error': {
+                        bg: '#dc3545',
+                        border: '#dc3545', 
+                        text: '#ffffff'
+                    },
+                    'warning': {
+                        bg: '#ffc107',
+                        border: '#ffc107',
+                        text: '#212529'
+                    },
+                    'info': {
+                        bg: '#17a2b8',
+                        border: '#17a2b8',
+                        text: '#ffffff'
+                    }
+                };
+                const colorScheme = colors[tip] || colors['info'];
+
+                // Bildirim HTML'i oluştur
+                const notificationHTML = `
+                    <div id="${notificationId}" class="auth-notification-toast" style="
+                        position: fixed !important;
+                        top: 30px !important;
+                        right: 30px !important;
+                        background: ${colorScheme.bg} !important;
+                        color: ${colorScheme.text} !important;
+                        padding: 18px 24px !important;
+                        border-radius: 10px !important;
+                        box-shadow: 0 8px 30px rgba(0,0,0,0.4) !important;
+                        border-left: 5px solid ${colorScheme.border} !important;
+                        min-width: 350px !important;
+                        max-width: 500px !important;
+                        z-index: 999999 !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        gap: 14px !important;
+                        opacity: 0 !important;
+                        transform: translateX(100%) scale(0.8) !important;
+                        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+                        font-size: 15px !important;
+                        font-weight: 500 !important;
+                        line-height: 1.5 !important;
+                        backdrop-filter: blur(10px) !important;
+                    ">
+                        <i class="material-icons" style="
+                            font-size: 24px !important; 
+                            flex-shrink: 0 !important;
+                            color: ${colorScheme.text} !important;
+                        ">${icon}</i>
+                        <div style="
+                            flex: 1 !important; 
+                            word-wrap: break-word !important;
+                            color: ${colorScheme.text} !important;
+                            font-weight: 500 !important;
+                        ">${mesaj}</div>
+                        <button onclick="removeAuthNotification('${notificationId}')" style="
+                            background: rgba(255,255,255,0.2) !important;
+                            border: none !important;
+                            color: ${colorScheme.text} !important;
+                            cursor: pointer !important;
+                            opacity: 0.8 !important;
+                            transition: all 0.2s !important;
+                            padding: 6px !important;
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                            flex-shrink: 0 !important;
+                            border-radius: 6px !important;
+                            width: 28px !important;
+                            height: 28px !important;
+                        " onmouseover="this.style.opacity='1'; this.style.background='rgba(255,255,255,0.3)'" 
+                           onmouseout="this.style.opacity='0.8'; this.style.background='rgba(255,255,255,0.2)'">
+                            <i class="material-icons" style="font-size: 18px !important; color: ${colorScheme.text} !important;">close</i>
+                        </button>
                         </div>
-                        <div class="toast-body">${mesaj}</div>
-                    </div>`;
+                `;
 
-                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-                const toastElement = document.getElementById(toastId);
+                // DOM'a ekle
+                document.body.insertAdjacentHTML('beforeend', notificationHTML);
+                const notificationElement = document.getElementById(notificationId);
 
-                if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-                    const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 5000 });
-                    toast.show();
-                    toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
-                } else {
-                    console.warn('Bootstrap Toast bulunamadı, manuel gösterim:', mesaj);
-                    setTimeout(() => toastElement.remove(), 5000);
+                if (notificationElement) {
+                    // Göster animasyonu
+                    setTimeout(() => {
+                        notificationElement.style.opacity = '1';
+                        notificationElement.style.transform = 'translateX(0) scale(1)';
+                    }, 100);
+
+                    // Otomatik kapat
+                    setTimeout(() => {
+                        removeAuthNotification(notificationId);
+                    }, 7000);
                 }
+
             } catch (error) {
-                console.error('showGlobalNotification hatası:', error);
-                alert(mesaj);
+                console.error('Auth bildirim gösterme hatası:', error);
+                // Fallback olarak alert göster
+                alert(`${tip.toUpperCase()}: ${mesaj}`);
+            }
+        }
+
+        // Auth sayfası için bildirim kaldırma fonksiyonu
+        function removeAuthNotification(notificationId) {
+            const element = document.getElementById(notificationId);
+            if (element) {
+                element.style.opacity = '0';
+                element.style.transform = 'translateX(100%) scale(0.8)';
+                setTimeout(() => {
+                    if (element && element.parentNode) {
+                        element.remove();
+                    }
+                }, 500);
             }
         }
 
@@ -418,13 +518,18 @@
             });
         {% endif %}
 
+        // Auth sayfası flash mesajları
+        document.addEventListener('DOMContentLoaded', function() {
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
+                        if ('{{ message|safe }}'.trim() && '{{ message|safe }}' !== '{{ category }}') {
                     showGlobalNotification('{{ message|safe }}', '{% if category == "error" %}error{% elif category == "success" %}success{% elif category == "warning" %}warning{% else %}info{% endif %}');
+                        }
                 {% endfor %}
             {% endif %}
         {% endwith %}
+        });
     </script>
 </body>
 </html> 

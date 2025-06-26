@@ -1,0 +1,1258 @@
+{% extends "layout.html" %}
+
+{% block title %}AI Avukat{% endblock %}
+
+{% block content %}
+<div class="ai-chat-container">
+    <!-- Sol Panel - Sohbet Geçmişi -->
+    <div class="chat-sidebar">
+        <div class="sidebar-header">
+            <h3><i class="material-icons">history</i> Sohbet Geçmişi</h3>
+            <button id="newChatBtn" class="new-chat-btn">
+                <i class="material-icons">add</i>
+                <span>Yeni Sohbet</span>
+            </button>
+        </div>
+        <div class="chat-history" id="chatHistory">
+            <!-- Sohbet geçmişi buraya yüklenecek -->
+            <div class="history-item active" data-chat-id="current">
+                <div class="history-title">Mevcut Sohbet</div>
+                <div class="history-preview">Hukuki sorularınız için hazırım...</div>
+                <div class="history-time">Şimdi</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ana Sohbet Alanı -->
+    <div class="chat-main">
+        <div class="chat-header">
+            <div class="ai-info">
+                <div class="ai-avatar">
+                    <i class="material-icons">smart_toy</i>
+                </div>
+                <div class="ai-details">
+                    <h1>Yapay Zeka Avukat Asistanı</h1> 
+                </div>
+            </div>
+            <div class="chat-actions">
+                <div class="chat-status online">
+                    <span class="status-dot"></span>
+                    <span>Çevrimiçi</span>
+                </div>
+                <button id="clearChatBtn" class="action-btn">
+                    <i class="material-icons">clear_all</i>
+                    <span>Temizle</span>
+                </button>
+                <button id="exportChatBtn" class="action-btn">
+                    <i class="material-icons">save</i>
+                    <span>Kaydet</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="chat-body" id="chatBody">
+            <div class="welcome-message">
+                <div class="ai-message">
+                    <div class="message-avatar">
+                        <i class="material-icons">smart_toy</i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-text">
+                            <p><strong>Merhaba! Ben Yapay Zeka Avukat asistanınızım.</strong></p>
+                            <p>Gelişmiş yapay zeka teknolojisi kullanarak size aşağıdaki konularda ve dilediğiniz başka konularda yardımcı olabilirim:</p>
+                            <ul>
+                                <li>🏛️ <strong>Medeni Hukuk:</strong> Boşanma, miras, kişilik hakları, velayet</li>
+                                <li>👔 <strong>İş Hukuku:</strong> İşçi hakları, iş sözleşmeleri, tazminatlar</li>
+                                <li>🏠 <strong>Kira Hukuku:</strong> Kiracı-ev sahibi ilişkileri, kira artışları</li>
+                                <li>⚖️ <strong>Ceza Hukuku:</strong> Suçlar ve cezalar, dava süreçleri</li>
+                                <li>💼 <strong>Ticaret Hukuku:</strong> Şirket kuruluşu, ticari işlemler</li>
+                                <li>🏢 <strong>Şirketler Hukuku:</strong> Anonim şirket, limited şirket işlemleri</li>
+                                <li>⚡ <strong>İcra Hukuku:</strong> İcra takibi, haciz işlemleri</li>
+                                <li>📋 <strong>Borçlar Hukuku:</strong> Sözleşmeler, tazminat talepleri</li>
+                                <li>📄 <strong>Sözleşme Hukuku:</strong> Sözleşme hazırlama, fesih işlemleri</li>
+                                <li>🏦 <strong>Banka ve Finans Hukuku:</strong> Kredi sözleşmeleri, teminatlar</li>
+                                <li>🏗️ <strong>İnşaat Hukuku:</strong> İnşaat sözleşmeleri, müteahhit sorumlulukları</li>
+                            </ul>
+                            <p>Sorunuzu detaylı bir şekilde yazabilirsiniz. Ben de size Türk hukuku kapsamında en doğru yanıtı vermeye çalışacağım.</p>
+                        </div>
+                        <div class="message-time">{{ current_time or "Şimdi" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="quick-questions">
+                <button class="quick-btn" data-question="Boşanma davası nasıl açılır ve hangi belgeler gereklidir?">
+                    <i class="material-icons">gavel</i>
+                    Boşanma Davası
+                </button>
+                <button class="quick-btn" data-question="İş yerinden kovuldum, haklarım neler ve ne yapmam gerekir?">
+                    <i class="material-icons">work</i>
+                    İşten Çıkarma
+                </button>
+                <button class="quick-btn" data-question="Ev sahibim kira artışı yaptı, bu yasal mı? Nasıl itiraz edebilirim?">
+                    <i class="material-icons">home</i>
+                    Kira Artışı
+                </button>
+                <button class="quick-btn" data-question="Miras paylaşımı nasıl yapılır, saklı pay nedir?">
+                    <i class="material-icons">account_balance</i>
+                    Miras Paylaşımı
+                </button>
+                <button class="quick-btn" data-question="Ticaret unvanı nasıl tescil edilir, hangi belgeler gereklidir?">
+                    <i class="material-icons">business</i>
+                    Ticaret Unvanı
+                </button>
+                <button class="quick-btn" data-question="İş kazası tazminatı nasıl hesaplanır?">
+                    <i class="material-icons">local_hospital</i>
+                    İş Kazası
+                </button>
+                <button class="quick-btn" data-question="İcra takibi nasıl başlatılır, hangi belgeler gereklidir?">
+                    <i class="material-icons">gavel</i>
+                    İcra Takibi
+                </button>
+                <button class="quick-btn" data-question="Trafik kazasında maddi ve manevi tazminat nasıl hesaplanır?">
+                    <i class="material-icons">directions_car</i>
+                    Trafik Kazası
+                </button>
+                <button class="quick-btn" data-question="İşyerinde mobbing yaşıyorum, hukuki haklarım neler?">
+                    <i class="material-icons">report_problem</i>
+                    Mobbing
+                </button>
+                <button class="quick-btn" data-question="Alacağımı tahsil edemiyorum, ne yapmalıyım?">
+                    <i class="material-icons">account_balance_wallet</i>
+                    Alacak Tahsilatı
+                </button>
+                <button class="quick-btn" data-question="Sözleşmemi feshetmek istiyorum, yasal süreç nedir?">
+                    <i class="material-icons">description</i>
+                    Sözleşme Feshi
+                </button>
+            
+            </div>
+            
+            <div class="input-container">
+                <div class="message-input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="Hukuki sorunuzu detaylı bir şekilde yazın..." 
+                        rows="3"
+                        maxlength="5000"
+                    ></textarea>
+                    <div class="input-actions">
+                        <div class="input-info">
+                            <span id="charCount">0</span>/5000
+                            <span class="divider">|</span>
+                            <span class="ai-model">Kaplan AI</span>
+                        </div>
+                        <button id="sendBtn" class="send-btn" disabled>
+                            <i class="material-icons">send</i>
+                            <span>Gönder</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typing indicator -->
+        <div class="typing-indicator" id="typingIndicator" style="display: none;">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span class="typing-text">AI Avukat düşünüyor...</span>
+        </div>
+    </div>
+</div>
+
+<style>
+.ai-chat-container {
+    display: flex;
+    height: calc(100vh - 200px);
+    background: #f8f9fa;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin: 20px;
+    margin-top: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+
+
+.chat-sidebar {
+    width: 320px;
+    background: #2d3748;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #4a5568;
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #4a5568;
+}
+
+.sidebar-header h3 {
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.new-chat-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.new-chat-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.chat-history {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.history-item {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.history-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.history-item.active {
+    background: rgba(102, 126, 234, 0.3);
+    border-left: 3px solid #667eea;
+}
+
+.history-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.history-preview {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.history-time {
+    font-size: 0.75rem;
+    opacity: 0.6;
+}
+
+.delete-chat-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(239, 68, 68, 0.1);
+    border: none;
+    border-radius: 4px;
+    padding: 4px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s;
+    color: #ef4444;
+}
+
+.history-item {
+    position: relative;
+}
+
+.history-item:hover .delete-chat-btn {
+    opacity: 1;
+}
+
+.delete-chat-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: scale(1.1);
+}
+
+.delete-chat-btn i {
+    font-size: 16px;
+}
+
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+}
+
+.chat-header {
+    padding: 1.5rem 2rem;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.ai-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ai-avatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.ai-avatar i {
+    font-size: 1.5rem;
+}
+
+.ai-details h1 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.ai-details p {
+    margin: 0.25rem 0 0;
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+
+
+.chat-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.chat-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #4caf50;
+    font-weight: 500;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background: #4caf50;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #4a5568;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+}
+
+.chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    background: #f8f9fa;
+}
+
+.ai-message, .user-message {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.user-message {
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ai-message .message-avatar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.user-message .message-avatar {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.message-content {
+    max-width: 75%;
+    position: relative;
+}
+
+.message-text {
+    background: white;
+    padding: 1.25rem 1.5rem;
+    border-radius: 18px;
+    line-height: 1.6;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.user-message .message-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.message-text ul {
+    margin: 0.75rem 0;
+    padding-left: 1.5rem;
+}
+
+.message-text li {
+    margin-bottom: 0.5rem;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: #a0aec0;
+    margin-top: 0.5rem;
+    text-align: right;
+}
+
+.user-message .message-time {
+    text-align: left;
+    color: #e2e8f0;
+}
+
+.chat-input-area {
+    background: white;
+    padding: 1.5rem 2rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.quick-questions {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.quick-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    color: #4a5568;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.quick-btn:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.quick-btn i {
+    font-size: 1rem;
+}
+
+.input-container {
+    position: relative;
+}
+
+.message-input-wrapper {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.message-input-wrapper:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+#messageInput {
+    width: 100%;
+    border: none;
+    outline: none;
+    padding: 1.25rem 1.25rem 0.75rem;
+    resize: none;
+    font-size: 1rem;
+    font-family: inherit;
+    background: transparent;
+    max-height: 120px;
+    min-height: 80px;
+}
+
+.input-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid #f1f5f9;
+}
+
+.input-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.divider {
+    color: #cbd5e0;
+}
+
+.ai-model {
+    color: #667eea;
+    font-weight: 500;
+}
+
+.send-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.send-btn:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.send-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 2rem;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.typing-dots span {
+    width: 6px;
+    height: 6px;
+    background: #667eea;
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.3;
+    }
+    30% {
+        transform: translateY(-10px);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.typing-text {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .chat-sidebar {
+        width: 280px;
+    }
+    
+    .message-content {
+        max-width: 80%;
+    }
+}
+
+@media (max-width: 768px) {
+    .ai-chat-container {
+        flex-direction: column;
+        height: calc(100vh - 180px);
+        margin: 10px;
+        margin-top: 15px;
+    }
+    
+    .chat-sidebar {
+        width: 100%;
+        height: 200px;
+        border-right: none;
+        border-bottom: 1px solid #4a5568;
+    }
+    
+    .chat-history {
+        display: flex;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding: 1rem;
+    }
+    
+    .history-item {
+        min-width: 200px;
+        margin-bottom: 0;
+    }
+    
+    .chat-header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .chat-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .quick-questions {
+        gap: 0.5rem;
+    }
+    
+    .quick-btn {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .message-content {
+        max-width: 90%;
+    }
+    
+    .input-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+}
+
+
+
+
+
+/* Scrollbar Styling */
+.chat-body::-webkit-scrollbar,
+.chat-history::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-body::-webkit-scrollbar-track,
+.chat-history::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.chat-body::-webkit-scrollbar-thumb,
+.chat-history::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.chat-body::-webkit-scrollbar-thumb:hover,
+.chat-history::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>
+
+<script>
+// Sayfa tanımlayıcısı ekle
+document.documentElement.setAttribute('data-page', 'ai_avukat');
+
+document.addEventListener('DOMContentLoaded', function() {
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatBody = document.getElementById('chatBody');
+    const charCount = document.getElementById('charCount');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const quickBtns = document.querySelectorAll('.quick-btn');
+    const clearChatBtn = document.getElementById('clearChatBtn');
+    const exportChatBtn = document.getElementById('exportChatBtn');
+    const newChatBtn = document.getElementById('newChatBtn');
+
+    let chatHistory = [];
+    let currentChatId = 'current';
+    let savedChatHistories = [];
+    // Sayfa yüklendiğinde sohbet geçmişlerini yükle
+    loadChatHistories();
+
+    // Karakter sayacı
+    messageInput.addEventListener('input', function() {
+        const length = this.value.length;
+        charCount.textContent = length;
+        
+        sendBtn.disabled = length === 0 || length > 5000;
+        
+        if (length > 4500) {
+            charCount.style.color = '#dc3545';
+        } else if (length > 3500) {
+            charCount.style.color = '#ffc107';
+        } else {
+            charCount.style.color = '#64748b';
+        }
+    });
+
+    // Enter tuşu ile gönderme
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (!sendBtn.disabled) {
+                sendMessage();
+            }
+        }
+    });
+
+    // Gönder butonu
+    sendBtn.addEventListener('click', sendMessage);
+
+    // Hızlı sorular
+    quickBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const question = this.dataset.question;
+            messageInput.value = question;
+            messageInput.dispatchEvent(new Event('input'));
+            sendMessage();
+        });
+    });
+
+    // Chat temizleme
+    clearChatBtn.addEventListener('click', function() {
+        if (confirm('Mevcut sohbeti temizlemek istediğinizden emin misiniz?')) {
+            clearChat();
+        }
+    });
+
+    // Chat kaydetme
+    exportChatBtn.addEventListener('click', function() {
+        if (chatHistory.length > 0) {
+            saveChatHistory();
+        } else {
+            alert('Kaydedilecek sohbet bulunamadı.');
+        }
+    });
+
+    // Yeni chat
+    newChatBtn.addEventListener('click', function() {
+        if (chatHistory.length > 0) {
+            if (confirm('Yeni sohbet başlatmak istediğinizden emin misiniz? Mevcut sohbet kaydedilecek.')) {
+                startNewChat();
+            }
+        } else {
+            startNewChat();
+        }
+    });
+
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+
+        // Kullanıcı mesajını ekle
+        addUserMessage(message);
+        
+        // Input'u temizle
+        messageInput.value = '';
+        messageInput.dispatchEvent(new Event('input'));
+        
+        // Typing indicator göster
+        showTypingIndicator();
+        
+        // AI yanıtını al
+        getAIResponse(message);
+    }
+
+    function addUserMessage(message, addToHistory = true) {
+        const messageElement = createMessageElement('user', message);
+        chatBody.appendChild(messageElement);
+        scrollToBottom();
+        
+        // Chat history'ye ekle (sadece yeni mesajlar için)
+        if (addToHistory) {
+            chatHistory.push({
+                type: 'user',
+                content: message,
+                timestamp: new Date().toISOString()
+            });
+            markAsUnsaved();
+        }
+    }
+
+    function addAIMessage(message, addToHistory = true) {
+        const messageElement = createMessageElement('ai', message);
+        chatBody.appendChild(messageElement);
+        scrollToBottom();
+        
+        // Chat history'ye ekle (sadece yeni mesajlar için)
+        if (addToHistory) {
+            chatHistory.push({
+                type: 'ai',
+                content: message,
+                timestamp: new Date().toISOString()
+            });
+            markAsUnsaved();
+        }
+    }
+
+    function createMessageElement(type, content) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = type === 'user' ? 'user-message' : 'ai-message';
+        
+        const avatar = type === 'user' ? 'person' : 'smart_toy';
+        const time = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        
+        messageDiv.innerHTML = `
+            <div class="message-avatar">
+                <i class="material-icons">${avatar}</i>
+            </div>
+            <div class="message-content">
+                <div class="message-text">
+                    ${formatMessage(content)}
+                </div>
+                <div class="message-time">${time}</div>
+            </div>
+        `;
+        
+        return messageDiv;
+    }
+
+    function formatMessage(content) {
+        // Basit markdown formatting
+        return content
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/\n/g, '<br>');
+    }
+
+    function showTypingIndicator() {
+        typingIndicator.style.display = 'flex';
+        scrollToBottom();
+    }
+
+    function hideTypingIndicator() {
+        typingIndicator.style.display = 'none';
+    }
+
+    function scrollToBottom() {
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function getAIResponse(userMessage) {
+        const sohbet_id = currentChatId !== 'current' ? currentChatId : null;
+        
+        fetch('/api/ai_avukat/sohbet', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
+            },
+            body: JSON.stringify({ 
+                mesaj: userMessage,
+                sohbet_id: sohbet_id
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideTypingIndicator();
+            
+            if (data.success) {
+                addAIMessage(data.ai_yaniti);
+            } else {
+                addAIMessage('Üzgünüm, şu anda bir teknik sorun yaşıyorum. Lütfen daha sonra tekrar deneyin.');
+                console.error('AI Response Error:', data.error);
+            }
+        })
+        .catch(error => {
+            hideTypingIndicator();
+            addAIMessage('Bağlantı hatası oluştu. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.');
+            console.error('Network Error:', error);
+        });
+    }
+
+    // Sohbet geçmişi fonksiyonları
+    function loadChatHistories() {
+        fetch('/api/ai_avukat/sohbet_gecmisi', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                savedChatHistories = data.sohbetler;
+                renderChatHistories();
+            }
+        })
+        .catch(error => {
+            console.error('Sohbet geçmişi yüklenirken hata:', error);
+        });
+    }
+
+    function renderChatHistories() {
+        const chatHistoryContainer = document.getElementById('chatHistory');
+        
+        // Mevcut chat'i koru, diğerlerini temizle
+        const currentChat = chatHistoryContainer.querySelector('[data-chat-id="current"]');
+        chatHistoryContainer.innerHTML = '';
+        chatHistoryContainer.appendChild(currentChat);
+        
+        // Kayıtlı sohbetleri ekle
+        savedChatHistories.forEach(sohbet => {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            historyItem.dataset.chatId = sohbet.id;
+            
+            // Tarih formatla
+            const date = new Date(sohbet.guncelleme_tarihi);
+            const timeStr = date.toLocaleDateString('tr-TR') + ' ' + 
+                           date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+            
+            historyItem.innerHTML = `
+                <div class="history-title">${sohbet.baslik}</div>
+                <div class="history-preview">${sohbet.mesaj_sayisi} mesaj</div>
+                <div class="history-time">${timeStr}</div>
+                <button class="delete-chat-btn" onclick="deleteChatHistory(${sohbet.id})" title="Sohbeti Sil">
+                    <i class="material-icons">delete</i>
+                </button>
+            `;
+            
+            // Tıklama olayı ekle
+            historyItem.addEventListener('click', (e) => {
+                if (!e.target.closest('.delete-chat-btn')) {
+                    loadChatHistory(sohbet.id);
+                }
+            });
+            
+            chatHistoryContainer.appendChild(historyItem);
+        });
+    }
+
+    function loadChatHistory(sohbetId) {
+        fetch(`/api/ai_avukat/sohbet_gecmisi/${sohbetId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const sohbet = data.sohbet;
+                
+                // Mevcut sohbeti temizle
+                clearChat();
+                
+                // Aktif sohbeti değiştir
+                document.querySelectorAll('.history-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                document.querySelector(`[data-chat-id="${sohbetId}"]`).classList.add('active');
+                
+                currentChatId = sohbetId;
+                
+                // Sohbet verilerini yükle
+                const sohbetVerisi = sohbet.sohbet_verisi;
+                chatHistory = [];
+                
+                sohbetVerisi.forEach(mesaj => {
+                    if (mesaj.tip === 'kullanici') {
+                        addUserMessage(mesaj.mesaj, false);
+                    } else if (mesaj.tip === 'ai') {
+                        addAIMessage(mesaj.mesaj, false);
+                    }
+                    
+                    chatHistory.push({
+                        type: mesaj.tip === 'kullanici' ? 'user' : 'ai',
+                        content: mesaj.mesaj,
+                        timestamp: mesaj.zaman
+                    });
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Sohbet geçmişi yüklenirken hata:', error);
+        });
+    }
+
+    function saveChatHistory() {
+        if (chatHistory.length === 0) {
+            alert('Kaydedilecek sohbet bulunamadı.');
+            return;
+        }
+        
+        // İlk kullanıcı mesajından başlık oluştur
+        const ilkMesaj = chatHistory.find(msg => msg.type === 'user');
+        const baslik = ilkMesaj ? ilkMesaj.content.substring(0, 50) + '...' : 'AI Avukat Sohbeti';
+        
+        const sohbetVerisi = chatHistory.map(msg => ({
+            tip: msg.type === 'user' ? 'kullanici' : 'ai',
+            mesaj: msg.content,
+            zaman: msg.timestamp
+        }));
+        
+        fetch('/api/ai_avukat/sohbet_gecmisi', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
+            },
+            body: JSON.stringify({
+                baslik: baslik,
+                sohbet_verisi: sohbetVerisi
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Sohbet geçmişlerini yeniden yükle
+                loadChatHistories();
+                markAsSaved();
+                showGlobalNotification('Sohbet geçmişi başarıyla kaydedildi!', 'success');
+            } else {
+                showGlobalNotification('Sohbet kaydedilirken hata oluştu: ' + (data.error || 'Bilinmeyen hata'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Sohbet kaydedilirken hata:', error);
+            showGlobalNotification('Sohbet kaydedilirken bağlantı hatası oluştu. Lütfen tekrar deneyin.', 'error');
+        });
+    }
+
+    window.deleteChatHistory = function(sohbetId) {
+        if (!confirm('Bu sohbet geçmişini silmek istediğinizden emin misiniz?')) {
+            return;
+        }
+        
+        fetch(`/api/ai_avukat/sohbet_gecmisi/${sohbetId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Eğer silinen sohbet aktifse, mevcut sohbete geç
+                if (currentChatId == sohbetId) {
+                    clearChat();
+                    currentChatId = 'current';
+                    document.querySelector('[data-chat-id="current"]').classList.add('active');
+                }
+                
+                // Sohbet geçmişlerini yeniden yükle
+                loadChatHistories();
+                showGlobalNotification('Sohbet geçmişi başarıyla silindi.', 'success');
+            } else {
+                showGlobalNotification('Sohbet silinirken hata oluştu: ' + (data.error || 'Bilinmeyen hata'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Sohbet silinirken hata:', error);
+            showGlobalNotification('Sohbet silinirken bağlantı hatası oluştu. Lütfen tekrar deneyin.', 'error');
+        });
+    };
+
+
+
+    function clearChat() {
+        // Welcome message hariç tüm mesajları sil
+        const messages = chatBody.querySelectorAll('.ai-message:not(.welcome-message .ai-message), .user-message');
+        messages.forEach(msg => msg.remove());
+        chatHistory = [];
+    }
+
+    function exportChat() {
+        if (chatHistory.length === 0) {
+            alert('İndirilecek sohbet bulunamadı.');
+            return;
+        }
+
+        const exportData = {
+            title: 'AI Avukat Sohbet',
+            date: new Date().toLocaleString('tr-TR'),
+            messages: chatHistory
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ai-avukat-sohbet-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function startNewChat() {
+        clearChat();
+        currentChatId = 'chat_' + Date.now();
+        
+        // Sidebar'da yeni chat ekle
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item active';
+        historyItem.dataset.chatId = currentChatId;
+        historyItem.innerHTML = `
+            <div class="history-title">Yeni Sohbet</div>
+            <div class="history-preview">Henüz mesaj yok...</div>
+            <div class="history-time">${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</div>
+        `;
+        
+        // Önceki aktif chat'i pasif yap
+        document.querySelectorAll('.history-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Yeni chat'i ekle
+        document.getElementById('chatHistory').appendChild(historyItem);
+    }
+
+    // Otomatik resize için textarea
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Sayfa çıkışında sohbet kaydetme sistemi
+    let hasUnsavedChanges = false;
+    
+    // Yeni mesaj eklediğimizde flag'i set et
+    function markAsUnsaved() {
+        hasUnsavedChanges = true;
+    }
+    
+    // Kaydet işlemi sonrası flag'i temizle
+    function markAsSaved() {
+        hasUnsavedChanges = false;
+    }
+    
+    // Sayfa kapatılmaya çalışıldığında uyar
+    window.addEventListener('beforeunload', function(e) {
+        if (hasUnsavedChanges && chatHistory.length >= 2 && currentChatId === 'current') {
+            e.preventDefault();
+            e.returnValue = 'Kaydedilmemiş sohbetiniz var. Sayfadan çıkmak istediğinizden emin misiniz?';
+            return e.returnValue;
+        }
+    });
+    
+    // Sayfa gizlendiğinde (tab değiştirme, başka sayfa gitme) otomatik kaydet
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'hidden' && hasUnsavedChanges && chatHistory.length >= 2 && currentChatId === 'current') {
+            // Sessizce arka planda kaydet
+            const data = {
+                baslik: chatHistory.find(msg => msg.type === 'user')?.content.substring(0, 50) + '...' || 'AI Avukat Sohbeti',
+                sohbet_verisi: chatHistory.map(msg => ({
+                    tip: msg.type === 'user' ? 'kullanici' : 'ai',
+                    mesaj: msg.content,
+                    zaman: msg.timestamp
+                }))
+            };
+            
+            navigator.sendBeacon('/api/ai_avukat/sohbet_gecmisi', 
+                new Blob([JSON.stringify(data)], { type: 'application/json' })
+            );
+            
+            markAsSaved();
+        }
+    });
+});
+</script>
+{% endblock %} 

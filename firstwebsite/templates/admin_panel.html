@@ -1,2074 +1,1261 @@
 {% extends "layout.html" %}
 
-{% block title %}Yönetici Paneli{% endblock %}
+{% block title %}Admin Panel - Kullanıcı Yönetimi{% endblock %}
 
 {% block content %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <div class="admin-container">
+    <!-- Header -->
     <div class="admin-header">
-        <h1>Yönetici Paneli</h1>
-        <p>Kullanıcı yönetimi ve sistem ayarları</p>
-    </div>
-
-    <div class="admin-content">
-        <!-- Onay Bekleyen Kullanıcılar -->
-        <div class="admin-section">
-            <div class="section-header">
-                <i class="material-icons">person_add</i>
-                <h2>Onay Bekleyen Kullanıcılar</h2>
-            </div>
-            <div class="section-content">
-                <div class="table-responsive">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Kullanıcı Adı</th>
-                                <th>E-posta</th>
-                                <th>Meslek</th>
-                                <th>Kayıt Tarihi</th>
-                                <th>İşlemler</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in pending_users %}
-                            <tr>
-                                <td>{{ user.username }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.role }}</td>
-                                <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-                                <td class="actions">
-                                    <button onclick="approveUser({{ user.id }})" class="approve-btn">
-                                        <i class="material-icons">check</i>
-                                        Onayla
-                                    </button>
-                                    <button onclick="rejectUser({{ user.id }})" class="reject-btn">
-                                        <i class="material-icons">close</i>
-                                        Reddet
-                                    </button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="header-content">
+            <h1><i class="material-icons">admin_panel_settings</i> Sistem Yönetimi</h1>
+            <p>Kullanıcı yetkilendirme ve sistem kontrolü</p>
         </div>
-
-        <!-- Onaylanmış Kullanıcılar -->
-        <div class="admin-section">
-            <div class="section-header">
-                <i class="material-icons">people</i>
-                <h2>Onaylanmış Kullanıcılar</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-number">{{ active_users|length }}</span>
+                <span class="stat-label">Aktif Kullanıcı</span>
             </div>
-            <div class="section-content">
-                <div class="table-responsive">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Kullanıcı Adı</th>
-                                <th>E-posta</th>
-                                <th>Meslek</th>
-                                <th>Onay Tarihi</th>
-                                <th>İşlemler</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in approved_users %}
-                            <tr>
-                                <td>{{ user.username }}</td>
-                                <td>{{ user.email }}</td>
-                                <td>{{ user.role }}</td>
-                                <td>{{ user.approval_date.strftime('%d.%m.%Y %H:%M') if user.approval_date else '-' }}</td>
-                                <td class="actions">
-                                    <button onclick="editUser({{ user.id }})" class="edit-btn">
-                                        <i class="material-icons">edit</i>
-                                        Düzenle
-                                    </button>
-                                    <button onclick="toggleUserStatus({{ user.id }})" class="status-btn">
-                                        <i class="material-icons">block</i>
-                                        Engelle
-                                    </button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ pending_users|length }}</span>
+                <span class="stat-label">Onay Bekleyen</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">{{ (active_users|length + pending_users|length) }}</span>
+                <span class="stat-label">Toplam</span>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Kullanıcı Düzenleme Modal -->
-<div id="editUserModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Kullanıcı Yetkilerini Düzenle</h2>
-            <button onclick="closeModal('editUserModal')" class="close-btn">
-                <i class="material-icons">close</i>
+    <!-- Control Panel -->
+    <div class="control-panel">
+        <div class="search-section">
+            <div class="search-box">
+                <i class="material-icons">search</i>
+                <input type="text" id="userSearch" placeholder="Kullanıcı ara...">
+            </div>
+            <select id="roleFilter" class="filter-select">
+                <option value="all">Tüm Roller</option>
+                <option value="Yönetici Avukat">Yönetici Avukat</option>
+                <option value="Avukat">Avukat</option>
+                <option value="Stajyer Avukat">Stajyer Avukat</option>
+                <option value="Takip Elemanı">Takip Elemanı</option>
+                <option value="Muhasebe">Muhasebe</option>
+                <option value="Ulaşım">Ulaşım</option>
+                <option value="Sekreter">Sekreter</option>
+            </select>
+        </div>
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="approveSelectedUsers()">
+                <i class="material-icons">check_circle</i> Seçilenleri Onayla
             </button>
         </div>
-        <div class="modal-body">
-            <form id="editUserForm">
-                <input type="hidden" id="editUserId" name="user_id">
-                
-                <div class="user-info" id="userInfoSection">
-                    <!-- Kullanıcı bilgileri buraya dinamik olarak eklenecek -->
-                </div>
-                    
-                <div class="permissions-section">
-                    <div class="permissions-header">
-                        <h3>Kullanıcı Yetkileri</h3>
-                        <div class="templates-dropdown">
-                            <button type="button" class="template-dropdown-btn">
-                                <i class="material-icons">settings</i> Hazır Şablonlar
-                                <i class="material-icons dropdown-icon">arrow_drop_down</i>
-                            </button>
-                            <div class="templates-dropdown-content">
-                                <button type="button" class="template-option" onclick="applyTemplate('admin')">
-                                    <span class="template-badge admin">Yönetici</span>
-                                    <span class="template-desc">Tüm yetkilere sahip</span>
-                                </button>
-                                <button type="button" class="template-option" onclick="applyTemplate('lawyer')">
-                                    <span class="template-badge lawyer">Avukat</span>
-                                    <span class="template-desc">Dosya ve takvim işlemleri</span>
-                                </button>
-                                <button type="button" class="template-option" onclick="applyTemplate('secretary')">
-                                    <span class="template-badge secretary">Sekreter</span>
-                                    <span class="template-desc">Dosya görüntüleme ve takvim</span>
-                                </button>
-                                <button type="button" class="template-option" onclick="applyTemplate('intern')">
-                                    <span class="template-badge intern">Stajyer</span>
-                                    <span class="template-desc">Sınırlı görüntüleme</span>
-                                </button>
-                                <button type="button" class="template-option" onclick="applyTemplate('none')">
-                                    <span class="template-badge none">Yetki Yok</span>
-                                    <span class="template-desc">Tüm yetkileri kaldır</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="permission-categories-container">
-                        <div class="permission-sidebar">
-                            <button class="category-btn active" data-category="system">
-                                <i class="material-icons">admin_panel_settings</i>
-                                <span>Sistem Erişimi</span>
-                            </button>
-                            <button class="category-btn" data-category="files">
-                                <i class="material-icons">folder</i>
-                                <span>Dosya İşlemleri</span>
-                            </button>
-                            <button class="category-btn" data-category="calendar">
-                                <i class="material-icons">event</i>
-                                <span>Takvim İşlemleri</span>
-                            </button>
-                            <button class="category-btn" data-category="announcement">
-                                <i class="material-icons">campaign</i>
-                                <span>Duyuru İşlemleri</span>
-                            </button>
-                            <button class="category-btn" data-category="payment">
-                                <i class="material-icons">payments</i>
-                                <span>Ödeme İşlemleri</span>
-                            </button>
-                            <button class="category-btn" data-category="calculator">
-                                <i class="material-icons">calculate</i>
-                                <span>Hesaplamalar</span>
-                            </button>
-                            <button class="category-btn" data-category="workerform">
-                                <i class="material-icons">description</i>
-                                <span>İşçi Görüşme</span>
-                            </button>
-                        </div>
-                        
-                        <div class="permission-content">
-                            <!-- Sistem Erişimi -->
-                            <div class="permission-panel active" id="system-panel">
-                                <div class="permission-grid">
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">dashboard</i>
-                                                <span>Panel Görüntüleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="panel_goruntule" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">settings</i>
-                                                <span>Ayarlar</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="ayarlar" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Dosya İşlemleri -->
-                            <div class="permission-panel" id="files-panel">
-                                <div class="permission-grid">
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">search</i>
-                                                <span>Dosya Sorgulama</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="dosya_sorgula" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">add_circle</i>
-                                                <span>Dosya Ekleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="dosya_ekle" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">edit</i>
-                                                <span>Dosya Düzenleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="dosya_duzenle" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">delete</i>
-                                                <span>Dosya Silme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="dosya_sil" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Takvim İşlemleri -->
-                            <div class="permission-panel" id="calendar-panel">
-                                <div class="permission-grid">
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">visibility</i>
-                                                <span>Takvim Görüntüleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="takvim_goruntule" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">add_box</i>
-                                                <span>Etkinlik Ekleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="etkinlik_ekle" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">edit_calendar</i>
-                                                <span>Etkinlik Düzenleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="etkinlik_duzenle" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">event_busy</i>
-                                                <span>Etkinlik Silme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="etkinlik_sil" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Duyuru İşlemleri -->
-                            <div class="permission-panel" id="announcement-panel">
-                                <div class="permission-grid">
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">visibility</i>
-                                                <span>Duyuru Görüntüleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="duyuru_goruntule" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">post_add</i>
-                                                <span>Duyuru Ekleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="duyuru_ekle" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">edit_note</i>
-                                                <span>Duyuru Düzenleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="duyuru_duzenle" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">delete_sweep</i>
-                                                <span>Duyuru Silme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="duyuru_sil" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Ödeme İşlemleri -->
-                            <div class="permission-panel" id="payment-panel">
-                                <div class="permission-grid">
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">visibility</i>
-                                                <span>Ödeme Görüntüleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="odeme_goruntule" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">add_card</i>
-                                                <span>Ödeme Ekleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="odeme_ekle" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">edit_note</i>
-                                                <span>Ödeme Düzenleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="odeme_duzenle" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">money_off</i>
-                                                <span>Ödeme Silme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="odeme_sil" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">bar_chart</i>
-                                                <span>İstatistik Görüntüleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="odeme_istatistik_goruntule" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Hesaplamalar -->
-                            <div class="permission-panel" id="calculator-panel">
-                                <div class="permission-grid">
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">percent</i>
-                                                <span>Faiz Hesaplama</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="faiz_hesaplama" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">account_balance</i>
-                                                <span>Harç Hesaplama</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="harc_hesaplama" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">person_search</i>
-                                                <span>İşçi Alacak Hesaplama</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="isci_hesaplama" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">gavel</i>
-                                                <span>Vekalet Ücreti Hesaplama</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="vekalet_hesaplama" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">calculate</i>
-                                                <span>Ceza İnfaz Hesaplama</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="ceza_infaz_hesaplama" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- İşçi Görüşme Formu İşlemleri -->
-                            <div class="permission-panel" id="workerform-panel">
-                                <div class="permission-grid">
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">visibility</i>
-                                                <span>İşçi Görüşme Görüntüleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="isci_gorusme_goruntule" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">add_box</i>
-                                                <span>İşçi Görüşme Ekleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="isci_gorusme_ekle" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">edit_note</i>
-                                                <span>İşçi Görüşme Düzenleme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="isci_gorusme_duzenle" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                    <div class="permission-item">
-                                        <label class="switch-wrapper">
-                                            <span class="permission-label">
-                                                <i class="material-icons">delete_sweep</i>
-                                                <span>İşçi Görüşme Silme</span>
-                                            </span>
-                                            <div class="switch">
-                                                <input type="checkbox" name="permissions" value="isci_gorusme_sil" class="switch-input">
-                                                <span class="switch-label" data-on="Açık" data-off="Kapalı"></span>
-                                                <span class="switch-handle"></span>
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    </div>
 
-                <div class="modal-actions">
-                    <button type="button" onclick="closeModal('editUserModal')" class="cancel-btn">
-                        <i class="material-icons">cancel</i> İptal
-                    </button>
-                    <button type="submit" class="save-btn" id="savePermissionsBtn">
-                        <span class="loading-spinner"></span>
-                        <i class="material-icons">save</i> Kaydet
-                    </button>
-                </div>
-            </form>
+    <!-- Active Users -->
+    <div class="data-section">
+        <div class="section-header">
+            <h2><i class="material-icons">verified_user</i> Aktif Kullanıcılar ({{ active_users|length }})</h2>
+        </div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th width="50"><input type="checkbox" id="selectAllActive"></th>
+                        <th>Kullanıcı</th>
+                        <th>İletişim</th>
+                        <th>Rol</th>
+                        <th>Onay Tarihi</th>
+                        <th width="100">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in active_users %}
+                    <tr data-role="{{ user.role }}">
+                        <td><input type="checkbox" name="selectedUsers" value="{{ user.id }}"></td>
+                        <td>
+                            <div class="user-cell">
+                                <img src="{{ url_for('static', filename='images/pp.png') }}" class="user-avatar">
+                                <div>
+                                    <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
+                                    <div class="user-username">@{{ user.username }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="contact-cell">
+                                <div><i class="material-icons">email</i> {{ user.email }}</div>
+                                {% if user.phone %}<div><i class="material-icons">phone</i> {{ user.phone }}</div>{% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="role-badge role-{{ user.role.replace(' ', '-').lower() }}">{{ user.role }}</span>
+                            {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
+                        </td>
+                        <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-icon edit" onclick="editUser({{ user.id }})" title="Düzenle">
+                                    <i class="material-icons">edit</i>
+                                </button>
+                                <button class="btn-icon delete" onclick="deleteUser({{ user.id }})" title="Sil">
+                                    <i class="material-icons">delete</i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pending Users -->
+    <div class="data-section">
+        <div class="section-header">
+            <h2><i class="material-icons">pending</i> Onay Bekleyen Kullanıcılar ({{ pending_users|length }})</h2>
+        </div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th width="50"><input type="checkbox" id="selectAllPending"></th>
+                        <th>Kullanıcı</th>
+                        <th>İletişim</th>
+                        <th>Rol</th>
+                        <th>Kayıt Tarihi</th>
+                        <th width="120">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in pending_users %}
+                    <tr data-role="{{ user.role }}" class="pending-row">
+                        <td><input type="checkbox" name="selectedPendingUsers" value="{{ user.id }}"></td>
+                        <td>
+                            <div class="user-cell">
+                                <img src="{{ url_for('static', filename='images/pp.png') }}" class="user-avatar">
+                                <div>
+                                    <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
+                                    <div class="user-username">@{{ user.username }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="contact-cell">
+                                <div><i class="material-icons">email</i> {{ user.email }}</div>
+                                {% if user.phone %}<div><i class="material-icons">phone</i> {{ user.phone }}</div>{% endif %}
+                            </div>
+                        </td>
+                        <td><span class="role-badge role-{{ user.role.replace(' ', '-').lower() }}">{{ user.role }}</span></td>
+                        <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-icon approve" onclick="approveUser({{ user.id }})" title="Onayla">
+                                    <i class="material-icons">check</i>
+                                </button>
+                                <button class="btn-icon reject" onclick="rejectUser({{ user.id }})" title="Reddet">
+                                    <i class="material-icons">close</i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <style>
 .admin-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #f5f7fa;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .admin-header {
-    text-align: center;
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, rgb(45,49,60) 0%, rgb(60,65,75) 100%);
-    border-radius: 15px;
+    background: linear-gradient(135deg, #2d313b 0%, #3a4149 100%);
     color: white;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-}
-
-.admin-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: url('/static/images/pattern.svg');
-    opacity: 0.05;
-}
-
-.admin-header h1 {
-    font-size: 1.8rem;
-    margin-bottom: 0.5rem;
-    color: white;
-    position: relative;
-}
-
-.admin-header p {
-    font-size: 1rem;
-    opacity: 0.9;
-    color: white;
-    position: relative;
-}
-
-.admin-content {
+    padding: 2rem 3rem;
     display: flex;
-    flex-direction: column;
-    gap: 2rem;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.admin-section {
+.header-content h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.header-content p {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+.stats-grid {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.stat-card {
+    background: rgba(255,255,255,0.15);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-top: 0.25rem;
+}
+
+.control-panel {
     background: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    margin-bottom: 1.5rem;
-    border: 1px solid rgba(0,0,0,0.05);
-    transition: all 0.3s ease;
+    padding: 1.5rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e1e8ed;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.admin-section:hover {
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
+.search-section {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box .material-icons {
+    position: absolute;
+    left: 1rem;
+    color: #657786;
+}
+
+.search-box input {
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    border: 1px solid #e1e8ed;
+    border-radius: 20px;
+    width: 300px;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #2d313b;
+    box-shadow: 0 0 0 3px rgba(45,49,59,0.1);
+}
+
+.filter-select {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e1e8ed;
+    border-radius: 8px;
+    background: white;
+    font-size: 0.95rem;
+    min-width: 150px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #2d313b;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #3a4149;
+    transform: translateY(-1px);
+}
+
+.data-section {
+    margin: 2rem 3rem;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .section-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #e9ecef;
-}
-
-.section-header i {
-    font-size: 24px;
-    color: white;
-    background: rgb(45,49,60);
-    padding: 12px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    background: #f8fafc;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e1e8ed;
 }
 
 .section-header h2 {
     margin: 0;
-    font-size: 1.3rem;
-    color: #343a40;
+    font-size: 1.25rem;
+    color: #2d3748;
     font-weight: 600;
-}
-
-.select-all-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 8px 15px;
-    background: rgb(45,49,60);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-.select-all-btn:hover {
-    background: rgb(60,65,75);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+.table-container {
+    overflow-x: auto;
 }
 
-.select-all-btn i {
-    font-size: 18px;
-    color: white;
-}
-
-.admin-table {
+.data-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.05);
-}
-
-.admin-table th {
-    background: linear-gradient(to right, #f8f9fa, #f1f3f5);
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #343a40;
-    padding: 15px;
-    text-align: left;
-    border-bottom: 2px solid #dee2e6;
-}
-
-.admin-table td {
+    border-collapse: collapse;
     font-size: 0.95rem;
-    color: #495057;
-    padding: 15px;
-    border-bottom: 1px solid #f1f3f5;
+}
+
+.data-table th {
+    background: #f8fafc;
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-weight: 600;
+    color: #4a5568;
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.data-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f7fafc;
     vertical-align: middle;
 }
 
-.admin-table tr:last-child td {
-    border-bottom: none;
+.data-table tr:hover {
+    background: #f8fafc;
 }
 
-.admin-table tr:hover td {
-    background-color: #f8f9fa;
+.pending-row {
+    background: rgba(255,193,7,0.05);
 }
 
-.actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.actions button {
+.user-cell {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    gap: 0.75rem;
 }
 
-.approve-btn {
-    background: linear-gradient(135deg, #28a745, #20c997);
-    color: white;
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
-.reject-btn {
-    background: linear-gradient(135deg, #dc3545, #e74c3c);
-    color: white;
-}
-
-.edit-btn {
-    background: linear-gradient(135deg, rgb(45,49,60), rgb(60,65,75));
-    color: white;
-}
-
-.status-btn {
-    background: linear-gradient(135deg, #6c757d, #495057);
-    color: white;
-}
-
-.actions button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-}
-
-.actions button i {
-    font-size: 18px;
-}
-
-@media (max-width: 768px) {
-    .admin-container {
-        padding: 1rem;
-    }
-    
-    .actions {
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    
-    .permission-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .tabs-navigation {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 5px;
-    }
-    
-    .modal-content {
-        width: 95%;
-        max-height: 85vh;
-    }
-    
-    .user-info {
-        flex-direction: column;
-    }
-    
-    .template-buttons {
-        flex-direction: column;
-    }
-    
-    .modal-actions {
-        flex-direction: column-reverse;
-    }
-    
-    .modal-actions button {
-        width: 100%;
-    }
-}
-
-/* Modal stilleri güncellendi */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: white;
-    border-radius: 15px;
-    width: 90%;
-    max-width: 900px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(0,0,0,0.05);
-}
-
-.modal-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid #dee2e6;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    background: white;
-    z-index: 1;
-    border-top-left-radius: 15px;
-    border-top-right-radius: 15px;
-}
-
-.modal-header h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: rgb(45,49,60);
+.user-name {
     font-weight: 600;
+    color: #2d3748;
 }
 
-.modal-body {
-    padding: 1.5rem;
+.user-username {
+    color: #718096;
+    font-size: 0.875rem;
 }
 
-.user-info {
-    background: linear-gradient(to right, #f8f9fa, #f1f3f5);
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 25px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    border: 1px solid #e9ecef;
-}
-
-.user-info-item {
-    flex: 1;
-    min-width: 200px;
-    padding: 10px;
-    background: white;
-    border-radius: 8px;
-    border-left: 4px solid rgb(45,49,60);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.user-info-label {
-    font-size: 0.8rem;
-    color: #6c757d;
-    margin-bottom: 4px;
-    font-weight: 500;
-}
-
-.user-info-value {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #343a40;
-}
-
-.permissions-tabs {
-    border: 1px solid #dee2e6;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
-
-.tabs-navigation {
-    display: flex;
-    overflow-x: auto;
-    background: linear-gradient(to right, #f8f9fa, #f1f3f5);
-    border-bottom: 1px solid #dee2e6;
-    padding: 0 5px;
-}
-
-.tab-btn {
-    padding: 15px 20px;
-    background: transparent;
-    border: none;
-    border-bottom: 3px solid transparent;
-    cursor: pointer;
-    white-space: nowrap;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    color: #495057;
-}
-
-.tab-btn:hover {
-    background: rgba(0,0,0,0.02);
-    color: rgb(45,49,60);
-}
-
-.tab-btn.active {
-    border-bottom-color: rgb(45,49,60);
-    color: rgb(45,49,60);
-    background: white;
-    font-weight: 600;
-}
-
-.tab-content {
-    display: none;
-    padding: 25px;
-    background: white;
-}
-
-.tab-content.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.tab-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #f8f9fa;
-}
-
-.tab-header h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: rgb(45,49,60);
-    font-weight: 600;
-}
-
-.permission-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 15px;
-}
-
-.role-templates {
-    margin-top: 30px;
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 12px;
-    border: 1px solid #e9ecef;
-}
-
-.role-templates h3 {
-    margin: 0 0 15px 0;
-    font-size: 1.1rem;
-    color: #343a40;
-    font-weight: 600;
-}
-
-.template-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.template-buttons button {
-    padding: 12px 20px;
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #495057;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.template-buttons button:hover {
-    background: #e9ecef;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    color: #212529;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #dee2e6;
-}
-
-.save-btn, .cancel-btn {
+.contact-cell div {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
 }
 
-.save-btn {
-    background: rgb(45,49,60);
-    color: white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    position: relative;
-    overflow: hidden;
+.contact-cell .material-icons {
+    font-size: 1rem;
+    color: #718096;
 }
 
-.save-btn::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 100%;
-    background: rgba(255,255,255,0.1);
-    transition: width 0.3s ease;
-}
-
-.save-btn:hover::after {
-    width: 100%;
-}
-
-.cancel-btn {
-    background: #e9ecef;
-    color: #495057;
-}
-
-.save-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-}
-
-.cancel-btn:hover {
-    background: #dee2e6;
-    transform: translateY(-2px);
-}
-
-/* Toast güncellemeleri */
-.toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 16px 20px;
-    border-radius: 10px;
-    color: white;
-    font-size: 0.95rem;
-    font-weight: 500;
-    z-index: 1100;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: all 0.3s ease;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    max-width: 350px;
-}
-
-.toast.success {
-    background: linear-gradient(135deg, #28a745, #20c997);
-    border-left: 5px solid #1e7e34;
-}
-
-.toast.error {
-    background: linear-gradient(135deg, #dc3545, #e74c3c);
-    border-left: 5px solid #bd2130;
-}
-
-.toast.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.toast-icon {
-    font-size: 20px;
-}
-
-.toast-message {
-    flex: 1;
-}
-
-.toast-close {
-    background: transparent;
-    border: none;
-    color: white;
-    opacity: 0.7;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    margin: 0;
-}
-
-.toast-close:hover {
-    opacity: 1;
-}
-
-/* Loading spinner iyileştirmeleri */
-.loading-spinner {
-    display: none;
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top: 2px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-right: 8px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.save-status {
-    display: inline-flex;
-    align-items: center;
-    margin-left: 10px;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    animation: fadeIn 0.3s ease-in-out;
-}
-
-.save-status.success {
-    background-color: rgba(76, 175, 80, 0.15);
-    color: #4CAF50;
-    border: 1px solid rgba(76, 175, 80, 0.3);
-}
-
-.save-status.error {
-    background-color: rgba(244, 67, 54, 0.15);
-    color: #F44336;
-    border: 1px solid rgba(244, 67, 54, 0.3);
-}
-
-.save-status i {
-    font-size: 16px;
-    margin-right: 5px;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-.permission-updated {
-    animation: highlightPermission 1.5s ease-in-out;
-}
-
-@keyframes highlightPermission {
-    0% { background-color: transparent; }
-    30% { background-color: rgba(33, 150, 243, 0.2); }
-    100% { background-color: transparent; }
-}
-
-/* Checkboxlardaki geçişi iyileştir */
-.permission-item input[type="checkbox"] {
-    transition: all 0.2s ease-in-out;
-}
-
-/* Yetki item'larını belirginleştir */
-.permission-item {
-    padding: 10px;
-    border-radius: 6px;
-    transition: background-color 0.3s ease;
-}
-
-.permission-item:hover {
-    background-color: rgba(0, 0, 0, 0.03);
-}
-
-/* Tab geçişlerini pürüzsüzleştir */
-.tab-content {
-    transition: opacity 0.3s ease;
-    opacity: 0;
-    height: 0;
-    overflow: hidden;
-    pointer-events: none;
-}
-
-.tab-content.active {
-    opacity: 1;
-    height: auto;
-    overflow: visible;
-    pointer-events: all;
-}
-
-/* Permission UI Styling - New styles for permission management */
-.permissions-section {
-    margin-top: 25px;
-}
-
-.permissions-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.permissions-header h3 {
-    margin: 0;
-    font-size: 1.3rem;
-    color: #333;
-    font-weight: 600;
-}
-
-.templates-dropdown {
-    position: relative;
+.role-badge {
     display: inline-block;
-}
-
-.template-dropdown-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background: linear-gradient(135deg, #2d313c, #3c414b);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.template-dropdown-btn:hover {
-    background: linear-gradient(135deg, #3c414b, #4e535d);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-}
-
-.dropdown-icon {
-    font-size: 18px;
-    transition: transform 0.3s ease;
-}
-
-.templates-dropdown-content {
-    display: none;
-    position: absolute;
-    right: 0;
-    z-index: 1;
-    width: 250px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    padding: 10px;
-    transition: all 0.3s ease;
-    transform-origin: top right;
-}
-
-.templates-dropdown:hover .templates-dropdown-content {
-    display: block;
-    animation: scaleIn 0.2s ease-in-out;
-}
-
-.templates-dropdown:hover .dropdown-icon {
-    transform: rotate(180deg);
-}
-
-@keyframes scaleIn {
-    0% {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.template-option {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 12px;
-    background: white;
-    border: none;
-    border-radius: 8px;
-    margin-bottom: 5px;
-    text-align: left;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.template-option:hover {
-    background: #f5f5f5;
-}
-
-.template-badge {
-    display: inline-block;
-    padding: 5px 10px;
-    border-radius: 50px;
-    font-size: 0.8rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
     font-weight: 600;
-    margin-right: 10px;
-    color: white;
-}
-
-.template-badge.admin {
-    background: linear-gradient(135deg, #2d313c, #3c414b);
-}
-
-.template-badge.lawyer {
-    background: linear-gradient(135deg, #2e7d32, #43a047);
-}
-
-.template-badge.secretary {
-    background: linear-gradient(135deg, #1565c0, #1976d2);
-}
-
-.template-badge.intern {
-    background: linear-gradient(135deg, #f57c00, #ff9800);
-}
-
-.template-badge.none {
-    background: linear-gradient(135deg, #c62828, #e53935);
-}
-
-.template-desc {
-    font-size: 0.85rem;
-    color: #666;
-}
-
-.permission-categories-container {
-    display: flex;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-}
-
-.permission-sidebar {
-    width: 250px;
-    background: #f8f9fa;
-    border-right: 1px solid #e9ecef;
-    padding: 15px 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.category-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 20px;
-    border: none;
-    background: transparent;
-    text-align: left;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #495057;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border-left: 3px solid transparent;
-}
-
-.category-btn i {
-    font-size: 20px;
-    color: #6c757d;
-    transition: all 0.2s ease;
-}
-
-.category-btn:hover {
-    background: #f1f3f5;
-    color: #212529;
-}
-
-.category-btn:hover i {
-    color: #2d313c;
-}
-
-.category-btn.active {
-    background: white;
-    color: #2d313c;
-    font-weight: 600;
-    border-left: 3px solid #2d313c;
-    box-shadow: 3px 0 10px rgba(0, 0, 0, 0.05);
-}
-
-.category-btn.active i {
-    color: #2d313c;
-}
-
-.permission-content {
-    flex: 1;
-    padding: 20px;
-}
-
-.permission-panel {
-    display: none;
-    animation: fadeIn 0.3s ease-in-out;
-}
-
-.permission-panel.active {
-    display: block;
-}
-
-.permission-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 15px;
-}
-
-.permission-item {
-    background: #f9f9f9;
-    border-radius: 10px;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
-}
-
-.permission-item:hover {
-    background: #f0f0f0;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
-}
-
-.switch-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 12px 16px;
-    cursor: pointer;
-    box-sizing: border-box;
-}
-
-.permission-label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.permission-label i {
-    font-size: 20px;
-    color: #2d313c;
-}
-
-.permission-label span {
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: #333;
-}
-
-/* Toggle Switch Styling */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 55px;
-    height: 28px;
-}
-
-.switch-input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.switch-label {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #e9ecef;
-    transition: .4s;
-    border-radius: 34px;
-}
-
-.switch-label:before {
-    position: absolute;
-    content: "";
-    height: 20px;
-    width: 20px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.switch-input:checked + .switch-label {
-    background-color: #2d313c;
-}
-
-.switch-input:checked + .switch-label:before {
-    transform: translateX(26px);
-}
-
-.switch-input:focus + .switch-label {
-    box-shadow: 0 0 1px #2d313c;
-}
-
-.switch-label:after {
-    content: attr(data-off);
-    display: block;
-    position: absolute;
-    transform: translate(-50%, -50%);
-    top: 50%;
-    left: 70%;
-    font-size: 0.6rem;
-    font-weight: 700;
-    color: #495057;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.switch-input:checked + .switch-label:after {
-    content: attr(data-on);
-    left: 30%;
+.role-yönetici-avukat { background: #fed7d7; color: #c53030; }
+.role-avukat { background: #bee3f8; color: #2b6cb0; }
+.role-stajyer-avukat { background: #c6f6d5; color: #276749; }
+.role-takip-elemanı { background: #faf089; color: #744210; }
+.role-muhasebe { background: #e9d8fd; color: #553c9a; }
+.role-ulaşım { background: #fed7d7; color: #c53030; }
+.role-sekreter { background: #fbb6ce; color: #97266d; }
+
+.admin-badge {
+    display: inline-block;
+    background: #2d3748;
     color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-left: 0.5rem;
 }
 
-.permission-updated {
-    animation: highlight 1.5s ease-in-out;
+.action-btns {
+    display: flex;
+    gap: 0.5rem;
 }
 
-@keyframes highlight {
-    0% { background-color: #f9f9f9; }
-    50% { background-color: rgba(45, 49, 60, 0.1); }
-    100% { background-color: #f9f9f9; }
+.btn-icon {
+    background: none;
+    border: 1px solid #e1e8ed;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
 }
 
-/* Responsive adjustments */
-@media (max-width: 992px) {
-    .permission-categories-container {
+.btn-icon .material-icons {
+    font-size: 1rem;
+}
+
+.btn-icon.edit { color: #2d313b; border-color: #2d313b; }
+.btn-icon.edit:hover { background: #2d313b; color: white; }
+
+.btn-icon.delete { color: #e53e3e; border-color: #e53e3e; }
+.btn-icon.delete:hover { background: #e53e3e; color: white; }
+
+.btn-icon.approve { color: #38a169; border-color: #38a169; }
+.btn-icon.approve:hover { background: #38a169; color: white; }
+
+.btn-icon.reject { color: #e53e3e; border-color: #e53e3e; }
+.btn-icon.reject:hover { background: #e53e3e; color: white; }
+
+@media (max-width: 1024px) {
+    .admin-header {
         flex-direction: column;
+        gap: 1.5rem;
+        text-align: center;
+        padding: 1.5rem;
     }
     
-    .permission-sidebar {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid #e9ecef;
-        padding: 10px 0;
-        overflow-x: auto;
-        display: flex;
-        flex-direction: row;
+    .stats-grid {
+        justify-content: center;
     }
     
-    .category-btn {
-        white-space: nowrap;
-        border-left: none;
-        border-bottom: 3px solid transparent;
-        padding: 10px 15px;
-    }
-    
-    .category-btn.active {
-        border-left: none;
-        border-bottom: 3px solid #2d313c;
-    }
-    
-    .permission-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 768px) {
-    .permissions-header {
+    .control-panel {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
+        gap: 1rem;
+        padding: 1.5rem;
     }
     
-    .templates-dropdown {
-        width: 100%;
+    .data-section {
+        margin: 1rem;
     }
     
-    .template-dropdown-btn {
-        width: 100%;
-        justify-content: space-between;
-    }
-    
-    .templates-dropdown-content {
+    .search-box input {
         width: 100%;
     }
 }
 </style>
 
 <script>
-function approveUser(userId) {
-    if (confirm('Bu kullanıcıyı onaylamak istediğinize emin misiniz?')) {
-        fetch('/admin/approve_user/' + userId, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                showGlobalNotification(data.message || 'Bir hata oluştu', 'error');
-            }
+// Search and filter functionality for admin panel
+document.addEventListener('DOMContentLoaded', function() {
+    const adminSearchInput = document.getElementById('userSearch');
+    const adminRoleFilter = document.getElementById('roleFilter');
+    
+    function filterUsers() {
+        if (!adminSearchInput) return; // Guard clause
+        
+        const searchTerm = adminSearchInput.value.toLowerCase();
+        const selectedRole = adminRoleFilter ? adminRoleFilter.value : 'all';
+        
+        document.querySelectorAll('.data-table tbody tr').forEach(row => {
+            const userNameElement = row.querySelector('.user-name');
+            const contactElement = row.querySelector('.contact-cell');
+            
+            if (!userNameElement || !contactElement) return;
+            
+            const userName = userNameElement.textContent.toLowerCase();
+            const userEmail = contactElement.textContent.toLowerCase();
+            const userRole = row.dataset.role;
+            
+            const matchesSearch = userName.includes(searchTerm) || userEmail.includes(searchTerm);
+            const matchesRole = selectedRole === 'all' || userRole === selectedRole;
+            
+            row.style.display = matchesSearch && matchesRole ? '' : 'none';
         });
     }
-}
-
-function rejectUser(userId) {
-    if (confirm('Bu kullanıcıyı reddetmek istediğinize emin misiniz?')) {
-        fetch('/admin/reject_user/' + userId, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                showGlobalNotification(data.message || 'Bir hata oluştu', 'error');
-            }
-        });
+    
+    if (adminSearchInput) {
+        adminSearchInput.addEventListener('input', filterUsers);
     }
+    if (adminRoleFilter) {
+        adminRoleFilter.addEventListener('change', filterUsers);
+    }
+});
+
+// Select all functionality
+document.getElementById('selectAllActive')?.addEventListener('change', function() {
+    document.querySelectorAll('input[name="selectedUsers"]').forEach(cb => {
+        cb.checked = this.checked;
+    });
+});
+
+document.getElementById('selectAllPending')?.addEventListener('change', function() {
+    document.querySelectorAll('input[name="selectedPendingUsers"]').forEach(cb => {
+        cb.checked = this.checked;
+    });
+});
+
+// Get CSRF token
+function getCSRFToken() {
+    return document.querySelector('meta[name=csrf-token]').getAttribute('content');
 }
 
+// User management functions
 function editUser(userId) {
-    // Modalı aç
-    const modal = document.getElementById('editUserModal');
-    modal.style.display = 'flex';
-    
-    // User ID'yi form'a ekle
-    document.getElementById('editUserId').value = userId;
-    
-    // Save butonundaki spinner'ı göster
-    const saveBtn = modal.querySelector('.save-btn');
-    const spinner = saveBtn.querySelector('.loading-spinner');
-    if (spinner) {
-        spinner.style.display = 'inline-block';
-    }
-    
-    // Kullanıcı bilgilerini getir
-    fetch(`/admin/get_user_info/${userId}`)
+    // Backend'den kullanıcı bilgilerini al
+    fetch(`/admin/get_user_details/${userId}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Kullanıcı bilgilerini göster
-                const userInfo = document.getElementById('userInfoSection');
-                userInfo.innerHTML = `
-                    <div class="user-info-item">
-                        <div class="user-info-label">Kullanıcı Adı</div>
-                        <div class="user-info-value">${data.user.username}</div>
-                    </div>
-                    <div class="user-info-item">
-                        <div class="user-info-label">Ad Soyad</div>
-                        <div class="user-info-value">${data.user.first_name} ${data.user.last_name}</div>
-                    </div>
-                    <div class="user-info-item">
-                        <div class="user-info-label">E-posta</div>
-                        <div class="user-info-value">${data.user.email}</div>
-                    </div>
-                    <div class="user-info-item">
-                        <div class="user-info-label">Meslek</div>
-                        <div class="user-info-value">${data.user.role}</div>
-                    </div>
-                `;
-                
-                // Yetkileri getir
-                return fetch(`/admin/get_user_permissions/${userId}`);
+                showEditUserModal(data.user);
             } else {
-                showToast('Kullanıcı bilgileri yüklenirken bir hata oluştu', 'error');
-                throw new Error('Kullanıcı bilgileri alınamadı');
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Tüm checkbox'ları sıfırla
-                document.querySelectorAll('input[name="permissions"]').forEach(checkbox => {
-                    checkbox.checked = false;
-                });
-                
-                // Mevcut yetkileri işaretle
-                const permissions = data.permissions;
-                for (const [key, value] of Object.entries(permissions)) {
-                    const checkbox = document.querySelector(`input[value="${key}"]`);
-                    if (checkbox) {
-                        checkbox.checked = value;
-                    }
-                }
-            } else {
-                showToast('Yetkiler yüklenirken bir hata oluştu', 'error');
+                showToast('Kullanıcı bilgileri alınamadı', 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showToast('Yetkiler yüklenirken bir hata oluştu', 'error');
-        })
-        .finally(() => {
-            // Loading spinner'ı gizle
-            if (spinner) {
-                spinner.style.display = 'none';
-            }
+            showToast('Bir hata oluştu', 'error');
         });
 }
 
-// Form gönderme
-document.getElementById('editUserForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+function approveUser(userId) {
+    if (confirm('Bu kullanıcıyı onaylamak istediğinizden emin misiniz?')) {
+        fetch(`/admin/approve_user/${userId}`, { 
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Kullanıcı başarıyla onaylandı', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Bir hata oluştu', 'error');
+            }
+        })
+        .catch(error => showToast('Bir hata oluştu', 'error'));
+    }
+}
+
+function rejectUser(userId) {
+    if (confirm('Bu kullanıcıyı reddetmek istediğinizden emin misiniz?')) {
+        fetch(`/admin/reject_user/${userId}`, { 
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Kullanıcı reddedildi', 'warning');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Bir hata oluştu', 'error');
+            }
+        })
+        .catch(error => showToast('Bir hata oluştu', 'error'));
+    }
+}
+
+function deleteUser(userId) {
+    if (confirm('Bu kullanıcıyı kalıcı olarak silmek istediğinizden emin misiniz?')) {
+        fetch(`/admin/delete_user/${userId}`, { 
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Kullanıcı başarıyla silindi', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Bir hata oluştu', 'error');
+            }
+        })
+        .catch(error => showToast('Bir hata oluştu', 'error'));
+    }
+}
+
+function approveSelectedUsers() {
+    const selectedUsers = document.querySelectorAll('input[name="selectedPendingUsers"]:checked');
     
-    // Form gerçekten submit butonu ile mi gönderildi kontrol et
-    // Event.submitter özelliği, formu gönderen butonu gösterir
-    if (!e.submitter || !e.submitter.classList.contains('save-btn')) {
-        console.log('Form kaydet butonu dışında bir yolla gönderilmeye çalışıldı.');
-        return false;
+    if (selectedUsers.length === 0) {
+        showToast('Lütfen onaylanacak kullanıcıları seçin', 'warning');
+        return;
     }
     
-    const userId = document.getElementById('editUserId').value;
-    const permissions = {};
-    const saveBtn = this.querySelector('.save-btn');
-    const spinner = saveBtn.querySelector('.loading-spinner');
-    
-    // Save butonunu devre dışı bırak ve loading göster
-    saveBtn.disabled = true;
-    if (spinner) {
-        spinner.style.display = 'inline-block';
+    if (confirm(`${selectedUsers.length} kullanıcıyı onaylamak istediğinizden emin misiniz?`)) {
+        const userIds = Array.from(selectedUsers).map(cb => cb.value);
+        
+        fetch('/admin/approve_multiple_users', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ user_ids: userIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`${data.approved_count} kullanıcı başarıyla onaylandı`, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Bir hata oluştu', 'error');
+            }
+        })
+        .catch(error => showToast('Bir hata oluştu', 'error'));
     }
+}
+
+function showToast(message, type = 'success') {
+    const colors = {
+        'success': '#38a169',
+        'error': '#e53e3e',
+        'warning': '#d69e2e',
+        'info': '#3182ce'
+    };
+
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${colors[type]};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 9999;
+        font-weight: 500;
+        animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = message;
+
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+// User edit modal with advanced permissions
+function showEditUserModal(user) {
+    // Önce kullanıcının mevcut yetkilerini al
+    fetch(`/admin/get_user_permissions/${user.id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                createAdvancedModal(user, data.permissions);
+            } else {
+                showToast('Kullanıcı yetkileri alınamadı', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Bir hata oluştu', 'error');
+        });
+}
+
+function createAdvancedModal(user, userPermissions = {}) {
+    const modalHTML = `
+        <div id="editUserModal" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(8px);
+            overflow-y: auto;
+            padding: 2rem;
+        ">
+            <div style="
+                background: white;
+                border-radius: 20px;
+                padding: 2.5rem;
+                width: 100%;
+                max-width: 1400px;
+                box-shadow: 0 25px 80px rgba(0,0,0,0.15);
+                max-height: 95vh;
+                overflow-y: auto;
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #e9ecef;">
+                    <h2 style="margin: 0; color: #2d3748; font-size: 1.5rem; font-weight: 700;">
+                        <i class="material-icons" style="margin-right: 0.5rem; vertical-align: middle;">admin_panel_settings</i>
+                        Kullanıcı Yetkilendirme
+                    </h2>
+                    <button onclick="closeEditUserModal()" style="
+                        background: #dc3545;
+                        border: none;
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        cursor: pointer;
+                        color: white;
+                    ">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                
+                <form id="editUserForm">
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: 2rem;">
+                        <!-- Sol Kolon: Kullanıcı Bilgileri -->
+                        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px;">
+                            <h3 style="margin: 0 0 1rem 0; color: #2d3748; display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem;">
+                                <i class="material-icons">person</i> Kullanıcı Bilgileri
+                            </h3>
+                            
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #2d3748; font-size: 0.95rem;">Ad Soyad:</label>
+                                <input type="text" value="${user.first_name} ${user.last_name}" readonly style="
+                                    width: 100%;
+                                    padding: 0.75rem;
+                                    border: 1px solid #e9ecef;
+                                    border-radius: 8px;
+                                    background: #f8f9fa;
+                                    color: #6c757d;
+                                    font-size: 0.9rem;
+                                ">
+                            </div>
+                            
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #2d3748; font-size: 0.95rem;">E-posta:</label>
+                                <input type="text" value="${user.email}" readonly style="
+                                    width: 100%;
+                                    padding: 0.75rem;
+                                    border: 1px solid #e9ecef;
+                                    border-radius: 8px;
+                                    background: #f8f9fa;
+                                    color: #6c757d;
+                                    font-size: 0.9rem;
+                                ">
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #2d3748; font-size: 0.95rem;">Kullanıcı Rolü:</label>
+                                <select id="userRole" onchange="applyRoleTemplate()" style="
+                                    width: 100%;
+                                    padding: 0.75rem;
+                                    border: 2px solid #e9ecef;
+                                    border-radius: 10px;
+                                    font-size: 0.95rem;
+                                    background: white;
+                                ">
+                                    <option value="Sekreter" ${user.role === 'Sekreter' ? 'selected' : ''}>📋 Sekreter</option>
+                                    <option value="Takip Elemanı" ${user.role === 'Takip Elemanı' ? 'selected' : ''}>📊 Takip Elemanı</option>
+                                    <option value="Muhasebe" ${user.role === 'Muhasebe' ? 'selected' : ''}>💰 Muhasebe</option>
+                                    <option value="Ulaşım" ${user.role === 'Ulaşım' ? 'selected' : ''}>🚗 Ulaşım</option>
+                                    <option value="Stajyer Avukat" ${user.role === 'Stajyer Avukat' ? 'selected' : ''}>🎓 Stajyer Avukat</option>
+                                    <option value="Avukat" ${user.role === 'Avukat' ? 'selected' : ''}>⚖️ Avukat</option>
+                                    <option value="Yönetici Avukat" ${user.role === 'Yönetici Avukat' ? 'selected' : ''}>👨‍💼 Yönetici Avukat</option>
+                                </select>
+                            </div>
+
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 0.75rem; background: #f8f9fa; border-radius: 10px;">
+                                    <input type="checkbox" id="isAdmin" ${user.is_admin ? 'checked' : ''} style="
+                                        width: 20px;
+                                        height: 20px;
+                                        accent-color: #2d3748;
+                                        cursor: pointer;
+                                    ">
+                                    <div>
+                                        <span style="font-weight: 600; color: #2d3748; display: block;">🔐 Süper Admin Yetkisi</span>
+                                        <small style="color: #6c757d;">Tüm sistem özelliklerine sınırsız erişim</small>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1.5rem; border-top: 2px solid #e9ecef;">
+                                <button type="button" onclick="toggleAllPermissions(false)" style="
+                                    padding: 0.875rem 2rem;
+                                    background: #6c757d;
+                                    color: white;
+                                    border: none;
+                                    border-radius: 10px;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                    font-size: 1rem;
+                                ">
+                                    Tümünü Kapat
+                                </button>
+                                <button type="button" onclick="toggleAllPermissions(true)" style="
+                                    padding: 0.875rem 2rem;
+                                    background: #28a745;
+                                    color: white;
+                                    border: none;
+                                    border-radius: 10px;
+                                    cursor: pointer;
+                                    font-weight: 600;
+                                    font-size: 1rem;
+                                ">
+                                    Tümünü Aç
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Sağ Kolon: Detaylı Yetki Ayarları -->
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                                <h3 style="margin: 0; color: #2d3748; display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem;">
+                                    <i class="material-icons">security</i> Detaylı Yetki Ayarları
+                                </h3>
+                            </div>
+                            
+                            <div id="permissionsContainer" style="
+                                max-height: 60vh;
+                                overflow-y: auto;
+                                padding-right: 1rem;
+                                scrollbar-width: thin;
+                                scrollbar-color: #2d3748 #f1f1f1;
+                            ">
+                                ${createPermissionsHTML(userPermissions)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1.5rem; border-top: 2px solid #e9ecef;">
+                        <button type="button" onclick="closeEditUserModal()" style="
+                            padding: 0.875rem 2rem;
+                            background: #6c757d;
+                            color: white;
+                            border: none;
+                            border-radius: 10px;
+                            cursor: pointer;
+                            font-weight: 600;
+                            font-size: 1rem;
+                        ">
+                            İptal
+                        </button>
+                        <button type="button" onclick="saveUserSettings(${user.id})" style="
+                            padding: 0.875rem 2rem;
+                            background: #2d3748;
+                            color: white;
+                            border: none;
+                            border-radius: 10px;
+                            cursor: pointer;
+                            font-weight: 600;
+                            font-size: 1rem;
+                        ">
+                            Değişiklikleri Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // CSS ekle
+    const style = document.createElement('style');
+    style.textContent = `
+        #permissionsContainer::-webkit-scrollbar {
+            width: 8px;
+        }
+        #permissionsContainer::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        #permissionsContainer::-webkit-scrollbar-thumb {
+            background: #2d3748;
+            border-radius: 4px;
+        }
+        #permissionsContainer::-webkit-scrollbar-thumb:hover {
+            background: #1a202c;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function createPermissionsHTML(userPermissions) {
+    const permissionCategories = {
+        'Temel Erişim': [
+            { key: 'panel_goruntule', label: 'Panel Görüntüleme', desc: 'Ana panel sayfasını görüntüleyebilir' },
+            { key: 'takvim_goruntule', label: 'Takvim Görüntüleme', desc: 'Takvim sayfasını görüntüleyebilir' },
+            { key: 'duyuru_goruntule', label: 'Duyuru Görüntüleme', desc: 'Duyurular sayfasını görüntüleyebilir' },
+            { key: 'odeme_goruntule', label: 'Ödeme Görüntüleme', desc: 'Ödemeler sayfasını görüntüleyebilir' },
+            { key: 'ayarlar', label: 'Ayarlar', desc: 'Kullanıcı ayarları sayfasına erişebilir' },
+            { key: 'iletisim', label: 'İletişim', desc: 'İletişim sayfasına erişebilir' }
+        ],
+        'Dosya Yönetimi': [
+            { key: 'dosya_sorgula', label: 'Dosya Sorgulama', desc: 'Dosyaları arayabilir ve görüntüleyebilir' },
+            { key: 'dosya_ekle', label: 'Dosya Ekleme', desc: 'Yeni dosya ekleyebilir' },
+            { key: 'dosya_duzenle', label: 'Dosya Düzenleme', desc: 'Mevcut dosyaları düzenleyebilir' },
+            { key: 'dosya_sil', label: 'Dosya Silme', desc: 'Dosyaları silebilir' },
+            { key: 'dosyalarim', label: 'Dosyalarım', desc: 'Kendi dosyalarını görüntüleyebilir' }
+        ],
+        'Etkinlik Yönetimi': [
+            { key: 'etkinlik_goruntule', label: 'Etkinlik Görüntüleme', desc: 'Takvim etkinliklerini görüntüleyebilir' },
+            { key: 'etkinlik_ekle', label: 'Etkinlik Ekleme', desc: 'Takvime yeni etkinlik ekleyebilir' },
+            { key: 'etkinlik_duzenle', label: 'Etkinlik Düzenleme', desc: 'Mevcut etkinlikleri düzenleyebilir' },
+            { key: 'etkinlik_sil', label: 'Etkinlik Silme', desc: 'Etkinlikleri silebilir' }
+        ],
+        'İçerik Yönetimi': [
+            { key: 'duyuru_ekle', label: 'Duyuru Ekleme', desc: 'Yeni duyuru ekleyebilir' },
+            { key: 'duyuru_duzenle', label: 'Duyuru Düzenleme', desc: 'Mevcut duyuruları düzenleyebilir' },
+            { key: 'duyuru_sil', label: 'Duyuru Silme', desc: 'Duyuruları silebilir' }
+        ],
+        'Finansal İşlemler': [
+            { key: 'odeme_ekle', label: 'Ödeme Ekleme', desc: 'Yeni ödeme kaydı ekleyebilir' },
+            { key: 'odeme_duzenle', label: 'Ödeme Düzenleme', desc: 'Mevcut ödeme kayıtlarını düzenleyebilir' },
+            { key: 'odeme_sil', label: 'Ödeme Silme', desc: 'Ödeme kayıtlarını silebilir' },
+            { key: 'odeme_istatistik_goruntule', label: 'Ödeme İstatistikleri', desc: 'Ödeme istatistiklerini görüntüleyebilir' }
+        ],
+        'Hesaplamalar': [
+            { key: 'faiz_hesaplama', label: 'Faiz Hesaplama', desc: 'Faiz hesaplaması yapabilir' },
+            { key: 'harc_hesaplama', label: 'Harç Hesaplama', desc: 'Harç hesaplaması yapabilir' },
+            { key: 'isci_hesaplama', label: 'İşçi Alacağı Hesaplama', desc: 'İşçi alacağı hesaplaması yapabilir' },
+            { key: 'vekalet_hesaplama', label: 'Vekalet Ücreti Hesaplama', desc: 'Vekalet ücreti hesaplaması yapabilir' },
+            { key: 'ceza_infaz_hesaplama', label: 'Ceza İnfaz Hesaplama', desc: 'Ceza infaz hesaplaması yapabilir' }
+        ],
+        'Araçlar ve Kaynaklar': [
+            { key: 'ornek_dilekceler', label: 'Örnek Dilekçeler', desc: 'Örnek dilekçelere erişebilir ve yönetebilir' },
+            { key: 'ornek_sozlesmeler', label: 'Örnek Sözleşmeler', desc: 'Örnek sözleşmelere erişebilir ve yönetebilir' },
+            { key: 'yargi_kararlari_arama', label: 'Yargı Kararları Arama', desc: 'Yargı kararlarında arama yapabilir' },
+            { key: 'ucret_tarifeleri', label: 'Ücret Tarifeleri', desc: 'Ücret tarifelerine erişebilir' },
+            { key: 'ai_avukat', label: 'AI Avukat', desc: 'AI Avukat sistemini kullanabilir' }
+        ],
+        'İnsan Kaynakları': [
+            { key: 'isci_gorusme_goruntule', label: 'İşçi Görüşme Görüntüleme', desc: 'İşçi görüşme kayıtlarını görüntüleyebilir' },
+            { key: 'isci_gorusme_ekle', label: 'İşçi Görüşme Ekleme', desc: 'Yeni işçi görüşme kaydı ekleyebilir' },
+            { key: 'isci_gorusme_duzenle', label: 'İşçi Görüşme Düzenleme', desc: 'Mevcut işçi görüşme kayıtlarını düzenleyebilir' },
+            { key: 'isci_gorusme_sil', label: 'İşçi Görüşme Silme', desc: 'İşçi görüşme kayıtlarını silebilir' }
+        ],
+        'Müşteri Yönetimi': [
+            { key: 'musteri_goruntule', label: 'Müşteri Görüntüleme', desc: 'Müşteri yönetimi sayfasını görüntüleyebilir' },
+            { key: 'musteri_ekle', label: 'Müşteri Ekleme', desc: 'Yeni müşteri ekleyebilir' },
+            { key: 'musteri_duzenle', label: 'Müşteri Düzenleme', desc: 'Mevcut müşteri bilgilerini düzenleyebilir' },
+            { key: 'musteri_sil', label: 'Müşteri Silme', desc: 'Müşteri kayıtlarını silebilir' }
+        ],
+        'Raporlar ve İstatistikler': [
+            { key: 'rapor_goruntule', label: 'Rapor Görüntüleme', desc: 'Raporlar sayfasını görüntüleyebilir' },
+            { key: 'rapor_olustur', label: 'Rapor Oluşturma', desc: 'Yeni rapor oluşturabilir' },
+            { key: 'kullanici_yonetimi', label: 'Kullanıcı Yönetimi', desc: 'Kullanıcı yönetimi sayfasını görüntüleyebilir' },
+            { key: 'bildirimler', label: 'Bildirimler', desc: 'Bildirimleri görüntüleyebilir' }
+        ],
+        'Sistem Yönetimi': [
+            { key: 'veritabani_yonetimi', label: 'Veritabanı Yönetimi', desc: 'Veritabanı yönetimi işlemlerini yapabilir' },
+            { key: 'admin_panel', label: 'Admin Panel', desc: 'Admin paneline erişebilir' },
+            { key: 'kullanici_onaylama', label: 'Kullanıcı Onaylama', desc: 'Kullanıcı onaylama işlemleri yapabilir' }
+        ]
+    };
+
+    let html = '';
     
-    // Tüm checkbox'ların durumunu topla
-    document.querySelectorAll('input[name="permissions"]').forEach(checkbox => {
-        permissions[checkbox.value] = checkbox.checked;
+    Object.entries(permissionCategories).forEach(([categoryName, permissions]) => {
+        const categoryKey = categoryName.toLowerCase().replace(/\s+/g, '_').replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c').replace(/ş/g, 's');
+        html += `
+            <div style="
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                border: 2px solid #dee2e6;
+                border-radius: 15px;
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h4 style="margin: 0; color: #2d3748; font-size: 1.1rem; font-weight: 700;">
+                        ${getCategoryIcon(categoryName)} ${categoryName}
+                    </h4>
+                    <div>
+                        <button type="button" onclick="toggleGroupPermissions('${categoryKey}', true)" style="
+                            background: #28a745;
+                            color: white;
+                            border: none;
+                            padding: 0.5rem 1rem;
+                            border-radius: 8px;
+                            margin-right: 0.5rem;
+                            cursor: pointer;
+                            font-size: 0.85rem;
+                            font-weight: 600;
+                        ">Tümü</button>
+                        <button type="button" onclick="toggleGroupPermissions('${categoryKey}', false)" style="
+                            background: #dc3545;
+                            color: white;
+                            border: none;
+                            padding: 0.5rem 1rem;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-size: 0.85rem;
+                            font-weight: 600;
+                        ">Hiçbiri</button>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                    ${permissions.map(perm => `
+                        <label style="
+                            display: flex;
+                            align-items: flex-start;
+                            gap: 0.75rem;
+                            padding: 0.75rem;
+                            background: white;
+                            border: 1px solid #dee2e6;
+                            border-radius: 10px;
+                            cursor: pointer;
+                            transition: all 0.2s ease;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                        " onmouseover="this.style.borderColor='#2d3748'; this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#dee2e6'; this.style.transform='translateY(0)'">
+                            <input type="checkbox" 
+                                   name="permission_${perm.key}" 
+                                   data-category="${categoryKey}"
+                                   ${userPermissions[perm.key] ? 'checked' : ''} 
+                                   style="
+                                       width: 18px;
+                                       height: 18px;
+                                       accent-color: #2d3748;
+                                       cursor: pointer;
+                                       margin-top: 2px;
+                                   ">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #2d3748; margin-bottom: 0.25rem; font-size: 0.9rem;">
+                                    ${perm.label}
+                                </div>
+                                <div style="font-size: 0.8rem; color: #6c757d; line-height: 1.4;">
+                                    ${perm.desc}
+                                </div>
+                            </div>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        `;
     });
     
-    // Sunucuya gönder - doğru endpoint URL'i kullanılıyor
+    return html;
+}
+
+function getCategoryIcon(categoryName) {
+    const icons = {
+        'Temel Erişim': '🏠',
+        'Dosya Yönetimi': '📁',
+        'Etkinlik Yönetimi': '📅',
+        'İçerik Yönetimi': '✍️',
+        'Finansal İşlemler': '💰',
+        'Hesaplamalar': '🧮',
+        'Araçlar ve Kaynaklar': '🛠️',
+        'İnsan Kaynakları': '👥',
+        'Müşteri Yönetimi': '👤',
+        'Raporlar ve İstatistikler': '📊',
+        'Sistem Yönetimi': '⚙️'
+    };
+    return icons[categoryName] || '📋';
+}
+
+function closeEditUserModal() {
+    document.getElementById('editUserModal')?.remove();
+}
+
+// Rol şablonu uygulama fonksiyonu
+function applyRoleTemplate() {
+    const selectedRole = document.getElementById('userRole').value;
+    
+    // Önce tüm yetkileri temizle
+    document.querySelectorAll('input[name^="permission_"]').forEach(cb => {
+        cb.checked = false;
+    });
+    
+    // Rol bazında yetki şablonları
+    const roleTemplates = {
+        'Sekreter': [
+            'panel_goruntule', 'takvim_goruntule', 'duyuru_goruntule', 'etkinlik_goruntule',
+            'etkinlik_ekle', 'etkinlik_duzenle', 'duyuru_ekle', 'duyuru_duzenle', 
+            'odeme_goruntule', 'odeme_ekle', 'dosya_sorgula', 'faiz_hesaplama', 
+            'harc_hesaplama', 'ornek_dilekceler', 'ornek_sozlesmeler', 'ucret_tarifeleri',
+            'isci_gorusme_goruntule', 'isci_gorusme_ekle', 'ayarlar', 'iletisim', 'bildirimler'
+        ],
+        'Takip Elemanı': [
+            'panel_goruntule', 'takvim_goruntule', 'duyuru_goruntule', 'etkinlik_goruntule',
+            'dosya_sorgula', 'dosya_ekle', 'dosya_duzenle', 'etkinlik_ekle', 'etkinlik_duzenle', 
+            'odeme_goruntule', 'odeme_ekle', 'odeme_duzenle', 'faiz_hesaplama', 
+            'harc_hesaplama', 'vekalet_hesaplama', 'isci_hesaplama', 'ornek_dilekceler', 
+            'ornek_sozlesmeler', 'ucret_tarifeleri', 'isci_gorusme_goruntule', 'isci_gorusme_ekle',
+            'isci_gorusme_duzenle', 'ayarlar', 'iletisim', 'bildirimler'
+        ],
+        'Muhasebe': [
+            'panel_goruntule', 'takvim_goruntule', 'duyuru_goruntule', 'etkinlik_goruntule',
+            'odeme_goruntule', 'odeme_ekle', 'odeme_duzenle', 'odeme_sil', 'odeme_istatistik_goruntule',
+            'dosya_sorgula', 'faiz_hesaplama', 'harc_hesaplama', 'vekalet_hesaplama', 
+            'isci_hesaplama', 'ucret_tarifeleri', 'rapor_goruntule', 'rapor_olustur',
+            'ayarlar', 'iletisim', 'bildirimler'
+        ],
+        'Ulaşım': [
+            'panel_goruntule', 'takvim_goruntule', 'duyuru_goruntule', 'etkinlik_goruntule',
+            'etkinlik_ekle', 'etkinlik_duzenle', 'dosya_sorgula', 'ucret_tarifeleri',
+            'ayarlar', 'iletisim', 'bildirimler'
+        ],
+        'Stajyer Avukat': [
+            'panel_goruntule', 'takvim_goruntule', 'duyuru_goruntule', 'etkinlik_goruntule',
+            'odeme_goruntule', 'dosya_sorgula', 'dosya_ekle', 'etkinlik_ekle', 
+            'faiz_hesaplama', 'harc_hesaplama', 'vekalet_hesaplama', 'isci_hesaplama', 
+            'ceza_infaz_hesaplama', 'ornek_dilekceler', 'ornek_sozlesmeler', 'yargi_kararlari_arama', 
+            'ucret_tarifeleri', 'isci_gorusme_goruntule', 'isci_gorusme_ekle', 'ai_avukat',
+            'ayarlar', 'iletisim', 'bildirimler'
+        ],
+        'Avukat': [
+            'panel_goruntule', 'takvim_goruntule', 'duyuru_goruntule', 'duyuru_ekle', 'duyuru_duzenle',
+            'etkinlik_goruntule', 'etkinlik_ekle', 'etkinlik_duzenle', 'etkinlik_sil',
+            'odeme_goruntule', 'odeme_ekle', 'odeme_duzenle', 'dosya_sorgula', 'dosya_ekle', 
+            'dosya_duzenle', 'dosya_sil', 'dosyalarim', 'faiz_hesaplama', 'harc_hesaplama', 
+            'vekalet_hesaplama', 'isci_hesaplama', 'ceza_infaz_hesaplama', 'ornek_dilekceler', 
+            'ornek_sozlesmeler', 'yargi_kararlari_arama', 'ucret_tarifeleri', 'ai_avukat',
+            'isci_gorusme_goruntule', 'isci_gorusme_ekle', 'isci_gorusme_duzenle', 'isci_gorusme_sil',
+            'musteri_goruntule', 'musteri_ekle', 'musteri_duzenle', 'rapor_goruntule',
+            'ayarlar', 'iletisim', 'bildirimler'
+        ],
+        'Yönetici Avukat': [
+            'panel_goruntule', 'takvim_goruntule', 'duyuru_goruntule', 'duyuru_ekle', 'duyuru_duzenle', 'duyuru_sil',
+            'etkinlik_goruntule', 'etkinlik_ekle', 'etkinlik_duzenle', 'etkinlik_sil',
+            'odeme_goruntule', 'odeme_ekle', 'odeme_duzenle', 'odeme_sil', 'odeme_istatistik_goruntule',
+            'dosya_sorgula', 'dosya_ekle', 'dosya_duzenle', 'dosya_sil', 'dosyalarim',
+            'faiz_hesaplama', 'harc_hesaplama', 'vekalet_hesaplama', 'isci_hesaplama', 'ceza_infaz_hesaplama',
+            'ornek_dilekceler', 'ornek_sozlesmeler', 'yargi_kararlari_arama', 'ucret_tarifeleri', 'ai_avukat',
+            'isci_gorusme_goruntule', 'isci_gorusme_ekle', 'isci_gorusme_duzenle', 'isci_gorusme_sil',
+            'musteri_goruntule', 'musteri_ekle', 'musteri_duzenle', 'musteri_sil',
+            'rapor_goruntule', 'rapor_olustur', 'kullanici_yonetimi', 'bildirimler',
+            'veritabani_yonetimi', 'admin_panel', 'kullanici_onaylama', 'ayarlar', 'iletisim'
+        ]
+    };
+    
+    const rolePermissions = roleTemplates[selectedRole] || [];
+    
+    // Seçili role ait yetkileri işaretle
+    rolePermissions.forEach(permission => {
+        const checkbox = document.querySelector(`input[name="permission_${permission}"]`);
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+    });
+    
+    showToast(`${selectedRole} rol şablonu uygulandı`, 'success');
+}
+
+// Tüm yetkileri aç/kapat
+function toggleAllPermissions(enable) {
+    document.querySelectorAll('input[name^="permission_"]').forEach(cb => {
+        cb.checked = enable;
+    });
+    
+    showToast(enable ? 'Tüm yetkiler açıldı' : 'Tüm yetkiler kapatıldı', 'info');
+}
+
+// Kategori bazında yetki aç/kapat
+function toggleGroupPermissions(categoryKey, enable) {
+    document.querySelectorAll(`input[data-category="${categoryKey}"]`).forEach(cb => {
+        cb.checked = enable;
+    });
+    
+    const categoryName = categoryKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    showToast(`${categoryName} kategorisi ${enable ? 'açıldı' : 'kapatıldı'}`, 'info');
+}
+
+// Kullanıcı ayarlarını kaydet
+function saveUserSettings(userId) {
+    const role = document.getElementById('userRole').value;
+    const isAdmin = document.getElementById('isAdmin').checked;
+    
+    // Tüm yetkileri topla
+    const permissions = {};
+    document.querySelectorAll('input[name^="permission_"]').forEach(cb => {
+        const permissionKey = cb.name.replace('permission_', '');
+        permissions[permissionKey] = cb.checked;
+    });
+    
+    const data = {
+        role: role,
+        is_admin: isAdmin,
+        permissions: permissions
+    };
+    
     fetch(`/admin/update_user_permissions/${userId}`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
+        headers: { 
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
         },
-        body: JSON.stringify({ permissions })
+        body: JSON.stringify(data)
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Başarı mesajı göster
             showToast('Kullanıcı yetkileri başarıyla güncellendi', 'success');
-            
-            // Yetki değişikliklerini göster
-            updatePermissionDisplay(data.permissions);
-            
-            // Kaydet butonunu tekrar aktifleştir
-            saveBtn.disabled = false;
-            if (spinner) {
-                spinner.style.display = 'none';
-            }
-            
-            // Yeşil tik işareti göster
-            const statusIndicator = document.createElement('span');
-            statusIndicator.className = 'save-status success';
-            statusIndicator.innerHTML = '<i class="material-icons">check_circle</i> Kaydedildi';
-            saveBtn.parentNode.appendChild(statusIndicator);
-            
-            // 3 saniye sonra tik işaretini kaldır
-            setTimeout(() => {
-                statusIndicator.remove();
-            }, 3000);
+            closeEditUserModal();
+            setTimeout(() => location.reload(), 1000);
         } else {
             showToast(data.message || 'Bir hata oluştu', 'error');
-            // Hata durumunda butonu tekrar aktifleştir
-            saveBtn.disabled = false;
-            if (spinner) {
-                spinner.style.display = 'none';
-            }
-            
-            // Hata işareti göster
-            const statusIndicator = document.createElement('span');
-            statusIndicator.className = 'save-status error';
-            statusIndicator.innerHTML = '<i class="material-icons">error</i> Hata';
-            saveBtn.parentNode.appendChild(statusIndicator);
-            
-            // 3 saniye sonra hata işaretini kaldır
-            setTimeout(() => {
-                statusIndicator.remove();
-            }, 3000);
         }
     })
     .catch(error => {
         console.error('Error:', error);
         showToast('Bir hata oluştu', 'error');
-        // Hata durumunda butonu tekrar aktifleştir
-        saveBtn.disabled = false;
-        if (spinner) {
-            spinner.style.display = 'none';
-        }
-        
-        // Hata işareti göster
-        const statusIndicator = document.createElement('span');
-        statusIndicator.className = 'save-status error';
-        statusIndicator.innerHTML = '<i class="material-icons">error</i> Hata';
-        saveBtn.parentNode.appendChild(statusIndicator);
-        
-        // 3 saniye sonra hata işaretini kaldır
-        setTimeout(() => {
-            statusIndicator.remove();
-        }, 3000);
     });
-});
+}
 
-// Yetki görüntüsünü güncelle
-function updatePermissionDisplay(permissions) {
-    // Tüm checkbox'ları gelen izinler ile güncelle
-    for (const [key, value] of Object.entries(permissions)) {
-        const checkbox = document.querySelector(`input[value="${key}"]`);
-        if (checkbox) {
-            checkbox.checked = value;
-            
-            // Animasyonla vurgula
-            const label = checkbox.closest('label');
-            if (label) {
-                label.classList.add('permission-updated');
-                setTimeout(() => {
-                    label.classList.remove('permission-updated');
-                }, 1500);
-            }
-        }
+// Animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
     }
-}
-
-// Belirli bir tab'daki tüm yetkileri seç
-function selectAllPermissionsInTab(tabId) {
-    const tab = document.getElementById(tabId);
-    const checkboxes = tab.querySelectorAll('input[name="permissions"]');
-    
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = true;
-    });
-    
-    showToast(`${tab.querySelector('h3').textContent} yetkileri seçildi`, 'success');
-}
-
-// Rol şablonlarını uygula
-function applyTemplate(templateType) {
-    // Tüm yetkileri sıfırla
-    document.querySelectorAll('input[name="permissions"]').forEach(checkbox => {
-        checkbox.checked = false;
-    });
-    
-    switch(templateType) {
-        case 'admin':
-            // Tüm yetkileri seç
-            document.querySelectorAll('input[name="permissions"]').forEach(checkbox => {
-                checkbox.checked = true;
-            });
-            break;
-            
-        case 'lawyer':
-            // Avukat için gerekli yetkileri seç
-            const lawyerPermissions = [
-                'panel_goruntule', 'ayarlar',
-                'dosya_sorgula', 'dosya_ekle', 'dosya_duzenle',
-                'takvim_goruntule', 'etkinlik_ekle', 'etkinlik_duzenle', 'etkinlik_sil',
-                'duyuru_goruntule',
-                'odeme_goruntule', 'odeme_ekle',
-                'faiz_hesaplama', 'harc_hesaplama', 'isci_hesaplama', 'vekalet_hesaplama', 'ceza_infaz_hesaplama',
-                'isci_gorusme_goruntule', 'isci_gorusme_ekle', 'isci_gorusme_duzenle'
-            ];
-            selectPermissions(lawyerPermissions);
-            break;
-            
-        case 'secretary':
-            // Sekreter için gerekli yetkileri seç
-            const secretaryPermissions = [
-                'panel_goruntule',
-                'dosya_sorgula',
-                'takvim_goruntule', 'etkinlik_ekle', 'etkinlik_duzenle',
-                'duyuru_goruntule',
-                'odeme_goruntule',
-                'isci_gorusme_goruntule'
-            ];
-            selectPermissions(secretaryPermissions);
-            break;
-            
-        case 'intern':
-            // Stajyer için gerekli yetkileri seç
-            const internPermissions = [
-                'panel_goruntule',
-                'dosya_sorgula',
-                'takvim_goruntule',
-                'duyuru_goruntule',
-                'faiz_hesaplama', 'harc_hesaplama', 'vekalet_hesaplama',
-                'isci_gorusme_goruntule'
-            ];
-            selectPermissions(internPermissions);
-            break;
-            
-        case 'none':
-            // Hiçbir yetkiyi seçme
-            break;
-    }
-    
-    // Uygulanan şablonu vurgula için tüm checkbox'ları kısaca animasyonlu yap
-    document.querySelectorAll('.permission-item').forEach(item => {
-        item.classList.add('permission-updated');
-        setTimeout(() => {
-            item.classList.remove('permission-updated');
-        }, 1500);
-    });
-}
-
-// Belirli yetkileri seçme yardımcı fonksiyonu
-function selectPermissions(permissionList) {
-    permissionList.forEach(permission => {
-        const checkbox = document.querySelector(`input[value="${permission}"]`);
-        if (checkbox) {
-            checkbox.checked = true;
-        }
-    });
-}
-
-// Modal işlevleri güncellendi
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    modal.style.display = 'none';
-    
-    // Modal kapatıldığında tüm toast mesajlarını temizle
-    clearAllToasts();
-}
-
-// Toast mesajlarını temizleme fonksiyonu
-function clearAllToasts() {
-    const existingToasts = document.querySelectorAll('.toast');
-    existingToasts.forEach(toast => {
-        toast.remove();
-    });
-}
-
-// Toast mesajı gösterme fonksiyonu
-function showToast(message, type = 'success') {
-    // Önceki toastları temizle
-    clearAllToasts();
-    
-    // Yeni toast oluştur
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    
-    let icon = type === 'success' ? 'check_circle' : 'error';
-    
-    toast.innerHTML = `
-        <i class="material-icons toast-icon">${icon}</i>
-        <div class="toast-message">${message}</div>
-        <button class="toast-close" onclick="this.parentElement.remove()">
-            <i class="material-icons">close</i>
-        </button>
-    `;
-    
-    document.body.appendChild(toast);
-    
-    // Animasyon için biraz bekleme
-    setTimeout(() => {
-        toast.classList.add('show');
-    }, 10);
-    
-    // 5 saniye sonra otomatik kapat
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
-    }, 5000);
-}
-
-// Kategori değiştirme işlevi
-document.querySelectorAll('.category-btn').forEach(button => {
-    button.addEventListener('click', function() {
-        // Aktif kategori butonunu değiştir
-        document.querySelectorAll('.category-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        this.classList.add('active');
-        
-        // İlgili paneli göster
-        const category = this.getAttribute('data-category');
-        document.querySelectorAll('.permission-panel').forEach(panel => {
-            panel.classList.remove('active');
-        });
-        document.getElementById(`${category}-panel`).classList.add('active');
-    });
-});
+`;
+document.head.appendChild(style);
 </script>
 
-<!-- Özel Toast Template -->
-<div id="toastTemplate" style="display:none">
-    <div class="toast">
-        <span class="toast-icon material-icons"></span>
-        <span class="toast-message"></span>
-        <button class="toast-close material-icons">close</button>
-    </div>
-</div>
 {% endblock %} 

@@ -51,7 +51,173 @@ class User(UserMixin, db.Model):
         if permission == 'etkinlik_goruntule' and 'takvim_goruntule' in self.permissions and self.permissions['takvim_goruntule']:
             return True
             
+        # Bağımlı yetkiler için kontrol
+        dependencies = self.get_permission_dependencies()
+        if permission in dependencies:
+            for dep in dependencies[permission]:
+                if dep in self.permissions and self.permissions[dep]:
+                    return True
+            
         return False
+
+    @staticmethod
+    def get_permission_dependencies():
+        """Yetkilerin birbirlerine olan bağımlılıkları"""
+        return {
+            'etkinlik_goruntule': ['takvim_goruntule'],
+            'etkinlik_ekle': ['takvim_goruntule', 'etkinlik_goruntule'],
+            'etkinlik_duzenle': ['takvim_goruntule', 'etkinlik_goruntule'],
+            'etkinlik_sil': ['takvim_goruntule', 'etkinlik_goruntule'],
+            'duyuru_duzenle': ['duyuru_goruntule'],
+            'duyuru_sil': ['duyuru_goruntule'],
+            'dosya_duzenle': ['dosya_sorgula'],
+            'dosya_sil': ['dosya_sorgula'],
+            'odeme_duzenle': ['odeme_goruntule'],
+            'odeme_sil': ['odeme_goruntule'],
+            'veritabani_yonetimi': ['panel_goruntule'],
+            'ai_avukat': ['panel_goruntule'],
+            'yargi_kararlari_arama': ['panel_goruntule'],
+            'ornek_dilekceler': ['panel_goruntule'],
+            'ornek_sozlesmeler': ['panel_goruntule'],
+            'ucret_tarifeleri': ['panel_goruntule']
+        }
+
+    @staticmethod
+    def get_default_permissions():
+        """Rol bazlı varsayılan yetkileri döndürür"""
+        return {
+            'Yönetici Avukat': {
+                'panel_goruntule': True,
+                'ayarlar': True,
+                'takvim_goruntule': True,
+                'etkinlik_goruntule': True,
+                'etkinlik_ekle': True,
+                'etkinlik_duzenle': True,
+                'etkinlik_sil': True,
+                'duyuru_goruntule': True,
+                'duyuru_ekle': True,
+                'duyuru_duzenle': True,
+                'duyuru_sil': True,
+                'odeme_goruntule': True,
+                'odeme_ekle': True,
+                'odeme_duzenle': True,
+                'odeme_sil': True,
+                'dosya_sorgula': True,
+                'dosya_ekle': True,
+                'dosya_duzenle': True,
+                'dosya_sil': True,
+                'faiz_hesaplama': True,
+                'harc_hesaplama': True,
+                'isci_hesaplama': True,
+                'vekalet_hesaplama': True,
+                'ceza_infaz_hesaplama': True,
+                'isci_gorusme_goruntule': True,
+                'isci_gorusme_ekle': True,
+                'isci_gorusme_duzenle': True,
+                'isci_gorusme_sil': True,
+                'veritabani_yonetimi': True,
+                'ai_avukat': True,
+                'yargi_kararlari_arama': True,
+                'ornek_dilekceler': True,
+                'ornek_sozlesmeler': True,
+                'ucret_tarifeleri': True
+            },
+            'Avukat': {
+                'panel_goruntule': True,
+                'ayarlar': True,
+                'takvim_goruntule': True,
+                'etkinlik_goruntule': True,
+                'etkinlik_ekle': True,
+                'etkinlik_duzenle': True,
+                'etkinlik_sil': True,
+                'duyuru_goruntule': True,
+                'duyuru_ekle': True,
+                'dosya_sorgula': True,
+                'dosya_ekle': True,
+                'dosya_duzenle': True,
+                'dosya_sil': True,
+                'odeme_goruntule': True,
+                'odeme_ekle': True,
+                'odeme_duzenle': True,
+                'faiz_hesaplama': True,
+                'harc_hesaplama': True,
+                'isci_hesaplama': True,
+                'vekalet_hesaplama': True,
+                'ceza_infaz_hesaplama': True,
+                'isci_gorusme_goruntule': True,
+                'isci_gorusme_ekle': True,
+                'isci_gorusme_duzenle': True,
+                'ai_avukat': True,
+                'yargi_kararlari_arama': True,
+                'ornek_dilekceler': True,
+                'ornek_sozlesmeler': True,
+                'ucret_tarifeleri': True
+            },
+            'Stajyer Avukat': {
+                'panel_goruntule': True,
+                'ayarlar': True,
+                'takvim_goruntule': True,
+                'etkinlik_goruntule': True,
+                'duyuru_goruntule': True,
+                'dosya_sorgula': True,
+                'dosya_ekle': True,
+                'odeme_goruntule': True,
+                'faiz_hesaplama': True,
+                'harc_hesaplama': True,
+                'isci_hesaplama': True,
+                'vekalet_hesaplama': True,
+                'ceza_infaz_hesaplama': True,
+                'isci_gorusme_goruntule': True,
+                'isci_gorusme_ekle': True,
+                'ai_avukat': True,
+                'yargi_kararlari_arama': True,
+                'ornek_dilekceler': True,
+                'ornek_sozlesmeler': True,
+                'ucret_tarifeleri': True
+            },
+            'Sekreter': {
+                'panel_goruntule': True,
+                'ayarlar': True,
+                'takvim_goruntule': True,
+                'etkinlik_goruntule': True,
+                'etkinlik_ekle': True,
+                'duyuru_goruntule': True,
+                'dosya_sorgula': True,
+                'dosya_ekle': True,
+                'odeme_goruntule': True,
+                'odeme_ekle': True,
+                'faiz_hesaplama': True,
+                'harc_hesaplama': True,
+                'isci_hesaplama': True,
+                'vekalet_hesaplama': True,
+                'ceza_infaz_hesaplama': True,
+                'isci_gorusme_goruntule': True,
+                'isci_gorusme_ekle': True,
+                'ai_avukat': True,
+                'yargi_kararlari_arama': True,
+                'ornek_dilekceler': True,
+                'ornek_sozlesmeler': True,
+                'ucret_tarifeleri': True
+            },
+            'Takip Elemanı': {
+                'panel_goruntule': True,
+                'ayarlar': True,
+                'takvim_goruntule': True,
+                'etkinlik_goruntule': True,
+                'duyuru_goruntule': True,
+                'dosya_sorgula': True,
+                'odeme_goruntule': True,
+                'faiz_hesaplama': True,
+                'harc_hesaplama': True,
+                'isci_hesaplama': True,
+                'vekalet_hesaplama': True,
+                'ceza_infaz_hesaplama': True,
+                'ai_avukat': True,
+                'yargi_kararlari_arama': True,
+                'ornek_dilekceler': True,
+                'ucret_tarifeleri': True
+            }
+        }
 
     def get_title(self):
         """Kullanıcının rolüne göre ünvanını döndürür"""
@@ -388,3 +554,28 @@ class OrnekSozlesme(db.Model):
 
     def __repr__(self):
         return f'<OrnekSozlesme {self.sozlesme_adi}>'
+
+class AISohbetGecmisi(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    baslik = db.Column(db.String(200), nullable=False)
+    sohbet_verisi = db.Column(db.Text, nullable=False)  # JSON formatında sohbet mesajları
+    olusturulma_tarihi = db.Column(db.DateTime, default=datetime.utcnow)
+    guncelleme_tarihi = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    mesaj_sayisi = db.Column(db.Integer, default=0)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    user = db.relationship('User', backref=db.backref('ai_sohbet_gecmisleri', lazy=True))
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'baslik': self.baslik,
+            'sohbet_verisi': json.loads(self.sohbet_verisi) if self.sohbet_verisi else [],
+            'olusturulma_tarihi': self.olusturulma_tarihi.strftime('%Y-%m-%d %H:%M:%S'),
+            'guncelleme_tarihi': self.guncelleme_tarihi.strftime('%Y-%m-%d %H:%M:%S'),
+            'mesaj_sayisi': self.mesaj_sayisi,
+            'user_id': self.user_id
+        }
+    
+    def __repr__(self):
+        return f'<AISohbetGecmisi {self.baslik}>'

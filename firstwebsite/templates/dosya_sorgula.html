@@ -126,8 +126,12 @@
                 <div class="file-type-details">
                     <div class="main-type">{{ case_file.file_type|title }}</div>
                     <div class="sub-details">
+                        {% if case_file.courthouse %}
                         <small>{{ case_file.courthouse }}</small>
+                        {% endif %}
+                        {% if case_file.department %}
                         <small>{{ case_file.department }}</small>
+                        {% endif %}
                     </div>
                 </div>
             </td>
@@ -1940,8 +1944,8 @@ function showDetails(caseId) {
 
             // Temel bilgileri doldur
             document.getElementById('detailFileType').textContent = capitalizeFileType(data.file_type);
-            document.getElementById('detailCourthouse').textContent = data.courthouse || '-';
-            document.getElementById('detailDepartment').textContent = data.department || '-';
+            document.getElementById('detailCourthouse').textContent = data.courthouse || '';
+            document.getElementById('detailDepartment').textContent = data.department || '';
             document.getElementById('detailCaseNumber').textContent = data.case_number || '-';
             document.getElementById('detailClientName').textContent = data.client_name || '-';
             document.getElementById('detailPhoneNumber').textContent = data.phone_number || '-';

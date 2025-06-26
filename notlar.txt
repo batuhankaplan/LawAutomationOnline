@@ -2,5 +2,6 @@ YAPILACAKLAR:
 1) Son gün uyarısı.
 2) IA Avukat sistemi.
 3) Örnek dilekçelerden veya dosya detayları modalında kayıtlı belgelerin (udf,pdf,doc,docx gibi) içeriğinden yani içerdiği kelimerden arama yapılabilsin.
-
+4) Bir dosyaya birden fazla taraf ekleyebilelim. Hemde karşı taraf eklemek opsiyonel olsun.
 HATA VE BUGLAR:
+Birçok hata ve bug var. Dosyalarda isimler buglanmış. Bug fix yapılacak.

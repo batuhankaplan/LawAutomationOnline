@@ -1,0 +1,850 @@
+{% extends "layout.html" %}
+
+{% block title %}Veritabanı Yönetimi{% endblock %}
+
+{% block content %}
+<div class="database-container">
+    <div class="database-header">
+        <h1><i class="material-icons">storage</i>Veritabanı Yönetimi</h1>
+        <p>Sistem verilerini yönetin ve veritabanı işlemleri gerçekleştirin</p>
+    </div>
+
+    <div class="database-content">
+        <!-- İstatistikler -->
+        <div class="stats-section">
+            <h2><i class="material-icons">analytics</i>Veritabanı İstatistikleri</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="material-icons">people</i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">{{ stats.kullanici_sayisi }}</div>
+                        <div class="stat-label">Toplam Kullanıcı</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card warning">
+                    <div class="stat-icon">
+                        <i class="material-icons">person_add_disabled</i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">{{ stats.onaysiz_kullanici_sayisi }}</div>
+                        <div class="stat-label">Onaysız Kullanıcı</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="material-icons">folder</i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">{{ stats.dosya_sayisi }}</div>
+                        <div class="stat-label">Toplam Dosya</div>
+                    </div>
+                </div>
+
+                <div class="stat-card success">
+                    <div class="stat-icon">
+                        <i class="material-icons">folder_open</i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">{{ stats.aktif_dosya_sayisi }}</div>
+                        <div class="stat-label">Aktif Dosya</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="material-icons">event</i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">{{ stats.etkinlik_sayisi }}</div>
+                        <div class="stat-label">Etkinlik</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="material-icons">campaign</i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">{{ stats.duyuru_sayisi }}</div>
+                        <div class="stat-label">Duyuru</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="material-icons">payments</i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">{{ stats.odeme_sayisi }}</div>
+                        <div class="stat-label">Ödeme Kaydı</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="material-icons">description</i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">{{ stats.belge_sayisi }}</div>
+                        <div class="stat-label">Belge</div>
+                    </div>
+                </div>
+
+                <div class="stat-card info">
+                    <div class="stat-icon">
+                        <i class="material-icons">history</i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number">{{ stats.log_sayisi }}</div>
+                        <div class="stat-label">Log Kaydı</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- İşlemler -->
+        <div class="operations-section">
+            <h2><i class="material-icons">build</i>Veritabanı İşlemleri</h2>
+            <div class="operations-grid">
+                <div class="operation-card">
+                    <div class="operation-header">
+                        <i class="material-icons">backup</i>
+                        <h3>Yedekleme</h3>
+                    </div>
+                    <p>Veritabanının tam yedeğini alın</p>
+                    <button class="operation-btn primary" onclick="veritabaniYedekle()">
+                        <i class="material-icons">cloud_download</i>
+                        Yedek Al
+                    </button>
+                </div>
+
+                <div class="operation-card">
+                    <div class="operation-header">
+                        <i class="material-icons">cleaning_services</i>
+                        <h3>Eski Logları Temizle</h3>
+                    </div>
+                    <p>30 günden eski aktivite loglarını silin</p>
+                    <button class="operation-btn warning" onclick="veritabaniTemizle('eski_loglar')">
+                        <i class="material-icons">delete_sweep</i>
+                        Logları Temizle
+                    </button>
+                </div>
+
+                <div class="operation-card">
+                    <div class="operation-header">
+                        <i class="material-icons">person_remove</i>
+                        <h3>Onaysız Kullanıcıları Temizle</h3>
+                    </div>
+                    <p>7 günden eski onaysız kullanıcıları silin</p>
+                    <button class="operation-btn danger" onclick="veritabaniTemizle('onaysiz_kullanicilar')">
+                        <i class="material-icons">person_off</i>
+                        Kullanıcıları Sil
+                    </button>
+                </div>
+
+                <div class="operation-card">
+                    <div class="operation-header">
+                        <i class="material-icons">event_busy</i>
+                        <h3>Eski Etkinlikleri Temizle</h3>
+                    </div>
+                    <p>1 yıldan eski etkinlikleri silin</p>
+                    <button class="operation-btn warning" onclick="veritabaniTemizle('gecmis_etkinlikler')">
+                        <i class="material-icons">clear_all</i>
+                        Etkinlikleri Sil
+                    </button>
+                </div>
+
+                <div class="operation-card">
+                    <div class="operation-header">
+                        <i class="material-icons">refresh</i>
+                        <h3>İstatistikleri Yenile</h3>
+                    </div>
+                    <p>Veritabanı istatistiklerini güncelleyin</p>
+                    <button class="operation-btn info" onclick="istatistikleriYenile()">
+                        <i class="material-icons">sync</i>
+                        Yenile
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Son Aktiviteler -->
+        <div class="activities-section">
+            <h2><i class="material-icons">timeline</i>Son Aktiviteler</h2>
+            <div class="activities-list">
+                {% for activity in recent_activities %}
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="material-icons">
+                            {% if 'Yedek' in activity.activity_type %}backup
+                            {% elif 'Temizlik' in activity.activity_type %}cleaning_services
+                            {% elif 'Silindi' in activity.activity_type %}delete
+                            {% elif 'Eklendi' in activity.activity_type %}add_circle
+                            {% elif 'Güncellendi' in activity.activity_type %}edit
+                            {% else %}info
+                            {% endif %}
+                        </i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">{{ activity.activity_type }}</div>
+                        <div class="activity-description">{{ activity.description }}</div>
+                        <div class="activity-meta">
+                            <span class="activity-user">{{ activity.user.get_full_name() if activity.user else 'Sistem' }}</span>
+                            <span class="activity-time">{{ activity.timestamp.strftime('%d.%m.%Y %H:%M') }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="no-activities">
+                    <i class="material-icons">inbox</i>
+                    <p>Henüz aktivite bulunmuyor</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div id="loadingModal" class="loading-modal" style="display: none;">
+    <div class="loading-backdrop"></div>
+    <div class="loading-modal-content">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h3>İşlem Gerçekleştiriliyor...</h3>
+            <p>Lütfen bekleyin, bu işlem birkaç dakika sürebilir</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.database-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.database-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    border-radius: 15px;
+    color: white;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.database-header h1 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.database-header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.database-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.stats-section h2,
+.operations-section h2,
+.activities-section h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.4rem;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #ecf0f1;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #ecf0f1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+.stat-card.success {
+    border-left: 4px solid #27ae60;
+}
+
+.stat-card.warning {
+    border-left: 4px solid #f39c12;
+}
+
+.stat-card.danger {
+    border-left: 4px solid #e74c3c;
+}
+
+.stat-card.info {
+    border-left: 4px solid #3498db;
+}
+
+.stat-icon {
+    background: #ecf0f1;
+    padding: 15px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-icon i {
+    font-size: 24px;
+    color: #2c3e50;
+}
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin-top: 5px;
+}
+
+.operations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.operation-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #ecf0f1;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.operation-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+.operation-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+.operation-header i {
+    font-size: 2.5rem;
+    color: #3498db;
+}
+
+.operation-header h3 {
+    font-size: 1.2rem;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.operation-card p {
+    color: #7f8c8d;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.operation-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: white;
+}
+
+.operation-btn.primary {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+.operation-btn.warning {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.operation-btn.danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.operation-btn.info {
+    background: linear-gradient(135deg, #1abc9c, #16a085);
+}
+
+.operation-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+}
+
+.activities-list {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #ecf0f1;
+    overflow: hidden;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-bottom: 1px solid #ecf0f1;
+    transition: background-color 0.2s ease;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item:hover {
+    background-color: #f8f9fa;
+}
+
+.activity-icon {
+    background: #ecf0f1;
+    padding: 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.activity-icon i {
+    font-size: 20px;
+    color: #3498db;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.activity-description {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
+.activity-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 0.8rem;
+    color: #95a5a6;
+}
+
+.no-activities {
+    text-align: center;
+    padding: 3rem;
+    color: #95a5a6;
+}
+
+.no-activities i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.loading-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(44, 62, 80, 0.8);
+    backdrop-filter: blur(4px);
+}
+
+.loading-modal-content {
+    position: relative;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+    z-index: 1;
+    transform: scale(0.8);
+    animation: modalPop 0.3s ease forwards;
+}
+
+@keyframes modalPop {
+    to {
+        transform: scale(1);
+    }
+}
+
+.loading-content {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.loading-content h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+}
+
+.loading-content p {
+    color: #7f8c8d;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.spinner {
+    border: 4px solid #ecf0f1;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 2rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Progress Bar */
+.progress-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #ecf0f1;
+    margin-bottom: 2rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #ecf0f1;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    animation: progressShimmer 2s infinite;
+}
+
+@keyframes progressShimmer {
+    0% { background-position: -200px 0; }
+    100% { background-position: calc(200px + 100%) 0; }
+}
+
+/* Responsive Tasarım */
+@media (max-width: 768px) {
+    .database-container {
+        padding: 1rem;
+    }
+    
+    .database-header {
+        padding: 1.5rem;
+    }
+    
+    .database-header h1 {
+        font-size: 1.5rem;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .operations-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .operation-card {
+        padding: 1.5rem;
+    }
+    
+    .activity-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .activity-meta {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .loading-modal-content {
+        margin: 1rem;
+        max-width: calc(100vw - 2rem);
+    }
+    
+    .loading-content {
+        padding: 2rem 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stat-card {
+        min-height: 100px;
+    }
+    
+    .operation-btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+}
+</style>
+
+<script>
+function veritabaniYedekle() {
+    showLoading();
+    
+    fetch('/api/veritabani/yedekle', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showNotification('success', data.message);
+            // İstatistikleri yenile
+            setTimeout(istatistikleriYenile, 1000);
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showNotification('error', 'İşlem sırasında bir hata oluştu: ' + error.message);
+    });
+}
+
+function veritabaniTemizle(temizlikTuru) {
+    let confirmMessage = '';
+    
+    switch(temizlikTuru) {
+        case 'eski_loglar':
+            confirmMessage = '30 günden eski log kayıtları silinecek. Emin misiniz?';
+            break;
+        case 'onaysiz_kullanicilar':
+            confirmMessage = '7 günden eski onaysız kullanıcılar silinecek. Emin misiniz?';
+            break;
+        case 'gecmis_etkinlikler':
+            confirmMessage = '1 yıldan eski etkinlikler silinecek. Emin misiniz?';
+            break;
+    }
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    showLoading();
+    
+    fetch('/api/veritabani/temizle', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            temizlik_turu: temizlikTuru
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showNotification('success', data.message);
+            // İstatistikleri yenile
+            setTimeout(istatistikleriYenile, 1000);
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        showNotification('error', 'İşlem sırasında bir hata oluştu: ' + error.message);
+    });
+}
+
+function istatistikleriYenile() {
+    fetch('/api/veritabani/istatistikler')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // İstatistikleri güncelle
+            updateStatistics(data.stats);
+            showNotification('success', 'İstatistikler güncellendi');
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(error => {
+        showNotification('error', 'İstatistikler yenilenemedi: ' + error.message);
+    });
+}
+
+function updateStatistics(stats) {
+    // İstatistik kartlarındaki sayıları güncelle
+    const statCards = document.querySelectorAll('.stat-number');
+    const statLabels = [
+        'kullanici_sayisi', 'onaysiz_kullanici_sayisi', 'dosya_sayisi', 
+        'aktif_dosya_sayisi', 'etkinlik_sayisi', 'duyuru_sayisi', 
+        'odeme_sayisi', 'belge_sayisi', 'log_sayisi'
+    ];
+    
+    statCards.forEach((card, index) => {
+        if (statLabels[index] && stats[statLabels[index]] !== undefined) {
+            card.textContent = stats[statLabels[index]];
+        }
+    });
+}
+
+function showLoading() {
+    document.getElementById('loadingModal').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loadingModal').style.display = 'none';
+}
+
+function showNotification(type, message) {
+    // Basit notification sistemi
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="material-icons">${type === 'success' ? 'check_circle' : 'error'}</i>
+        <span>${message}</span>
+    `;
+    
+    // Notification stilini ekle
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        background: ${type === 'success' ? '#27ae60' : '#e74c3c'};
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideInRight 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // 5 saniye sonra kaldır
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 5000);
+}
+
+// CSS animasyonları
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideOutRight {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %} 
