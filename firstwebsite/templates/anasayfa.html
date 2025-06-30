@@ -179,10 +179,15 @@
                                 {{ hearing.title }}
                             {% endif %}
                         </div>
-                        {% if hearing.courthouse and hearing.department %}
+                        {% if hearing.file_type and hearing.file_type not in ['AİHM', 'AYM', 'ARABULUCULUK'] and hearing.courthouse and hearing.courthouse != 'Uygulanamaz' %}
                         <div class="hearing-location">
                             <i class="material-icons">location_on</i>
-                            <span>{{ hearing.courthouse }} - {{ hearing.department }}</span>
+                            <span>
+                                {{ hearing.courthouse }}
+                                {% if hearing.file_type not in ['AİHM', 'AYM', 'ARABULUCULUK', 'savcilik'] and hearing.department and hearing.department != 'Uygulanamaz' %}
+                                 - {{ hearing.department }}
+                                {% endif %}
+                            </span>
                         </div>
                         {% endif %}
                     </div>

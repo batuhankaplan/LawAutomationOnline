@@ -625,10 +625,24 @@ document.addEventListener('DOMContentLoaded', function() {
          const departmentSpan = document.getElementById('detailDepartment');
 
          if ((event.event_type === 'durusma' || event.event_type === 'e-durusma') && courthouseItem && departmentItem) {
-             courthouseSpan.textContent = event.courthouse || '-';
-             departmentSpan.textContent = event.department || '-';
-             courthouseItem.style.display = 'flex';
-             departmentItem.style.display = 'flex';
+             // Dosya türüne göre adliye ve mahkeme bilgilerini göster/gizle
+             const fileType = event.file_type;
+             const shouldShowCourthouse = fileType && !['AİHM', 'AYM', 'ARABULUCULUK'].includes(fileType);
+             const shouldShowDepartment = fileType && !['AİHM', 'AYM', 'ARABULUCULUK', 'savcilik'].includes(fileType);
+             
+             if (shouldShowCourthouse && event.courthouse && event.courthouse !== 'Uygulanamaz') {
+                 courthouseSpan.textContent = event.courthouse;
+                 courthouseItem.style.display = 'flex';
+             } else {
+                 courthouseItem.style.display = 'none';
+             }
+             
+             if (shouldShowDepartment && event.department && event.department !== 'Uygulanamaz') {
+                 departmentSpan.textContent = event.department;
+                 departmentItem.style.display = 'flex';
+             } else {
+                 departmentItem.style.display = 'none';
+             }
          } else if (courthouseItem && departmentItem) {
              courthouseItem.style.display = 'none';
              departmentItem.style.display = 'none';
@@ -679,7 +693,29 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
                     <div class="event-title">${event.title}</div>
                     ${event.assigned_to ? `<div class="assigned-to">${event.assigned_to}</div>` : ''}
-                    ${event.description ? `<div class="event-location">${(event.description || '').substring(0, 50)}...</div>` : ''}
+                    ${(() => {
+                        // Dosya türüne göre konum bilgisi göster
+                        if (event.event_type === 'durusma' || event.event_type === 'e-durusma') {
+                            const fileType = event.file_type;
+                            const shouldShowCourthouse = fileType && !['AİHM', 'AYM', 'ARABULUCULUK'].includes(fileType);
+                            const shouldShowDepartment = fileType && !['AİHM', 'AYM', 'ARABULUCULUK', 'savcilik'].includes(fileType);
+                            
+                            let locationText = '';
+                            if (shouldShowCourthouse && event.courthouse && event.courthouse !== 'Uygulanamaz') {
+                                locationText = event.courthouse;
+                                if (shouldShowDepartment && event.department && event.department !== 'Uygulanamaz') {
+                                    locationText += ` - ${event.department}`;
+                                }
+                            }
+                            
+                            if (locationText) {
+                                return `<div class="event-location">${locationText.substring(0, 50)}...</div>`;
+                            }
+                        }
+                        
+                        // Duruşma değilse veya konum bilgisi yoksa açıklama göster
+                        return event.description ? `<div class="event-location">${(event.description || '').substring(0, 50)}...</div>` : '';
+                    })()}
                  `;
                  // Tıklayınca detay modalını aç
                  itemDiv.onclick = () => {

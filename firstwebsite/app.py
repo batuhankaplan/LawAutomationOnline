@@ -9770,8 +9770,7 @@ def api_yargi_mahkeme_secenekleri():
 @permission_required('ai_avukat')
 def ai_avukat():
     """AI Avukat sohbet sayfası"""
-    current_time = datetime.now().strftime('%H:%M')
-    return render_template('ai_avukat.html', current_time=current_time)
+    return render_template('ai_avukat.html')
 
 @app.route('/api/ai_avukat/sohbet', methods=['POST'])
 @login_required

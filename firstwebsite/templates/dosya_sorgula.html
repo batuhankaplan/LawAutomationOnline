@@ -126,10 +126,10 @@
                 <div class="file-type-details">
                     <div class="main-type">{{ case_file.file_type|title }}</div>
                     <div class="sub-details">
-                        {% if case_file.courthouse %}
+                        {% if case_file.file_type not in ['AİHM', 'AYM', 'ARABULUCULUK'] and case_file.courthouse %}
                         <small>{{ case_file.courthouse }}</small>
                         {% endif %}
-                        {% if case_file.department %}
+                        {% if case_file.file_type not in ['AİHM', 'AYM', 'ARABULUCULUK', 'savcilik'] and case_file.department %}
                         <small>{{ case_file.department }}</small>
                         {% endif %}
                     </div>
@@ -1740,9 +1740,11 @@ function handleFileTypeChange() {
     }
     
     // ARABULUCULUK, AİHM ve AYM için şehir ve adliye devre dışı
-    const disableCourthouseAndCity = ['arabuluculuk', 'aihm', 'aym'].includes(selectedFileType);
+    const disableCourthouseAndCity = ['arabuluculuk', 'aihm', 'aym'].includes(selectedFileType) || 
+                                    ['ARABULUCULUK', 'AİHM', 'AYM'].includes(fileTypeSelect.value);
     // Savcılık için sadece mahkeme devre dışı
-    const disableDepartment = ['arabuluculuk', 'aihm', 'aym', 'savcilik'].includes(selectedFileType);
+    const disableDepartment = ['arabuluculuk', 'aihm', 'aym', 'savcilik'].includes(selectedFileType) ||
+                             ['ARABULUCULUK', 'AİHM', 'AYM', 'savcilik'].includes(fileTypeSelect.value);
     
     citySelect.disabled = disableCourthouseAndCity;
     courthouseSelect.disabled = disableCourthouseAndCity;
@@ -1944,8 +1946,14 @@ function showDetails(caseId) {
 
             // Temel bilgileri doldur
             document.getElementById('detailFileType').textContent = capitalizeFileType(data.file_type);
-            document.getElementById('detailCourthouse').textContent = data.courthouse || '';
-            document.getElementById('detailDepartment').textContent = data.department || '';
+            
+            // Dosya türüne göre adliye ve mahkeme bilgilerini göster/gizle
+            const fileType = data.file_type;
+            const shouldShowCourthouse = !['AİHM', 'AYM', 'ARABULUCULUK'].includes(fileType);
+            const shouldShowDepartment = !['AİHM', 'AYM', 'ARABULUCULUK', 'savcilik'].includes(fileType);
+            
+            document.getElementById('detailCourthouse').textContent = shouldShowCourthouse ? (data.courthouse || '') : '';
+            document.getElementById('detailDepartment').textContent = shouldShowDepartment ? (data.department || '') : '';
             document.getElementById('detailCaseNumber').textContent = data.case_number || '-';
             document.getElementById('detailClientName').textContent = data.client_name || '-';
             document.getElementById('detailPhoneNumber').textContent = data.phone_number || '-';
@@ -2165,7 +2173,7 @@ function editCase(caseId) {
                                 </div>
                                 <div class="detail-group">
                                     <label>Şehir</label>
-                                    <select id="editCity" onchange="updateEditCourthouses(); populateEditDepartments(document.getElementById('editFileType').value, document.getElementById('editDepartment'), null, document.getElementById('editCourthouse').value);">
+                                    <select id="editCity" onchange="updateEditCourthouses(); populateEditDepartments(document.getElementById('editFileType').value, document.getElementById('editDepartment'), null, document.getElementById('editCourthouse').value);" ${['ARABULUCULUK', 'AİHM', 'AYM'].includes(data.file_type) ? 'disabled' : ''}>
                                         <option value="">Seçiniz</option>
                                         ${Object.keys(allCourthousesData).map(cityName => 
                                             `<option value="${cityName}" ${city === cityName ? 'selected' : ''}>${cityName}</option>`
@@ -2175,7 +2183,7 @@ function editCase(caseId) {
                                 </div>
                                 <div class="detail-group">
                                     <label>Adliye</label>
-                                    <select id="editCourthouse" onchange="populateEditDepartments(document.getElementById('editFileType').value, document.getElementById('editDepartment'), null, this.value);">
+                                    <select id="editCourthouse" onchange="populateEditDepartments(document.getElementById('editFileType').value, document.getElementById('editDepartment'), null, this.value);" ${['ARABULUCULUK', 'AİHM', 'AYM'].includes(data.file_type) ? 'disabled' : ''}>
                                         <option value="">Seçiniz</option>
                                         ${city === 'İstanbul' ? 
                                             istanbulSpecificCourthouses.map(courthouse => 
@@ -2283,7 +2291,21 @@ function editCase(caseId) {
 
 
             editFileTypeSelect.onchange = function() {
-                populateEditDepartments(this.value, editDepartmentSelect, null, editCourthouseSelect.value, editCitySelect.value);
+                const selectedFileType = this.value;
+                const shouldDisableCityAndCourthouse = ['ARABULUCULUK', 'AİHM', 'AYM'].includes(selectedFileType);
+                const shouldDisableDepartment = ['ARABULUCULUK', 'AİHM', 'AYM', 'savcilik'].includes(selectedFileType);
+                
+                // Şehir ve adliye alanlarını etkinleştir/devre dışı bırak
+                editCitySelect.disabled = shouldDisableCityAndCourthouse;
+                editCourthouseSelect.disabled = shouldDisableCityAndCourthouse;
+                
+                // Devre dışı bırakıldıysa değerleri temizle
+                if (shouldDisableCityAndCourthouse) {
+                    editCitySelect.value = '';
+                    editCourthouseSelect.innerHTML = '<option value="">Seçiniz</option>';
+                }
+                
+                populateEditDepartments(selectedFileType, editDepartmentSelect, null, editCourthouseSelect.value, editCitySelect.value);
             };
             editCitySelect.onchange = function() {
                 updateEditCourthouses(this, editCourthouseSelect, null); // Adliyeleri güncelle

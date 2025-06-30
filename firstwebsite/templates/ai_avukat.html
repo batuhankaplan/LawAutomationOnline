@@ -75,7 +75,7 @@
                             </ul>
                             <p>Sorunuzu detaylı bir şekilde yazabilirsiniz. Ben de size Türk hukuku kapsamında en doğru yanıtı vermeye çalışacağım.</p>
                         </div>
-                        <div class="message-time">{{ current_time or "Şimdi" }}</div>
+                        <div class="message-time">Şimdi</div>
                     </div>
                 </div>
             </div>
@@ -166,6 +166,53 @@
 </div>
 
 <style>
+/* Layout datetime-container'ı korumak için özel kural */
+.datetime-container {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-left: 20px !important;
+    color: var(--text-color) !important;
+    font-size: 0.9rem !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 1000 !important;
+}
+
+.datetime-text {
+    color: #666 !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.separator {
+    color: #ccc !important;
+    font-weight: 300 !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Layout header'ını da koru */
+header {
+    background: var(--text-light) !important;
+    padding: 15px 25px !important;
+    border-radius: 8px !important;
+    box-shadow: var(--shadow) !important;
+    margin-bottom: 25px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    position: relative !important;
+    z-index: 100 !important;
+}
+
+.header-right {
+    display: flex !important;
+    align-items: center !important;
+}
+
 .ai-chat-container {
     display: flex;
     height: calc(100vh - 200px);
@@ -670,6 +717,15 @@
 }
 
 @media (max-width: 768px) {
+    /* Layout datetime-container'ı mobilde de koru */
+    .datetime-container {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin-left: 15px !important;
+        font-size: 0.8rem !important;
+    }
+    
     .ai-chat-container {
         flex-direction: column;
         height: calc(100vh - 180px);
@@ -990,10 +1046,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderChatHistories() {
         const chatHistoryContainer = document.getElementById('chatHistory');
         
-        // Mevcut chat'i koru, diğerlerini temizle
+        // Mevcut chat'i koru, sadece kayıtlı sohbetleri temizle
         const currentChat = chatHistoryContainer.querySelector('[data-chat-id="current"]');
-        chatHistoryContainer.innerHTML = '';
-        chatHistoryContainer.appendChild(currentChat);
+        
+        // Kayıtlı sohbet elementlerini sil (current hariç)
+        const existingItems = chatHistoryContainer.querySelectorAll('.history-item:not([data-chat-id="current"])');
+        existingItems.forEach(item => item.remove());
         
         // Kayıtlı sohbetleri ekle
         savedChatHistories.forEach(sohbet => {
@@ -1024,6 +1082,26 @@ document.addEventListener('DOMContentLoaded', function() {
             
             chatHistoryContainer.appendChild(historyItem);
         });
+        
+        // Current chat'e de tıklama olayı ekle (eğer yoksa)
+        if (currentChat && !currentChat.hasAttribute('data-click-added')) {
+            currentChat.addEventListener('click', (e) => {
+                if (!e.target.closest('.delete-chat-btn')) {
+                    // Eğer başka bir sohbet aktifse, mevcut sohbete geri dön
+                    if (currentChatId !== 'current') {
+                        clearChat();
+                        currentChatId = 'current';
+                    }
+                    
+                    // Mevcut sohbeti aktif yap
+                    document.querySelectorAll('.history-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    currentChat.classList.add('active');
+                }
+            });
+            currentChat.setAttribute('data-click-added', 'true');
+        }
     }
 
     function loadChatHistory(sohbetId) {
