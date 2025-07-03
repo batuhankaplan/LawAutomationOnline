@@ -324,6 +324,28 @@ class CaseFile(db.Model):
     hearing_type = db.Column(db.String(20), default='durusma')  # durusma veya e-durusma
     description = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Müvekkil detay bilgileri
+    client_entity_type = db.Column(db.String(20), default='person')  # person/company
+    client_identity_number = db.Column(db.String(20))  # TC/Vergi No
+    client_capacity = db.Column(db.String(100))  # Sıfat
+    client_address = db.Column(db.Text)  # Adres
+    
+    # Karşı taraf bilgileri
+    opponent_entity_type = db.Column(db.String(20), default='person')  # person/company
+    opponent_name = db.Column(db.String(150))
+    opponent_identity_number = db.Column(db.String(20))  # TC/Vergi No
+    opponent_capacity = db.Column(db.String(100))  # Sıfat
+    opponent_phone = db.Column(db.String(20))
+    opponent_address = db.Column(db.Text)
+    opponent_lawyer = db.Column(db.String(150))
+    opponent_lawyer_phone = db.Column(db.String(20))
+    opponent_lawyer_address = db.Column(db.Text)
+    
+    # Çoklu kişi bilgileri (JSON formatında)
+    additional_clients_json = db.Column(db.Text)  # Ek müvekkiller
+    additional_opponents_json = db.Column(db.Text)  # Ek karşı taraflar
+    
     expenses = db.relationship('Expense', backref='case_file', lazy=True)
     documents = db.relationship('Document', backref='case_file', lazy=True)
 

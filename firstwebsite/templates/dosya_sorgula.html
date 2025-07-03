@@ -112,6 +112,10 @@
                 Müvekkil Adı
                 <i class="sort-icon material-icons">swap_vert</i>
             </th>
+            <th class="sortable" data-sort="open_date">
+                Açılış Tarihi
+                <i class="sort-icon material-icons">swap_vert</i>
+            </th>
             <th class="sortable" data-sort="status">
                 Durum
                 <i class="sort-icon material-icons">swap_vert</i>
@@ -138,6 +142,13 @@
             <td>{{ case_file.year }}</td>
             <td class="case-number">{{ case_file.case_number }}</td>
             <td class="client-name">{{ case_file.client_name }}</td>
+            <td class="open-date">
+                {% if case_file.open_date %}
+                    {{ case_file.open_date.strftime('%d.%m.%Y') }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
             <td>
                 <span class="case-status status-text {% if case_file.status == 'Aktif' %}status-active{% else %}status-closed{% endif %}">
                     {{ case_file.status }}
@@ -168,60 +179,172 @@
         </div>
         
         <div class="modal-body">
-            <!-- Temel Bilgiler -->
-            <div class="detail-section basic-info">
-                <div class="info-row">
-                    <div class="info-group">
-                        <label>DOSYA TÜRÜ</label>
-                        <span id="detailFileType"></span>
-                    </div>
-                    <div class="info-group">
-                        <label>ADLİYE</label>
-                        <span id="detailCourthouse"></span>
-                    </div>
-                    <div class="info-group">
-                        <label>MAHKEME</label>
-                        <span id="detailDepartment"></span>
-                    </div>
-                    <div class="info-group">
-                        <label>DOSYA NUMARASI</label>
-                        <span id="detailCaseNumber"></span>
-                    </div>
-                </div>
-                <div class="info-row">
-                    <div class="info-group">
-                        <label>MÜVEKKİL</label>
-                        <span id="detailClientName"></span>
-                    </div>
-                    <div class="info-group">
-                        <label>TELEFON</label>
-                        <span id="detailPhoneNumber"></span>
-                    </div>
-                    <div class="info-group">
-                        <label>DURUM</label>
-                        <span id="detailStatus"></span>
-                    </div>
-                    <div class="info-group">
-                        <label>AÇILIŞ TARİHİ</label>
-                        <span id="detailOpenDate"></span>
-                    </div>
-                </div>
-                <div class="info-row">
-                    <div class="info-group">
-                        <label>SONRAKİ DURUŞMA</label>
-                        <div class="hearing-info">
-                            <span id="detailNextHearing"></span>
-                            <span class="hearing-separator">-</span>
-                            <span id="detailHearingTime"></span>
-                            <span class="hearing-separator">-</span>
-                            <span id="detailHearingType"></span>
+            <!-- Üst Bilgiler Container -->
+            <div class="top-info-container">
+                <!-- Dosya Bilgileri -->
+                <div class="detail-section basic-info">
+                    <h3><i class="material-icons">folder</i> Dosya Bilgileri</h3>
+                    <div class="info-row">
+                        <div class="info-group">
+                            <label>DOSYA TÜRÜ</label>
+                            <span id="detailFileType"></span>
                         </div>
+                        <div class="info-group">
+                            <label>YIL</label>
+                            <span id="detailYear"></span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-group">
+                            <label>ESAS NO</label>
+                            <span id="detailCaseNumber"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>AÇILIŞ TARİHİ</label>
+                            <span id="detailOpenDate"></span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-group">
+                            <label>ŞEHİR</label>
+                            <span id="detailCity"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>ADLİYE</label>
+                            <span id="detailCourthouse"></span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-group">
+                            <label>MAHKEME</label>
+                            <span id="detailDepartment"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>DURUM</label>
+                            <span id="detailStatus"></span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-group full-width">
+                            <label>SONRAKİ DURUŞMA</label>
+                            <div class="hearing-info">
+                                <span id="detailNextHearing"></span>
+                                <span class="hearing-separator">-</span>
+                                <span id="detailHearingTime"></span>
+                                <span class="hearing-separator">-</span>
+                                <span id="detailHearingType"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Müvekkil Bilgileri -->
+                <div class="detail-section">
+                    <h3><i class="material-icons">person</i> Müvekkil Bilgileri</h3>
+                    <div class="info-row">
+                        <div class="info-group">
+                            <label>TİP</label>
+                            <span id="detailClientEntityType"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>SIFAT</label>
+                            <span id="detailClientCapacity"></span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-group full-width">
+                            <label>AD SOYAD / UNVAN</label>
+                            <span id="detailClientName"></span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-group full-width">
+                            <label>KİMLİK / VERGİ NO</label>
+                            <span id="detailClientIdentityNumber"></span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-group">
+                            <label>TELEFON</label>
+                            <span id="detailPhoneNumber"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>ADRES</label>
+                            <span id="detailClientAddress"></span>
+                        </div>
+                    </div>
+                    <!-- Ek Müvekkiller -->
+                    <div id="additionalClientsDisplay" class="additional-display">
+                        <!-- Dinamik olarak eklenecek -->
+                    </div>
+                </div>
+
+                <!-- Karşı Taraf Bilgileri -->
+                <div class="detail-section">
+                    <h3><i class="material-icons">group</i> Karşı Taraf Bilgileri</h3>
+                    <div class="info-row">
+                        <div class="info-group">
+                            <label>TİP</label>
+                            <span id="detailOpponentEntityType"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>SIFAT</label>
+                            <span id="detailOpponentCapacity"></span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-group full-width">
+                            <label>AD SOYAD / UNVAN</label>
+                            <span id="detailOpponentName"></span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-group full-width">
+                            <label>KİMLİK / VERGİ NO</label>
+                            <span id="detailOpponentIdentityNumber"></span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-group">
+                            <label>TELEFON</label>
+                            <span id="detailOpponentPhone"></span>
+                        </div>
+                        <div class="info-group">
+                            <label>ADRES</label>
+                            <span id="detailOpponentAddress"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Vekil Bilgileri -->
+                    <div id="opponentLawyerDisplay" class="lawyer-display" style="display: none;">
+                        <h4><i class="material-icons">account_balance</i> Vekil Bilgileri</h4>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>VEKİL ADI SOYADI</label>
+                                <span id="detailOpponentLawyer"></span>
+                            </div>
+                            <div class="info-group">
+                                <label>VEKİL TELEFONU</label>
+                                <span id="detailOpponentLawyerPhone"></span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group full-width">
+                                <label>VEKİL ADRESİ</label>
+                                <span id="detailOpponentLawyerAddress"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ek Karşı Taraflar -->
+                    <div id="additionalOpponentsDisplay" class="additional-display">
+                        <!-- Dinamik olarak eklenecek -->
                     </div>
                 </div>
             </div>
 
             <!-- Dosya Açıklaması -->
-            <div class="detail-section">
+            <div class="detail-section description-section">
                 <div class="section-header">
                     <h3>Dosya Açıklaması</h3>
                     <button class="btn edit-btn" onclick="editDescription()" title="Açıklama Düzenle">
@@ -242,26 +365,29 @@
                 </div>
             </div>
 
-            <!-- Masraflar -->
-            <div class="detail-section">
-                <div class="section-header">
-                    <h3>Masraflar</h3>
-                    <button class="btn primary" onclick="showExpenseModal()">
-                        <i class="material-icons">add</i> Masraf Ekle
-                    </button>
+            <!-- Alt Bölümler Container - Yan Yana -->
+            <div class="bottom-sections-container">
+                <!-- Masraflar -->
+                <div class="detail-section">
+                    <div class="section-header">
+                        <h3>Masraflar</h3>
+                        <button class="btn primary" onclick="showExpenseModal()">
+                            <i class="material-icons">add</i> Masraf Ekle
+                        </button>
+                    </div>
+                    <div id="editExpensesList" class="expenses-list"></div>
                 </div>
-                <div id="editExpensesList" class="expenses-list"></div>
-            </div>
 
-            <!-- Belgeler -->
-            <div class="detail-section">
-                <div class="section-header">
-                    <h3>Belgeler</h3>
-                    <button class="btn primary" onclick="showUploadModal()">
-                        <i class="material-icons">upload</i> Belge Yükle
-                    </button>
+                <!-- Belgeler -->
+                <div class="detail-section">
+                    <div class="section-header">
+                        <h3>Belgeler</h3>
+                        <button class="btn primary" onclick="showUploadModal()">
+                            <i class="material-icons">upload</i> Belge Yükle
+                        </button>
+                    </div>
+                    <div id="documentsList" class="documents-list"></div>
                 </div>
-                <div id="documentsList" class="documents-list"></div>
             </div>
         </div>
 
@@ -356,7 +482,7 @@
 .modal-content {
     background: white;
     width: 95%;
-    max-width: 1200px;
+    max-width: 1400px;
     max-height: 90vh;
     border-radius: 12px;
     display: flex;
@@ -384,22 +510,42 @@
 .modal-body {
     flex: 1;
     overflow-y: auto;
-    padding: 25px;
+    padding: 20px;
+}
+
+/* Üst bilgiler container - yan yana yerleşim */
+.top-info-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 1300px) {
+    .top-info-container {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .top-info-container {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Temel bilgiler bölümü */
 .basic-info {
     background: #f8f9fa;
     border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 25px;
+    padding: 15px;
+    margin-bottom: 0;
     border: 1px solid #e9ecef;
 }
 
 .info-row {
     display: flex;
-    gap: 20px;
-    margin-bottom: 15px;
+    gap: 15px;
+    margin-bottom: 12px;
 }
 
 .info-row:last-child {
@@ -409,6 +555,20 @@
 .info-group {
     flex: 1;
     min-width: 0;
+}
+
+.info-group.full-width {
+    flex: 2;
+    grid-column: span 2;
+}
+
+.info-group.full-width span {
+    white-space: normal;
+    max-height: 3em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
 }
 
 .info-group label {
@@ -423,11 +583,12 @@
 
 .info-group span {
     display: block;
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: #2c3e50;
-    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.4;
+    word-wrap: break-word;
 }
 
 /* Duruşma bilgileri için özel stiller */
@@ -436,16 +597,20 @@
     align-items: center;
     gap: 10px;
     padding: 4px 0;
+    flex-wrap: nowrap;
 }
 
 .hearing-info span {
     color: #2c3e50;
     font-weight: normal;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .hearing-separator {
     color: #6c757d !important;
     font-weight: normal !important;
+    flex-shrink: 0;
 }
 
 /* Durum için özel stiller */
@@ -471,16 +636,63 @@
 .detail-section {
     background: white;
     border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 25px;
+    padding: 15px;
+    margin-bottom: 0;
     border: 1px solid #e9ecef;
+}
+
+/* Açıklama bölümü için özel stil */
+.detail-section.description-section {
+    margin-bottom: 30px;
+}
+
+/* Alt bölümler için yan yana container */
+.bottom-sections-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+/* Alt bölümlerde detail-section margin'larını düzenle */
+.bottom-sections-container .detail-section {
+    margin-bottom: 0;
+}
+
+/* Mobil responsive */
+@media (max-width: 1024px) {
+    .bottom-sections-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
+
+/* Edit modal için bilgiler container */
+.edit-info-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.edit-section {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid #e9ecef;
+}
+
+@media (max-width: 768px) {
+    .edit-info-container {
+        grid-template-columns: 1fr;
+    }
 }
 
 .detail-section h3 {
     font-size: 1.1rem;
     color: #2c3e50;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
     border-bottom: 1px solid #e9ecef;
     font-weight: 600;
 }
@@ -489,7 +701,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 /* Butonlar */
@@ -542,31 +754,75 @@
     --light-blue-bg: #f5f5f6;
 }
 
-/* Düzenleme modalı için stiller */
+/* Düzenleme modalı için stiller - Dosya detayları gibi */
 #editModal .modal-content {
     background: white;
     width: 95%;
-    max-width: 1200px;
-    max-height: 90vh;
-    border-radius: 12px;
+    max-width: 1400px;
+    max-height: 95vh;
+    border-radius: 16px;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    overflow: hidden;
+}
+
+/* Modal header */
+#editModal .modal-header {
+    background: linear-gradient(135deg, #1a237e 0%, #2d313c 100%);
+    color: white;
+    padding: 25px 30px;
+    border-bottom: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#editModal .modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+}
+
+#editModal .modal-header .close-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#editModal .modal-header .close-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+#editModal .modal-header .close-btn .material-icons {
+    color: white;
+    font-size: 20px;
 }
 
 #editModal .modal-body {
-    padding: 25px;
+    padding: 25px 30px;
+    overflow-y: auto;
+    flex: 1;
+    background: #f8f9fa;
 }
 
 #editModal .detail-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 25px;
-    background: #f8f9fa;
-    border-radius: 8px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+    background: white;
+    border-radius: 12px;
     padding: 20px;
-    margin-bottom: 25px;
-    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 #editModal .detail-group {
@@ -575,54 +831,98 @@
     gap: 8px;
 }
 
+#editModal .detail-group.full-width {
+    grid-column: span 2;
+}
+
 #editModal .detail-group label {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: #6c757d;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-bottom: 5px;
 }
 
 #editModal .detail-group input,
 #editModal .detail-group select,
 #editModal .detail-group textarea {
-    padding: 8px 12px;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
     font-size: 0.95rem;
     color: #2c3e50;
     background: white;
+    transition: all 0.2s ease;
 }
 
 #editModal .detail-group input:focus,
 #editModal .detail-group select:focus,
 #editModal .detail-group textarea:focus {
-    border-color: var(--primary-blue);
+    border-color: #1a237e;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
 }
 
-#editModal .detail-section {
+/* Edit sections styling */
+#editModal .edit-section {
     background: white;
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 20px;
-    margin-bottom: 25px;
-    border: 1px solid #e9ecef;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
-#editModal .detail-section h3 {
+#editModal .edit-section h3 {
     font-size: 1.1rem;
     color: #2c3e50;
     margin-bottom: 15px;
     padding-bottom: 10px;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 2px solid #e9ecef;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#editModal .edit-section h3 .material-icons {
+    color: #1a237e;
+    font-size: 20px;
 }
 
 #editModal textarea {
-    width: 100%;
-    min-height: 100px;
+    min-height: 80px;
     resize: vertical;
+}
+
+/* Modal footer */
+#editModal .modal-footer {
+    padding: 20px 30px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    background: white;
+}
+
+/* Dosya bilgileri bölümü için özel başlık */
+#editModal h3:has(.material-icons) {
+    font-size: 1.2rem;
+    color: #2c3e50;
+    margin: 25px 0 15px 0;
+    padding: 15px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#editModal h3 .material-icons {
+    color: #1a237e;
+    font-size: 24px;
 }
 
 /* Butonları güncelle */
@@ -1453,6 +1753,74 @@
     transform: translateY(-1px);
 }
 
+/* Yeni stil eklemeleri */
+.detail-section h3 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 16px;
+    font-weight: 600;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-section h3 i {
+    font-size: 18px;
+    color: #3498db;
+}
+
+.additional-person {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.additional-person h5 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.additional-person h5 i {
+    font-size: 16px;
+    color: #3498db;
+}
+
+.lawyer-display {
+    margin-top: 20px;
+    padding: 15px;
+    background: #fff3cd;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+}
+
+.lawyer-display h4 {
+    margin: 0 0 15px 0;
+    color: #856404;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lawyer-display h4 i {
+    font-size: 16px;
+    color: #ffc107;
+}
+
+.info-group.full-width {
+    grid-column: span 4;
+}
+
 .detail-group input[type="file"] {
     border: 2px dashed #bdc3c7;
     background: rgba(236, 240, 241, 0.3);
@@ -1954,9 +2322,122 @@ function showDetails(caseId) {
             
             document.getElementById('detailCourthouse').textContent = shouldShowCourthouse ? (data.courthouse || '') : '';
             document.getElementById('detailDepartment').textContent = shouldShowDepartment ? (data.department || '') : '';
+            document.getElementById('detailYear').textContent = data.year || '-';
             document.getElementById('detailCaseNumber').textContent = data.case_number || '-';
+            document.getElementById('detailCity').textContent = data.city || '-';
+            
+            // Müvekkil Bilgileri
+            document.getElementById('detailClientEntityType').textContent = 
+                data.client_entity_type === 'company' ? 'Şirket' : 'Gerçek Kişi';
             document.getElementById('detailClientName').textContent = data.client_name || '-';
+            document.getElementById('detailClientCapacity').textContent = data.client_capacity || '-';
+            document.getElementById('detailClientIdentityNumber').textContent = data.client_identity_number || '-';
             document.getElementById('detailPhoneNumber').textContent = data.phone_number || '-';
+            document.getElementById('detailClientAddress').textContent = data.client_address || '-';
+            
+            // Karşı Taraf Bilgileri
+            document.getElementById('detailOpponentEntityType').textContent = 
+                data.opponent_entity_type === 'company' ? 'Şirket' : 'Gerçek Kişi';
+            document.getElementById('detailOpponentName').textContent = data.opponent_name || '-';
+            document.getElementById('detailOpponentCapacity').textContent = data.opponent_capacity || '-';
+            document.getElementById('detailOpponentIdentityNumber').textContent = data.opponent_identity_number || '-';
+            document.getElementById('detailOpponentPhone').textContent = data.opponent_phone || '-';
+            document.getElementById('detailOpponentAddress').textContent = data.opponent_address || '-';
+            
+            // Vekil bilgileri kontrolü ve gösterimi
+            const opponentLawyerDisplay = document.getElementById('opponentLawyerDisplay');
+            if (data.opponent_lawyer || data.opponent_lawyer_phone || data.opponent_lawyer_address) {
+                document.getElementById('detailOpponentLawyer').textContent = data.opponent_lawyer || '-';
+                document.getElementById('detailOpponentLawyerPhone').textContent = data.opponent_lawyer_phone || '-';
+                document.getElementById('detailOpponentLawyerAddress').textContent = data.opponent_lawyer_address || '-';
+                opponentLawyerDisplay.style.display = 'block';
+            } else {
+                opponentLawyerDisplay.style.display = 'none';
+            }
+            
+            // Ek Müvekkilleri göster
+            const additionalClientsDisplay = document.getElementById('additionalClientsDisplay');
+            additionalClientsDisplay.innerHTML = '';
+            if (data.additional_clients && data.additional_clients.length > 0) {
+                data.additional_clients.forEach((client, index) => {
+                    const clientDiv = document.createElement('div');
+                    clientDiv.className = 'additional-person';
+                    clientDiv.innerHTML = `
+                        <h5><i class="material-icons">person_add</i> Ek Müvekkil ${index + 1}</h5>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>TİP</label>
+                                <span>${client.entity_type === 'company' ? 'Şirket' : 'Gerçek Kişi'}</span>
+                            </div>
+                            <div class="info-group">
+                                <label>AD SOYAD / UNVAN</label>
+                                <span>${client.name || '-'}</span>
+                            </div>
+                            <div class="info-group">
+                                <label>SIFAT</label>
+                                <span>${client.capacity || '-'}</span>
+                            </div>
+                            <div class="info-group">
+                                <label>KİMLİK / VERGİ NO</label>
+                                <span>${client.identity_number || '-'}</span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>TELEFON</label>
+                                <span>${client.phone || '-'}</span>
+                            </div>
+                            <div class="info-group full-width">
+                                <label>ADRES</label>
+                                <span>${client.address || '-'}</span>
+                            </div>
+                        </div>
+                    `;
+                    additionalClientsDisplay.appendChild(clientDiv);
+                });
+            }
+            
+            // Ek Karşı Tarafları göster
+            const additionalOpponentsDisplay = document.getElementById('additionalOpponentsDisplay');
+            additionalOpponentsDisplay.innerHTML = '';
+            if (data.additional_opponents && data.additional_opponents.length > 0) {
+                data.additional_opponents.forEach((opponent, index) => {
+                    const opponentDiv = document.createElement('div');
+                    opponentDiv.className = 'additional-person';
+                    opponentDiv.innerHTML = `
+                        <h5><i class="material-icons">group_add</i> Ek Karşı Taraf ${index + 1}</h5>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>TİP</label>
+                                <span>${opponent.entity_type === 'company' ? 'Şirket' : 'Gerçek Kişi'}</span>
+                            </div>
+                            <div class="info-group">
+                                <label>AD SOYAD / UNVAN</label>
+                                <span>${opponent.name || '-'}</span>
+                            </div>
+                            <div class="info-group">
+                                <label>SIFAT</label>
+                                <span>${opponent.capacity || '-'}</span>
+                            </div>
+                            <div class="info-group">
+                                <label>KİMLİK / VERGİ NO</label>
+                                <span>${opponent.identity_number || '-'}</span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>TELEFON</label>
+                                <span>${opponent.phone || '-'}</span>
+                            </div>
+                            <div class="info-group full-width">
+                                <label>ADRES</label>
+                                <span>${opponent.address || '-'}</span>
+                            </div>
+                        </div>
+                    `;
+                    additionalOpponentsDisplay.appendChild(opponentDiv);
+                });
+            }
             
             // Durum bilgisini doldur
             const statusElement = document.getElementById('detailStatus');
@@ -2209,15 +2690,114 @@ function editCase(caseId) {
                                     </select>
                                 </div>
                             </div>
+                            <!-- Bilgiler Container -->
+                            <div class="edit-info-container">
+                                <!-- Müvekkil Bilgileri -->
+                                <div class="edit-section">
+                                    <h3><i class="material-icons">person</i> Müvekkil Bilgileri</h3>
+                                    <div class="detail-grid">
+                                        <div class="detail-group">
+                                            <label>Tip</label>
+                                            <select id="editClientEntityType">
+                                                <option value="person" ${(data.client_entity_type || 'person') === 'person' ? 'selected' : ''}>Gerçek Kişi</option>
+                                                <option value="company" ${data.client_entity_type === 'company' ? 'selected' : ''}>Şirket</option>
+                                            </select>
+                                        </div>
+                                        <div class="detail-group">
+                                            <label>Sıfat</label>
+                                            <input type="text" id="editClientCapacity" value="${data.client_capacity || ''}" placeholder="Müvekkil, Davacı, Davalı vs.">
+                                        </div>
+                                    </div>
+                                    <div class="detail-grid">
+                                        <div class="detail-group full-width">
+                                            <label>Ad Soyad / Unvan</label>
+                                            <input type="text" id="editClientName" value="${data.client_name || ''}">
+                                        </div>
+                                    </div>
+                                    <div class="detail-grid">
+                                        <div class="detail-group full-width">
+                                            <label>Kimlik / Vergi No</label>
+                                            <input type="text" id="editClientIdentityNumber" value="${data.client_identity_number || ''}">
+                                        </div>
+                                    </div>
+                                    <div class="detail-grid">
+                                        <div class="detail-group">
+                                            <label>Telefon</label>
+                                            <input type="text" id="editPhoneNumber" value="${data.phone_number || ''}">
+                                        </div>
+                                        <div class="detail-group">
+                                            <label>Adres</label>
+                                            <textarea id="editClientAddress" rows="2">${data.client_address || ''}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Karşı Taraf Bilgileri -->
+                                <div class="edit-section">
+                                    <h3><i class="material-icons">group</i> Karşı Taraf Bilgileri</h3>
+                                    <div class="detail-grid">
+                                        <div class="detail-group">
+                                            <label>Tip</label>
+                                            <select id="editOpponentEntityType">
+                                                <option value="person" ${(data.opponent_entity_type || 'person') === 'person' ? 'selected' : ''}>Gerçek Kişi</option>
+                                                <option value="company" ${data.opponent_entity_type === 'company' ? 'selected' : ''}>Şirket</option>
+                                            </select>
+                                        </div>
+                                        <div class="detail-group">
+                                            <label>Sıfat</label>
+                                            <input type="text" id="editOpponentCapacity" value="${data.opponent_capacity || ''}" placeholder="Davalı, Davacı vs.">
+                                        </div>
+                                    </div>
+                                    <div class="detail-grid">
+                                        <div class="detail-group full-width">
+                                            <label>Ad Soyad / Unvan</label>
+                                            <input type="text" id="editOpponentName" value="${data.opponent_name || ''}">
+                                        </div>
+                                    </div>
+                                    <div class="detail-grid">
+                                        <div class="detail-group full-width">
+                                            <label>Kimlik / Vergi No</label>
+                                            <input type="text" id="editOpponentIdentityNumber" value="${data.opponent_identity_number || ''}">
+                                        </div>
+                                    </div>
+                                    <div class="detail-grid">
+                                        <div class="detail-group">
+                                            <label>Telefon</label>
+                                            <input type="text" id="editOpponentPhone" value="${data.opponent_phone || ''}">
+                                        </div>
+                                        <div class="detail-group">
+                                            <label>Adres</label>
+                                            <textarea id="editOpponentAddress" rows="2">${data.opponent_address || ''}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Vekil Bilgileri -->
+                            <div class="detail-grid" id="editLawyerSection" style="margin-top: 15px;">
+                                <div class="detail-group" style="grid-column: span 4;">
+                                    <label style="font-weight: 600; color: #856404;">
+                                        <i class="material-icons" style="vertical-align: middle; margin-right: 5px;">account_balance</i>
+                                        Vekil Bilgileri (Opsiyonel)
+                                    </label>
+                                </div>
+                                <div class="detail-group">
+                                    <label>Vekil Adı Soyadı</label>
+                                    <input type="text" id="editOpponentLawyer" value="${data.opponent_lawyer || ''}">
+                                </div>
+                                <div class="detail-group">
+                                    <label>Vekil Telefonu</label>
+                                    <input type="text" id="editOpponentLawyerPhone" value="${data.opponent_lawyer_phone || ''}">
+                                </div>
+                                <div class="detail-group full-width" style="grid-column: span 2;">
+                                    <label>Vekil Adresi</label>
+                                    <textarea id="editOpponentLawyerAddress" rows="2">${data.opponent_lawyer_address || ''}</textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- Dosya Bilgileri -->
+                            <h3><i class="material-icons">folder</i> Dosya Bilgileri</h3>
                             <div class="detail-grid">
-                                <div class="detail-group">
-                                    <label>Müvekkil Adı</label>
-                                    <input type="text" id="editClientName" value="${data.client_name || ''}">
-                                </div>
-                                <div class="detail-group">
-                                    <label>Telefon</label>
-                                    <input type="text" id="editPhoneNumber" value="${data.phone_number || ''}">
-                                </div>
                                 <div class="detail-group">
                                     <label>Dosya Durumu</label>
                                     <select id="editStatus">
@@ -2229,7 +2809,7 @@ function editCase(caseId) {
                                     <label>Açılış Tarihi</label>
                                     <input type="date" id="editOpenDate" value="${openDate}" disabled>
                                 </div>
-                                    </div>
+                            </div>
                              <!-- Duruşma Bilgileri Başlığı -->
                             <div class="detail-grid" style="padding-bottom:0; margin-bottom:0; border:none; background: none; box-shadow: none;"> {# Kenarlık ve arkaplanı kaldırarak görünmez yap #}
                                  <div class="detail-group" style="grid-column: span 4;">
@@ -2527,13 +3107,33 @@ function saveChanges(caseId) {
         file_type: document.getElementById('editFileType').value,
         courthouse: document.getElementById('editCourthouse').value,
         department: finalDepartmentValue, // Güncellenmiş departman değeri
+        
+        // Müvekkil bilgileri
+        client_entity_type: document.getElementById('editClientEntityType').value,
         client_name: document.getElementById('editClientName').value,
+        client_capacity: document.getElementById('editClientCapacity').value,
+        client_identity_number: document.getElementById('editClientIdentityNumber').value,
+        client_address: document.getElementById('editClientAddress').value,
         phone_number: document.getElementById('editPhoneNumber').value,
+        
+        // Karşı taraf bilgileri
+        opponent_entity_type: document.getElementById('editOpponentEntityType').value,
+        opponent_name: document.getElementById('editOpponentName').value,
+        opponent_capacity: document.getElementById('editOpponentCapacity').value,
+        opponent_identity_number: document.getElementById('editOpponentIdentityNumber').value,
+        opponent_phone: document.getElementById('editOpponentPhone').value,
+        opponent_address: document.getElementById('editOpponentAddress').value,
+        
+        // Vekil bilgileri
+        opponent_lawyer: document.getElementById('editOpponentLawyer').value,
+        opponent_lawyer_phone: document.getElementById('editOpponentLawyerPhone').value,
+        opponent_lawyer_address: document.getElementById('editOpponentLawyerAddress').value,
+        
+        // Dosya bilgileri
         status: document.getElementById('editStatus').value,
-        // open_date alanını kaldırdık - sistem tarafından otomatik ayarlanır
         next_hearing: document.getElementById('editNextHearing').value || null,
         hearing_time: document.getElementById('editHearingTime').value || null,
-        hearing_type: hearingType // Duruşma türünü ekledik
+        hearing_type: hearingType
     };
 
 
@@ -2683,7 +3283,14 @@ function handleExpenseTypeChange() {
 }
 
 // Masraf kaydetme fonksiyonunu güncelle
+let isSavingExpense = false; // Çift kayıt önleme flag'ı
+
 function saveExpense() {
+    // Zaten kaydetme işlemi devam ediyorsa çık
+    if (isSavingExpense) {
+        return;
+    }
+
     const expenseType = document.getElementById('expenseType');
     const otherExpenseType = document.getElementById('otherExpenseType');
     const amount = document.getElementById('expenseAmount');
@@ -2708,6 +3315,9 @@ function saveExpense() {
         alert('Lütfen tarih seçiniz.');
         return;
     }
+
+    // Kaydetme işlemini başlat
+    isSavingExpense = true;
 
     const data = {
         expense_type: expenseType.value === 'Diğer' ? otherExpenseType.value : expenseType.value,
@@ -2737,6 +3347,10 @@ function saveExpense() {
     .catch(error => {
         console.error('Hata:', error);
         alert('Masraf eklenirken bir hata oluştu: ' + error.message);
+    })
+    .finally(() => {
+        // İşlem tamamlandığında flag'ı sıfırla
+        isSavingExpense = false;
     });
 }
 
@@ -3056,6 +3670,8 @@ function closeExpenseModal() {
     if (modal) {
         modal.remove();
     }
+    // Flag'ı sıfırla
+    isSavingExpense = false;
 }
 
 function closeUploadModal() {
@@ -3384,6 +4000,10 @@ function sortTable(column) {
         if (column === 'year' || column === 'case_number') {
             aValue = parseInt(aValue) || 0;
             bValue = parseInt(bValue) || 0;
+        } else if (column === 'open_date') {
+            // Tarihi YYYY-MM-DD formatına çevir
+            aValue = convertDateForSort(aValue);
+            bValue = convertDateForSort(bValue);
         } else {
             aValue = aValue.toLowerCase();
             bValue = bValue.toLowerCase();
@@ -3413,11 +4033,27 @@ function getCellValue(row, column) {
             return row.cells[2]?.textContent || '';
         case 'client_name':
             return row.cells[3]?.textContent || '';
+        case 'open_date':
+            return row.cells[4]?.textContent || '';
         case 'status':
             return row.querySelector('.status-text')?.textContent || '';
         default:
             return '';
     }
+}
+
+function convertDateForSort(dateString) {
+    if (!dateString || dateString === '-') {
+        return '0000-00-00'; // Boş tarihler en alta
+    }
+    
+    // DD.MM.YYYY formatından YYYY-MM-DD formatına çevir
+    const parts = dateString.split('.');
+    if (parts.length === 3) {
+        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+    
+    return dateString;
 }
 
 // Sayfa yüklendiğinde sıralama özelliğini başlat

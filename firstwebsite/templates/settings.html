@@ -1,928 +1,1423 @@
 {% extends "layout.html" %}
 
-{% block title %}Ayarlar{% endblock %}
+{% block title %}Hesap Ayarları{% endblock %}
 
 {% block content %}
-<div class="settings-container">
+<div class="settings-page">
+    <div class="container">
+        <!-- Header -->
     <div class="settings-header">
-        <h1>Hesap Ayarları</h1>
-        <p>Hesabınızla ilgili tüm ayarları buradan yönetebilirsiniz</p>
+            <h1 class="page-title">
+                <i class="fas fa-cog"></i>
+                Hesap Ayarları
+            </h1>
+            <p class="page-subtitle">Hesabınızı ve uygulama tercihlerinizi yönetin</p>
     </div>
 
+        <!-- Settings Content -->
     <div class="settings-content">
-        <!-- Güvenlik Ayarları -->
+            
+            <!-- Güvenlik Bölümü -->
         <div class="settings-section">
             <div class="section-header">
                 <i class="fas fa-shield-alt"></i>
                 <h2>Güvenlik</h2>
             </div>
-            <div class="section-content">
-                <div class="settings-item">
-                    <div class="item-content">
-                        <h3>Şifre Değiştirme</h3>
-                        <p>Hesap güvenliğiniz için şifrenizi düzenli olarak değiştirin</p>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Şifre Değiştir</h3>
+                        <p>Hesabınızın güvenliği için düzenli olarak şifrenizi güncelleyin</p>
                     </div>
-                    <button class="password-change-btn" onclick="showPasswordModal()">
-                        Şifre Değiştir
+                    <button class="btn btn-primary" onclick="openPasswordModal()">
+                        <i class="fas fa-key"></i>
+                        Değiştir
                     </button>
                 </div>
 
-                <div class="settings-item">
-                    <div class="item-content">
-                        <h3>İki Faktörlü Doğrulama (Yapım Aşamasında)</h3>
-                        <p>Hesabınızı SMS doğrulaması ile koruyun</p>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>İki Faktörlü Doğrulama</h3>
+                        <p>Ek güvenlik katmanı ekleyin</p>
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" id="twoFactorAuth">
-                        <span class="slider round"></span>
+                    <div class="toggle-container">
+                        <input type="checkbox" id="twoFactorAuth" class="toggle-input">
+                        <label for="twoFactorAuth" class="toggle-label">
+                            <span class="toggle-slider"></span>
                     </label>
                 </div>
             </div>
         </div>
 
-        <!-- Bildirim Ayarları -->
+            <!-- Bildirimler Bölümü -->
         <div class="settings-section">
             <div class="section-header">
                 <i class="fas fa-bell"></i>
                 <h2>Bildirimler</h2>
             </div>
-            <div class="section-content">
-                <div class="settings-item">
-                    <div class="item-content">
-                        <h3>E-posta Bildirimleri (Yapım Aşamasında)</h3>
-                        <p>Duruşma ve ödeme bildirimleri</p>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>E-posta Bildirimleri</h3>
+                        <p>Önemli güncellemeler ve hatırlatmalar</p>
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" id="emailNotifications" checked>
-                        <span class="slider round"></span>
+                    <div class="toggle-container">
+                        <input type="checkbox" id="emailNotifications" class="toggle-input" checked>
+                        <label for="emailNotifications" class="toggle-label">
+                            <span class="toggle-slider"></span>
                     </label>
+                    </div>
                 </div>
 
-                <div class="settings-item">
-                    <div class="item-content">
-                        <h3>Sistem Bildirimleri (Yapım Aşamasında)</h3>
-                        <p>Sistem güncellemeleri ve önemli duyurular</p>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Sistem Bildirimleri</h3>
+                        <p>Tarayıcı bildirimleri ve sistem uyarıları</p>
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" id="systemNotifications" checked>
-                        <span class="slider round"></span>
+                    <div class="toggle-container">
+                        <input type="checkbox" id="systemNotifications" class="toggle-input" checked>
+                        <label for="systemNotifications" class="toggle-label">
+                            <span class="toggle-slider"></span>
                     </label>
                 </div>
             </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Test Bildirimleri</h3>
+                        <p>Bildirim sistemlerini test edin</p>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline" onclick="testEmailNotification()">
+                            <i class="fas fa-envelope"></i>
+                            E-posta Test Et
+                        </button>
+                        <button class="btn btn-outline" onclick="testSystemNotification()">
+                            <i class="fas fa-desktop"></i>
+                            Sistem Test Et
+                        </button>
+                    </div>
+                </div>
         </div>
 
-        <!-- Görünüm Ayarları -->
+            <!-- Görünüm Bölümü -->
         <div class="settings-section">
             <div class="section-header">
-                <i class="fas fa-paint-brush"></i>
+                    <i class="fas fa-palette"></i>
                 <h2>Görünüm</h2>
             </div>
-            <div class="section-content">
-                <div class="settings-item">
-                    <div class="item-content">
-                        <h3>Tema (Yapım Aşamasında)</h3>
-                        <p>Karanlık veya aydınlık tema seçin</p>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Tema</h3>
+                        <p>Aydınlık veya karanlık tema seçin</p>
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" id="darkMode">
-                        <span class="slider round"></span>
-                    </label>
+                    <div class="theme-selector">
+                        <div class="theme-option active" data-theme="light" onclick="changeTheme('light')">
+                            <div class="theme-preview light-theme">
+                                <div class="preview-bar"></div>
+                                <div class="preview-content"></div>
+                            </div>
+                            <span>Aydınlık</span>
+                        </div>
+                        <div class="theme-option" data-theme="dark" onclick="changeTheme('dark')">
+                            <div class="theme-preview dark-theme">
+                                <div class="preview-bar"></div>
+                                <div class="preview-content"></div>
+                            </div>
+                            <span>Karanlık</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="settings-item">
-                    <div class="item-content">
+                <div class="setting-item">
+                    <div class="setting-info">
                         <h3>Yazı Boyutu</h3>
-                        <p>İçerik yazı boyutunu ayarlayın</p>
+                        <p>Metinlerin görüntülenme boyutunu ayarlayın</p>
                     </div>
-                    <div class="font-size-controls">
-                        <button class="font-size-btn" data-size="small">A</button>
-                        <button class="font-size-btn active" data-size="medium">A</button>
-                        <button class="font-size-btn" data-size="large">A</button>
-                    </div>
+                    <div class="font-size-selector">
+                        <button class="font-btn" data-size="small" onclick="changeFontSize('small')">Aa</button>
+                        <button class="font-btn active" data-size="medium" onclick="changeFontSize('medium')">Aa</button>
+                        <button class="font-btn" data-size="large" onclick="changeFontSize('large')">Aa</button>
                 </div>
             </div>
         </div>
 
-        <!-- Hesap Silme -->
-        <div class="settings-section danger">
+            <!-- Hesap Yönetimi Bölümü -->
+            <div class="settings-section">
             <div class="section-header">
-                <i class="fas fa-exclamation-triangle"></i>
-                <h2>Tehlikeli Bölge</h2>
+                    <i class="fas fa-user-cog"></i>
+                    <h2>Hesap Yönetimi</h2>
             </div>
-            <div class="section-content">
-                <div class="settings-item">
-                    <div class="item-content">
-                        <h3>Hesabı Sil</h3>
-                        <p class="warning-text">Bu işlem geri alınamaz. Tüm verileriniz silinecektir.</p>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <h3>Hesap Bilgileri</h3>
+                        <p>{{ current_user.get_full_name() }} • {{ current_user.email }}</p>
                     </div>
-                    <button class="delete-btn" onclick="showDeleteConfirmation()">
+                    <a href="{{ url_for('profile') }}" class="btn btn-outline">
+                        <i class="fas fa-edit"></i>
+                        Düzenle
+                    </a>
+                </div>
+
+                <div class="setting-item danger-zone">
+                    <div class="setting-info">
+                        <h3>Hesabı Sil</h3>
+                        <p class="danger-text">Bu işlem geri alınamaz. Tüm verileriniz kalıcı olarak silinecektir.</p>
+                    </div>
+                    <button class="btn btn-danger" onclick="openDeleteModal()">
                         <i class="fas fa-trash-alt"></i>
                         Hesabı Sil
                     </button>
                 </div>
             </div>
         </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{{ url_for('anasayfa') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Geri Dön
+            </a>
+            <button class="btn btn-primary" onclick="saveAllSettings()">
+                <i class="fas fa-save"></i>
+                Tüm Ayarları Kaydet
+            </button>
+        </div>
     </div>
 </div>
 
 <!-- Şifre Değiştirme Modal -->
-<div class="modal" id="passwordModal">
-    <div class="modal-content">
+<div class="modal-overlay" id="passwordModal">
+    <div class="modal">
         <div class="modal-header">
-            <h2>Şifre Değiştir</h2>
+            <h3>Şifre Değiştir</h3>
             <button class="close-btn" onclick="closeModal('passwordModal')">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <form id="passwordForm" action="{{ url_for('change_password') }}" method="POST">
+        <form id="passwordForm">
             <div class="form-group">
-                <label>Mevcut Şifre</label>
-                <input type="password" name="current_password" required>
+                <label for="currentPassword">Mevcut Şifre</label>
+                <div class="input-group">
+                    <input type="password" id="currentPassword" name="current_password" required>
+                    <button type="button" class="input-toggle" onclick="togglePassword('currentPassword')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
             <div class="form-group">
-                <label>Yeni Şifre</label>
-                <input type="password" name="new_password" required>
+                <label for="newPassword">Yeni Şifre</label>
+                <div class="input-group">
+                    <input type="password" id="newPassword" name="new_password" required>
+                    <button type="button" class="input-toggle" onclick="togglePassword('newPassword')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
             <div class="form-group">
-                <label>Yeni Şifre Tekrar</label>
-                <input type="password" name="confirm_password" required>
+                <label for="confirmPassword">Yeni Şifre Tekrar</label>
+                <div class="input-group">
+                    <input type="password" id="confirmPassword" name="confirm_password" required>
+                    <button type="button" class="input-toggle" onclick="togglePassword('confirmPassword')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
             <div class="modal-actions">
-                <button type="button" class="cancel-btn" onclick="closeModal('passwordModal')">İptal</button>
-                <button type="submit" class="save-btn">Kaydet</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('passwordModal')">İptal</button>
+                <button type="submit" class="btn btn-primary">Şifreyi Değiştir</button>
             </div>
         </form>
     </div>
 </div>
 
 <!-- Hesap Silme Modal -->
-<div class="modal" id="deleteConfirmModal">
-    <div class="modal-content">
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal">
         <div class="modal-header">
-            <h2>Hesap Silme Onayı</h2>
-            <button class="close-btn" onclick="closeModal('deleteConfirmModal')">
+            <div class="danger-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <h3>Hesabı Sil</h3>
+                <p>Bu işlem geri alınamaz!</p>
+            </div>
+            <button class="close-btn" onclick="closeModal('deleteModal')">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <form id="deleteAccountForm" action="{{ url_for('delete_account') }}" method="POST">
+        <form id="deleteForm">
+            <div class="warning-message">
+                <p>Hesabınızı silmek üzeresiniz. Bu işlem:</p>
+                <ul>
+                    <li>Tüm verilerinizi kalıcı olarak silecek</li>
+                    <li>Dosyalarınızı ve belgelerinizi kaldıracak</li>
+                    <li>Geri alınamaz olacak</li>
+                </ul>
+            </div>
             <div class="form-group">
-                <label>Onay için şifrenizi girin</label>
-                <input type="password" name="password" required>
+                <label for="deletePassword">Onaylamak için şifrenizi girin</label>
+                <div class="input-group">
+                    <input type="password" id="deletePassword" name="password" required>
+                    <button type="button" class="input-toggle" onclick="togglePassword('deletePassword')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
             <div class="modal-actions">
-                <button type="button" class="cancel-btn" onclick="closeModal('deleteConfirmModal')">İptal</button>
-                <button type="submit" class="delete-btn">Hesabı Sil</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('deleteModal')">İptal</button>
+                <button type="submit" class="btn btn-danger">Hesabı Kalıcı Olarak Sil</button>
             </div>
         </form>
     </div>
 </div>
 
 <style>
-.settings-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-    background: var(--bg-color);
-    border-radius: 20px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+/* CSS Variables for Theme Support */
+:root {
+    --primary-color: #6c7ae0;
+    --primary-dark: #5a67d8;
+    --bg-color: #ffffff;
+    --bg-secondary: #f8fafc;
+    --text-color: #2d3748;
+    --text-secondary: #718096;
+    --border-color: #e2e8f0;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --danger-color: #e53e3e;
+    --success-color: #38a169;
 }
 
+/* Dark Theme Variables */
+[data-theme="dark"] {
+    --bg-color: #1a202c;
+    --bg-secondary: #2d3748;
+    --text-color: #ffffff;
+    --text-secondary: #a0aec0;
+    --border-color: #4a5568;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* Base Styles */
+.settings-page {
+    min-height: 100vh;
+    background-color: var(--bg-secondary);
+    padding: 2rem 0;
+    transition: all 0.3s ease;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+@media (max-width: 1440px) {
+    .container {
+        max-width: 1200px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .container {
+        max-width: 1000px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+    }
+}
+
+/* Header */
 .settings-header {
     text-align: center;
     margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: rgb(45,49,60);
-    border-radius: 15px;
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.settings-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, 
-        rgba(45,49,60, 0.95) 0%,
-        rgba(45,49,60, 0.95) 100%);
-    z-index: 1;
-}
-
-.settings-header h1, .settings-header p {
-    position: relative;
-    z-index: 2;
-}
-
-.settings-header h1 {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-    color: white;
-}
-
-.settings-header p {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    color: white;
-}
-
-.settings-content {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.settings-section {
-    background: var(--bg-secondary);
-    border-radius: 15px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    transition: all 0.3s ease;
+    background-color: var(--bg-color);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
     border: 1px solid var(--border-color);
 }
 
-.settings-section:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+.page-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.page-title i {
+    color: var(--primary-color);
+}
+
+.page-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Settings Content */
+.settings-content {
+    space-y: 1.5rem;
+}
+
+/* Settings Section */
+.settings-section {
+    background-color: var(--bg-color);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
 }
 
 .section-header {
     display: flex;
     align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--border-color);
+    gap: 0.75rem;
+    padding: 1.5rem;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .section-header i {
-    font-size: 1.8rem;
-    margin-right: 1rem;
     color: var(--primary-color);
-    background: var(--bg-hover);
-    padding: 12px;
-    border-radius: 12px;
+    font-size: 1.25rem;
 }
 
 .section-header h2 {
     margin: 0;
-    font-size: 1.2rem;
-    color: var(--text-color);
+    font-size: 1.25rem;
     font-weight: 600;
+    color: var(--text-color);
 }
 
-.settings-item {
+/* Setting Item */
+.setting-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.8rem;
-    background: var(--bg-color);
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
-    transition: all 0.3s ease;
-    border: 1px solid var(--border-color);
+    padding: 2rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s ease;
+    min-height: 80px;
+    gap: 2rem;
 }
 
-.settings-item:hover {
-    background: var(--bg-hover);
-    border-color: var(--primary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+.setting-item:last-child {
+    border-bottom: none;
 }
 
-.settings-item:last-child {
-    margin-bottom: 0;
+.setting-item:hover {
+    background-color: var(--bg-secondary);
 }
 
-.item-content {
+.setting-info {
     flex: 1;
+    min-width: 0;
 }
 
-.item-content h3 {
+.setting-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.setting-info p {
     margin: 0;
     font-size: 0.9rem;
-    color: var(--text-color);
-    font-weight: 600;
-}
-
-.item-content p {
-    margin: 0.5rem 0 0;
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    line-height: 1.5;
+    white-space: normal;
+    word-wrap: break-word;
 }
 
-.form-actions {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    background: var(--bg-secondary);
-    border-radius: 15px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    border: 1px solid var(--border-color);
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-}
-
+/* Buttons */
 .btn {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    white-space: nowrap;
 }
 
 .btn-primary {
-    background: var(--primary-color);
+    background-color: var(--primary-color);
     color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
 }
 
 .btn-secondary {
-    background: var(--secondary-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: var(--border-color);
+}
+
+.btn-outline {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+.btn-outline:hover {
+    background-color: var(--primary-color);
     color: white;
 }
 
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
 }
 
-.switch {
+.btn-danger:hover {
+    background-color: #c53030;
+    transform: translateY(-1px);
+}
+
+.btn-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Toggle Switch */
+.toggle-container {
     position: relative;
-    display: inline-block;
-    width: 52px;
-    height: 26px;
 }
 
-.switch input {
+.toggle-input {
     opacity: 0;
     width: 0;
     height: 0;
 }
 
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+.toggle-label {
+    display: block;
+    width: 44px;
+    height: 24px;
     background-color: var(--border-color);
-    transition: .4s;
-    border-radius: 34px;
+    border-radius: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
-.slider:before {
+.toggle-slider {
     position: absolute;
-    content: "";
-    height: 20px;
+    top: 2px;
+    left: 2px;
     width: 20px;
-    left: 3px;
-    bottom: 3px;
+    height: 20px;
     background-color: white;
-    transition: .4s;
     border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-input:checked + .slider {
+.toggle-input:checked + .toggle-label {
     background-color: var(--primary-color);
 }
 
-input:checked + .slider:before {
-    transform: translateX(26px);
+.toggle-input:checked + .toggle-label .toggle-slider {
+    transform: translateX(20px);
 }
 
-.font-size-controls {
+/* Theme Selector */
+.theme-selector {
+    display: flex;
+    gap: 1rem;
+}
+
+.theme-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-option.active {
+    border-color: var(--primary-color);
+    background-color: var(--bg-secondary);
+}
+
+.theme-preview {
+    width: 40px;
+    height: 30px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.light-theme {
+    background-color: #ffffff;
+}
+
+.dark-theme {
+    background-color: #2d3748;
+}
+
+.preview-bar {
+    height: 8px;
+    background-color: var(--primary-color);
+}
+
+.preview-content {
+    height: 22px;
+    background-color: var(--bg-secondary);
+}
+
+.light-theme .preview-content {
+    background-color: #f8fafc;
+}
+
+.dark-theme .preview-content {
+    background-color: #1a202c;
+}
+
+.theme-option span {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Font Size Selector */
+.font-size-selector {
     display: flex;
     gap: 0.5rem;
 }
 
-.font-size-btn {
-    width: 32px;
-    height: 32px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background: var(--bg-color);
+.font-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--border-color);
+    background-color: var(--bg-color);
     color: var(--text-color);
+    border-radius: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    transition: all 0.2s ease;
+    font-weight: 600;
 }
 
-.font-size-btn.active {
-    background: var(--primary-color);
+.font-btn[data-size="small"] {
+    font-size: 0.75rem;
+}
+
+.font-btn[data-size="medium"] {
+    font-size: 1rem;
+}
+
+.font-btn[data-size="large"] {
+    font-size: 1.25rem;
+}
+
+.font-btn.active {
+    border-color: var(--primary-color);
+    background-color: var(--primary-color);
     color: white;
-    border-color: var(--primary-color);
 }
 
-.font-size-btn:hover {
-    border-color: var(--primary-color);
+/* Danger Zone */
+.danger-zone {
+    background-color: #fef5e7;
+    border-left: 4px solid var(--danger-color);
 }
 
-/* Dark mode styles */
-[data-theme="dark"] {
-    --bg-color: #1a1a1a;
-    --bg-secondary: #2d2d2d;
-    --bg-hover: #363636;
-    --text-color: #fff;
-    --text-secondary: #bbb;
-    --border-color: #404040;
-    --accent-color: #4a148c;
+[data-theme="dark"] .danger-zone {
+    background-color: rgba(229, 62, 62, 0.1);
 }
 
-/* Modal styles */
-.modal {
+.danger-text {
+    color: var(--danger-color);
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: var(--bg-color);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+}
+
+/* Modal Styles */
+.modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: none;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
 }
 
-.modal-content {
-    background: var(--bg-color);
-    border-radius: 15px;
-    padding: 2.5rem;
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal {
+    background-color: var(--bg-color);
+    border-radius: 12px;
     width: 90%;
-    max-width: 450px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    border: none;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal {
+    transform: scale(1);
 }
 
 .modal-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
+    justify-content: space-between;
+    padding: 1.5rem;
     border-bottom: 1px solid var(--border-color);
 }
 
-.modal-header h2 {
+.modal-header h3 {
     margin: 0;
-    font-size: 1.6rem;
-    color: rgb(45,49,60);
-    font-weight: 600;
-}
-
-.modal .form-group {
-    margin-bottom: 1.5rem;
-    max-width: 320px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.modal .form-group label {
-    display: block;
-    margin-bottom: 0.8rem;
-    color: rgb(45,49,60);
-    font-size: 0.95rem;
-    font-weight: 500;
-}
-
-.modal .form-group input {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    background: #f8f9fa;
-}
-
-.modal .form-group input:focus {
-    border-color: rgb(45,49,60);
-    box-shadow: 0 0 0 3px rgba(45,49,60, 0.1);
-    outline: none;
-    background: white;
-}
-
-.modal .form-group input::placeholder {
-    color: #adb5bd;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 2.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border-color);
-    max-width: 320px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.modal .cancel-btn {
-    padding: 10px 20px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    background: white;
-    color: rgb(45,49,60);
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.modal .cancel-btn:hover {
-    background: #f8f9fa;
-    border-color: rgb(45,49,60);
-}
-
-.modal .save-btn {
-    padding: 10px 24px;
-    border: none;
-    border-radius: 8px;
-    background: rgb(45,49,60);
-    color: white;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.modal .save-btn:hover {
-    background: rgba(45,49,60, 0.9);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    color: var(--text-color);
 }
 
 .close-btn {
     background: none;
     border: none;
-    color: rgb(45,49,60);
+    font-size: 1.25rem;
+    color: var(--text-secondary);
     cursor: pointer;
+    padding: 0.25rem;
+}
+
+.danger-icon {
+    color: var(--danger-color);
     font-size: 1.5rem;
-    padding: 0.5rem;
-    transition: all 0.3s ease;
-    opacity: 0.7;
+    margin-right: 1rem;
 }
 
-.close-btn:hover {
-    opacity: 1;
-    transform: rotate(90deg);
+/* Form Styles */
+.form-group {
+    margin-bottom: 1rem;
 }
 
-/* Responsive design */
-@media (max-width: 1200px) {
-    .settings-content {
-        grid-template-columns: 1fr;
-    }
-    
-    .settings-container {
-        padding: 1rem;
-        margin: 1rem;
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.input-group {
+    position: relative;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 0.75rem;
+    padding-right: 3rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: border-color 0.2s ease;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.input-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.warning-message {
+    padding: 1.5rem;
+    background-color: #fef5e7;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+[data-theme="dark"] .warning-message {
+    background-color: rgba(229, 62, 62, 0.1);
+}
+
+.warning-message p {
+    margin: 0 0 0.5rem 0;
+    color: var(--danger-color);
+    font-weight: 500;
+}
+
+.warning-message ul {
+    margin: 0.5rem 0 0 1rem;
+    color: var(--danger-color);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+        max-width: 100%;
     }
     
     .settings-header {
         padding: 1.5rem;
+        margin-bottom: 1.5rem;
     }
     
-    .settings-header h1 {
-        font-size: 1.8rem;
+    .page-title {
+        font-size: 1.75rem;
     }
     
-    .settings-section {
+    .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
         padding: 1.5rem;
     }
+    
+    .setting-info {
+        width: 100%;
+    }
+    
+    .setting-info h3 {
+        font-size: 1rem;
+    }
+    
+    .setting-info p {
+        font-size: 0.85rem;
+    }
+    
+    .theme-selector {
+        flex-direction: row;
+        justify-content: flex-start;
+        width: 100%;
+    }
+    
+    .font-size-selector {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .modal {
+        width: 95%;
+        max-width: none;
+        margin: 0 auto;
+    }
+    
+    .modal-header,
+    .modal-body,
+    .modal-actions {
+        padding: 1rem;
+    }
 }
 
-/* Buton stilleri */
-.action-btn {
-    padding: 0.8rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background: var(--primary-color);
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+@media (max-width: 480px) {
+    .settings-page {
+        padding: 1rem 0;
+    }
+    
+    .container {
+        padding: 0 0.5rem;
+    }
+    
+    .settings-header {
+        padding: 1rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .setting-item {
+        padding: 1rem;
+    }
+    
+    .theme-option {
+        padding: 0.5rem;
+    }
+    
+    .font-btn {
+        width: 35px;
+        height: 35px;
+    }
 }
 
-.action-btn i {
-    font-size: 1.2rem;
+/* Font Size Classes */
+.font-size-small {
+    font-size: 14px;
 }
 
-.action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    background: var(--hover-color);
+.font-size-medium {
+    font-size: 16px;
 }
 
-.delete-btn {
-    padding: 0.8rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background: #dc3545;
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.delete-btn i {
-    font-size: 1.2rem;
-}
-
-.delete-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    background: #c82333;
-}
-
-/* Ayar öğeleri stilleri */
-.settings-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.8rem;
-    background: var(--bg-color);
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
-    transition: all 0.3s ease;
-    border: 1px solid var(--border-color);
-}
-
-.settings-item:hover {
-    background: var(--bg-hover);
-    border-color: var(--primary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.settings-item:last-child {
-    margin-bottom: 0;
-}
-
-.item-content h3 {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--text-color);
-    font-weight: 600;
-}
-
-.item-content p {
-    margin: 0.5rem 0 0;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-/* Dark mode styles */
-[data-theme="dark"] .action-btn {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-}
-
-[data-theme="dark"] .action-btn:hover {
-    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-}
-
-[data-theme="dark"] .settings-item {
-    border-color: var(--border-color);
-}
-
-[data-theme="dark"] .settings-item:hover {
-    border-color: var(--primary-color);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-/* Değişken tanımlamaları */
-:root {
-    --primary-color: #2d313c;
-    --accent-color: #4a148c;
-    --hover-color: #3c404d;
-    --bg-color: #ffffff;
-    --bg-secondary: #f8f9fa;
-    --bg-hover: #f0f0f0;
-    --text-color: #2c3e50;
-    --text-secondary: #666;
-    --border-color: #dee2e6;
-}
-
-/* Şifre değiştir butonu için özel stil */
-.password-change-btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background: rgb(45,49,60);
-    color: white;
-    display: inline-block;
-}
-
-.password-change-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    background: rgba(45,49,60, 0.9);
+.font-size-large {
+    font-size: 18px;
 }
 </style>
 
-<!-- Kaydet ve İptal butonları -->
-<div class="form-actions">
-    <a href="{{ url_for('anasayfa') }}" class="btn btn-secondary">
-        <i class="fas fa-times"></i>
-        İptal
-    </a>
-    <button type="button" class="btn btn-primary" onclick="saveSettings()">
-        <i class="fas fa-save"></i>
-        Değişiklikleri Kaydet
-    </button>
-</div>
-
 <script>
-// Modal fonksiyonları
-function showPasswordModal() {
-    document.getElementById('passwordModal').style.display = 'flex';
+// Sayfa yüklendiğinde kullanıcının ayarlarını getir
+document.addEventListener('DOMContentLoaded', function() {
+    loadUserSettings();
+    initializeTheme();
+});
+
+// Kullanıcı ayarlarını yükle
+async function loadUserSettings() {
+    try {
+        const response = await fetch('/get_user_settings');
+        const data = await response.json();
+        
+        if (data.success) {
+            const settings = data.settings;
+            
+            // Toggle ayarlarını uygula
+            document.getElementById('emailNotifications').checked = settings.emailNotifications;
+            document.getElementById('systemNotifications').checked = settings.systemNotifications;
+            document.getElementById('twoFactorAuth').checked = settings.twoFactorEnabled;
+            
+            // Tema ayarını uygula
+            const currentTheme = settings.theme || 'light';
+            applyTheme(currentTheme);
+            
+            // Font boyutunu uygula
+            const fontSize = settings.fontSize || 'medium';
+            applyFontSize(fontSize);
+        }
+    } catch (error) {
+        console.error('Ayarlar yüklenirken hata:', error);
+    }
 }
 
-function showDeleteConfirmation() {
-    document.getElementById('deleteConfirmModal').style.display = 'flex';
+// Tema sistemi
+function initializeTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
 }
 
-function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
+function changeTheme(theme) {
+    applyTheme(theme);
+    updateSetting('theme', theme);
 }
 
-// Tema değiştirme fonksiyonu
-function toggleTheme(isDark) {
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-    document.body.style.backgroundColor = isDark ? '#1a1a1a' : '#f8f9fa';
-    document.body.style.color = isDark ? '#fff' : '#212529';
+function applyTheme(theme) {
+    // HTML root elementine tema attribute'unu ekle - bu global olarak tüm sayfalarda çalışır
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
     
-    // Tema tercihini kaydet
-    localStorage.setItem('darkMode', isDark);
+    // Tema seçicisini güncelle (sadece settings sayfasında varsa)
+    document.querySelectorAll('.theme-option').forEach(option => {
+        option.classList.remove('active');
+        if (option.dataset.theme === theme) {
+            option.classList.add('active');
+        }
+    });
     
-    fetch('/update_theme_preference', {
+    // Global event dispatching - diğer sayfalar için
+    window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: theme } }));
+}
+
+// Font boyutu sistemi
+function changeFontSize(size) {
+    applyFontSize(size);
+    updateSetting('fontSize', size);
+}
+
+function applyFontSize(size) {
+    // Eski font class'larını kaldır
+    document.documentElement.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');
+    
+    // Yeni font class'ını ekle
+    document.documentElement.classList.add(`font-size-${size}`);
+    
+    localStorage.setItem('fontSize', size);
+    
+    // Font butonlarını güncelle
+    document.querySelectorAll('.font-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.size === size) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+// Toggle değişiklikleri
+document.getElementById('emailNotifications').addEventListener('change', function() {
+    updateSetting('emailNotifications', this.checked);
+});
+
+document.getElementById('systemNotifications').addEventListener('change', function() {
+    updateSetting('systemNotifications', this.checked);
+});
+
+document.getElementById('twoFactorAuth').addEventListener('change', function() {
+    enable2FA(this.checked);
+});
+
+// Ayar güncelleme fonksiyonu
+async function updateSetting(setting, value) {
+    try {
+        const response = await fetch('/update_settings', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            theme: isDark ? 'dark' : 'light'
+                [setting]: value
         })
     });
-}
-
-// Tema toggle event listener
-document.getElementById('darkMode').addEventListener('change', function() {
-    toggleTheme(this.checked);
-});
-
-// Yazı boyutu
-document.querySelectorAll('.font-size-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        // Diğer butonlardan active class'ı kaldır
-        document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('active'));
-        // Tıklanan butona active class ekle
-        this.classList.add('active');
         
-        const size = this.dataset.size;
-        
-        // HTML root elementinden eski font-size class'ını kaldır
-        document.documentElement.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');
-        // Yeni font-size class'ını ekle
-        document.documentElement.classList.add(`font-size-${size}`);
-        
-        // Tercihi localStorage'a kaydet
-        localStorage.setItem('fontSize', size);
-        
-        // Sunucuya kaydet
-        fetch('/update_settings', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                fontSize: size
-            })
-        });
-    });
-});
-
-// Sayfa yüklendiğinde font boyutunu ayarla
-document.addEventListener('DOMContentLoaded', function() {
-    // Font size ayarını localStorage'dan al
-    const fontSize = localStorage.getItem('fontSize') || 'medium';
-    
-    // Butonları güncelle
-    document.querySelectorAll('.font-size-btn').forEach(btn => {
-        if (btn.dataset.size === fontSize) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
+        const data = await response.json();
+        if (!data.success) {
+            showNotification('Ayar güncellenirken hata oluştu: ' + data.message, 'error');
         }
-    });
-    
-    // HTML root elementinden eski font-size class'ını kaldır
-    document.documentElement.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');
-    // Yeni font-size class'ını ekle
-    document.documentElement.classList.add(`font-size-${fontSize}`);
-});
+    } catch (error) {
+        console.error('Ayar güncellenirken hata:', error);
+        showNotification('Ayar güncellenirken hata oluştu', 'error');
+    }
+}
 
 // İki faktörlü doğrulama
-document.getElementById('twoFactorAuth').addEventListener('change', function() {
-    if (this.checked) {
-        fetch('/enable_2fa', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+async function enable2FA(enabled) {
+    if (enabled) {
+        // 2FA etkinleştirme - QR kod modalını göster
+        try {
+            const response = await fetch('/generate_2fa_qr', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                show2FAModal(data.qr_code, data.secret);
+            } else {
+                showNotification('2FA QR kod oluşturulurken hata: ' + (data.error || data.message), 'error');
+                document.getElementById('twoFactorAuth').checked = false;
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
-                this.checked = false;
-                                    showGlobalNotification(data.message || 'İki faktörlü doğrulama aktifleştirilemedi.', 'error');
-            }
-        })
-        .catch(error => {
-            this.checked = false;
-                          showGlobalNotification('Bir hata oluştu.', 'error');
-        });
-    }
-});
-
-// Modal dışına tıklandığında kapatma
-window.onclick = function(event) {
-    if (event.target.classList.contains('modal')) {
-        event.target.style.display = 'none';
+        } catch (error) {
+            console.error('2FA QR kod oluşturma hatası:', error);
+            showNotification('2FA QR kod oluşturulurken hata: ' + error.message, 'error');
+            document.getElementById('twoFactorAuth').checked = false;
+        }
+    } else {
+        // 2FA devre dışı bırakma
+        if (confirm('İki faktörlü doğrulamayı devre dışı bırakmak istediğinizden emin misiniz?')) {
+            await update2FAStatus(false);
+        } else {
+            document.getElementById('twoFactorAuth').checked = true;
+        }
     }
 }
 
-// Form doğrulama
-document.getElementById('passwordForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const newPassword = this.querySelector('input[name="new_password"]').value;
-    const confirmPassword = this.querySelector('input[name="confirm_password"]').value;
+// 2FA secret'ını global olarak sakla
+let currentSecret = null;
+
+// 2FA QR kod modalını göster
+function show2FAModal(qrCode, secret) {
+    currentSecret = secret; // Secret'ı global değişkende sakla
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.id = 'qrModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-qrcode"></i> İki Faktörlü Doğrulama Kurulumu</h3>
+                <button class="close-btn" onclick="closeQRModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <h4>1. Authenticator uygulamanızla QR kodu tarayın:</h4>
+                    <div style="background: white; padding: 1rem; border-radius: 8px; display: inline-block; margin: 1rem 0;">
+                        <img src="data:image/png;base64,${qrCode}" alt="2FA QR Code" style="width: 200px; height: 200px;">
+                    </div>
+                    <p><small>QR kod okutamıyorsanız, bu kodu manuel olarak girin:<br><code>${secret}</code></small></p>
+                </div>
+                <div class="form-group">
+                    <label for="verification_code">2. Uygulamanızdan aldığınız 6 haneli kodu girin:</label>
+                    <input type="text" id="verification_code" placeholder="123456" maxlength="6" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; text-align: center; font-size: 1.2rem; letter-spacing: 0.2em;">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeQRModal()">İptal</button>
+                <button class="btn btn-primary" onclick="verify2FACode()">Doğrula ve Etkinleştir</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// 2FA kod doğrulama
+async function verify2FACode() {
+    const code = document.getElementById('verification_code').value;
     
-    if (newPassword !== confirmPassword) {
-                    showGlobalNotification('Şifreler eşleşmiyor!', 'warning');
+    if (!code || code.length !== 6) {
+        showNotification('Lütfen 6 haneli doğrulama kodunu girin', 'error');
         return;
     }
     
-    this.submit();
+    if (!currentSecret) {
+        showNotification('Secret bulunamadı, lütfen sayfayı yenileyin', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/verify_2fa_setup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                token: code,
+                secret: currentSecret
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showNotification('İki faktörlü doğrulama başarıyla etkinleştirildi!', 'success');
+            closeQRModal();
+            await update2FAStatus(true);
+        } else {
+            showNotification('Doğrulama kodu hatalı: ' + (data.error || data.message), 'error');
+        }
+    } catch (error) {
+        console.error('2FA doğrulama hatası:', error);
+        showNotification('2FA doğrulama hatası: ' + error.message, 'error');
+    }
+}
+
+// 2FA durumunu güncelle
+async function update2FAStatus(enabled) {
+    try {
+        const response = await fetch('/enable_2fa', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                enabled: enabled
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('twoFactorAuth').checked = enabled;
+            showNotification(enabled ? 'İki faktörlü doğrulama etkinleştirildi' : 'İki faktörlü doğrulama devre dışı bırakıldı', 'success');
+        } else {
+            showNotification('2FA durum güncellenirken hata: ' + data.message, 'error');
+            document.getElementById('twoFactorAuth').checked = !enabled;
+        }
+    } catch (error) {
+        console.error('2FA durum güncelleme hatası:', error);
+        showNotification('2FA durum güncellenirken hata oluştu', 'error');
+        document.getElementById('twoFactorAuth').checked = !enabled;
+    }
+}
+
+// QR modal'ını kapat
+function closeQRModal() {
+    const modal = document.getElementById('qrModal');
+    if (modal) {
+        modal.remove();
+        document.getElementById('twoFactorAuth').checked = false;
+        currentSecret = null; // Secret'ı temizle
+    }
+}
+
+// Test fonksiyonları
+async function testEmailNotification() {
+    try {
+        const response = await fetch('/test_email_notification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                type: 'test'
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showNotification('Test e-postası gönderildi! E-posta kutunuzu kontrol edin.', 'success');
+        } else {
+            showNotification('E-posta gönderilirken hata: ' + (data.error || data.message), 'error');
+        }
+    } catch (error) {
+        console.error('E-posta test edilirken hata:', error);
+        showNotification('E-posta gönderilirken hata: ' + error.message, 'error');
+    }
+}
+
+function testSystemNotification() {
+    // Tarayıcı bildirim izni iste
+    if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+            new Notification('Test Bildirimi', {
+                body: 'Sistem bildirimleri çalışıyor!',
+                icon: '/static/images/logo.png'
+            });
+            showNotification('Sistem bildirimi gönderildi!', 'success');
+        } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    new Notification('Test Bildirimi', {
+                        body: 'Sistem bildirimleri çalışıyor!',
+                        icon: '/static/images/logo.png'
+                    });
+                    showNotification('Sistem bildirimi gönderildi!', 'success');
+                } else {
+                    showNotification('Bildirim izni reddedildi', 'error');
+                }
+            });
+        } else {
+            showNotification('Bildirimler bu tarayıcıda engellendi', 'error');
+        }
+    } else {
+        showNotification('Bu tarayıcı bildirimleri desteklemiyor', 'error');
+    }
+}
+
+// Modal fonksiyonları
+function openPasswordModal() {
+    document.getElementById('passwordModal').classList.add('active');
+}
+
+function openDeleteModal() {
+    document.getElementById('deleteModal').classList.add('active');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+// Şifre görünürlüğü
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const icon = input.nextElementSibling.querySelector('i');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+// Form submit handlers
+document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const newPassword = formData.get('new_password');
+    const confirmPassword = formData.get('confirm_password');
+    
+    if (newPassword !== confirmPassword) {
+        showNotification('Yeni şifreler eşleşmiyor!', 'error');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showNotification('Şifre en az 6 karakter olmalıdır!', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/change_password', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showNotification('Şifre başarıyla değiştirildi!', 'success');
+            closeModal('passwordModal');
+            this.reset();
+        } else {
+            showNotification('Şifre değiştirme hatası: ' + data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Şifre değiştirme hatası:', error);
+        showNotification('Şifre değiştirme sırasında hata oluştu', 'error');
+    }
 });
 
-// Ayarları kaydetme fonksiyonu
-function saveSettings() {
-    // Tüm ayarları topla
+document.getElementById('deleteForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (!confirm('Hesabınızı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem GERİ ALINAMAZ!')) {
+        return;
+    }
+    
+    const formData = new FormData(this);
+    
+    try {
+        const response = await fetch('/delete_account', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showNotification('Hesabınız silindi. Yönlendiriliyorsunuz...', 'success');
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 2000);
+        } else {
+            showNotification('Hesap silme hatası: ' + data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Hesap silme hatası:', error);
+        showNotification('Hesap silme sırasında hata oluştu', 'error');
+    }
+});
+
+// Tüm ayarları kaydet
+async function saveAllSettings() {
     const settings = {
-        theme: document.getElementById('darkMode').checked ? 'dark' : 'light',
-        fontSize: document.querySelector('.font-size-btn.active').dataset.size,
         emailNotifications: document.getElementById('emailNotifications').checked,
         systemNotifications: document.getElementById('systemNotifications').checked,
-        twoFactorAuth: document.getElementById('twoFactorAuth').checked
+        theme: document.querySelector('.theme-option.active').dataset.theme,
+        fontSize: document.querySelector('.font-btn.active').dataset.size
     };
     
-    // Ayarları kaydet
-    fetch('/update_settings', {
+    try {
+        const response = await fetch('/update_settings', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(settings)
-    })
-    .then(response => response.json())
-    .then(data => {
+        });
+        
+        const data = await response.json();
         if (data.success) {
-            // Başarılı bildirim göster
-            showGlobalNotification('Ayarlar başarıyla kaydedildi!', 'success');
+            showNotification('Tüm ayarlar başarıyla kaydedildi!', 'success');
         } else {
-            // Hata bildirim göster
-            showGlobalNotification('Ayarlar kaydedilirken bir hata oluştu!', 'error');
+            showNotification('Ayarlar kaydedilirken hata: ' + data.message, 'error');
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showGlobalNotification('Bir hata oluştu!', 'error');
-    });
+    } catch (error) {
+        console.error('Ayarlar kaydedilirken hata:', error);
+        showNotification('Ayarlar kaydedilirken hata oluştu', 'error');
+    }
 }
+
+// Utility fonksiyonlar
+function getCSRFToken() {
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    return metaTag ? metaTag.getAttribute('content') : '';
+}
+
+function showNotification(message, type = 'info') {
+    // Layout.html'deki showGlobalNotification fonksiyonunu kullan
+    if (typeof showGlobalNotification === 'function') {
+        showGlobalNotification(message, type);
+    } else {
+        // Fallback olarak alert kullan
+        alert(message);
+    }
+}
+
+// Modal dışına tıklayınca kapat
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+        e.target.classList.remove('active');
+    }
+});
+
+// ESC tuşu ile modal kapat
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+            modal.classList.remove('active');
+        });
+    }
+});
 </script>
 {% endblock %} 
