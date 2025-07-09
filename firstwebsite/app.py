@@ -2474,6 +2474,7 @@ def dosya_ekle():
                 
                 # Vekil bilgileri
                 opponent_lawyer=data.get('opponent-lawyer', ''),
+                opponent_lawyer_bar_number=data.get('opponent-lawyer-bar-number', ''),
                 opponent_lawyer_phone=data.get('opponent-lawyer-phone', ''),
                 opponent_lawyer_address=data.get('opponent-lawyer-address', '')
             )
@@ -2559,6 +2560,7 @@ def case_details(case_id):
             
             # Vekil bilgileri
             'opponent_lawyer': case_file.opponent_lawyer,
+            'opponent_lawyer_bar_number': case_file.opponent_lawyer_bar_number,
             'opponent_lawyer_phone': case_file.opponent_lawyer_phone,
             'opponent_lawyer_address': case_file.opponent_lawyer_address,
             
@@ -5143,8 +5145,13 @@ def dosya_ekle():
                 
                 # Vekil bilgileri
                 opponent_lawyer=data.get('opponent-lawyer', ''),
+                opponent_lawyer_bar_number=data.get('opponent-lawyer-bar-number', ''),
                 opponent_lawyer_phone=data.get('opponent-lawyer-phone', ''),
-                opponent_lawyer_address=data.get('opponent-lawyer-address', '')
+                opponent_lawyer_address=data.get('opponent-lawyer-address', ''),
+                
+                # EK KİŞİLER - YENİ EKLENEN
+                additional_clients_json=data.get('additional_clients_json', ''),
+                additional_opponents_json=data.get('additional_opponents_json', '')
             )
 
             db.session.add(new_case_file)
@@ -5195,10 +5202,50 @@ def case_details(case_id):
         # Duruşma türünü Büyük Harfle başlayacak şekilde biçimlendir
         formatted_hearing_type = "E-Duruşma" if case_file.hearing_type == "e-durusma" else "Duruşma"
         
+        # Şehir bilgisini adliye adından çıkar
+        city = "Bilinmiyor"
+        if case_file.courthouse:
+            if case_file.courthouse.startswith("İstanbul"):
+                city = "İstanbul"
+            else:
+                # Adliye adından şehir ismini çıkarmak için adliye listesini kontrol et
+                cities_courthouses, cities = parse_adliye_list()
+                for city_name, courthouses in cities_courthouses.items():
+                    if any(case_file.courthouse in courthouse for courthouse in courthouses):
+                        city = city_name
+                        break
+        
+        # Ek müvekkil, karşı taraf ve vekil bilgilerini JSON'dan parse et
+        additional_clients = []
+        additional_opponents = []
+        additional_lawyers = []
+        
+        if case_file.additional_clients_json:
+            try:
+                import json
+                additional_clients = json.loads(case_file.additional_clients_json)
+            except:
+                additional_clients = []
+                
+        if case_file.additional_opponents_json:
+            try:
+                import json
+                additional_opponents = json.loads(case_file.additional_opponents_json)
+            except:
+                additional_opponents = []
+                
+        if case_file.additional_lawyers_json:
+            try:
+                import json
+                additional_lawyers = json.loads(case_file.additional_lawyers_json)
+            except:
+                additional_lawyers = []
+        
         return jsonify({
             'success': True,
             'file_type': case_file.file_type,
             'courthouse': case_file.courthouse,
+            'city': city,  # Şehir bilgisi eklendi
             'department': case_file.department,
             'year': case_file.year,
             'case_number': formatted_case_number,  # Formatlanmış dosya numarası
@@ -5228,8 +5275,14 @@ def case_details(case_id):
             
             # Vekil bilgileri
             'opponent_lawyer': case_file.opponent_lawyer,
+            'opponent_lawyer_bar_number': case_file.opponent_lawyer_bar_number,
             'opponent_lawyer_phone': case_file.opponent_lawyer_phone,
             'opponent_lawyer_address': case_file.opponent_lawyer_address,
+            
+            # Ek müvekkiller, karşı taraflar ve vekiller
+            'additional_clients': additional_clients,
+            'additional_opponents': additional_opponents,
+            'additional_lawyers': additional_lawyers,
             
             'expenses': [{
                 'id': expense.id,
@@ -5303,6 +5356,8 @@ def edit_case(case_id):
         # Vekil bilgileri
         if 'opponent_lawyer' in data:
             case_file.opponent_lawyer = data['opponent_lawyer']
+        if 'opponent_lawyer_bar_number' in data:
+            case_file.opponent_lawyer_bar_number = data['opponent_lawyer_bar_number']
         if 'opponent_lawyer_phone' in data:
             case_file.opponent_lawyer_phone = data['opponent_lawyer_phone']
         if 'opponent_lawyer_address' in data:
@@ -5314,7 +5369,7 @@ def edit_case(case_id):
         if 'opponent_entity_type' in data:
             case_file.opponent_entity_type = data['opponent_entity_type']
         
-        # Ek müvekkiller ve karşı taraflar JSON formatında
+        # Ek müvekkiller, karşı taraflar ve vekiller JSON formatında
         if 'additional_clients_json' in data:
             import json
             try:
@@ -5337,6 +5392,17 @@ def edit_case(case_id):
                 case_file.additional_opponents_json = json.dumps(additional_opponents)
             except:
                 case_file.additional_opponents_json = None
+                
+        if 'additional_lawyers_json' in data:
+            import json
+            try:
+                if isinstance(data['additional_lawyers_json'], str):
+                    additional_lawyers = json.loads(data['additional_lawyers_json'])
+                else:
+                    additional_lawyers = data['additional_lawyers_json']
+                case_file.additional_lawyers_json = json.dumps(additional_lawyers)
+            except:
+                case_file.additional_lawyers_json = None
         
         # Duruşma türünü al ve kaydet
         if 'hearing_type' in data and data['hearing_type']:
@@ -10886,6 +10952,387 @@ def email_notification_settings():
                 'security_alert': email_settings.get('security_alert', True)
             }
         })
+
+# Yeni kişi ekleme API endpoint'i
+@app.route('/add_person_to_case', methods=['POST'])
+@login_required
+@permission_required('dosya_duzenle')
+@csrf.exempt
+def add_person_to_case():
+    """Dosyaya yeni kişi ekle"""
+    try:
+        case_id = request.form.get('case_id')
+        person_type = request.form.get('person_type')  # 'client' veya 'opponent'
+        entity_type = request.form.get('entity_type')
+        capacity = request.form.get('capacity')
+        name = request.form.get('name')
+        phone = request.form.get('phone')
+        identity_number = request.form.get('identity_number')
+        address = request.form.get('address')
+        
+        if not all([case_id, person_type, name]):
+            return jsonify({
+                'success': False,
+                'message': 'Gerekli alanlar eksik'
+            }), 400
+        
+        case = CaseFile.query.get(case_id)
+        if not case:
+            return jsonify({
+                'success': False,
+                'message': 'Dosya bulunamadı'
+            }), 404
+        
+        # Mevcut ek kişileri al
+        if person_type == 'client':
+            additional_people = case.additional_clients or []
+        else:
+            additional_people = case.additional_opponents or []
+        
+        # Yeni kişiyi ekle
+        new_person = {
+            'entity_type': entity_type,
+            'capacity': capacity,
+            'name': name,
+            'phone': phone,
+            'identity_number': identity_number,
+            'address': address
+        }
+        
+        additional_people.append(new_person)
+        
+        # Dosyayı güncelle
+        if person_type == 'client':
+            case.additional_clients = additional_people
+        else:
+            case.additional_opponents = additional_people
+        
+        db.session.commit()
+        
+        # Activity log oluştur
+        log_activity(
+            activity_type='dosya_guncelleme',
+            description=f'Dosyaya yeni {person_type} eklendi: {name}',
+            user_id=current_user.id,
+            case_id=case_id
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': f'Yeni {person_type} başarıyla eklendi',
+            'person_id': len(additional_people) - 1  # Index'i döndür
+        })
+        
+    except Exception as e:
+        logger.error(f"Kişi ekleme hatası: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+# Yeni vekil ekleme API endpoint'i
+@app.route('/add_lawyer_to_case', methods=['POST'])
+@login_required
+@permission_required('dosya_duzenle')
+@csrf.exempt
+def add_lawyer_to_case():
+    """Dosyaya yeni vekil ekle"""
+    try:
+        case_id = request.form.get('case_id')
+        name = request.form.get('name')
+        bar_number = request.form.get('bar_number')
+        phone = request.form.get('phone')
+        address = request.form.get('address')
+        
+        if not all([case_id, name]):
+            return jsonify({
+                'success': False,
+                'message': 'Gerekli alanlar eksik'
+            }), 400
+        
+        case = CaseFile.query.get(case_id)
+        if not case:
+            return jsonify({
+                'success': False,
+                'message': 'Dosya bulunamadı'
+            }), 404
+        
+        # Eğer ana vekil boşsa, ana vekil olarak ekle
+        if not case.opponent_lawyer:
+            case.opponent_lawyer = name
+            case.opponent_lawyer_bar_number = bar_number
+            case.opponent_lawyer_phone = phone
+            case.opponent_lawyer_address = address
+            message = 'Ana vekil bilgileri başarıyla eklendi'
+        else:
+            # Ana vekil doluysa, ek vekil olarak ekle
+            additional_lawyers = case.additional_lawyers or []
+            
+            new_lawyer = {
+                'name': name,
+                'bar_number': bar_number,
+                'phone': phone,
+                'address': address
+            }
+            
+            additional_lawyers.append(new_lawyer)
+            case.additional_lawyers = additional_lawyers
+            message = 'Ek vekil başarıyla eklendi'
+        
+        db.session.commit()
+        
+        # Activity log oluştur
+        log_activity(
+            activity_type='dosya_guncelleme',
+            description=f'Dosyaya vekil eklendi: {name}',
+            user_id=current_user.id,
+            case_id=case_id
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': message,
+            'lawyer_id': len(case.additional_lawyers) if case.additional_lawyers else 0
+        })
+        
+    except Exception as e:
+        logger.error(f"Vekil ekleme hatası: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+# Ana kişi güncelleme endpoint'i
+@app.route('/update_main_person', methods=['POST'])
+@login_required
+@permission_required('dosya_duzenle')
+@csrf.exempt
+def update_main_person():
+    """Ana müvekkil/karşı taraf bilgilerini güncelle"""
+    try:
+        case_id = request.form.get('case_id')
+        person_type = request.form.get('person_type')  # 'client' veya 'opponent'
+        entity_type = request.form.get('entity_type')
+        capacity = request.form.get('capacity')
+        name = request.form.get('name')
+        phone = request.form.get('phone')
+        identity_number = request.form.get('identity_number')
+        address = request.form.get('address')
+        
+        if not all([case_id, person_type, name]):
+            return jsonify({
+                'success': False,
+                'message': 'Gerekli alanlar eksik'
+            }), 400
+        
+        case = CaseFile.query.get(case_id)
+        if not case:
+            return jsonify({
+                'success': False,
+                'message': 'Dosya bulunamadı'
+            }), 404
+        
+        # Ana kişi bilgilerini güncelle
+        if person_type == 'client':
+            case.client_entity_type = entity_type
+            case.client_capacity = capacity
+            case.client_name = name
+            case.phone_number = phone
+            case.client_identity_number = identity_number
+            case.client_address = address
+        else:  # opponent
+            case.opponent_entity_type = entity_type
+            case.opponent_capacity = capacity
+            case.opponent_name = name
+            case.opponent_phone = phone
+            case.opponent_identity_number = identity_number
+            case.opponent_address = address
+        
+        db.session.commit()
+        
+        # Activity log oluştur
+        log_activity(
+            activity_type='dosya_guncelleme',
+            description=f'Ana {person_type} bilgileri güncellendi: {name}',
+            user_id=current_user.id,
+            case_id=case_id
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': f'{"Müvekkil" if person_type == "client" else "Karşı taraf"} bilgileri başarıyla güncellendi'
+        })
+        
+    except Exception as e:
+        logger.error(f"Ana kişi güncelleme hatası: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+# Ana kişi silme endpoint'i
+@app.route('/delete_main_person', methods=['POST'])
+@login_required
+@permission_required('dosya_duzenle')
+@csrf.exempt
+def delete_main_person():
+    """Ana müvekkil/karşı taraf bilgilerini sil"""
+    try:
+        case_id = request.form.get('case_id')
+        person_type = request.form.get('person_type')  # 'client' veya 'opponent'
+        
+        if not all([case_id, person_type]):
+            return jsonify({
+                'success': False,
+                'message': 'Gerekli alanlar eksik'
+            }), 400
+        
+        case = CaseFile.query.get(case_id)
+        if not case:
+            return jsonify({
+                'success': False,
+                'message': 'Dosya bulunamadı'
+            }), 404
+        
+        # Ana kişi bilgilerini temizle
+        if person_type == 'client':
+            case.client_entity_type = 'person'
+            case.client_capacity = None
+            case.client_name = None
+            case.phone_number = None
+            case.client_identity_number = None
+            case.client_address = None
+        else:  # opponent
+            case.opponent_entity_type = 'person'
+            case.opponent_capacity = None
+            case.opponent_name = None
+            case.opponent_phone = None
+            case.opponent_identity_number = None
+            case.opponent_address = None
+        
+        db.session.commit()
+        
+        # Activity log oluştur
+        log_activity(
+            activity_type='dosya_guncelleme',
+            description=f'Ana {person_type} bilgileri temizlendi',
+            user_id=current_user.id,
+            case_id=case_id
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': f'{"Müvekkil" if person_type == "client" else "Karşı taraf"} bilgileri başarıyla temizlendi'
+        })
+        
+    except Exception as e:
+        logger.error(f"Ana kişi silme hatası: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+# Dosya temel bilgileri güncelleme endpoint'i
+@app.route('/update_case_basic_info', methods=['POST'])
+@login_required
+@permission_required('dosya_duzenle')
+@csrf.exempt
+def update_case_basic_info():
+    """Dosyanın temel bilgilerini güncelle"""
+    try:
+        case_id = request.form.get('case_id')
+        file_type = request.form.get('file_type')
+        year = request.form.get('year')
+        case_number = request.form.get('case_number')
+        open_date = request.form.get('open_date')
+        city = request.form.get('city')
+        courthouse = request.form.get('courthouse')
+        department = request.form.get('department')
+        status = request.form.get('status')
+        next_hearing = request.form.get('next_hearing')
+        hearing_time = request.form.get('hearing_time')
+        hearing_type = request.form.get('hearing_type')
+        
+        if not all([case_id, file_type, year, case_number, status]):
+            return jsonify({
+                'success': False,
+                'message': 'Gerekli alanlar eksik'
+            }), 400
+        
+        case = CaseFile.query.get(case_id)
+        if not case:
+            return jsonify({
+                'success': False,
+                'message': 'Dosya bulunamadı'
+            }), 404
+        
+        # Tarihleri parse et
+        open_date_obj = None
+        if open_date:
+            try:
+                open_date_obj = datetime.strptime(open_date, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
+        next_hearing_obj = None
+        if next_hearing:
+            try:
+                next_hearing_obj = datetime.strptime(next_hearing, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
+        # Dosya bilgilerini güncelle
+        case.file_type = file_type
+        case.year = int(year)
+        case.case_number = case_number
+        case.open_date = open_date_obj
+        case.status = status
+        case.next_hearing = next_hearing_obj
+        case.hearing_time = hearing_time if hearing_time else None
+        case.hearing_type = hearing_type if hearing_type else 'durusma'
+        
+        # Şehir bilgisini courthouse string'inden çıkar ve güncelle
+        if city and courthouse:
+            case.courthouse = f"{city} - {courthouse}"
+        elif courthouse:
+            case.courthouse = courthouse
+        
+        case.department = department if department else None
+        
+        db.session.commit()
+        
+        # Activity log oluştur
+        log_activity(
+            activity_type='dosya_guncelleme',
+            description=f'Dosya temel bilgileri güncellendi',
+            user_id=current_user.id,
+            case_id=case_id
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'Dosya bilgileri başarıyla güncellendi',
+            'data': {
+                'file_type': file_type,
+                'year': year,
+                'case_number': case_number,
+                'open_date': open_date,
+                'city': city,
+                'courthouse': courthouse,
+                'department': department,
+                'status': status,
+                'next_hearing': next_hearing,
+                'hearing_time': hearing_time,
+                'hearing_type': hearing_type
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Dosya bilgileri güncelleme hatası: {e}")
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
 
 if __name__ == '__main__':
     with app.app_context():

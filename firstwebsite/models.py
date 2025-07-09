@@ -339,15 +339,71 @@ class CaseFile(db.Model):
     opponent_phone = db.Column(db.String(20))
     opponent_address = db.Column(db.Text)
     opponent_lawyer = db.Column(db.String(150))
+    opponent_lawyer_bar_number = db.Column(db.String(20))
     opponent_lawyer_phone = db.Column(db.String(20))
     opponent_lawyer_address = db.Column(db.Text)
     
     # Çoklu kişi bilgileri (JSON formatında)
     additional_clients_json = db.Column(db.Text)  # Ek müvekkiller
     additional_opponents_json = db.Column(db.Text)  # Ek karşı taraflar
+    additional_lawyers_json = db.Column(db.Text)  # Ek vekiller
     
     expenses = db.relationship('Expense', backref='case_file', lazy=True)
     documents = db.relationship('Document', backref='case_file', lazy=True)
+    
+    @property
+    def additional_clients(self):
+        """Ek müvekkilleri liste olarak döndür"""
+        if self.additional_clients_json:
+            try:
+                return json.loads(self.additional_clients_json)
+            except:
+                return []
+        return []
+    
+    @additional_clients.setter
+    def additional_clients(self, value):
+        """Ek müvekkilleri JSON olarak kaydet"""
+        if value is None:
+            self.additional_clients_json = None
+        else:
+            self.additional_clients_json = json.dumps(value)
+    
+    @property
+    def additional_opponents(self):
+        """Ek karşı tarafları liste olarak döndür"""
+        if self.additional_opponents_json:
+            try:
+                return json.loads(self.additional_opponents_json)
+            except:
+                return []
+        return []
+    
+    @additional_opponents.setter
+    def additional_opponents(self, value):
+        """Ek karşı tarafları JSON olarak kaydet"""
+        if value is None:
+            self.additional_opponents_json = None
+        else:
+            self.additional_opponents_json = json.dumps(value)
+    
+    @property
+    def additional_lawyers(self):
+        """Ek vekilleri liste olarak döndür"""
+        if self.additional_lawyers_json:
+            try:
+                return json.loads(self.additional_lawyers_json)
+            except:
+                return []
+        return []
+    
+    @additional_lawyers.setter
+    def additional_lawyers(self, value):
+        """Ek vekilleri JSON olarak kaydet"""
+        if value is None:
+            self.additional_lawyers_json = None
+        else:
+            self.additional_lawyers_json = json.dumps(value)
 
 class Announcement(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -183,96 +183,196 @@
             <div class="top-info-container">
                 <!-- Dosya Bilgileri -->
                 <div class="detail-section basic-info">
-                    <h3><i class="material-icons">folder</i> Dosya Bilgileri</h3>
-                    <div class="info-row">
-                        <div class="info-group">
-                            <label>DOSYA TÜRÜ</label>
-                            <span id="detailFileType"></span>
-                        </div>
-                        <div class="info-group">
-                            <label>YIL</label>
-                            <span id="detailYear"></span>
-                        </div>
+                    <div class="section-header">
+                        <h3><i class="material-icons">folder</i> Dosya Bilgileri</h3>
+                        <button class="btn edit-btn" onclick="toggleFileInfoEdit()" title="Dosya Bilgilerini Düzenle">
+                            <i class="material-icons">edit</i>
+                        </button>
                     </div>
-                    <div class="info-row">
-                        <div class="info-group">
-                            <label>ESAS NO</label>
-                            <span id="detailCaseNumber"></span>
-                        </div>
-                        <div class="info-group">
-                            <label>AÇILIŞ TARİHİ</label>
-                            <span id="detailOpenDate"></span>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-group">
-                            <label>ŞEHİR</label>
-                            <span id="detailCity"></span>
-                        </div>
-                        <div class="info-group">
-                            <label>ADLİYE</label>
-                            <span id="detailCourthouse"></span>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-group">
-                            <label>MAHKEME</label>
-                            <span id="detailDepartment"></span>
-                        </div>
-                        <div class="info-group">
-                            <label>DURUM</label>
-                            <span id="detailStatus"></span>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-group full-width">
-                            <label>SONRAKİ DURUŞMA</label>
-                            <div class="hearing-info">
-                                <span id="detailNextHearing"></span>
-                                <span class="hearing-separator">-</span>
-                                <span id="detailHearingTime"></span>
-                                <span class="hearing-separator">-</span>
-                                <span id="detailHearingType"></span>
+                    <!-- Görüntüleme modu -->
+                    <div id="fileInfoDisplay">
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>DOSYA TÜRÜ</label>
+                                <span id="detailFileType"></span>
                             </div>
+                            <div class="info-group">
+                                <label>YIL</label>
+                                <span id="detailYear"></span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>ESAS NO</label>
+                                <span id="detailCaseNumber"></span>
+                            </div>
+                            <div class="info-group">
+                                <label>AÇILIŞ TARİHİ</label>
+                                <span id="detailOpenDate"></span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>ŞEHİR</label>
+                                <span id="detailCity"></span>
+                            </div>
+                            <div class="info-group">
+                                <label>ADLİYE</label>
+                                <span id="detailCourthouse"></span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>MAHKEME</label>
+                                <span id="detailDepartment"></span>
+                            </div>
+                            <div class="info-group">
+                                <label>DURUM</label>
+                                <span id="detailStatus"></span>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group full-width">
+                                <label>SONRAKİ DURUŞMA</label>
+                                <div class="hearing-info">
+                                    <span id="detailNextHearing"></span>
+                                    <span class="hearing-separator">-</span>
+                                    <span id="detailHearingTime"></span>
+                                    <span class="hearing-separator">-</span>
+                                    <span id="detailHearingType"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Düzenleme modu -->
+                    <div id="fileInfoEdit" style="display: none;">
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>DOSYA TÜRÜ</label>
+                                <select id="editFileType" onchange="updateEditFileType()">
+                                    <option value="hukuk">Hukuk</option>
+                                    <option value="ceza">Ceza</option>
+                                    <option value="icra">İcra</option>
+                                    <option value="savcilik">Savcılık</option>
+                                    <option value="ARABULUCULUK">Arabuluculuk</option>
+                                    <option value="AİHM">AİHM</option>
+                                    <option value="AYM">AYM</option>
+                                </select>
+                            </div>
+                            <div class="info-group">
+                                <label>YIL</label>
+                                <input type="number" id="editYear" min="2000" max="2050">
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>ESAS NO</label>
+                                <input type="text" id="editCaseNumber" placeholder="Esas numarası">
+                            </div>
+                            <div class="info-group">
+                                <label>AÇILIŞ TARİHİ</label>
+                                <input type="date" id="editOpenDate">
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>ŞEHİR</label>
+                                <select id="editCity" onchange="updateEditCourthouse()">
+                                    <option value="">Seçiniz</option>
+                                </select>
+                            </div>
+                            <div class="info-group">
+                                <label>ADLİYE</label>
+                                <select id="editCourthouse">
+                                    <option value="">Önce şehir seçiniz</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>MAHKEME</label>
+                                <select id="editDepartment">
+                                    <option value="">Seçiniz</option>
+                                </select>
+                            </div>
+                            <div class="info-group">
+                                <label>DURUM</label>
+                                <select id="editStatus">
+                                    <option value="Aktif">Aktif</option>
+                                    <option value="Kapalı">Kapalı</option>
+                                    <option value="Beklemede">Beklemede</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>SONRAKİ DURUŞMA</label>
+                                <input type="date" id="editNextHearing">
+                            </div>
+                            <div class="info-group">
+                                <label>DURUŞMA SAATİ</label>
+                                <input type="time" id="editHearingTime">
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-group">
+                                <label>DURUŞMA TÜRÜ</label>
+                                <select id="editHearingType">
+                                    <option value="durusma">Normal Duruşma</option>
+                                    <option value="e-durusma">E-Duruşma</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="file-info-actions">
+                            <button class="btn secondary" onclick="cancelFileInfoEdit()">İptal</button>
+                            <button class="btn primary" onclick="saveFileInfo()">Kaydet</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Müvekkil Bilgileri -->
-                <div class="detail-section">
+                <div class="detail-section client-info-compact">
                     <h3><i class="material-icons">person</i> Müvekkil Bilgileri</h3>
-                    <div class="info-row">
-                        <div class="info-group">
-                            <label>TİP</label>
-                            <span id="detailClientEntityType"></span>
+                    
+                    <!-- Ana Müvekkil - Katlanabilir -->
+                    <div class="collapsible-person-card">
+                        <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
+                            <div class="collapsible-title">
+                                <i class="material-icons person-icon">person</i>
+                                <div class="person-info">
+                                    <div class="person-title main-client-title">Müvekkil Bilgileri</div>
+                                    <div class="person-subtitle" id="mainClientSubtitle"></div>
+                                </div>
+                            </div>
+                            <i class="material-icons collapse-arrow">expand_more</i>
                         </div>
-                        <div class="info-group">
-                            <label>SIFAT</label>
-                            <span id="detailClientCapacity"></span>
+                        <div class="collapsible-content">
+                            <div class="detail-info-grid">
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TİP</span>
+                                    <span class="detail-info-value" id="detailClientEntityType"></span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">SIFAT</span>
+                                    <span class="detail-info-value" id="detailClientCapacity"></span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TELEFON</span>
+                                    <span class="detail-info-value" id="detailPhoneNumber"></span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                    <span class="detail-info-value" id="detailClientIdentityNumber"></span>
+                                </div>
+                                <div class="detail-info-item full-width">
+                                    <span class="detail-info-label">ADRES</span>
+                                    <span class="detail-info-value" id="detailClientAddress"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="info-row">
-                        <div class="info-group full-width">
-                            <label>AD SOYAD / UNVAN</label>
-                            <span id="detailClientName"></span>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-group full-width">
-                            <label>KİMLİK / VERGİ NO</label>
-                            <span id="detailClientIdentityNumber"></span>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-group">
-                            <label>TELEFON</label>
-                            <span id="detailPhoneNumber"></span>
-                        </div>
-                        <div class="info-group">
-                            <label>ADRES</label>
-                            <span id="detailClientAddress"></span>
-                        </div>
-                    </div>
+                    
                     <!-- Ek Müvekkiller -->
                     <div id="additionalClientsDisplay" class="additional-display">
                         <!-- Dinamik olarak eklenecek -->
@@ -282,62 +382,52 @@
                 <!-- Karşı Taraf Bilgileri -->
                 <div class="detail-section">
                     <h3><i class="material-icons">group</i> Karşı Taraf Bilgileri</h3>
-                    <div class="info-row">
-                        <div class="info-group">
-                            <label>TİP</label>
-                            <span id="detailOpponentEntityType"></span>
-                        </div>
-                        <div class="info-group">
-                            <label>SIFAT</label>
-                            <span id="detailOpponentCapacity"></span>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-group full-width">
-                            <label>AD SOYAD / UNVAN</label>
-                            <span id="detailOpponentName"></span>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-group full-width">
-                            <label>KİMLİK / VERGİ NO</label>
-                            <span id="detailOpponentIdentityNumber"></span>
-                        </div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-group">
-                            <label>TELEFON</label>
-                            <span id="detailOpponentPhone"></span>
-                        </div>
-                        <div class="info-group">
-                            <label>ADRES</label>
-                            <span id="detailOpponentAddress"></span>
-                        </div>
-                    </div>
                     
-                    <!-- Vekil Bilgileri -->
-                    <div id="opponentLawyerDisplay" class="lawyer-display" style="display: none;">
-                        <h4><i class="material-icons">account_balance</i> Vekil Bilgileri</h4>
-                        <div class="info-row">
-                            <div class="info-group">
-                                <label>VEKİL ADI SOYADI</label>
-                                <span id="detailOpponentLawyer"></span>
+                    <!-- Ana Karşı Taraf - Katlanabilir -->
+                    <div class="collapsible-person-card">
+                        <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
+                            <div class="collapsible-title">
+                                <i class="material-icons person-icon">group</i>
+                                <div class="person-info">
+                                    <div class="person-title main-opponent-title">Karşı Taraf Bilgileri</div>
+                                    <div class="person-subtitle" id="mainOpponentSubtitle"></div>
+                                </div>
                             </div>
-                            <div class="info-group">
-                                <label>VEKİL TELEFONU</label>
-                                <span id="detailOpponentLawyerPhone"></span>
-                            </div>
+                            <i class="material-icons collapse-arrow">expand_more</i>
                         </div>
-                        <div class="info-row">
-                            <div class="info-group full-width">
-                                <label>VEKİL ADRESİ</label>
-                                <span id="detailOpponentLawyerAddress"></span>
+                        <div class="collapsible-content">
+                            <div class="detail-info-grid">
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TİP</span>
+                                    <span class="detail-info-value" id="detailOpponentEntityType"></span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">SIFAT</span>
+                                    <span class="detail-info-value" id="detailOpponentCapacity"></span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TELEFON</span>
+                                    <span class="detail-info-value" id="detailOpponentPhone"></span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                    <span class="detail-info-value" id="detailOpponentIdentityNumber"></span>
+                                </div>
+                                <div class="detail-info-item full-width">
+                                    <span class="detail-info-label">ADRES</span>
+                                    <span class="detail-info-value" id="detailOpponentAddress"></span>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Ek Karşı Taraflar -->
                     <div id="additionalOpponentsDisplay" class="additional-display">
+                        <!-- Dinamik olarak eklenecek -->
+                    </div>
+                    
+                    <!-- Vekil Bilgileri -->
+                    <div id="lawyersDisplay" class="additional-display">
                         <!-- Dinamik olarak eklenecek -->
                     </div>
                 </div>
@@ -552,6 +642,23 @@
     margin-bottom: 0;
 }
 
+/* Yeni column yapısı */
+.info-column-left,
+.info-column-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-column-left {
+    margin-right: 15px;
+}
+
+.info-column-right {
+    margin-left: 15px;
+}
+
 .info-group {
     flex: 1;
     min-width: 0;
@@ -641,6 +748,30 @@
     border: 1px solid #e9ecef;
 }
 
+/* Müvekkil bilgileri için kompakt stil */
+.detail-section.client-info-compact {
+    padding: 12px;
+    max-width: 95%;
+}
+
+.detail-section.client-info-compact .info-row {
+    margin-bottom: 10px;
+}
+
+.detail-section.client-info-compact .info-group {
+    min-width: 0;
+}
+
+.detail-section.client-info-compact .info-group label {
+    font-size: 0.75rem;
+    margin-bottom: 3px;
+}
+
+.detail-section.client-info-compact .info-group span {
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
 /* Açıklama bölümü için özel stil */
 .detail-section.description-section {
     margin-bottom: 30px;
@@ -660,10 +791,513 @@
 }
 
 /* Mobil responsive */
+@media (max-width: 768px) {
+    .info-column-left,
+    .info-column-right {
+        margin-left: 0;
+        margin-right: 0;
+        gap: 8px;
+    }
+    
+    .info-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
 @media (max-width: 1024px) {
     .bottom-sections-container {
         grid-template-columns: 1fr;
         gap: 15px;
+    }
+}
+
+/* EDIT MODAL İÇİN EK STİLLER */
+
+/* Ana kişi kartları için özel stiller */
+.main-person-card {
+    border: 2px solid #e9ecef;
+    margin-bottom: 15px;
+}
+
+.main-person-card .collapsible-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Gizli edit formları */
+.hidden-edit-form {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+
+.edit-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Dosya bilgileri düzenleme stiller */
+.file-info-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+}
+
+.file-info-actions .btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.file-info-actions .btn.primary {
+    background: #1a237e;
+    color: white;
+}
+
+.file-info-actions .btn.primary:hover {
+    background: #0d1b6e;
+}
+
+.file-info-actions .btn.secondary {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.file-info-actions .btn.secondary:hover {
+    background: #e9ecef;
+}
+
+#fileInfoEdit .info-group input,
+#fileInfoEdit .info-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: white;
+    transition: border-color 0.2s ease;
+}
+
+#fileInfoEdit .info-group input:focus,
+#fileInfoEdit .info-group select:focus {
+    outline: none;
+    border-color: #1a237e;
+    box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.1);
+}
+
+/* Section header için stiller */
+.basic-info .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.basic-info .section-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.basic-info .section-header .edit-btn {
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.basic-info .section-header .edit-btn:hover {
+    background: rgba(26, 35, 126, 0.1);
+    color: #1a237e;
+}
+
+.basic-info .section-header .edit-btn i {
+    font-size: 18px;
+}
+
+/* Düzenleme modalı için özel buton stiller */
+.btn-icon-small {
+    background: none;
+    border: none;
+    padding: 4px;
+    margin: 0 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon-small:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.btn-icon-small.edit {
+    color: #007bff;
+}
+
+.btn-icon-small.edit:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.btn-icon-small.delete {
+    color: #dc3545;
+}
+
+.btn-icon-small.delete:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.btn-icon-small i {
+    font-size: 16px;
+}
+
+/* Card actions container */
+.card-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Collapse arrow özel stil */
+.collapse-arrow {
+    transition: transform 0.3s ease;
+    margin-left: 10px;
+    color: #6c757d;
+}
+
+/* Editable person card özel stiller */
+.editable-person-card .collapsible-content {
+    transition: all 0.3s ease;
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 18px;
+}
+
+.editable-person-card .collapsible-content.open {
+    max-height: 400px;
+    padding: 18px;
+}
+
+/* Lawyer card özel renk teması */
+.lawyer-card {
+    background: #fff9e6;
+    border-color: #ffc107;
+}
+
+.lawyer-card .collapsible-header {
+    background: linear-gradient(135deg, #fff9e6 0%, #ffecb3 100%);
+    border-bottom-color: #ffc107;
+}
+
+.lawyer-card .person-icon.lawyer-icon {
+    color: #ffc107;
+}
+
+/* Vekil ekleme butonu */
+.add-lawyer-btn-container {
+    text-align: center;
+    padding: 20px;
+}
+
+.add-lawyer-btn-container .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Edit section düzenlemesi */
+.edit-section {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.edit-info-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .edit-info-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* YENİ - Katlanabilir Person Card Stilleri */
+.collapsible-person-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.collapsible-person-card:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+}
+
+.collapsible-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 14px 18px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.collapsible-header:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+}
+
+.collapsible-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.person-icon {
+    background: #1a237e;
+    color: white;
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 18px !important;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.person-info {
+    flex: 1;
+}
+
+.person-title {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+}
+
+.person-subtitle {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.collapse-arrow {
+    color: #6c757d;
+    font-size: 20px;
+    transition: all 0.3s ease;
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    background: #fafbfc;
+    transition: all 0.3s ease;
+    padding: 0 18px;
+}
+
+.collapsible-content.open {
+    max-height: 250px;
+    padding: 18px;
+}
+
+.detail-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.detail-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detail-info-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-info-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-info-value {
+    font-size: 0.85rem;
+    color: #2c3e50;
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+/* Additional display container */
+.additional-display {
+    margin-top: 16px;
+}
+
+.additional-display:empty {
+    display: none;
+}
+
+/* Vekil bilgileri için özel stil */
+.lawyer-info-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+}
+
+.lawyer-info-section .detail-info-item:first-child {
+    margin-top: 0;
+}
+
+.lawyer-info-section .detail-info-label {
+    color: #856404;
+    font-weight: 600;
+}
+
+.lawyer-info-section .detail-info-label::before {
+    content: '⚖️ ';
+    margin-right: 4px;
+}
+
+/* Vekil kartları için farklı renk teması */
+.lawyer-card {
+    border-color: #d4a574;
+}
+
+.lawyer-card .collapsible-header {
+    background: linear-gradient(135deg, #fef7ef 0%, #f8ead4 100%);
+    border-bottom-color: #d4a574;
+}
+
+.lawyer-card .collapsible-header:hover {
+    background: linear-gradient(135deg, #f8ead4 0%, #f0d7a8 100%);
+}
+
+.lawyer-card .collapsible-content {
+    background: #fefbf7;
+}
+
+.lawyer-card .lawyer-icon {
+    background: #d4a574;
+    color: white;
+}
+
+.lawyer-card:hover {
+    box-shadow: 0 4px 10px rgba(212, 165, 116, 0.2);
+}
+
+/* Düzenlenebilir person card butonları */
+.card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-icon-small {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: #6c757d;
+}
+
+.btn-icon-small:hover {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.btn-icon-small.edit:hover {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.btn-icon-small.delete:hover {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.btn-icon-small i {
+    font-size: 16px;
+}
+
+.editable-person-card .collapsible-header {
+    justify-content: space-between;
+}
+
+/* Responsive iyileştirmeler */
+@media (max-width: 768px) {
+    .detail-info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .collapsible-header {
+        padding: 12px 15px;
+    }
+    
+    .collapsible-title {
+        gap: 10px;
+    }
+    
+    .person-icon {
+        width: 26px;
+        height: 26px;
+        font-size: 16px !important;
+    }
+    
+    .person-title {
+        font-size: 0.9rem;
+    }
+    
+    .person-subtitle {
+        font-size: 0.75rem;
     }
 }
 
@@ -686,6 +1320,43 @@
     .edit-info-container {
         grid-template-columns: 1fr;
     }
+}
+
+/* Section header with add button */
+.section-header-with-add {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.section-header-with-add h3 {
+    margin: 0;
+}
+
+.btn-add-person {
+    background: none;
+    color: #1a237e;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-add-person:hover {
+    background: rgba(26, 35, 126, 0.1);
+    transform: translateY(-1px);
+    color: #0d1b6e;
+}
+
+.btn-add-person i {
+    font-size: 20px;
+    font-weight: bold;
 }
 
 .detail-section h3 {
@@ -767,26 +1438,27 @@
     overflow: hidden;
 }
 
-/* Modal header */
+/* Modal header - Dosya detayları modalı ile uyumlu */
 #editModal .modal-header {
-    background: linear-gradient(135deg, #1a237e 0%, #2d313c 100%);
-    color: white;
-    padding: 25px 30px;
-    border-bottom: none;
+    background: #f8f9fa;
+    color: #2c3e50;
+    padding: 20px 25px;
+    border-bottom: 1px solid #e9ecef;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-radius: 12px 12px 0 0;
 }
 
 #editModal .modal-header h2 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 600;
-    color: white;
+    color: #2c3e50;
 }
 
 #editModal .modal-header .close-btn {
-    background: rgba(255,255,255,0.2);
+    background: #e9ecef;
     border: none;
     border-radius: 8px;
     width: 40px;
@@ -799,11 +1471,11 @@
 }
 
 #editModal .modal-header .close-btn:hover {
-    background: rgba(255,255,255,0.3);
+    background: #dee2e6;
 }
 
 #editModal .modal-header .close-btn .material-icons {
-    color: white;
+    color: #6c757d;
     font-size: 20px;
 }
 
@@ -1947,6 +2619,54 @@
 +    font-size: 16px; /* İkon boyutunu küçült */
 +    margin-right: 4px;
 +}
+
+/* Duruşma türü seçim stili - E-duruşma tek satır düzeltmesi */
+.hearing-type-inline {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    margin-top: 10px !important;
+    flex-wrap: wrap !important;
+}
+
+.hearing-type-inline > div {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    white-space: nowrap !important;
+}
+
+.hearing-type-inline label {
+    margin-bottom: 0 !important;
+    font-weight: normal !important;
+    white-space: nowrap !important;
+}
+
+.hearing-type-inline button {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+}
+
+/* Mobil responsive düzeltmeler */
+@media (max-width: 768px) {
+    .hearing-type-inline {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+    
+    .hearing-type-inline > div:first-child,
+    .hearing-type-inline > div:nth-child(2) {
+        display: inline-flex !important;
+        margin-right: 15px !important;
+    }
+    
+    .hearing-type-inline button {
+        margin-left: 0 !important;
+        margin-top: 5px !important;
+        width: 100% !important;
+    }
+}
 </style>
 
 <!-- TIFF ve DOCX Önizleme Kütüphaneleri -->
@@ -1974,6 +2694,38 @@ let currentExpenses = [];
 
 // Backend'den gelen tüm adliye verisi
 const allCourthousesData = JSON.parse('{{ all_courthouses | safe }}');
+
+// Dosya türüne göre sıfat seçenekleri
+const capacityOptions = {
+    hukuk: {
+        client: ['Davacı', 'Davalı', 'Davalı-Karşı Davacı', 'Davacı Karşı Davalı', 'Talepte Bulunan', 'Muris', 'Kayyım', 'Dahili Davalı', 'Kısıtlı', 'Temsilci', 'Mirasçı'],
+        opponent: ['Davalı', 'Davacı', 'Davalı-Karşı Davacı', 'Davacı Karşı Davalı', 'Talepte Bulunan', 'Muris', 'Kayyım', 'Dahili Davalı', 'Kısıtlı', 'Temsilci', 'Mirasçı']
+    },
+    ceza: {
+        client: ['Mağdur', 'Müşteki', 'Sanık', 'Katılan', 'S.S.Ç.'],
+        opponent: ['Mağdur', 'Müşteki', 'Sanık', 'Katılan', 'S.S.Ç.']
+    },
+    savcilik: {
+        client: ['Mağdur', 'Müşteki', 'Sanık', 'Katılan', 'S.S.Ç.'],
+        opponent: ['Mağdur', 'Müşteki', 'Sanık', 'Katılan', 'S.S.Ç.']
+    },
+    icra: {
+        client: ['Alacaklı', 'Borçlu'],
+        opponent: ['Alacaklı', 'Borçlu']
+    },
+    ARABULUCULUK: {
+        client: ['Başvuran', 'Aleyhine Başvurulan'],
+        opponent: ['Başvuran', 'Aleyhine Başvurulan']
+    },
+    AİHM: {
+        client: ['Başvurucu'],
+        opponent: []
+    },
+    AYM: {
+        client: ['Başvurucu'],
+        opponent: []
+    }
+};
 
 // Orijinal Birim seçenekleri
 const originalDepartments = [
@@ -2329,7 +3081,6 @@ function showDetails(caseId) {
             // Müvekkil Bilgileri
             document.getElementById('detailClientEntityType').textContent = 
                 data.client_entity_type === 'company' ? 'Şirket' : 'Gerçek Kişi';
-            document.getElementById('detailClientName').textContent = data.client_name || '-';
             document.getElementById('detailClientCapacity').textContent = data.client_capacity || '-';
             document.getElementById('detailClientIdentityNumber').textContent = data.client_identity_number || '-';
             document.getElementById('detailPhoneNumber').textContent = data.phone_number || '-';
@@ -2338,58 +3089,147 @@ function showDetails(caseId) {
             // Karşı Taraf Bilgileri
             document.getElementById('detailOpponentEntityType').textContent = 
                 data.opponent_entity_type === 'company' ? 'Şirket' : 'Gerçek Kişi';
-            document.getElementById('detailOpponentName').textContent = data.opponent_name || '-';
             document.getElementById('detailOpponentCapacity').textContent = data.opponent_capacity || '-';
             document.getElementById('detailOpponentIdentityNumber').textContent = data.opponent_identity_number || '-';
             document.getElementById('detailOpponentPhone').textContent = data.opponent_phone || '-';
             document.getElementById('detailOpponentAddress').textContent = data.opponent_address || '-';
             
-            // Vekil bilgileri kontrolü ve gösterimi
-            const opponentLawyerDisplay = document.getElementById('opponentLawyerDisplay');
-            if (data.opponent_lawyer || data.opponent_lawyer_phone || data.opponent_lawyer_address) {
-                document.getElementById('detailOpponentLawyer').textContent = data.opponent_lawyer || '-';
-                document.getElementById('detailOpponentLawyerPhone').textContent = data.opponent_lawyer_phone || '-';
-                document.getElementById('detailOpponentLawyerAddress').textContent = data.opponent_lawyer_address || '-';
-                opponentLawyerDisplay.style.display = 'block';
-            } else {
-                opponentLawyerDisplay.style.display = 'none';
+            // Ana müvekkil başlık ve subtitle'ını güncelle
+            const mainClientTitle = document.querySelector('.main-client-title');
+            const mainClientSubtitle = document.getElementById('mainClientSubtitle');
+            if (mainClientTitle && mainClientSubtitle) {
+                const clientParts = [];
+                if (data.client_capacity) clientParts.push(data.client_capacity);
+                if (data.client_name) clientParts.push(data.client_name);
+                
+                if (clientParts.length > 0) {
+                    mainClientTitle.textContent = clientParts.join(' - ');
+                    mainClientSubtitle.textContent = data.client_identity_number || '';
+                } else {
+                    mainClientTitle.textContent = 'Müvekkil Bilgileri';
+                    mainClientSubtitle.textContent = '';
+                }
             }
             
-            // Ek Müvekkilleri göster
+            // Ana karşı taraf başlık ve subtitle'ını güncelle
+            const mainOpponentTitle = document.querySelector('.main-opponent-title');
+            const mainOpponentSubtitle = document.getElementById('mainOpponentSubtitle');
+            if (mainOpponentTitle && mainOpponentSubtitle) {
+                const opponentParts = [];
+                if (data.opponent_capacity) opponentParts.push(data.opponent_capacity);
+                if (data.opponent_name) opponentParts.push(data.opponent_name);
+                
+                if (opponentParts.length > 0) {
+                    mainOpponentTitle.textContent = opponentParts.join(' - ');
+                    mainOpponentSubtitle.textContent = data.opponent_identity_number || '';
+                } else {
+                    mainOpponentTitle.textContent = 'Karşı Taraf Bilgileri';
+                    mainOpponentSubtitle.textContent = '';
+                }
+            }
+            
+            // Vekil bilgilerini göster - Tüm vekilleri ana vekil olarak göster
+            const lawyersDisplay = document.getElementById('lawyersDisplay');
+            lawyersDisplay.innerHTML = '';
+            
+            // Ana vekili listeye ekle
+            const allLawyers = [];
+            if (data.opponent_lawyer || data.opponent_lawyer_phone || data.opponent_lawyer_address) {
+                allLawyers.push({
+                    name: data.opponent_lawyer || 'Ad belirtilmemiş',
+                    bar_number: data.opponent_lawyer_bar_number || '',
+                    phone: data.opponent_lawyer_phone || '',
+                    address: data.opponent_lawyer_address || ''
+                });
+            }
+            
+            // Ek vekilleri listeye ekle
+            if (data.additional_lawyers && Array.isArray(data.additional_lawyers)) {
+                data.additional_lawyers.forEach(lawyer => {
+                    allLawyers.push({
+                        name: lawyer.name || 'Ad belirtilmemiş',
+                        bar_number: lawyer.bar_number || '',
+                        phone: lawyer.phone || '',
+                        address: lawyer.address || ''
+                    });
+                });
+            }
+            
+            // Tüm vekilleri aynı formatta göster
+            allLawyers.forEach((lawyer, index) => {
+                const lawyerDiv = document.createElement('div');
+                lawyerDiv.className = 'collapsible-person-card lawyer-card';
+                lawyerDiv.innerHTML = `
+                    <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
+                        <div class="collapsible-title">
+                            <i class="material-icons person-icon lawyer-icon">account_balance</i>
+                            <div class="person-info">
+                                <div class="person-title">Vekil - ${lawyer.name}</div>
+                                <div class="person-subtitle">Baro No: ${lawyer.bar_number || 'Belirtilmemiş'}</div>
+                            </div>
+                        </div>
+                        <i class="material-icons collapse-arrow">expand_more</i>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="detail-info-grid">
+                            <div class="detail-info-item">
+                                <span class="detail-info-label">BARO NUMARASI</span>
+                                <span class="detail-info-value">${lawyer.bar_number || '-'}</span>
+                            </div>
+                            <div class="detail-info-item">
+                                <span class="detail-info-label">TELEFON</span>
+                                <span class="detail-info-value">${lawyer.phone || '-'}</span>
+                            </div>
+                            <div class="detail-info-item full-width">
+                                <span class="detail-info-label">ADRES</span>
+                                <span class="detail-info-value">${lawyer.address || '-'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                lawyersDisplay.appendChild(lawyerDiv);
+            });
+            
+            // Ek Müvekkilleri göster - YENİ katlanabilir tasarım
             const additionalClientsDisplay = document.getElementById('additionalClientsDisplay');
             additionalClientsDisplay.innerHTML = '';
             if (data.additional_clients && data.additional_clients.length > 0) {
                 data.additional_clients.forEach((client, index) => {
                     const clientDiv = document.createElement('div');
-                    clientDiv.className = 'additional-person';
+                    clientDiv.className = 'collapsible-person-card';
                     clientDiv.innerHTML = `
-                        <h5><i class="material-icons">person_add</i> Ek Müvekkil ${index + 1}</h5>
-                        <div class="info-row">
-                            <div class="info-group">
-                                <label>TİP</label>
-                                <span>${client.entity_type === 'company' ? 'Şirket' : 'Gerçek Kişi'}</span>
+                        <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
+                            <div class="collapsible-title">
+                                <i class="material-icons person-icon">person_add</i>
+                                <div class="person-info">
+                                    <div class="person-title">${client.capacity ? client.capacity + ' - ' : ''}${client.name || 'Ad belirtilmemiş'}</div>
+                                    <div class="person-subtitle">${client.identity_number || ''}</div>
+                                </div>
                             </div>
-                            <div class="info-group">
-                                <label>AD SOYAD / UNVAN</label>
-                                <span>${client.name || '-'}</span>
-                            </div>
-                            <div class="info-group">
-                                <label>SIFAT</label>
-                                <span>${client.capacity || '-'}</span>
-                            </div>
-                            <div class="info-group">
-                                <label>KİMLİK / VERGİ NO</label>
-                                <span>${client.identity_number || '-'}</span>
-                            </div>
+                            <i class="material-icons collapse-arrow">expand_more</i>
                         </div>
-                        <div class="info-row">
-                            <div class="info-group">
-                                <label>TELEFON</label>
-                                <span>${client.phone || '-'}</span>
-                            </div>
-                            <div class="info-group full-width">
-                                <label>ADRES</label>
-                                <span>${client.address || '-'}</span>
+                        <div class="collapsible-content">
+                            <div class="detail-info-grid">
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TİP</span>
+                                    <span class="detail-info-value">${client.entity_type === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">SIFAT</span>
+                                    <span class="detail-info-value">${client.capacity || '-'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                    <span class="detail-info-value">${client.identity_number || '-'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TELEFON</span>
+                                    <span class="detail-info-value">${client.phone || '-'}</span>
+                                </div>
+                                <div class="detail-info-item full-width">
+                                    <span class="detail-info-label">ADRES</span>
+                                    <span class="detail-info-value">${client.address || '-'}</span>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -2397,41 +3237,46 @@ function showDetails(caseId) {
                 });
             }
             
-            // Ek Karşı Tarafları göster
+            // Ek Karşı Tarafları göster - YENİ katlanabilir tasarım
             const additionalOpponentsDisplay = document.getElementById('additionalOpponentsDisplay');
             additionalOpponentsDisplay.innerHTML = '';
             if (data.additional_opponents && data.additional_opponents.length > 0) {
                 data.additional_opponents.forEach((opponent, index) => {
                     const opponentDiv = document.createElement('div');
-                    opponentDiv.className = 'additional-person';
+                    opponentDiv.className = 'collapsible-person-card';
                     opponentDiv.innerHTML = `
-                        <h5><i class="material-icons">group_add</i> Ek Karşı Taraf ${index + 1}</h5>
-                        <div class="info-row">
-                            <div class="info-group">
-                                <label>TİP</label>
-                                <span>${opponent.entity_type === 'company' ? 'Şirket' : 'Gerçek Kişi'}</span>
+                        <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
+                            <div class="collapsible-title">
+                                <i class="material-icons person-icon">group_add</i>
+                                <div class="person-info">
+                                    <div class="person-title">${opponent.capacity ? opponent.capacity + ' - ' : ''}${opponent.name || 'Ad belirtilmemiş'}</div>
+                                    <div class="person-subtitle">${opponent.identity_number || ''}</div>
+                                </div>
                             </div>
-                            <div class="info-group">
-                                <label>AD SOYAD / UNVAN</label>
-                                <span>${opponent.name || '-'}</span>
-                            </div>
-                            <div class="info-group">
-                                <label>SIFAT</label>
-                                <span>${opponent.capacity || '-'}</span>
-                            </div>
-                            <div class="info-group">
-                                <label>KİMLİK / VERGİ NO</label>
-                                <span>${opponent.identity_number || '-'}</span>
-                            </div>
+                            <i class="material-icons collapse-arrow">expand_more</i>
                         </div>
-                        <div class="info-row">
-                            <div class="info-group">
-                                <label>TELEFON</label>
-                                <span>${opponent.phone || '-'}</span>
-                            </div>
-                            <div class="info-group full-width">
-                                <label>ADRES</label>
-                                <span>${opponent.address || '-'}</span>
+                        <div class="collapsible-content">
+                            <div class="detail-info-grid">
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TİP</span>
+                                    <span class="detail-info-value">${opponent.entity_type === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">SIFAT</span>
+                                    <span class="detail-info-value">${opponent.capacity || '-'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                    <span class="detail-info-value">${opponent.identity_number || '-'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TELEFON</span>
+                                    <span class="detail-info-value">${opponent.phone || '-'}</span>
+                                </div>
+                                <div class="detail-info-item full-width">
+                                    <span class="detail-info-label">ADRES</span>
+                                    <span class="detail-info-value">${opponent.address || '-'}</span>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -2694,104 +3539,262 @@ function editCase(caseId) {
                             <div class="edit-info-container">
                                 <!-- Müvekkil Bilgileri -->
                                 <div class="edit-section">
-                                    <h3><i class="material-icons">person</i> Müvekkil Bilgileri</h3>
-                                    <div class="detail-grid">
-                                        <div class="detail-group">
-                                            <label>Tip</label>
-                                            <select id="editClientEntityType">
-                                                <option value="person" ${(data.client_entity_type || 'person') === 'person' ? 'selected' : ''}>Gerçek Kişi</option>
-                                                <option value="company" ${data.client_entity_type === 'company' ? 'selected' : ''}>Şirket</option>
-                                            </select>
+                                    <div class="section-header-with-add">
+                                        <h3><i class="material-icons">person</i> Müvekkil Bilgileri</h3>
+                                        <button type="button" class="btn-add-person" onclick="addNewClientInModal(${caseId})" title="Yeni Müvekkil Ekle">
+                                            <i class="material-icons">add</i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Ana Müvekkil - Katlanabilir -->
+                                    <div id="mainClientCard" class="collapsible-person-card editable-person-card main-person-card">
+                                        <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
+                                            <div class="collapsible-title">
+                                                <i class="material-icons person-icon">person</i>
+                                                <div class="person-info">
+                                                    <div class="person-title main-edit-client-title">${(data.client_capacity || 'Müvekkil') + ' - ' + (data.client_name || 'İsim belirtilmemiş')}</div>
+                                                    <div class="person-subtitle">${data.client_identity_number || ''}</div>
+                                                </div>
+                                            </div>
+                                            <div class="card-actions" onclick="event.stopPropagation()">
+                                                <button type="button" class="btn-icon-small edit" onclick="editMainPersonInModal('client', ${caseId})" title="Düzenle">
+                                                    <i class="material-icons">edit</i>
+                                                </button>
+                                                <button type="button" class="btn-icon-small delete" onclick="deleteMainPersonInModal('client', ${caseId})" title="Sil">
+                                                    <i class="material-icons">delete</i>
+                                                </button>
+                                                <i class="material-icons collapse-arrow">expand_more</i>
+                                            </div>
                                         </div>
-                                        <div class="detail-group">
-                                            <label>Sıfat</label>
-                                            <input type="text" id="editClientCapacity" value="${data.client_capacity || ''}" placeholder="Müvekkil, Davacı, Davalı vs.">
+                                        <div class="collapsible-content">
+                                            <div class="detail-info-grid">
+                                                <div class="detail-info-item">
+                                                    <span class="detail-info-label">TİP</span>
+                                                    <span class="detail-info-value">${(data.client_entity_type || 'person') === 'person' ? 'Gerçek Kişi' : 'Şirket'}</span>
+                                                </div>
+                                                <div class="detail-info-item">
+                                                    <span class="detail-info-label">SIFAT</span>
+                                                    <span class="detail-info-value">${data.client_capacity || '-'}</span>
+                                                </div>
+                                                <div class="detail-info-item">
+                                                    <span class="detail-info-label">TELEFON</span>
+                                                    <span class="detail-info-value">${data.phone_number || '-'}</span>
+                                                </div>
+                                                <div class="detail-info-item">
+                                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                                    <span class="detail-info-value">${data.client_identity_number || '-'}</span>
+                                                </div>
+                                                <div class="detail-info-item full-width">
+                                                    <span class="detail-info-label">ADRES</span>
+                                                    <span class="detail-info-value">${data.client_address || '-'}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="detail-grid">
-                                        <div class="detail-group full-width">
-                                            <label>Ad Soyad / Unvan</label>
-                                            <input type="text" id="editClientName" value="${data.client_name || ''}">
+                                    
+                                    <!-- Gizli Ana Müvekkil Edit Formu -->
+                                    <div id="mainClientEditForm" style="display: none;" class="hidden-edit-form">
+                                        <div class="detail-grid">
+                                            <div class="detail-group">
+                                                <label>Tip</label>
+                                                <select id="editClientEntityType">
+                                                    <option value="person" ${(data.client_entity_type || 'person') === 'person' ? 'selected' : ''}>Gerçek Kişi</option>
+                                                    <option value="company" ${data.client_entity_type === 'company' ? 'selected' : ''}>Şirket</option>
+                                                </select>
+                                            </div>
+                                            <div class="detail-group">
+                                                <label>Sıfat</label>
+                                                <input type="text" id="editClientCapacity" value="${data.client_capacity || ''}" placeholder="Müvekkil, Davacı, Davalı vs.">
+                                            </div>
+                                        </div>
+                                        <div class="detail-grid">
+                                            <div class="detail-group full-width">
+                                                <label>Ad Soyad / Unvan</label>
+                                                <input type="text" id="editClientName" value="${data.client_name || ''}">
+                                            </div>
+                                        </div>
+                                        <div class="detail-grid">
+                                            <div class="detail-group">
+                                                <label>Telefon</label>
+                                                <input type="text" id="editPhoneNumber" value="${data.phone_number || ''}">
+                                            </div>
+                                            <div class="detail-group">
+                                                <label>Kimlik / Vergi No</label>
+                                                <input type="text" id="editClientIdentityNumber" value="${data.client_identity_number || ''}">
+                                            </div>
+                                        </div>
+                                        <div class="detail-grid">
+                                            <div class="detail-group full-width">
+                                                <label>Adres</label>
+                                                <textarea id="editClientAddress" rows="2">${data.client_address || ''}</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="edit-form-actions">
+                                            <button type="button" class="btn secondary" onclick="cancelMainPersonEdit('client')">İptal</button>
+                                            <button type="button" class="btn primary" onclick="saveMainPersonEdit('client', ${caseId})">Kaydet</button>
                                         </div>
                                     </div>
-                                    <div class="detail-grid">
-                                        <div class="detail-group full-width">
-                                            <label>Kimlik / Vergi No</label>
-                                            <input type="text" id="editClientIdentityNumber" value="${data.client_identity_number || ''}">
-                                        </div>
-                                    </div>
-                                    <div class="detail-grid">
-                                        <div class="detail-group">
-                                            <label>Telefon</label>
-                                            <input type="text" id="editPhoneNumber" value="${data.phone_number || ''}">
-                                        </div>
-                                        <div class="detail-group">
-                                            <label>Adres</label>
-                                            <textarea id="editClientAddress" rows="2">${data.client_address || ''}</textarea>
-                                        </div>
+                                    
+                                    <!-- Ek Müvekkiller -->
+                                    <div id="editAdditionalClientsDisplay" class="additional-display">
+                                        <!-- Dinamik olarak eklenecek -->
                                     </div>
                                 </div>
                                 
                                 <!-- Karşı Taraf Bilgileri -->
                                 <div class="edit-section">
-                                    <h3><i class="material-icons">group</i> Karşı Taraf Bilgileri</h3>
-                                    <div class="detail-grid">
-                                        <div class="detail-group">
-                                            <label>Tip</label>
-                                            <select id="editOpponentEntityType">
-                                                <option value="person" ${(data.opponent_entity_type || 'person') === 'person' ? 'selected' : ''}>Gerçek Kişi</option>
-                                                <option value="company" ${data.opponent_entity_type === 'company' ? 'selected' : ''}>Şirket</option>
-                                            </select>
+                                    <div class="section-header-with-add">
+                                        <h3><i class="material-icons">group</i> Karşı Taraf Bilgileri</h3>
+                                        <button type="button" class="btn-add-person" onclick="addNewOpponentInModal(${caseId})" title="Yeni Karşı Taraf Ekle">
+                                            <i class="material-icons">add</i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Ana Karşı Taraf - Katlanabilir -->
+                                    <div id="mainOpponentCard" class="collapsible-person-card editable-person-card main-person-card">
+                                        <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
+                                            <div class="collapsible-title">
+                                                <i class="material-icons person-icon">group</i>
+                                                <div class="person-info">
+                                                    <div class="person-title main-edit-opponent-title">${(data.opponent_capacity || 'Karşı Taraf') + ' - ' + (data.opponent_name || 'İsim belirtilmemiş')}</div>
+                                                    <div class="person-subtitle">${data.opponent_identity_number || ''}</div>
+                                                </div>
+                                            </div>
+                                            <div class="card-actions" onclick="event.stopPropagation()">
+                                                <button type="button" class="btn-icon-small edit" onclick="editMainPersonInModal('opponent', ${caseId})" title="Düzenle">
+                                                    <i class="material-icons">edit</i>
+                                                </button>
+                                                <button type="button" class="btn-icon-small delete" onclick="deleteMainPersonInModal('opponent', ${caseId})" title="Sil">
+                                                    <i class="material-icons">delete</i>
+                                                </button>
+                                                <i class="material-icons collapse-arrow">expand_more</i>
+                                            </div>
                                         </div>
-                                        <div class="detail-group">
-                                            <label>Sıfat</label>
-                                            <input type="text" id="editOpponentCapacity" value="${data.opponent_capacity || ''}" placeholder="Davalı, Davacı vs.">
+                                        <div class="collapsible-content">
+                                            <div class="detail-info-grid">
+                                                <div class="detail-info-item">
+                                                    <span class="detail-info-label">TİP</span>
+                                                    <span class="detail-info-value">${(data.opponent_entity_type || 'person') === 'person' ? 'Gerçek Kişi' : 'Şirket'}</span>
+                                                </div>
+                                                <div class="detail-info-item">
+                                                    <span class="detail-info-label">SIFAT</span>
+                                                    <span class="detail-info-value">${data.opponent_capacity || '-'}</span>
+                                                </div>
+                                                <div class="detail-info-item">
+                                                    <span class="detail-info-label">TELEFON</span>
+                                                    <span class="detail-info-value">${data.opponent_phone || '-'}</span>
+                                                </div>
+                                                <div class="detail-info-item">
+                                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                                    <span class="detail-info-value">${data.opponent_identity_number || '-'}</span>
+                                                </div>
+                                                <div class="detail-info-item full-width">
+                                                    <span class="detail-info-label">ADRES</span>
+                                                    <span class="detail-info-value">${data.opponent_address || '-'}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="detail-grid">
-                                        <div class="detail-group full-width">
-                                            <label>Ad Soyad / Unvan</label>
-                                            <input type="text" id="editOpponentName" value="${data.opponent_name || ''}">
+                                    
+                                    <!-- Gizli Ana Karşı Taraf Edit Formu -->
+                                    <div id="mainOpponentEditForm" style="display: none;" class="hidden-edit-form">
+                                        <div class="detail-grid">
+                                            <div class="detail-group">
+                                                <label>Tip</label>
+                                                <select id="editOpponentEntityType">
+                                                    <option value="person" ${(data.opponent_entity_type || 'person') === 'person' ? 'selected' : ''}>Gerçek Kişi</option>
+                                                    <option value="company" ${data.opponent_entity_type === 'company' ? 'selected' : ''}>Şirket</option>
+                                                </select>
+                                            </div>
+                                            <div class="detail-group">
+                                                <label>Sıfat</label>
+                                                <input type="text" id="editOpponentCapacity" value="${data.opponent_capacity || ''}" placeholder="Davalı, Davacı vs.">
+                                            </div>
+                                        </div>
+                                        <div class="detail-grid">
+                                            <div class="detail-group full-width">
+                                                <label>Ad Soyad / Unvan</label>
+                                                <input type="text" id="editOpponentName" value="${data.opponent_name || ''}">
+                                            </div>
+                                        </div>
+                                        <div class="detail-grid">
+                                            <div class="detail-group">
+                                                <label>Telefon</label>
+                                                <input type="text" id="editOpponentPhone" value="${data.opponent_phone || ''}">
+                                            </div>
+                                            <div class="detail-group">
+                                                <label>Kimlik / Vergi No</label>
+                                                <input type="text" id="editOpponentIdentityNumber" value="${data.opponent_identity_number || ''}">
+                                            </div>
+                                        </div>
+                                        <div class="detail-grid">
+                                            <div class="detail-group full-width">
+                                                <label>Adres</label>
+                                                <textarea id="editOpponentAddress" rows="2">${data.opponent_address || ''}</textarea>
+                                            </div>
+                                        </div>
+                                        <div class="edit-form-actions">
+                                            <button type="button" class="btn secondary" onclick="cancelMainPersonEdit('opponent')">İptal</button>
+                                            <button type="button" class="btn primary" onclick="saveMainPersonEdit('opponent', ${caseId})">Kaydet</button>
                                         </div>
                                     </div>
-                                    <div class="detail-grid">
-                                        <div class="detail-group full-width">
-                                            <label>Kimlik / Vergi No</label>
-                                            <input type="text" id="editOpponentIdentityNumber" value="${data.opponent_identity_number || ''}">
-                                        </div>
-                                    </div>
-                                    <div class="detail-grid">
-                                        <div class="detail-group">
-                                            <label>Telefon</label>
-                                            <input type="text" id="editOpponentPhone" value="${data.opponent_phone || ''}">
-                                        </div>
-                                        <div class="detail-group">
-                                            <label>Adres</label>
-                                            <textarea id="editOpponentAddress" rows="2">${data.opponent_address || ''}</textarea>
-                                        </div>
+                                    
+                                    <!-- Ek Karşı Taraflar -->
+                                    <div id="editAdditionalOpponentsDisplay" class="additional-display">
+                                        <!-- Dinamik olarak eklenecek -->
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Vekil Bilgileri -->
-                            <div class="detail-grid" id="editLawyerSection" style="margin-top: 15px;">
-                                <div class="detail-group" style="grid-column: span 4;">
-                                    <label style="font-weight: 600; color: #856404;">
-                                        <i class="material-icons" style="vertical-align: middle; margin-right: 5px;">account_balance</i>
-                                        Vekil Bilgileri (Opsiyonel)
-                                    </label>
+                            <div class="edit-section vekil-section" id="editLawyerSection" style="margin-top: 15px;">
+                                <div class="section-header-with-add">
+                                    <h3><i class="material-icons">account_balance</i> Vekil Bilgileri (Opsiyonel)</h3>
+                                    <button type="button" class="btn-add-person" onclick="addNewLawyerInModal(${caseId})" title="Yeni Vekil Ekle">
+                                        <i class="material-icons">add</i>
+                                    </button>
                                 </div>
-                                <div class="detail-group">
-                                    <label>Vekil Adı Soyadı</label>
-                                    <input type="text" id="editOpponentLawyer" value="${data.opponent_lawyer || ''}">
+                                
+
+                                
+                                <!-- Vekil Ekleme Butonu (Hiç vekil yoksa göster) -->
+                                <div class="add-lawyer-btn-container" style="${(data.opponent_lawyer || data.opponent_lawyer_phone || data.opponent_lawyer_address || (data.additional_lawyers && data.additional_lawyers.length > 0)) ? 'display: none;' : ''}">
+                                    <button type="button" class="btn btn-outline-primary" onclick="showMainLawyerEditForm()">
+                                        <i class="material-icons">add</i> Vekil Ekle
+                                    </button>
                                 </div>
-                                <div class="detail-group">
-                                    <label>Vekil Telefonu</label>
-                                    <input type="text" id="editOpponentLawyerPhone" value="${data.opponent_lawyer_phone || ''}">
+                                
+                                <!-- Gizli Vekil Edit Formu -->
+                                <div id="mainLawyerEditForm" style="display: none;" class="hidden-edit-form">
+                                    <div class="detail-grid">
+                                        <div class="detail-group">
+                                            <label>Vekil Adı Soyadı</label>
+                                            <input type="text" id="editOpponentLawyer" value="${data.opponent_lawyer || ''}">
+                                        </div>
+                                        <div class="detail-group">
+                                            <label>Baro Numarası</label>
+                                            <input type="text" id="editOpponentLawyerBarNumber" value="${data.opponent_lawyer_bar_number || ''}">
+                                        </div>
+                                    </div>
+                                    <div class="detail-grid">
+                                        <div class="detail-group">
+                                            <label>Vekil Telefonu</label>
+                                            <input type="text" id="editOpponentLawyerPhone" value="${data.opponent_lawyer_phone || ''}">
+                                        </div>
+                                        <div class="detail-group full-width">
+                                            <label>Vekil Adresi</label>
+                                            <textarea id="editOpponentLawyerAddress" rows="2">${data.opponent_lawyer_address || ''}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="edit-form-actions">
+                                        <button type="button" class="btn secondary" onclick="cancelMainLawyerEdit()">İptal</button>
+                                        <button type="button" class="btn primary" onclick="saveMainLawyerEdit(${caseId})">Kaydet</button>
+                                    </div>
                                 </div>
-                                <div class="detail-group full-width" style="grid-column: span 2;">
-                                    <label>Vekil Adresi</label>
-                                    <textarea id="editOpponentLawyerAddress" rows="2">${data.opponent_lawyer_address || ''}</textarea>
+                                
+                                <!-- Ek Vekiller Gösterim Alanı -->
+                                <div id="editAdditionalLawyersDisplay" class="additional-display">
+                                    <!-- Dinamik olarak ek vekiller buraya eklenecek -->
                                 </div>
                             </div>
                             
@@ -2921,6 +3924,193 @@ function editCase(caseId) {
                 showHearingBtn.style.display = 'flex';
                  hearingInfoLabel.style.display = 'block';
             };
+            
+            // Ek müvekkilleri ve karşı tarafları göster - edit modal için
+            if (data.additional_clients && data.additional_clients.length > 0) {
+                const editAdditionalClientsDisplay = editModal.querySelector('#editAdditionalClientsDisplay');
+                data.additional_clients.forEach((client, index) => {
+                    const clientDiv = document.createElement('div');
+                    clientDiv.className = 'collapsible-person-card editable-person-card';
+                    clientDiv.setAttribute('data-person-type', 'client');
+                    clientDiv.setAttribute('data-person-index', index);
+                    clientDiv.innerHTML = `
+                        <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
+                            <div class="collapsible-title">
+                                <i class="material-icons person-icon">person_add</i>
+                                <div class="person-info">
+                                    <div class="person-title">${client.capacity || 'Müvekkil'} - ${client.name || 'İsim belirtilmemiş'}</div>
+                                    <div class="person-subtitle">${client.entity_type === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}${client.identity_number ? ' • ' + client.identity_number : ''}</div>
+                                </div>
+                            </div>
+                            <div class="card-actions" onclick="event.stopPropagation()">
+                                <button type="button" class="btn-icon-small edit" onclick="editPersonInModal('client', ${index}, ${caseId})" title="Düzenle">
+                                    <i class="material-icons">edit</i>
+                                </button>
+                                <button type="button" class="btn-icon-small delete" onclick="deletePersonInModal('client', ${index}, ${caseId})" title="Sil">
+                                    <i class="material-icons">delete</i>
+                                </button>
+                                <i class="material-icons collapse-arrow">expand_more</i>
+                            </div>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="detail-info-grid">
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TİP</span>
+                                    <span class="detail-info-value">${client.entity_type === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">SIFAT</span>
+                                    <span class="detail-info-value">${client.capacity || '-'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                    <span class="detail-info-value">${client.identity_number || '-'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TELEFON</span>
+                                    <span class="detail-info-value">${client.phone || '-'}</span>
+                                </div>
+                                <div class="detail-info-item full-width">
+                                    <span class="detail-info-label">ADRES</span>
+                                    <span class="detail-info-value">${client.address || '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    editAdditionalClientsDisplay.appendChild(clientDiv);
+                });
+            }
+            
+            if (data.additional_opponents && data.additional_opponents.length > 0) {
+                const editAdditionalOpponentsDisplay = editModal.querySelector('#editAdditionalOpponentsDisplay');
+                data.additional_opponents.forEach((opponent, index) => {
+                    const opponentDiv = document.createElement('div');
+                    opponentDiv.className = 'collapsible-person-card editable-person-card';
+                    opponentDiv.setAttribute('data-person-type', 'opponent');
+                    opponentDiv.setAttribute('data-person-index', index);
+                    opponentDiv.innerHTML = `
+                        <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
+                            <div class="collapsible-title">
+                                <i class="material-icons person-icon">group_add</i>
+                                <div class="person-info">
+                                    <div class="person-title">${opponent.capacity || 'Karşı Taraf'} - ${opponent.name || 'İsim belirtilmemiş'}</div>
+                                    <div class="person-subtitle">${opponent.entity_type === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}${opponent.identity_number ? ' • ' + opponent.identity_number : ''}</div>
+                                </div>
+                            </div>
+                            <div class="card-actions" onclick="event.stopPropagation()">
+                                <button type="button" class="btn-icon-small edit" onclick="editPersonInModal('opponent', ${index}, ${caseId})" title="Düzenle">
+                                    <i class="material-icons">edit</i>
+                                </button>
+                                <button type="button" class="btn-icon-small delete" onclick="deletePersonInModal('opponent', ${index}, ${caseId})" title="Sil">
+                                    <i class="material-icons">delete</i>
+                                </button>
+                                <i class="material-icons collapse-arrow">expand_more</i>
+                            </div>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="detail-info-grid">
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TİP</span>
+                                    <span class="detail-info-value">${opponent.entity_type === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">SIFAT</span>
+                                    <span class="detail-info-value">${opponent.capacity || '-'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                    <span class="detail-info-value">${opponent.identity_number || '-'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TELEFON</span>
+                                    <span class="detail-info-value">${opponent.phone || '-'}</span>
+                                </div>
+                                <div class="detail-info-item full-width">
+                                    <span class="detail-info-label">ADRES</span>
+                                    <span class="detail-info-value">${opponent.address || '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    editAdditionalOpponentsDisplay.appendChild(opponentDiv);
+                });
+            }
+            
+            // Tüm vekilleri göster - Ana vekil + ek vekilleri birlikte
+            const editAdditionalLawyersDisplay = editModal.querySelector('#editAdditionalLawyersDisplay');
+            editAdditionalLawyersDisplay.innerHTML = ''; // Önce temizle
+            
+            // Ana vekili de listeye ekle
+            const allEditLawyers = [];
+            if (data.opponent_lawyer || data.opponent_lawyer_phone || data.opponent_lawyer_address) {
+                allEditLawyers.push({
+                    name: data.opponent_lawyer || 'Ad belirtilmemiş',
+                    bar_number: data.opponent_lawyer_bar_number || '',
+                    phone: data.opponent_lawyer_phone || '',
+                    address: data.opponent_lawyer_address || '',
+                    isMain: true,
+                    id: 'main'
+                });
+            }
+            
+            // Ek vekilleri de listeye ekle
+            if (data.additional_lawyers && data.additional_lawyers.length > 0) {
+                data.additional_lawyers.forEach((lawyer, index) => {
+                    allEditLawyers.push({
+                        name: lawyer.name || 'İsim belirtilmemiş',
+                        bar_number: lawyer.bar_number || '',
+                        phone: lawyer.phone || '',
+                        address: lawyer.address || '',
+                        isMain: false,
+                        id: index
+                    });
+                });
+            }
+            
+            // Tüm vekilleri aynı formatta göster
+            allEditLawyers.forEach((lawyer, displayIndex) => {
+                const lawyerDiv = document.createElement('div');
+                lawyerDiv.className = 'collapsible-person-card editable-person-card';
+                lawyerDiv.setAttribute('data-lawyer-id', lawyer.id);
+                lawyerDiv.setAttribute('data-is-main', lawyer.isMain);
+                lawyerDiv.innerHTML = `
+                    <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
+                        <div class="collapsible-title">
+                            <i class="material-icons person-icon lawyer-icon">account_balance</i>
+                            <div class="person-info">
+                                <div class="person-title">Vekil - ${lawyer.name}</div>
+                                <div class="person-subtitle">Baro No: ${lawyer.bar_number || 'Belirtilmemiş'}</div>
+                            </div>
+                        </div>
+                        <div class="card-actions" onclick="event.stopPropagation()">
+                            <button type="button" class="btn-icon-small edit" onclick="${lawyer.isMain ? 'editMainPersonInModal(\'opponent_lawyer\', ' + currentCaseId + ')' : 'editAdditionalLawyer(' + lawyer.id + ', event)'}" title="Düzenle">
+                                <i class="material-icons">edit</i>
+                            </button>
+                            <button type="button" class="btn-icon-small delete" onclick="${lawyer.isMain ? 'deleteMainPersonInModal(\'opponent_lawyer\', ' + currentCaseId + ')' : 'deleteAdditionalLawyer(' + lawyer.id + ', event)'}" title="Sil">
+                                <i class="material-icons">delete</i>
+                            </button>
+                            <i class="material-icons collapse-arrow">expand_more</i>
+                        </div>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="detail-info-grid">
+                            <div class="detail-info-item">
+                                <span class="detail-info-label">BARO NUMARASI</span>
+                                <span class="detail-info-value">${lawyer.bar_number || '-'}</span>
+                            </div>
+                            <div class="detail-info-item">
+                                <span class="detail-info-label">TELEFON</span>
+                                <span class="detail-info-value">${lawyer.phone || '-'}</span>
+                            </div>
+                            <div class="detail-info-item full-width">
+                                <span class="detail-info-label">ADRES</span>
+                                <span class="detail-info-value">${lawyer.address || '-'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                editAdditionalLawyersDisplay.appendChild(lawyerDiv);
+            });
             
             editModal.style.display = 'flex'; // Modal'ı tüm kurulumlar bittikten sonra göster
         });
@@ -3103,6 +4293,115 @@ function saveChanges(caseId) {
         }
     }
     
+    // Ek müvekkilleri topla
+    const additionalClients = [];
+    const additionalClientCards = document.querySelectorAll('#editAdditionalClientsDisplay .collapsible-person-card');
+    additionalClientCards.forEach(card => {
+        const personIndex = card.getAttribute('data-person-index');
+        const titleText = card.querySelector('.person-title')?.textContent || '';
+        const subtitleText = card.querySelector('.person-subtitle')?.textContent || '';
+        const detailItems = card.querySelectorAll('.detail-info-item');
+        
+        const client = {
+            name: titleText.includes(' - ') ? titleText.split(' - ')[1] : titleText,
+            capacity: titleText.includes(' - ') ? titleText.split(' - ')[0] : '',
+            entity_type: subtitleText.includes('Tüzel Kişi') ? 'company' : 'person'
+        };
+        
+        // Detail bilgilerini al
+        detailItems.forEach(item => {
+            const label = item.querySelector('.detail-info-label')?.textContent;
+            const value = item.querySelector('.detail-info-value')?.textContent;
+            
+            if (label && value && value !== '-') {
+                switch(label) {
+                    case 'KİMLİK / VERGİ NO':
+                        client.identity_number = value;
+                        break;
+                    case 'TELEFON':
+                        client.phone = value;
+                        break;
+                    case 'ADRES':
+                        client.address = value;
+                        break;
+                }
+            }
+        });
+        
+        additionalClients.push(client);
+    });
+    
+    // Ek karşı tarafları topla
+    const additionalOpponents = [];
+    const additionalOpponentCards = document.querySelectorAll('#editAdditionalOpponentsDisplay .collapsible-person-card');
+    additionalOpponentCards.forEach(card => {
+        const titleText = card.querySelector('.person-title')?.textContent || '';
+        const subtitleText = card.querySelector('.person-subtitle')?.textContent || '';
+        const detailItems = card.querySelectorAll('.detail-info-item');
+        
+        const opponent = {
+            name: titleText.includes(' - ') ? titleText.split(' - ')[1] : titleText,
+            capacity: titleText.includes(' - ') ? titleText.split(' - ')[0] : '',
+            entity_type: subtitleText.includes('Tüzel Kişi') ? 'company' : 'person'
+        };
+        
+        // Detail bilgilerini al
+        detailItems.forEach(item => {
+            const label = item.querySelector('.detail-info-label')?.textContent;
+            const value = item.querySelector('.detail-info-value')?.textContent;
+            
+            if (label && value && value !== '-') {
+                switch(label) {
+                    case 'KİMLİK / VERGİ NO':
+                        opponent.identity_number = value;
+                        break;
+                    case 'TELEFON':
+                        opponent.phone = value;
+                        break;
+                    case 'ADRES':
+                        opponent.address = value;
+                        break;
+                }
+            }
+        });
+        
+        additionalOpponents.push(opponent);
+    });
+    
+    // Ek vekilleri topla
+    const additionalLawyers = [];
+    const additionalLawyerCards = document.querySelectorAll('#editAdditionalLawyersDisplay .collapsible-person-card[data-is-main="false"]');
+    additionalLawyerCards.forEach(card => {
+        const titleText = card.querySelector('.person-title')?.textContent || '';
+        const detailItems = card.querySelectorAll('.detail-info-item');
+        
+        const lawyer = {
+            name: titleText.includes(' - ') ? titleText.split(' - ')[1] : titleText.replace('Vekil - ', '')
+        };
+        
+        // Detail bilgilerini al
+        detailItems.forEach(item => {
+            const label = item.querySelector('.detail-info-label')?.textContent;
+            const value = item.querySelector('.detail-info-value')?.textContent;
+            
+            if (label && value && value !== '-') {
+                switch(label) {
+                    case 'BARO NUMARASI':
+                        lawyer.bar_number = value;
+                        break;
+                    case 'TELEFON':
+                        lawyer.phone = value;
+                        break;
+                    case 'ADRES':
+                        lawyer.address = value;
+                        break;
+                }
+            }
+        });
+        
+        additionalLawyers.push(lawyer);
+    });
+
     const data = {
         file_type: document.getElementById('editFileType').value,
         courthouse: document.getElementById('editCourthouse').value,
@@ -3126,8 +4425,14 @@ function saveChanges(caseId) {
         
         // Vekil bilgileri
         opponent_lawyer: document.getElementById('editOpponentLawyer').value,
+        opponent_lawyer_bar_number: document.getElementById('editOpponentLawyerBarNumber').value,
         opponent_lawyer_phone: document.getElementById('editOpponentLawyerPhone').value,
         opponent_lawyer_address: document.getElementById('editOpponentLawyerAddress').value,
+        
+        // Ek kişiler
+        additional_clients_json: additionalClients,
+        additional_opponents_json: additionalOpponents,
+        additional_lawyers_json: additionalLawyers,
         
         // Dosya bilgileri
         status: document.getElementById('editStatus').value,
@@ -3665,6 +4970,1489 @@ function closeEditModal() {
     }
 }
 
+// YENİ - Katlanabilir kart toggle fonksiyonu
+function toggleCollapsibleCard(header) {
+    const card = header.closest('.collapsible-person-card');
+    const content = card.querySelector('.collapsible-content');
+    const arrow = header.querySelector('.collapse-arrow');
+    
+    if (content.classList.contains('open')) {
+        content.classList.remove('open');
+        arrow.textContent = 'expand_more';
+        arrow.style.transform = 'rotate(0deg)';
+    } else {
+        content.classList.add('open');
+        arrow.textContent = 'expand_less';
+        arrow.style.transform = 'rotate(180deg)';
+    }
+}
+
+// Ana müvekkil/karşı taraf düzenleme fonksiyonu - ek kişi mantığıyla
+function editMainPersonInModal(personType, caseId) {
+    const cardId = personType === 'client' ? 'mainClientCard' : 'mainOpponentCard';
+    const personCard = document.getElementById(cardId);
+    
+    if (!personCard) return;
+    
+    // Mevcut card'ı gizle ve edit form'u göster
+    const cardContent = personCard.querySelector('.collapsible-content');
+    const editFormId = `mainEditForm_${personType}`;
+    
+    // Eğer edit form yoksa oluştur
+    let editForm = document.getElementById(editFormId);
+    if (!editForm) {
+        createMainEditForm(personType, caseId);
+        editForm = document.getElementById(editFormId);
+    }
+    
+    // Card content'i gizle, edit form'u göster
+    if (cardContent && editForm) {
+        cardContent.style.display = 'none';
+        editForm.style.display = 'block';
+        
+        // Mevcut değerleri forma yükle
+        loadMainPersonDataToEditForm(personType);
+    }
+}
+
+// Ana kişi düzenleme iptal fonksiyonu
+function cancelMainPersonEdit(personType) {
+    const editFormId = `mainEditForm_${personType}`;
+    const cardId = personType === 'client' ? 'mainClientCard' : 'mainOpponentCard';
+    const personCard = document.getElementById(cardId);
+    const editForm = document.getElementById(editFormId);
+    
+    if (personCard && editForm) {
+        const cardContent = personCard.querySelector('.collapsible-content');
+        editForm.style.display = 'none';
+        if (cardContent) {
+            cardContent.style.display = 'block';
+        }
+    }
+}
+
+// Ana kişi silme fonksiyonu
+function deleteMainPersonInModal(personType, caseId) {
+    const personTypeText = personType === 'client' ? 'müvekkil' : 'karşı taraf';
+    
+    if (confirm(`Ana ${personTypeText} bilgilerini silmek istediğinizden emin misiniz?`)) {
+        // Backend'e silme isteği gönder
+        const formData = new FormData();
+        formData.append('case_id', caseId);
+        formData.append('person_type', personType);
+        formData.append('csrf_token', csrfToken);
+        
+        fetch('/delete_main_person', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Form alanlarını temizle
+                const prefix = personType === 'client' ? 'Client' : 'Opponent';
+                
+                document.getElementById(`edit${prefix}EntityType`).value = 'person';
+                document.getElementById(`edit${prefix}Capacity`).value = '';
+                document.getElementById(`edit${prefix}Name`).value = '';
+                document.getElementById(`edit${prefix}IdentityNumber`).value = '';
+                
+                if (personType === 'client') {
+                    document.getElementById('editPhoneNumber').value = '';
+                    document.getElementById('editClientAddress').value = '';
+                } else {
+                    document.getElementById('editOpponentPhone').value = '';
+                    document.getElementById('editOpponentAddress').value = '';
+                }
+                
+                // Card'ı güncelle
+                const cardId = personType === 'client' ? 'mainClientCard' : 'mainOpponentCard';
+                const personCard = document.getElementById(cardId);
+                
+                if (personCard) {
+                    const titleElement = personCard.querySelector('.person-title');
+                    if (titleElement) {
+                        titleElement.textContent = `${personType === 'client' ? 'Müvekkil' : 'Karşı Taraf'} - İsim belirtilmemiş`;
+                    }
+                    const subtitleElement = personCard.querySelector('.person-subtitle');
+                    if (subtitleElement) {
+                        subtitleElement.textContent = 'Gerçek Kişi';
+                    }
+                    
+                    // Detail item'ları temizle
+                    const detailItems = personCard.querySelectorAll('.detail-info-item');
+                    detailItems.forEach(item => {
+                        const label = item.querySelector('.detail-info-label')?.textContent;
+                        const valueSpan = item.querySelector('.detail-info-value');
+                        
+                        if (label && valueSpan) {
+                            switch(label) {
+                                case 'TİP':
+                                    valueSpan.textContent = 'Gerçek Kişi';
+                                    break;
+                                case 'SIFAT':
+                                case 'TELEFON':
+                                case 'KİMLİK / VERGİ NO':
+                                case 'ADRES':
+                                    valueSpan.textContent = '-';
+                                    break;
+                            }
+                        }
+                    });
+                }
+                
+                alert(data.message || `${personType === 'client' ? 'Müvekkil' : 'Karşı taraf'} bilgileri başarıyla temizlendi.`);
+            } else {
+                alert('Hata: ' + (data.message || 'Bilgiler silinirken bir hata oluştu.'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Bilgiler silinirken bir hata oluştu.');
+        });
+    }
+}
+
+// Ana kişi için dinamik form oluşturma
+function createMainEditForm(personType, caseId) {
+    const cardId = personType === 'client' ? 'mainClientCard' : 'mainOpponentCard';
+    const personCard = document.getElementById(cardId);
+    
+    if (!personCard) return;
+    
+    const editFormHtml = `
+        <div id="mainEditForm_${personType}" class="hidden-edit-form" style="display: none;">
+            <div class="detail-grid">
+                <div class="detail-group">
+                    <label>Tip</label>
+                    <select id="mainEdit_${personType}_entityType" onchange="updateMainEditLabels('${personType}')">
+                        <option value="person">Gerçek Kişi</option>
+                        <option value="company">Tüzel Kişi</option>
+                    </select>
+                </div>
+                <div class="detail-group">
+                    <label>Sıfat</label>
+                    <select id="mainEdit_${personType}_capacity">
+                        <option value="">Seçiniz</option>
+                    </select>
+                </div>
+            </div>
+            <div class="detail-grid">
+                <div class="detail-group full-width">
+                    <label id="mainEdit_${personType}_nameLabel">Ad Soyad</label>
+                    <input type="text" id="mainEdit_${personType}_name">
+                </div>
+            </div>
+            <div class="detail-grid">
+                <div class="detail-group">
+                    <label>Telefon</label>
+                    <input type="text" id="mainEdit_${personType}_phone">
+                </div>
+                <div class="detail-group">
+                    <label id="mainEdit_${personType}_identityLabel">T.C. Kimlik No</label>
+                    <input type="text" id="mainEdit_${personType}_identityNumber" maxlength="11">
+                </div>
+            </div>
+            <div class="detail-grid">
+                <div class="detail-group full-width">
+                    <label>Adres</label>
+                    <textarea id="mainEdit_${personType}_address" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="edit-form-actions">
+                <button type="button" class="btn secondary" onclick="cancelMainPersonEdit('${personType}')">İptal</button>
+                <button type="button" class="btn primary" onclick="saveMainPersonEdit('${personType}', ${caseId})">Kaydet</button>
+            </div>
+        </div>
+    `;
+    
+    // Form'u card'ın sonuna ekle
+    personCard.insertAdjacentHTML('beforeend', editFormHtml);
+    
+    // Sıfat seçeneklerini yükle
+    updateMainEditCapacityOptions(personType);
+    
+    // Radio button'ları için style ekle (sadece bir kez)
+    if (!document.getElementById('edit-radio-styles')) {
+        const style = document.createElement('style');
+        style.id = 'edit-radio-styles';
+        style.textContent = `
+            .radio-group-edit {
+                display: flex;
+                gap: 15px;
+                flex-wrap: wrap;
+                padding: 8px 0;
+            }
+            .radio-option-edit {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                cursor: pointer;
+                font-weight: 500;
+                color: var(--text-color, #2c3e50);
+            }
+            .radio-option-edit input[type="radio"] {
+                width: 16px;
+                height: 16px;
+                accent-color: var(--primary-color, #1a237e);
+            }
+            .radio-label-edit {
+                font-size: 0.9rem;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Sıfat seçeneklerini güncelle
+function updateMainEditCapacityOptions(personType) {
+    const fileType = document.getElementById('editFileType').value;
+    const capacitySelect = document.getElementById(`mainEdit_${personType}_capacity`);
+    
+    if (!capacitySelect) return;
+    
+    capacitySelect.innerHTML = '<option value="">Seçiniz</option>';
+    
+    if (capacityOptions[fileType]) {
+        const optionsKey = personType === 'client' ? 'client' : 'opponent';
+        const options = capacityOptions[fileType][optionsKey];
+        
+        if (options && options.length > 0) {
+            options.forEach(capacity => {
+                const option = document.createElement('option');
+                option.value = capacity;
+                option.textContent = capacity;
+                capacitySelect.appendChild(option);
+            });
+        }
+    }
+}
+
+// Entity type değişiminde label'ları güncelle
+function updateMainEditLabels(personType) {
+    const entityType = document.getElementById(`mainEdit_${personType}_entityType`)?.value;
+    const nameLabel = document.getElementById(`mainEdit_${personType}_nameLabel`);
+    const identityLabel = document.getElementById(`mainEdit_${personType}_identityLabel`);
+    const identityInput = document.getElementById(`mainEdit_${personType}_identityNumber`);
+    
+    if (entityType === 'company') {
+        nameLabel.textContent = 'Şirket Unvanı';
+        identityLabel.textContent = 'Vergi/Mersis No';
+        identityInput.maxLength = 20;
+        identityInput.placeholder = 'Vergi/Mersis/Ticaret Sicil No';
+    } else {
+        nameLabel.textContent = 'Ad Soyad';
+        identityLabel.textContent = 'T.C. Kimlik No';
+        identityInput.maxLength = 11;
+        identityInput.placeholder = '12345678901';
+    }
+}
+
+function loadMainPersonDataToEditForm(personType) {
+    const cardId = personType === 'client' ? 'mainClientCard' : 'mainOpponentCard';
+    const personCard = document.getElementById(cardId);
+    
+    if (!personCard) return;
+    
+    // Mevcut verileri card'dan al
+    const nameElement = personCard.querySelector('.person-title');
+    const detailItems = personCard.querySelectorAll('.detail-info-item');
+    
+    // Form alanlarına veriyi yükle
+    const nameText = nameElement ? nameElement.textContent : '';
+    const nameParts = nameText.includes(' - ') ? nameText.split(' - ') : ['', nameText];
+    
+    if (nameParts.length > 1) {
+        document.getElementById(`mainEdit_${personType}_capacity`).value = nameParts[0] || '';
+        document.getElementById(`mainEdit_${personType}_name`).value = nameParts[1] || '';
+    }
+    
+    // Diğer alanları detail-info-item'lardan al
+    detailItems.forEach(item => {
+        const label = item.querySelector('.detail-info-label')?.textContent;
+        const value = item.querySelector('.detail-info-value')?.textContent;
+        
+        if (label && value && value !== '-') {
+            switch(label) {
+                case 'TİP':
+                    const entityValue = value === 'Tüzel Kişi' ? 'company' : 'person';
+                    const entitySelect = document.getElementById(`mainEdit_${personType}_entityType`);
+                    if (entitySelect) {
+                        entitySelect.value = entityValue;
+                        updateMainEditLabels(personType);
+                    }
+                    break;
+                case 'TELEFON':
+                    document.getElementById(`mainEdit_${personType}_phone`).value = value;
+                    break;
+                case 'KİMLİK / VERGİ NO':
+                    document.getElementById(`mainEdit_${personType}_identityNumber`).value = value;
+                    break;
+                case 'ADRES':
+                    document.getElementById(`mainEdit_${personType}_address`).value = value;
+                    break;
+            }
+        }
+    });
+}
+
+// Ana kişi düzenleme kaydet fonksiyonu - gerçekten çalışan versiyon
+function saveMainPersonEdit(personType, caseId) {
+    // Form verilerini al
+    const capacity = document.getElementById(`mainEdit_${personType}_capacity`).value;
+    const name = document.getElementById(`mainEdit_${personType}_name`).value;
+    const entityType = document.getElementById(`mainEdit_${personType}_entityType`)?.value || 'person';
+    const phone = document.getElementById(`mainEdit_${personType}_phone`).value;
+    const identityNumber = document.getElementById(`mainEdit_${personType}_identityNumber`).value;
+    const address = document.getElementById(`mainEdit_${personType}_address`).value;
+    
+    // Validasyon
+    if (!name.trim()) {
+        alert('Ad Soyad / Unvan alanı zorunludur.');
+        return;
+    }
+    
+    // Backend'e gönder
+    const formData = new FormData();
+    formData.append('case_id', caseId);
+    formData.append('person_type', personType);
+    formData.append('entity_type', entityType);
+    formData.append('capacity', capacity);
+    formData.append('name', name);
+    formData.append('phone', phone);
+    formData.append('identity_number', identityNumber);
+    formData.append('address', address);
+    formData.append('csrf_token', csrfToken);
+    
+    fetch('/update_main_person', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Ana form alanlarını güncelle (gizli formda) - eğer edit modal açıksa
+            const editModal = document.getElementById('editModal');
+            if (editModal && editModal.style.display !== 'none') {
+                const prefix = personType === 'client' ? 'Client' : 'Opponent';
+                const entityTypeSelect = document.getElementById(`edit${prefix}EntityType`);
+                const capacityInput = document.getElementById(`edit${prefix}Capacity`);
+                const nameInput = document.getElementById(`edit${prefix}Name`);
+                const identityInput = document.getElementById(`edit${prefix}IdentityNumber`);
+                
+                if (entityTypeSelect) entityTypeSelect.value = entityType;
+                if (capacityInput) capacityInput.value = capacity;
+                if (nameInput) nameInput.value = name;
+                if (identityInput) identityInput.value = identityNumber;
+                
+                if (personType === 'client') {
+                    const phoneInput = document.getElementById('editPhoneNumber');
+                    const addressInput = document.getElementById('editClientAddress');
+                    if (phoneInput) phoneInput.value = phone;
+                    if (addressInput) addressInput.value = address;
+                } else {
+                    const phoneInput = document.getElementById('editOpponentPhone');
+                    const addressInput = document.getElementById('editOpponentAddress');
+                    if (phoneInput) phoneInput.value = phone;
+                    if (addressInput) addressInput.value = address;
+                }
+            }
+            
+            // Card'ı güncelle
+            const cardId = personType === 'client' ? 'mainClientCard' : 'mainOpponentCard';
+            const personCard = document.getElementById(cardId);
+            
+            if (personCard) {
+                // Başlığı güncelle
+                const titleElement = personCard.querySelector('.person-title');
+                if (titleElement) {
+                    titleElement.textContent = `${capacity || (personType === 'client' ? 'Müvekkil' : 'Karşı Taraf')} - ${name || 'İsim belirtilmemiş'}`;
+                }
+                
+                // Subtitle'ı güncelle
+                const subtitleElement = personCard.querySelector('.person-subtitle');
+                if (subtitleElement) {
+                    const entityText = entityType === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi';
+                    const identityText = identityNumber ? ' • ' + identityNumber : '';
+                    subtitleElement.textContent = entityText + identityText;
+                }
+                
+                // Detail item'ları güncelle
+                const detailItems = personCard.querySelectorAll('.detail-info-item');
+                detailItems.forEach(item => {
+                    const label = item.querySelector('.detail-info-label')?.textContent;
+                    const valueSpan = item.querySelector('.detail-info-value');
+                    
+                    if (label && valueSpan) {
+                        switch(label) {
+                            case 'TİP':
+                                valueSpan.textContent = entityType === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi';
+                                break;
+                            case 'SIFAT':
+                                valueSpan.textContent = capacity || '-';
+                                break;
+                            case 'TELEFON':
+                                valueSpan.textContent = phone || '-';
+                                break;
+                            case 'KİMLİK / VERGİ NO':
+                                valueSpan.textContent = identityNumber || '-';
+                                break;
+                            case 'ADRES':
+                                valueSpan.textContent = address || '-';
+                                break;
+                        }
+                    }
+                });
+            }
+            
+            cancelMainPersonEdit(personType);
+            alert(data.message || `${personType === 'client' ? 'Müvekkil' : 'Karşı taraf'} bilgileri başarıyla güncellendi.`);
+        } else {
+            alert('Hata: ' + (data.message || 'Bilgiler güncellenirken bir hata oluştu.'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Bilgiler güncellenirken bir hata oluştu.');
+    });
+}
+
+// Vekil düzenleme fonksiyonları
+function editMainLawyerInModal(caseId) {
+    const editForm = document.getElementById('mainLawyerEditForm');
+    const lawyerCard = document.querySelector('.lawyer-card');
+    
+    if (editForm && lawyerCard) {
+        lawyerCard.style.display = 'none';
+        editForm.style.display = 'block';
+    }
+}
+
+function showMainLawyerEditForm() {
+    const editForm = document.getElementById('mainLawyerEditForm');
+    const addButton = document.querySelector('.add-lawyer-btn-container');
+    
+    if (editForm && addButton) {
+        addButton.style.display = 'none';
+        editForm.style.display = 'block';
+    }
+}
+
+function cancelMainLawyerEdit() {
+    const editForm = document.getElementById('mainLawyerEditForm');
+    const lawyerCard = document.querySelector('.lawyer-card');
+    const addButton = document.querySelector('.add-lawyer-btn-container');
+    
+    if (editForm) {
+        editForm.style.display = 'none';
+        
+        if (lawyerCard && lawyerCard.style.display !== 'none') {
+            lawyerCard.style.display = 'block';
+        } else if (addButton) {
+            addButton.style.display = 'block';
+        }
+    }
+}
+
+function saveMainLawyerEdit(caseId) {
+    // Form verilerini al
+    const lawyerName = document.getElementById('editOpponentLawyer').value;
+    const lawyerBarNumber = document.getElementById('editOpponentLawyerBarNumber').value;
+    const lawyerPhone = document.getElementById('editOpponentLawyerPhone').value;
+    const lawyerAddress = document.getElementById('editOpponentLawyerAddress').value;
+    
+    // Vekil bilgileri girildiyse card'ı göster, buton'u gizle
+    const lawyerCard = document.querySelector('.lawyer-card');
+    const addButton = document.querySelector('.add-lawyer-btn-container');
+    
+    if (lawyerName || lawyerPhone || lawyerAddress) {
+        if (lawyerCard && addButton) {
+            lawyerCard.style.display = 'block';
+            addButton.style.display = 'none';
+            
+            // Card başlığını güncelle
+            const titleElement = lawyerCard.querySelector('.main-edit-lawyer-title');
+            const subtitleElement = lawyerCard.querySelector('.person-subtitle');
+            if (titleElement) {
+                titleElement.textContent = `Vekil - ${lawyerName || 'Ad belirtilmemiş'}`;
+            }
+            if (subtitleElement) {
+                subtitleElement.textContent = `Baro No: ${lawyerBarNumber || 'Belirtilmemiş'}`;
+            }
+            
+            // Detail item'ları güncelle
+            const detailItems = lawyerCard.querySelectorAll('.detail-info-item');
+            detailItems.forEach(item => {
+                const label = item.querySelector('.detail-info-label')?.textContent;
+                const valueSpan = item.querySelector('.detail-info-value');
+                
+                if (label && valueSpan) {
+                    switch(label) {
+                        case 'BARO NUMARASI':
+                            valueSpan.textContent = lawyerBarNumber || '-';
+                            break;
+                        case 'TELEFON':
+                            valueSpan.textContent = lawyerPhone || '-';
+                            break;
+                        case 'ADRES':
+                            valueSpan.textContent = lawyerAddress || '-';
+                            break;
+                    }
+                }
+            });
+        }
+    } else {
+        // Vekil bilgisi yoksa card'ı gizle, buton'u göster
+        if (lawyerCard && addButton) {
+            lawyerCard.style.display = 'none';
+            addButton.style.display = 'block';
+        }
+    }
+    
+    cancelMainLawyerEdit();
+    alert('Vekil bilgileri güncellendi. Tüm değişiklikleri kaydetmek için modal alt kısmındaki "Kaydet" butonunu kullanın.');
+}
+
+function deleteMainLawyerInModal(caseId) {
+    if (confirm('Vekil bilgilerini silmek istediğinizden emin misiniz?')) {
+        // Form alanlarını temizle
+        document.getElementById('editOpponentLawyer').value = '';
+        document.getElementById('editOpponentLawyerBarNumber').value = '';
+        document.getElementById('editOpponentLawyerPhone').value = '';
+        document.getElementById('editOpponentLawyerAddress').value = '';
+        
+        // Card'ı gizle, ekleme butonunu göster
+        const lawyerCard = document.querySelector('.lawyer-card');
+        const addButton = document.querySelector('.add-lawyer-btn-container');
+        
+        if (lawyerCard && addButton) {
+            lawyerCard.style.display = 'none';
+            addButton.style.display = 'block';
+        }
+        
+        alert('Vekil bilgileri temizlendi. Kaydetmek için modal alt kısmındaki "Kaydet" butonunu kullanın.');
+    }
+}
+
+// Yeni kişi ekleme fonksiyonları
+function addNewClientInModal(caseId) {
+    showPersonAddModal('client', caseId);
+}
+
+function addNewOpponentInModal(caseId) {
+    showPersonAddModal('opponent', caseId);
+}
+
+function addNewLawyerInModal(caseId) {
+    showLawyerAddModal(caseId);
+}
+
+// Kişi ekleme modalı göster
+function showPersonAddModal(personType, caseId) {
+    const personTypeText = personType === 'client' ? 'Müvekkil' : 'Karşı Taraf';
+    
+    const modalHtml = `
+        <div id="addPersonModal" class="file-detail-modal" style="display: flex;">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2>Yeni ${personTypeText} Ekle</h2>
+                    <button class="close-btn" onclick="closeAddPersonModal()">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPersonForm">
+                        <div class="detail-grid">
+                            <div class="detail-group">
+                                <label>Tip</label>
+                                <select id="addPersonEntityType" onchange="updateAddPersonModalLabels()">
+                                    <option value="person">Gerçek Kişi</option>
+                                    <option value="company">Şirket</option>
+                                    <option value="public">Kamu Kurumu</option>
+                                    <option value="legal_entity">Tüzel Kişi</option>
+                                </select>
+                            </div>
+                            <div class="detail-group">
+                                <label>Sıfat</label>
+                                <select id="addPersonCapacity">
+                                    <option value="">Seçiniz</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="detail-grid">
+                            <div class="detail-group full-width">
+                                <label id="addPersonNameLabel">Ad Soyad</label>
+                                <input type="text" id="addPersonName" required>
+                            </div>
+                        </div>
+                        <div class="detail-grid">
+                            <div class="detail-group">
+                                <label>Telefon</label>
+                                <input type="text" id="addPersonPhone">
+                            </div>
+                            <div class="detail-group">
+                                <label id="addPersonIdentityLabel">T.C. Kimlik No</label>
+                                <input type="text" id="addPersonIdentityNumber" maxlength="11">
+                            </div>
+                        </div>
+                        <div class="detail-grid">
+                            <div class="detail-group full-width">
+                                <label>Adres</label>
+                                <textarea id="addPersonAddress" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" onclick="closeAddPersonModal()">İptal</button>
+                    <button class="btn primary" onclick="saveNewPerson('${personType}', ${caseId})">Ekle</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Modal açıldıktan sonra sıfat seçeneklerini güncelle
+    updateAddPersonModalCapacity(personType);
+}
+
+// Vekil ekleme modalı göster
+function showLawyerAddModal(caseId) {
+    const modalHtml = `
+        <div id="addLawyerModal" class="file-detail-modal" style="display: flex;">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2>Yeni Vekil Ekle</h2>
+                    <button class="close-btn" onclick="closeAddLawyerModal()">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addLawyerForm">
+                        <div class="detail-grid">
+                            <div class="detail-group">
+                                <label>Vekil Adı Soyadı</label>
+                                <input type="text" id="addLawyerName" required>
+                            </div>
+                            <div class="detail-group">
+                                <label>Baro Numarası</label>
+                                <input type="text" id="addLawyerBarNumber">
+                            </div>
+                        </div>
+                        <div class="detail-grid">
+                            <div class="detail-group">
+                                <label>Telefon</label>
+                                <input type="text" id="addLawyerPhone">
+                            </div>
+                            <div class="detail-group full-width">
+                                <label>Adres</label>
+                                <textarea id="addLawyerAddress" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" onclick="closeAddLawyerModal()">İptal</button>
+                    <button class="btn primary" onclick="saveNewLawyer(${caseId})">Ekle</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Yeni kişi kaydet - direkt backend'e kaydeder
+function saveNewPerson(personType, caseId) {
+    const entityType = document.getElementById('addPersonEntityType').value;
+    const capacity = document.getElementById('addPersonCapacity').value;
+    const name = document.getElementById('addPersonName').value;
+    const phone = document.getElementById('addPersonPhone').value;
+    const identityNumber = document.getElementById('addPersonIdentityNumber').value;
+    const address = document.getElementById('addPersonAddress').value;
+    
+    if (!name.trim()) {
+        alert('Ad Soyad / Unvan alanı zorunludur.');
+        return;
+    }
+    
+    // Backend'e yeni kişi eklemek için API call
+    const formData = new FormData();
+    formData.append('case_id', caseId);
+    formData.append('person_type', personType);
+    formData.append('entity_type', entityType);
+    formData.append('capacity', capacity);
+    formData.append('name', name);
+    formData.append('phone', phone);
+    formData.append('identity_number', identityNumber);
+    formData.append('address', address);
+    formData.append('csrf_token', csrfToken);
+    
+    fetch('/add_person_to_case', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Başarılı - modalı kapat ve sayfayı yenile ya da card'ı dinamik ekle
+            closeAddPersonModal();
+            
+            // Yeni kişi card'ını oluştur
+            const displayArea = personType === 'client' ? 
+                document.getElementById('editAdditionalClientsDisplay') : 
+                document.getElementById('editAdditionalOpponentsDisplay');
+            
+            if (displayArea) {
+                const personIndex = displayArea.children.length;
+                const iconClass = personType === 'client' ? 'person_add' : 'group_add';
+                
+                const newPersonCardHtml = `
+                    <div class="collapsible-person-card editable-person-card" data-person-type="${personType}" data-person-index="${personIndex}" data-person-id="${data.person_id}">
+                        <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
+                            <div class="collapsible-title">
+                                <i class="material-icons person-icon">${iconClass}</i>
+                                <div class="person-info">
+                                    <div class="person-title">${capacity || (personType === 'client' ? 'Müvekkil' : 'Karşı Taraf')} - ${name}</div>
+                                    <div class="person-subtitle">${entityType === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}${identityNumber ? ' • ' + identityNumber : ''}</div>
+                                </div>
+                            </div>
+                            <div class="card-actions" onclick="event.stopPropagation()">
+                                <button type="button" class="btn-icon-small edit" onclick="editPersonInModal('${personType}', ${personIndex}, ${caseId})" title="Düzenle">
+                                    <i class="material-icons">edit</i>
+                                </button>
+                                <button type="button" class="btn-icon-small delete" onclick="deletePersonInModal('${personType}', ${personIndex}, ${caseId})" title="Sil">
+                                    <i class="material-icons">delete</i>
+                                </button>
+                                <i class="material-icons collapse-arrow">expand_more</i>
+                            </div>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="detail-info-grid">
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TİP</span>
+                                    <span class="detail-info-value">${entityType === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">SIFAT</span>
+                                    <span class="detail-info-value">${capacity || '-'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                    <span class="detail-info-value">${identityNumber || '-'}</span>
+                                </div>
+                                <div class="detail-info-item">
+                                    <span class="detail-info-label">TELEFON</span>
+                                    <span class="detail-info-value">${phone || '-'}</span>
+                                </div>
+                                <div class="detail-info-item full-width">
+                                    <span class="detail-info-label">ADRES</span>
+                                    <span class="detail-info-value">${address || '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                displayArea.insertAdjacentHTML('beforeend', newPersonCardHtml);
+            }
+        } else {
+            alert('Hata: ' + (data.message || 'Kişi eklenirken bir hata oluştu.'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Kişi eklenirken bir hata oluştu.');
+    });
+}
+
+// Yeni vekil kaydet - direkt backend'e kaydeder
+function saveNewLawyer(caseId) {
+    const name = document.getElementById('addLawyerName').value;
+    const barNumber = document.getElementById('addLawyerBarNumber').value;
+    const phone = document.getElementById('addLawyerPhone').value;
+    const address = document.getElementById('addLawyerAddress').value;
+    
+    if (!name.trim()) {
+        alert('Vekil Adı Soyadı alanı zorunludur.');
+        return;
+    }
+    
+    // Backend'e yeni vekil eklemek için API call
+    const formData = new FormData();
+    formData.append('case_id', caseId);
+    formData.append('name', name);
+    formData.append('bar_number', barNumber);
+    formData.append('phone', phone);
+    formData.append('address', address);
+    formData.append('csrf_token', csrfToken);
+    
+    fetch('/add_lawyer_to_case', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeAddLawyerModal();
+            
+            // lawyer_id 0 ise ana vekil olarak eklendi, değilse ek vekil
+            if (data.lawyer_id === 0) {
+                // Ana vekil olarak eklendi - mevcut alanları güncelle
+                document.getElementById('editOpponentLawyer').value = name;
+                document.getElementById('editOpponentLawyerBarNumber').value = barNumber;
+                document.getElementById('editOpponentLawyerPhone').value = phone;
+                document.getElementById('editOpponentLawyerAddress').value = address;
+                
+                // Vekil card'ını güncelle
+                const lawyerCard = document.querySelector('.lawyer-card');
+                const addButton = document.querySelector('.add-lawyer-btn-container');
+                
+                if (lawyerCard && addButton) {
+                    lawyerCard.style.display = 'block';
+                    addButton.style.display = 'none';
+                    
+                    // Card başlığını güncelle
+                    const titleElement = lawyerCard.querySelector('.main-edit-lawyer-title');
+                    const subtitleElement = lawyerCard.querySelector('.person-subtitle');
+                    if (titleElement) {
+                        titleElement.textContent = `Vekil - ${name}`;
+                    }
+                    if (subtitleElement) {
+                        subtitleElement.textContent = `Baro No: ${barNumber || 'Belirtilmemiş'}`;
+                    }
+                    
+                    // Detail item'ları güncelle
+                    const detailItems = lawyerCard.querySelectorAll('.detail-info-item');
+                    detailItems.forEach(item => {
+                        const label = item.querySelector('.detail-info-label')?.textContent;
+                        const valueSpan = item.querySelector('.detail-info-value');
+                        
+                        if (label && valueSpan) {
+                            switch(label) {
+                                case 'BARO NUMARASI':
+                                    valueSpan.textContent = barNumber || '-';
+                                    break;
+                                case 'TELEFON':
+                                    valueSpan.textContent = phone || '-';
+                                    break;
+                                case 'ADRES':
+                                    valueSpan.textContent = address || '-';
+                                    break;
+                            }
+                        }
+                    });
+                }
+            } else {
+                // Ek vekil olarak eklendi - yeni card oluştur
+                addAdditionalLawyerCard(name, barNumber, phone, address, data.lawyer_id);
+            }
+            
+            alert(data.message);
+        } else {
+            alert('Hata: ' + (data.message || 'Vekil eklenirken bir hata oluştu.'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Vekil eklenirken bir hata oluştu.');
+    });
+}
+
+// Ek vekil card'ı oluştur
+function addAdditionalLawyerCard(name, barNumber, phone, address, lawyerId) {
+    const lawyersDisplay = document.getElementById('editAdditionalLawyersDisplay');
+    
+    if (!lawyersDisplay) {
+        // Eğer display area yoksa oluştur
+        const vekilSection = document.querySelector('.vekil-section');
+        if (vekilSection) {
+            const displayDiv = document.createElement('div');
+            displayDiv.id = 'editAdditionalLawyersDisplay';
+            displayDiv.className = 'additional-display';
+            vekilSection.appendChild(displayDiv);
+        }
+    }
+    
+    const finalDisplay = document.getElementById('editAdditionalLawyersDisplay');
+    if (finalDisplay) {
+        const lawyerCard = document.createElement('div');
+        lawyerCard.className = 'collapsible-person-card editable-person-card';
+        lawyerCard.setAttribute('data-lawyer-id', lawyerId);
+        
+        lawyerCard.innerHTML = `
+            <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
+                <div class="collapsible-title">
+                    <i class="material-icons person-icon lawyer-icon">account_balance</i>
+                    <div class="person-info">
+                        <div class="person-title">Ek Vekil - ${name}</div>
+                        <div class="person-subtitle">Baro No: ${barNumber || 'Belirtilmemiş'}</div>
+                    </div>
+                </div>
+                <div class="card-actions" onclick="event.stopPropagation()">
+                    <button type="button" class="btn-icon-small edit" onclick="editAdditionalLawyer(${lawyerId}, event)" title="Düzenle">
+                        <i class="material-icons">edit</i>
+                    </button>
+                    <button type="button" class="btn-icon-small delete" onclick="deleteAdditionalLawyer(${lawyerId}, event)" title="Sil">
+                        <i class="material-icons">delete</i>
+                    </button>
+                    <i class="material-icons collapse-arrow">expand_more</i>
+                </div>
+            </div>
+            <div class="collapsible-content">
+                <div class="detail-info-grid">
+                    <div class="detail-info-item">
+                        <span class="detail-info-label">BARO NUMARASI</span>
+                        <span class="detail-info-value">${barNumber || '-'}</span>
+                    </div>
+                    <div class="detail-info-item">
+                        <span class="detail-info-label">TELEFON</span>
+                        <span class="detail-info-value">${phone || '-'}</span>
+                    </div>
+                    <div class="detail-info-item full-width">
+                        <span class="detail-info-label">ADRES</span>
+                        <span class="detail-info-value">${address || '-'}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        finalDisplay.appendChild(lawyerCard);
+    }
+}
+
+// Ek vekil düzenleme fonksiyonu
+function editAdditionalLawyer(lawyerId, event) {
+    if (event) event.stopPropagation();
+    
+    const lawyerCard = document.querySelector(`[data-lawyer-id="${lawyerId}"]`);
+    if (!lawyerCard) return;
+    
+    // Mevcut bilgileri al
+    const nameElement = lawyerCard.querySelector('.person-title');
+    const barNumberElement = lawyerCard.querySelector('.person-subtitle');
+    const detailItems = lawyerCard.querySelectorAll('.detail-info-item');
+    
+    const name = nameElement ? nameElement.textContent.replace('Vekil - ', '').replace('Ek Vekil - ', '') : '';
+    const barNumber = barNumberElement ? barNumberElement.textContent.replace('Baro No: ', '').replace('Belirtilmemiş', '') : '';
+    
+    let phone = '';
+    let address = '';
+    
+    detailItems.forEach(item => {
+        const label = item.querySelector('.detail-info-label')?.textContent;
+        const value = item.querySelector('.detail-info-value')?.textContent;
+        
+        if (label && value && value !== '-') {
+            switch(label) {
+                case 'TELEFON':
+                    phone = value;
+                    break;
+                case 'ADRES':
+                    address = value;
+                    break;
+            }
+        }
+    });
+    
+    // Düzenleme modalı aç
+    const modalHtml = `
+        <div id="editAdditionalLawyerModal" class="file-detail-modal" style="display: flex;">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2>Ek Vekil Düzenle</h2>
+                    <button class="close-btn" onclick="closeEditAdditionalLawyerModal()">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editAdditionalLawyerForm">
+                        <div class="detail-grid">
+                            <div class="detail-group">
+                                <label>Vekil Adı Soyadı</label>
+                                <input type="text" id="editAdditionalLawyerName" value="${name}" required>
+                            </div>
+                            <div class="detail-group">
+                                <label>Baro Numarası</label>
+                                <input type="text" id="editAdditionalLawyerBarNumber" value="${barNumber}">
+                            </div>
+                        </div>
+                        <div class="detail-grid">
+                            <div class="detail-group">
+                                <label>Telefon</label>
+                                <input type="text" id="editAdditionalLawyerPhone" value="${phone}">
+                            </div>
+                            <div class="detail-group full-width">
+                                <label>Adres</label>
+                                <textarea id="editAdditionalLawyerAddress" rows="3">${address}</textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn secondary" onclick="closeEditAdditionalLawyerModal()">İptal</button>
+                    <button class="btn primary" onclick="saveAdditionalLawyerEdit(${lawyerId})">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Ek vekil düzenleme modalını kapat
+function closeEditAdditionalLawyerModal() {
+    const modal = document.getElementById('editAdditionalLawyerModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Ek vekil düzenleme kaydet
+function saveAdditionalLawyerEdit(lawyerId) {
+    const name = document.getElementById('editAdditionalLawyerName').value;
+    const barNumber = document.getElementById('editAdditionalLawyerBarNumber').value;
+    const phone = document.getElementById('editAdditionalLawyerPhone').value;
+    const address = document.getElementById('editAdditionalLawyerAddress').value;
+    
+    if (!name.trim()) {
+        alert('Vekil Adı Soyadı alanı zorunludur.');
+        return;
+    }
+    
+    // Card'ı güncelle
+    const lawyerCard = document.querySelector(`[data-lawyer-id="${lawyerId}"]`);
+    if (lawyerCard) {
+        // Başlığı güncelle
+        const titleElement = lawyerCard.querySelector('.person-title');
+        if (titleElement) {
+            titleElement.textContent = `Vekil - ${name}`;
+        }
+        
+        // Subtitle'ı güncelle
+        const subtitleElement = lawyerCard.querySelector('.person-subtitle');
+        if (subtitleElement) {
+            subtitleElement.textContent = `Baro No: ${barNumber || 'Belirtilmemiş'}`;
+        }
+        
+        // Detail item'ları güncelle
+        const detailItems = lawyerCard.querySelectorAll('.detail-info-item');
+        detailItems.forEach(item => {
+            const label = item.querySelector('.detail-info-label')?.textContent;
+            const valueSpan = item.querySelector('.detail-info-value');
+            
+            if (label && valueSpan) {
+                switch(label) {
+                    case 'BARO NUMARASI':
+                        valueSpan.textContent = barNumber || '-';
+                        break;
+                    case 'TELEFON':
+                        valueSpan.textContent = phone || '-';
+                        break;
+                    case 'ADRES':
+                        valueSpan.textContent = address || '-';
+                        break;
+                }
+            }
+        });
+    }
+    
+    closeEditAdditionalLawyerModal();
+    alert('Ek vekil bilgileri güncellendi. Tüm değişiklikleri kaydetmek için modal alt kısmındaki "Kaydet" butonunu kullanın.');
+}
+
+// Ek vekil silme fonksiyonu
+function deleteAdditionalLawyer(lawyerId, event) {
+    if (event) event.stopPropagation();
+    
+    if (confirm('Bu ek vekili silmek istediğinizden emin misiniz?')) {
+        const lawyerCard = document.querySelector(`[data-lawyer-id="${lawyerId}"]`);
+        if (lawyerCard) {
+            lawyerCard.remove();
+            alert('Ek vekil kaldırıldı. Tüm değişiklikleri kaydetmek için modal alt kısmındaki "Kaydet" butonunu kullanın.');
+        }
+    }
+}
+
+// Modal için label güncelleme fonksiyonu
+function updateAddPersonModalLabels() {
+    const entityType = document.getElementById('addPersonEntityType').value;
+    const nameLabel = document.getElementById('addPersonNameLabel');
+    const identityLabel = document.getElementById('addPersonIdentityLabel');
+    const identityInput = document.getElementById('addPersonIdentityNumber');
+    
+    switch(entityType) {
+        case 'person':
+            nameLabel.textContent = 'Ad Soyad';
+            identityLabel.textContent = 'T.C. Kimlik No';
+            identityInput.maxLength = 11;
+            identityInput.placeholder = 'T.C. Kimlik No';
+            break;
+        case 'company':
+            nameLabel.textContent = 'Şirket Unvanı';
+            identityLabel.textContent = 'Vergi/Mersis No';
+            identityInput.maxLength = 20;
+            identityInput.placeholder = 'Vergi numarası';
+            break;
+        case 'public':
+            nameLabel.textContent = 'Kurum Adı';
+            identityLabel.textContent = 'Vergi/Kurum No';
+            identityInput.maxLength = 20;
+            identityInput.placeholder = 'Kurum vergi numarası';
+            break;
+        case 'legal_entity':
+            nameLabel.textContent = 'Kuruluş Unvanı';
+            identityLabel.textContent = 'Vergi/Sicil No';
+            identityInput.maxLength = 20;
+            identityInput.placeholder = 'Sicil/Vergi numarası';
+            break;
+        default:
+            nameLabel.textContent = 'Ad Soyad';
+            identityLabel.textContent = 'T.C. Kimlik No';
+            identityInput.maxLength = 11;
+            identityInput.placeholder = 'T.C. Kimlik No';
+    }
+}
+
+// Sıfat dropdown'ını güncelleme fonksiyonu
+function updateAddPersonModalCapacity(personType) {
+    const fileTypeElement = document.getElementById('editFileType');
+    const fileType = fileTypeElement ? fileTypeElement.value : 'hukuk'; // Default hukuk
+    const capacitySelect = document.getElementById('addPersonCapacity');
+    
+    capacitySelect.innerHTML = '<option value="">Seçiniz</option>';
+    
+    if (capacityOptions[fileType]) {
+        const optionsKey = personType === 'client' ? 'client' : 'opponent';
+        const options = capacityOptions[fileType][optionsKey];
+        
+        if (options && options.length > 0) {
+            options.forEach(capacity => {
+                const option = document.createElement('option');
+                option.value = capacity;
+                option.textContent = capacity;
+                capacitySelect.appendChild(option);
+            });
+        }
+    }
+}
+
+// Modal kapatma fonksiyonları
+function closeAddPersonModal() {
+    const modal = document.getElementById('addPersonModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function closeAddLawyerModal() {
+    const modal = document.getElementById('addLawyerModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Ek kişi düzenleme sistemi
+function editPersonInModal(personType, personIndex, caseId) {
+    const cardSelector = `[data-person-type="${personType}"][data-person-index="${personIndex}"]`;
+    const personCard = document.querySelector(cardSelector);
+    
+    if (!personCard) return;
+    
+    // Mevcut card'ı gizle ve edit form'u göster
+    const cardContent = personCard.querySelector('.collapsible-content');
+    const editFormId = `editForm_${personType}_${personIndex}`;
+    
+    // Eğer edit form yoksa oluştur
+    let editForm = document.getElementById(editFormId);
+    if (!editForm) {
+        createEditFormForPerson(personType, personIndex, caseId);
+        editForm = document.getElementById(editFormId);
+    }
+    
+    // Card content'i gizle, edit form'u göster
+    if (cardContent && editForm) {
+        cardContent.style.display = 'none';
+        editForm.style.display = 'block';
+        
+        // Mevcut değerleri forma yükle
+        loadPersonDataToEditForm(personType, personIndex);
+    }
+}
+
+function createEditFormForPerson(personType, personIndex, caseId) {
+    const cardSelector = `[data-person-type="${personType}"][data-person-index="${personIndex}"]`;
+    const personCard = document.querySelector(cardSelector);
+    
+    if (!personCard) return;
+    
+    const editFormHtml = `
+        <div id="editForm_${personType}_${personIndex}" class="hidden-edit-form" style="display: none;">
+            <div class="detail-grid">
+                <div class="detail-group">
+                    <label>Tip</label>
+                                                    <select id="edit_${personType}_${personIndex}_entityType" onchange="updatePersonEditLabels('${personType}', ${personIndex})">
+                                    <option value="person">Gerçek Kişi</option>
+                                    <option value="company">Şirket</option>
+                                    <option value="public">Kamu Kurumu</option>
+                                    <option value="legal_entity">Tüzel Kişi</option>
+                                </select>
+                </div>
+                <div class="detail-group">
+                    <label>Sıfat</label>
+                    <select id="edit_${personType}_${personIndex}_capacity">
+                        <option value="">Seçiniz</option>
+                    </select>
+                </div>
+            </div>
+            <div class="detail-grid">
+                <div class="detail-group full-width">
+                    <label id="edit_${personType}_${personIndex}_nameLabel">Ad Soyad</label>
+                    <input type="text" id="edit_${personType}_${personIndex}_name">
+                </div>
+            </div>
+            <div class="detail-grid">
+                <div class="detail-group">
+                    <label>Telefon</label>
+                    <input type="text" id="edit_${personType}_${personIndex}_phone">
+                </div>
+                <div class="detail-group">
+                    <label id="edit_${personType}_${personIndex}_identityLabel">T.C. Kimlik No</label>
+                    <input type="text" id="edit_${personType}_${personIndex}_identityNumber" maxlength="11">
+                </div>
+            </div>
+            <div class="detail-grid">
+                <div class="detail-group full-width">
+                    <label>Adres</label>
+                    <textarea id="edit_${personType}_${personIndex}_address" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="edit-form-actions">
+                <button type="button" class="btn secondary" onclick="cancelPersonEdit('${personType}', ${personIndex})">İptal</button>
+                <button type="button" class="btn primary" onclick="savePersonEdit('${personType}', ${personIndex}, ${caseId})">Kaydet</button>
+            </div>
+        </div>
+    `;
+    
+    // Form'u card'ın sonuna ekle
+    personCard.insertAdjacentHTML('beforeend', editFormHtml);
+    
+    // Sıfat seçeneklerini yükle
+    updatePersonEditCapacityOptions(personType, personIndex);
+}
+
+// Ek kişi düzenleme için sıfat seçeneklerini güncelle
+function updatePersonEditCapacityOptions(personType, personIndex) {
+    const fileType = document.getElementById('editFileType')?.value || document.getElementById('detailFileType')?.textContent?.toLowerCase();
+    const capacitySelect = document.getElementById(`edit_${personType}_${personIndex}_capacity`);
+    
+    if (!capacitySelect || !fileType) return;
+    
+    capacitySelect.innerHTML = '<option value="">Seçiniz</option>';
+    
+    if (capacityOptions[fileType]) {
+        const optionsKey = personType === 'client' ? 'client' : 'opponent';
+        const options = capacityOptions[fileType][optionsKey];
+        
+        if (options && options.length > 0) {
+            options.forEach(capacity => {
+                const option = document.createElement('option');
+                option.value = capacity;
+                option.textContent = capacity;
+                capacitySelect.appendChild(option);
+            });
+        }
+    }
+}
+
+// Ek kişi düzenleme için entity type değişiminde label'ları güncelle
+function updatePersonEditLabels(personType, personIndex) {
+    const entityType = document.getElementById(`edit_${personType}_${personIndex}_entityType`)?.value;
+    const nameLabel = document.getElementById(`edit_${personType}_${personIndex}_nameLabel`);
+    const identityLabel = document.getElementById(`edit_${personType}_${personIndex}_identityLabel`);
+    const identityInput = document.getElementById(`edit_${personType}_${personIndex}_identityNumber`);
+    
+    switch(entityType) {
+        case 'person':
+            nameLabel.textContent = 'Ad Soyad';
+            identityLabel.textContent = 'T.C. Kimlik No';
+            identityInput.maxLength = 11;
+            identityInput.placeholder = '12345678901';
+            break;
+        case 'company':
+            nameLabel.textContent = 'Şirket Unvanı';
+            identityLabel.textContent = 'Vergi/Mersis No';
+            identityInput.maxLength = 20;
+            identityInput.placeholder = 'Vergi/Mersis/Ticaret Sicil No';
+            break;
+        case 'public':
+            nameLabel.textContent = 'Kurum Adı';
+            identityLabel.textContent = 'Vergi/Kurum No';
+            identityInput.maxLength = 20;
+            identityInput.placeholder = 'Kurum vergi numarası';
+            break;
+        case 'legal_entity':
+            nameLabel.textContent = 'Kuruluş Unvanı';
+            identityLabel.textContent = 'Vergi/Sicil No';
+            identityInput.maxLength = 20;
+            identityInput.placeholder = 'Sicil/Vergi numarası';
+            break;
+        default:
+            nameLabel.textContent = 'Ad Soyad';
+            identityLabel.textContent = 'T.C. Kimlik No';
+            identityInput.maxLength = 11;
+            identityInput.placeholder = '12345678901';
+    }
+}
+
+function loadPersonDataToEditForm(personType, personIndex) {
+    const cardSelector = `[data-person-type="${personType}"][data-person-index="${personIndex}"]`;
+    const personCard = document.querySelector(cardSelector);
+    
+    if (!personCard) return;
+    
+    // Mevcut verileri card'dan al
+    const nameElement = personCard.querySelector('.person-title');
+    const subtitleElement = personCard.querySelector('.person-subtitle');
+    const detailItems = personCard.querySelectorAll('.detail-info-item');
+    
+    // Form alanlarına veriyi yükle
+    const nameText = nameElement ? nameElement.textContent : '';
+    const nameParts = nameText.includes(' - ') ? nameText.split(' - ') : ['', nameText];
+    
+    if (nameParts.length > 1) {
+        // Sıfat select'i için değeri al
+        const capacitySelect = document.getElementById(`edit_${personType}_${personIndex}_capacity`);
+        if (capacitySelect) {
+            capacitySelect.value = nameParts[0] || '';
+        }
+        document.getElementById(`edit_${personType}_${personIndex}_name`).value = nameParts[1] || '';
+    }
+    
+    let entityTypeFromCard = 'person';
+    
+    // Diğer alanları detail-info-item'lardan al
+    detailItems.forEach(item => {
+        const label = item.querySelector('.detail-info-label')?.textContent;
+        const value = item.querySelector('.detail-info-value')?.textContent;
+        
+        if (label && value && value !== '-') {
+            switch(label) {
+                case 'TİP':
+                    entityTypeFromCard = value === 'Tüzel Kişi' ? 'company' : 'person';
+                    break;
+                case 'TELEFON':
+                    document.getElementById(`edit_${personType}_${personIndex}_phone`).value = value;
+                    break;
+                case 'KİMLİK / VERGİ NO':
+                    document.getElementById(`edit_${personType}_${personIndex}_identityNumber`).value = value;
+                    break;
+                case 'ADRES':
+                    document.getElementById(`edit_${personType}_${personIndex}_address`).value = value;
+                    break;
+            }
+        }
+    });
+    
+    // Entity type dropdown'ını set et
+    const entitySelect = document.getElementById(`edit_${personType}_${personIndex}_entityType`);
+    if (entitySelect) {
+        entitySelect.value = entityTypeFromCard;
+        updatePersonEditLabels(personType, personIndex);
+    }
+}
+
+function cancelPersonEdit(personType, personIndex) {
+    const editFormId = `editForm_${personType}_${personIndex}`;
+    const cardSelector = `[data-person-type="${personType}"][data-person-index="${personIndex}"]`;
+    const personCard = document.querySelector(cardSelector);
+    const editForm = document.getElementById(editFormId);
+    
+    if (personCard && editForm) {
+        const cardContent = personCard.querySelector('.collapsible-content');
+        editForm.style.display = 'none';
+        if (cardContent) {
+            cardContent.style.display = 'block';
+        }
+    }
+}
+
+function savePersonEdit(personType, personIndex, caseId) {
+    // Form verilerini al
+    const capacity = document.getElementById(`edit_${personType}_${personIndex}_capacity`).value;
+    const name = document.getElementById(`edit_${personType}_${personIndex}_name`).value;
+    const entityType = document.getElementById(`edit_${personType}_${personIndex}_entityType`)?.value || 'person';
+    const phone = document.getElementById(`edit_${personType}_${personIndex}_phone`).value;
+    const identityNumber = document.getElementById(`edit_${personType}_${personIndex}_identityNumber`).value;
+    const address = document.getElementById(`edit_${personType}_${personIndex}_address`).value;
+    
+    // Card'ı güncelle
+    const cardSelector = `[data-person-type="${personType}"][data-person-index="${personIndex}"]`;
+    const personCard = document.querySelector(cardSelector);
+    
+    if (personCard) {
+        // Başlığı güncelle
+        const titleElement = personCard.querySelector('.person-title');
+        if (titleElement) {
+            titleElement.textContent = `${capacity || (personType === 'client' ? 'Müvekkil' : 'Karşı Taraf')} - ${name || 'İsim belirtilmemiş'}`;
+        }
+        
+        // Subtitle'ı güncelle
+        const subtitleElement = personCard.querySelector('.person-subtitle');
+        if (subtitleElement) {
+            const entityText = entityType === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi';
+            const identityText = identityNumber ? ' • ' + identityNumber : '';
+            subtitleElement.textContent = entityText + identityText;
+        }
+        
+        // Detail item'ları güncelle
+        const detailItems = personCard.querySelectorAll('.detail-info-item');
+        detailItems.forEach(item => {
+            const label = item.querySelector('.detail-info-label')?.textContent;
+            const valueSpan = item.querySelector('.detail-info-value');
+            
+            if (label && valueSpan) {
+                switch(label) {
+                    case 'TİP':
+                        valueSpan.textContent = entityType === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi';
+                        break;
+                    case 'SIFAT':
+                        valueSpan.textContent = capacity || '-';
+                        break;
+                    case 'TELEFON':
+                        valueSpan.textContent = phone || '-';
+                        break;
+                    case 'KİMLİK / VERGİ NO':
+                        valueSpan.textContent = identityNumber || '-';
+                        break;
+                    case 'ADRES':
+                        valueSpan.textContent = address || '-';
+                        break;
+                }
+            }
+        });
+    }
+    
+    cancelPersonEdit(personType, personIndex);
+    alert(`${personType === 'client' ? 'Müvekkil' : 'Karşı taraf'} bilgileri güncellendi. Kaydetmek için modal alt kısmındaki "Kaydet" butonunu kullanın.`);
+}
+
+// Edit modalda kişi silme fonksiyonu (ek kişiler için)
+function deletePersonInModal(personType, personIndex, caseId) {
+    const personTypeText = personType === 'client' ? 'müvekkili' : 'karşı tarafı';
+    
+    if (confirm(`Bu ${personTypeText} silmek istediğinizden emin misiniz?`)) {
+        const cardSelector = `[data-person-type="${personType}"][data-person-index="${personIndex}"]`;
+        const personCard = document.querySelector(cardSelector);
+        
+        if (personCard) {
+            personCard.remove();
+            alert(`${personType === 'client' ? 'Müvekkil' : 'Karşı taraf'} kaldırıldı. Kaydetmek için modal alt kısmındaki "Kaydet" butonunu kullanın.`);
+        }
+    }
+}
+
 function closeExpenseModal() {
     const modal = document.getElementById('expenseModal');
     if (modal) {
@@ -4060,5 +6848,281 @@ function convertDateForSort(dateString) {
 document.addEventListener('DOMContentLoaded', function() {
     initializeTableSorting();
 });
+
+// Dosya bilgileri düzenleme fonksiyonları
+function toggleFileInfoEdit() {
+    const displayDiv = document.getElementById('fileInfoDisplay');
+    const editDiv = document.getElementById('fileInfoEdit');
+    
+    if (editDiv.style.display === 'none') {
+        // Düzenleme moduna geç
+        displayDiv.style.display = 'none';
+        editDiv.style.display = 'block';
+        
+        // Mevcut değerleri forma yükle
+        loadFileInfoToEdit();
+    } else {
+        // Görüntüleme moduna geç
+        cancelFileInfoEdit();
+    }
+}
+
+function loadFileInfoToEdit() {
+    // Mevcut değerleri düzenleme formuna yükle
+    const fileType = document.getElementById('detailFileType').textContent;
+    const year = document.getElementById('detailYear').textContent;
+    const caseNumber = document.getElementById('detailCaseNumber').textContent;
+    const openDate = document.getElementById('detailOpenDate').textContent;
+    const status = document.getElementById('detailStatus').textContent;
+    const nextHearing = document.getElementById('detailNextHearing').textContent;
+    const hearingTime = document.getElementById('detailHearingTime').textContent;
+    const hearingType = document.getElementById('detailHearingType').textContent;
+    
+    // Form alanlarını doldur
+    document.getElementById('editFileType').value = fileType.toLowerCase();
+    document.getElementById('editYear').value = year;
+    document.getElementById('editCaseNumber').value = caseNumber;
+    document.getElementById('editStatus').value = status;
+    
+    // Tarihi DD.MM.YYYY'den YYYY-MM-DD'ye çevir
+    if (openDate && openDate !== '-') {
+        const parts = openDate.split('.');
+        if (parts.length === 3) {
+            const formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            document.getElementById('editOpenDate').value = formattedDate;
+        }
+    }
+    
+    // Duruşma tarihi
+    if (nextHearing && nextHearing !== '-') {
+        const parts = nextHearing.split('.');
+        if (parts.length === 3) {
+            const formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            document.getElementById('editNextHearing').value = formattedDate;
+        }
+    }
+    
+    // Duruşma saati
+    if (hearingTime && hearingTime !== '-') {
+        document.getElementById('editHearingTime').value = hearingTime;
+    }
+    
+    // Duruşma türü
+    if (hearingType && hearingType !== '-') {
+        const typeValue = hearingType.includes('E-Duruşma') ? 'e-durusma' : 'durusma';
+        document.getElementById('editHearingType').value = typeValue;
+    }
+    
+    // Şehir ve adliye listelerini yükle
+    loadEditCityOptions();
+}
+
+function loadEditCityOptions() {
+    const citySelect = document.getElementById('editCity');
+    citySelect.innerHTML = '<option value="">Seçiniz</option>';
+    
+    // cities_list global değişkeni varsa kullan
+    if (typeof cities_list !== 'undefined') {
+        cities_list.forEach(city => {
+            const option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            citySelect.appendChild(option);
+        });
+    }
+    
+    // Mevcut şehri seç
+    const currentCity = document.getElementById('detailCity').textContent;
+    if (currentCity && currentCity !== '-') {
+        citySelect.value = currentCity;
+        updateEditCourthouse();
+    }
+}
+
+function updateEditCourthouse() {
+    const citySelect = document.getElementById('editCity');
+    const courthouseSelect = document.getElementById('editCourthouse');
+    const selectedCity = citySelect.value;
+    
+    courthouseSelect.innerHTML = '<option value="">Seçiniz</option>';
+    
+    if (!selectedCity) {
+        courthouseSelect.innerHTML = '<option value="">Önce şehir seçiniz</option>';
+        return;
+    }
+    
+    // all_courthouses_data global değişkeni varsa kullan
+    if (typeof all_courthouses_data !== 'undefined' && all_courthouses_data[selectedCity]) {
+        all_courthouses_data[selectedCity].forEach(courthouse => {
+            const option = document.createElement('option');
+            option.value = courthouse;
+            option.textContent = courthouse;
+            courthouseSelect.appendChild(option);
+        });
+    }
+    
+    // Mevcut adliyeyi seç
+    const currentCourthouse = document.getElementById('detailCourthouse').textContent;
+    if (currentCourthouse && currentCourthouse !== '-') {
+        courthouseSelect.value = currentCourthouse;
+    }
+    
+    // Mahkeme seçeneklerini güncelle
+    updateEditDepartment();
+}
+
+function updateEditDepartment() {
+    const fileType = document.getElementById('editFileType').value.toLowerCase();
+    const departmentSelect = document.getElementById('editDepartment');
+    
+    // Mevcut seçenekleri temizle
+    departmentSelect.innerHTML = '<option value="">Seçiniz</option>';
+    
+    let departments = [];
+    if (fileType === 'hukuk') {
+        departments = [
+            'Asliye Hukuk Mahkemesi', 'Sulh Hukuk Mahkemesi', 'İş Mahkemesi', 'Aile Mahkemesi',
+            'Ticaret Mahkemesi', 'İcra Hukuk Mahkemesi', 'Tüketici Mahkemesi', 'Fikri ve Sınai Haklar Mahkemesi'
+        ];
+    } else if (fileType === 'ceza') {
+        departments = ['Asliye Ceza Mahkemesi', 'Ağır Ceza Mahkemesi', 'Sulh Ceza Hakimliği'];
+    } else if (fileType === 'icra') {
+        departments = ['İcra Dairesi'];
+    }
+    
+    departments.forEach(dept => {
+        const option = document.createElement('option');
+        option.value = dept;
+        option.textContent = dept;
+        departmentSelect.appendChild(option);
+    });
+    
+    // Mevcut mahkemeyi seç
+    const currentDepartment = document.getElementById('detailDepartment').textContent;
+    if (currentDepartment && currentDepartment !== '-') {
+        departmentSelect.value = currentDepartment;
+    }
+}
+
+function updateEditFileType() {
+    // Dosya türü değiştiğinde mahkeme seçeneklerini güncelle
+    updateEditDepartment();
+}
+
+function cancelFileInfoEdit() {
+    const displayDiv = document.getElementById('fileInfoDisplay');
+    const editDiv = document.getElementById('fileInfoEdit');
+    
+    displayDiv.style.display = 'block';
+    editDiv.style.display = 'none';
+}
+
+function saveFileInfo() {
+    // Form verilerini al
+    const fileType = document.getElementById('editFileType').value;
+    const year = document.getElementById('editYear').value;
+    const caseNumber = document.getElementById('editCaseNumber').value;
+    const openDate = document.getElementById('editOpenDate').value;
+    const city = document.getElementById('editCity').value;
+    const courthouse = document.getElementById('editCourthouse').value;
+    const department = document.getElementById('editDepartment').value;
+    const status = document.getElementById('editStatus').value;
+    const nextHearing = document.getElementById('editNextHearing').value;
+    const hearingTime = document.getElementById('editHearingTime').value;
+    const hearingType = document.getElementById('editHearingType').value;
+    
+    // Validasyon
+    if (!fileType || !year || !caseNumber || !status) {
+        alert('Dosya türü, yıl, esas no ve durum alanları zorunludur.');
+        return;
+    }
+    
+    // Backend'e gönder
+    const formData = new FormData();
+    formData.append('case_id', currentCaseId);
+    formData.append('file_type', fileType);
+    formData.append('year', year);
+    formData.append('case_number', caseNumber);
+    formData.append('open_date', openDate);
+    formData.append('city', city);
+    formData.append('courthouse', courthouse);
+    formData.append('department', department);
+    formData.append('status', status);
+    formData.append('next_hearing', nextHearing);
+    formData.append('hearing_time', hearingTime);
+    formData.append('hearing_type', hearingType);
+    formData.append('csrf_token', csrfToken);
+    
+    fetch('/update_case_basic_info', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Görüntüleme alanlarını güncelle
+            updateFileInfoDisplay({
+                file_type: fileType,
+                year: year,
+                case_number: caseNumber,
+                open_date: openDate,
+                city: city,
+                courthouse: courthouse,
+                department: department,
+                status: status,
+                next_hearing: nextHearing,
+                hearing_time: hearingTime,
+                hearing_type: hearingType
+            });
+            
+            cancelFileInfoEdit();
+            alert('Dosya bilgileri başarıyla güncellendi.');
+        } else {
+            alert('Hata: ' + (data.message || 'Dosya bilgileri güncellenirken bir hata oluştu.'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Dosya bilgileri güncellenirken bir hata oluştu.');
+    });
+}
+
+function updateFileInfoDisplay(data) {
+    // Görüntüleme alanlarını güncelle
+    document.getElementById('detailFileType').textContent = data.file_type.charAt(0).toUpperCase() + data.file_type.slice(1);
+    document.getElementById('detailYear').textContent = data.year;
+    document.getElementById('detailCaseNumber').textContent = data.case_number;
+    document.getElementById('detailStatus').textContent = data.status;
+    document.getElementById('detailCity').textContent = data.city || '-';
+    document.getElementById('detailCourthouse').textContent = data.courthouse || '-';
+    document.getElementById('detailDepartment').textContent = data.department || '-';
+    
+    // Tarihleri formatla
+    if (data.open_date) {
+        const date = new Date(data.open_date);
+        const formatted = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`;
+        document.getElementById('detailOpenDate').textContent = formatted;
+    } else {
+        document.getElementById('detailOpenDate').textContent = '-';
+    }
+    
+    // Duruşma bilgileri
+    if (data.next_hearing) {
+        const date = new Date(data.next_hearing);
+        const formatted = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`;
+        document.getElementById('detailNextHearing').textContent = formatted;
+    } else {
+        document.getElementById('detailNextHearing').textContent = '-';
+    }
+    
+    document.getElementById('detailHearingTime').textContent = data.hearing_time || '-';
+    
+    const hearingTypeText = data.hearing_type === 'e-durusma' ? 'E-Duruşma' : 'Normal Duruşma';
+    document.getElementById('detailHearingType').textContent = hearingTypeText;
+}
+
+
+
+// ... existing code ...
 </script>
 {% endblock %}

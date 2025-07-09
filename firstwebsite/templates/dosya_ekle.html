@@ -140,7 +140,7 @@
                 <div class="additional-section">
                     <button type="button" class="btn btn-secondary" id="addClientBtn">
                         <i class="material-icons">add</i>
-                        Ek Müvekkil Ekle
+                            Müvekkil Ekle
                     </button>
                     
                     <!-- Eklenen Müvekkiller Listesi -->
@@ -204,10 +204,15 @@
                                 <i class="material-icons" style="vertical-align: middle; margin-right: 5px;">account_balance</i>
                                 Vekil Bilgileri
                             </h4>
-                            <div class="form-grid">
+                            <div class="form-grid lawyer-form-grid">
                                 <div class="form-group">
                                     <label for="opponent-lawyer">Vekil Adı Soyadı</label>
                                     <input type="text" id="opponent-lawyer" name="opponent-lawyer">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="opponent-lawyer-bar-number">Baro Numarası</label>
+                                    <input type="text" id="opponent-lawyer-bar-number" name="opponent-lawyer-bar-number" placeholder="Baro sicil numarası">
                                 </div>
 
                                 <div class="form-group">
@@ -229,12 +234,17 @@
                     <div class="button-group" style="display: flex; gap: 15px; flex-wrap: wrap;">
                         <button type="button" class="btn btn-secondary" id="addOpponentBtn">
                             <i class="material-icons">add</i>
-                            Ek Karşı Taraf Ekle
+                            Karşı Taraf Ekle
                         </button>
-                        <button type="button" class="btn btn-secondary" id="toggleLawyerBtn" onclick="toggleOpponentLawyer()">
+                        <button type="button" class="btn btn-secondary" id="addLawyerBtn" onclick="showLawyerModal()">
                             <i class="material-icons">account_balance</i>
-                            <span id="lawyer-btn-text">Vekil Ekle</span>
+                            <span>Vekil Ekle</span>
                         </button>
+                    </div>
+                    
+                    <!-- Vekil Gösterim Alanı -->
+                    <div id="lawyer-display" class="additional-list" style="display: none;">
+                        <!-- Dinamik olarak vekil kartı eklenecek -->
                     </div>
                     
                     <!-- Eklenen Karşı Taraflar Listesi -->
@@ -252,6 +262,47 @@
             </button>
         </div>
     </form>
+</div>
+
+<!-- Vekil Ekleme Modal -->
+<div class="modal-overlay" id="lawyerModal" style="display: none;">
+    <div class="modal-content-advanced">
+        <div class="modal-header-simple">
+            <div class="modal-title-section">
+                <i class="material-icons">account_balance</i>
+                <h3>Vekil Ekle</h3>
+            </div>
+            <button type="button" class="modal-close-advanced" onclick="closeLawyerModal()">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        <div class="modal-body-advanced">
+            <form id="lawyerForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="lawyer-name">Vekil Adı Soyadı *</label>
+                        <input type="text" id="lawyer-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lawyer-bar-number">Baro Numarası *</label>
+                        <input type="text" id="lawyer-bar-number" required placeholder="Baro sicil numarası">
+                    </div>
+                    <div class="form-group">
+                        <label for="lawyer-phone">Telefon</label>
+                        <input type="tel" id="lawyer-phone" pattern="[0-9]{10,11}" placeholder="5XX XXX XX XX">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="lawyer-address">Adres</label>
+                        <textarea id="lawyer-address" rows="2" placeholder="Vekil adresi"></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer-advanced">
+            <button type="button" class="btn btn-secondary" onclick="closeLawyerModal()">İptal</button>
+            <button type="button" class="btn btn-primary" onclick="addLawyer()">Ekle</button>
+        </div>
+    </div>
 </div>
 
 <!-- UYAP Senkronizasyon Modal -->
@@ -314,7 +365,7 @@
     border: 1px solid var(--border-color);
     overflow: visible;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    min-height: 650px;
+    min-height: 500px;
     height: auto;
     display: flex;
     flex-direction: column;
@@ -395,6 +446,12 @@
     align-items: start;
     width: 100%;
     box-sizing: border-box;
+}
+
+/* Vekil form için 3 sütunlu grid */
+.lawyer-form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px 20px;
 }
 
 /* Numaralı mahkeme container'ı için özel grid stilı */
@@ -491,6 +548,590 @@
     display: flex;
     justify-content: center;
     padding: 20px 0;
+}
+
+/* Modal için yeni stiller */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-content-small {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #2c3e50;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: #dc3545;
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.modal-footer {
+    padding: 20px 25px;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* Person Card Stili - Katlanabilir Özellik ile */
+.person-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.person-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.person-card-header {
+    background: #f8f9fa;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #dee2e6;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.person-card-header:hover {
+    background: #e9ecef;
+}
+
+.person-card-header.collapsed {
+    border-bottom: none;
+}
+
+.person-name-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.collapse-indicator {
+    color: #6c757d;
+    font-size: 18px;
+    transition: transform 0.3s ease;
+}
+
+.collapse-indicator.expanded {
+    transform: rotate(90deg);
+}
+
+.person-name {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.person-summary {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-left: 8px;
+}
+
+.person-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.btn-icon.btn-delete:hover {
+    background: #f8d7da;
+    color: #dc3545;
+}
+
+.person-card-details {
+    padding: 15px 20px;
+    border-top: 1px solid #f1f1f1;
+    background: #fafbfc;
+    max-height: 200px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.person-card-details.collapsed {
+    max-height: 0;
+    padding: 0 20px;
+    opacity: 0;
+}
+
+.detail-row {
+    display: flex;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.detail-row span:first-child {
+    font-weight: 600;
+    color: #495057;
+    min-width: 80px;
+    margin-right: 10px;
+}
+
+.detail-row span:last-child {
+    color: #6c757d;
+    word-wrap: break-word;
+    flex: 1;
+}
+
+/* Additional List Stili */
+.additional-list {
+    margin-top: 15px;
+}
+
+/* YENİ - Geliştirilmiş Modal Stilleri */
+.modal-content-advanced {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    max-width: 600px;
+    width: 95%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header-advanced {
+    background: linear-gradient(135deg, #1a237e 0%, #2d313c 100%);
+    color: white;
+    padding: 20px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header-simple {
+    background: #f8f9fa;
+    color: #2c3e50;
+    padding: 18px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.modal-title-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-title-section i {
+    font-size: 24px;
+    color: inherit;
+}
+
+.modal-title-section h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: inherit;
+}
+
+.modal-close-advanced {
+    background: rgba(108, 117, 125, 0.1);
+    border: none;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-close-advanced:hover {
+    background: rgba(108, 117, 125, 0.2);
+}
+
+.modal-close-advanced i {
+    color: #6c757d;
+    font-size: 20px;
+}
+
+.modal-body-advanced {
+    padding: 25px;
+    flex: 1;
+    overflow-y: auto;
+    background: #ffffff;
+}
+
+.person-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.radio-group-advanced {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+.radio-option-advanced {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.radio-option-advanced:hover {
+    background: #f8f9fa;
+}
+
+.radio-option-advanced input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+}
+
+.radio-label-advanced {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.modal-footer-advanced {
+    padding: 20px 25px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    background: #f8f9fa;
+}
+
+/* YENİ - Geliştirilmiş Person Card Stilleri */
+.person-card-new {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.person-card-new:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+}
+
+.person-card-header-new {
+    background: #f8f9fa;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.person-card-header-new:hover {
+    background: #e9ecef;
+}
+
+.person-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.collapse-indicator-new {
+    color: #6c757d;
+    font-size: 20px;
+    transition: all 0.3s ease;
+}
+
+.collapse-indicator-new.expanded {
+    color: var(--primary-color);
+}
+
+.person-title-section {
+    flex: 1;
+}
+
+.person-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--primary-color);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.person-type-badge i {
+    font-size: 14px;
+}
+
+.person-name-new {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+}
+
+.person-summary-new {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.person-actions-new {
+    display: flex;
+    gap: 8px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.person-card-new:hover .person-actions-new {
+    opacity: 1;
+}
+
+.btn-icon-new {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: #6c757d;
+}
+
+.btn-icon-new:hover {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.btn-icon-new.edit:hover {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.btn-icon-new.delete:hover {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.btn-icon-new i {
+    font-size: 18px;
+}
+
+.person-card-details-new {
+    max-height: 0;
+    overflow: hidden;
+    background: #fafbfc;
+    transition: all 0.3s ease;
+    border-top: 1px solid #f1f1f1;
+}
+
+.person-card-details-new.open {
+    max-height: 300px;
+    padding: 20px;
+}
+
+.person-details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    font-size: 0.9rem;
+    color: #2c3e50;
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+/* Bilgi Yok Mesajı */
+.no-additional-info {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 20px;
+    margin: 0;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px dashed #dee2e6;
+}
+
+/* Success Toast */
+.success-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #2e7d32;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    animation: slideInToast 0.3s ease-out;
+}
+
+.success-toast i {
+    font-size: 20px;
+}
+
+.success-toast span {
+    font-weight: 500;
+}
+
+@keyframes slideInToast {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive iyileştirmeler */
+@media (max-width: 768px) {
+    .person-form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .person-details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content-advanced {
+        max-width: 95%;
+        margin: 10px;
+    }
+    
+    .person-header-left {
+        gap: 8px;
+    }
+    
+    .person-type-badge {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+    }
+    
+    .person-name-new {
+        font-size: 1rem;
+    }
+}
+
+.additional-section {
+    padding: 20px 30px 30px;
+    border-top: 1px solid #dee2e6;
+    background: #f8f9fa;
 }
 
 .btn {
@@ -795,6 +1436,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupFormSubmit();
     setupAdditionalPeople();
     setupFileTypeChangeListener();
+    setupLawyerModal();
 });
 
 // Vekil bilgilerini göster/gizle
@@ -820,10 +1462,6 @@ function setupFileTypeChangeListener() {
     const fileTypeSelect = document.getElementById('file-type');
     fileTypeSelect.addEventListener('change', handleFileTypeChange);
 }
-
-// Ek kişiler için global diziler
-let additionalClients = [];
-let additionalOpponents = [];
 
 function setupDepartmentOptions() {
     const departmentSelect = document.getElementById('department');
@@ -1131,13 +1769,16 @@ function setupModalEvents() {
     }
 }
 
+// Ek kişiler için global diziler - SIFIRDAN YENİDEN YAZILDI
+let additionalClients = [];
+let additionalOpponents = [];
+
 function setupFormSubmit() {
     const form = document.getElementById('addCaseForm');
     if (form) {
         form.addEventListener('submit', function(e) {
-            // Ek kişileri hidden input'lara ekle
+            // Ek kişileri JSON formatında hidden input'lara ekle
             addAdditionalPeopleToForm();
-            console.log('Form gönderiliyor...');
         });
     }
 }
@@ -1147,112 +1788,445 @@ function setupAdditionalPeople() {
     const addOpponentBtn = document.getElementById('addOpponentBtn');
     
     if (addClientBtn) {
-        addClientBtn.addEventListener('click', () => addPersonFromForm('client'));
+        addClientBtn.addEventListener('click', () => showNewPersonModal('client'));
     }
     
     if (addOpponentBtn) {
-        addOpponentBtn.addEventListener('click', () => addPersonFromForm('opponent'));
+        addOpponentBtn.addEventListener('click', () => showNewPersonModal('opponent'));
     }
 }
 
-function addPersonFromForm(type) {
+// YENİ - Geliştirilmiş person modal
+function showNewPersonModal(type) {
     const isClient = type === 'client';
-    const prefix = isClient ? 'client' : 'opponent';
+            const title = isClient ? 'Müvekkil Ekle' : 'Karşı Taraf Ekle';
+    const titleIcon = isClient ? 'person_add' : 'group_add';
     
-    // Form verilerini al
-    const entityType = document.querySelector(`input[name="${prefix}-entity-type"]:checked`).value;
-    const name = document.getElementById(`${prefix}-name`).value;
-    const id = document.getElementById(`${prefix}-id`).value;
-    const capacity = document.getElementById(`${prefix}-capacity`).value;
-    const phone = document.getElementById(`${prefix}-phone`).value;
-    const address = document.getElementById(`${prefix}-address`).value;
+    const modalHtml = `
+        <div class="modal-overlay" id="newPersonModal">
+            <div class="modal-content-advanced">
+                <div class="modal-header-simple">
+                    <div class="modal-title-section">
+                        <i class="material-icons">${titleIcon}</i>
+                        <h3>${title}</h3>
+                    </div>
+                    <button type="button" class="modal-close-advanced" onclick="closeNewPersonModal()">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+                <div class="modal-body-advanced">
+                    <form id="newPersonForm">
+                        <div class="person-form-grid">
+                            <div class="form-group">
+                                <label for="add-entity-type">Tür *</label>
+                                <select id="add-entity-type" name="add-entity-type" onchange="updatePersonModalLabels()" required>
+                                    <option value="person">Gerçek Kişi</option>
+                                    <option value="company">Şirket</option>
+                                    <option value="public">Kamu Kurumu</option>
+                                    <option value="legal_entity">Tüzel Kişi</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="add-capacity">Sıfat</label>
+                                <select id="add-capacity">
+                                    <option value="">Seçiniz</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="add-name" id="add-name-label">Ad Soyad *</label>
+                                <input type="text" id="add-name" required placeholder="Kişinin ad soyadını girin">
+                            </div>
+                            <div class="form-group">
+                                <label for="add-identity" id="add-identity-label">T.C. Kimlik No</label>
+                                <input type="text" id="add-identity" maxlength="11" placeholder="12345678901">
+                            </div>
+                            <div class="form-group">
+                                <label for="add-phone">Telefon</label>
+                                <input type="tel" id="add-phone" placeholder="5XX XXX XX XX">
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="add-address">Adres</label>
+                                <textarea id="add-address" rows="2" placeholder="Tam adres bilgisi"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer-advanced">
+                    <button type="button" class="btn btn-secondary" onclick="closeNewPersonModal()">İptal</button>
+                    <button type="button" class="btn btn-primary" onclick="addNewPersonToList('${type}')">
+                        <i class="material-icons">add</i>
+                        Ekle
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
     
-    // Zorunlu alanları kontrol et
-    if (!name.trim()) {
-        alert(`${isClient ? 'Müvekkil' : 'Karşı taraf'} adı girilmelidir!`);
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Entity type değişimi için event listener
+    const entityTypeSelect = document.getElementById('add-entity-type');
+    if (entityTypeSelect) {
+        entityTypeSelect.addEventListener('change', updatePersonModalLabels);
+    }
+    
+    // Sıfat dropdown'ını güncelle
+    updateModalCapacityOptions(type);
+}
+
+function updatePersonModalLabels() {
+    const entityType = document.getElementById('add-entity-type').value;
+    const nameLabel = document.getElementById('add-name-label');
+    const identityLabel = document.getElementById('add-identity-label');
+    const nameInput = document.getElementById('add-name');
+    const identityInput = document.getElementById('add-identity');
+    
+    switch(entityType) {
+        case 'person':
+            nameLabel.textContent = 'Ad Soyad *';
+            identityLabel.textContent = 'T.C. Kimlik No';
+            nameInput.placeholder = 'Kişinin ad soyadını girin';
+            identityInput.placeholder = '12345678901';
+            identityInput.maxLength = 11;
+            break;
+        case 'company':
+            nameLabel.textContent = 'Şirket Unvanı *';
+            identityLabel.textContent = 'Vergi/Mersis No';
+            nameInput.placeholder = 'Şirket unvanını girin';
+            identityInput.placeholder = '1234567890';
+            identityInput.maxLength = 20;
+            break;
+        case 'public':
+            nameLabel.textContent = 'Kurum Adı *';
+            identityLabel.textContent = 'Vergi/Kurum No';
+            nameInput.placeholder = 'Kamu kurumu adını girin';
+            identityInput.placeholder = '1234567890';
+            identityInput.maxLength = 20;
+            break;
+        case 'legal_entity':
+            nameLabel.textContent = 'Kuruluş Unvanı *';
+            identityLabel.textContent = 'Vergi/Sicil No';
+            nameInput.placeholder = 'Tüzel kişi unvanını girin';
+            identityInput.placeholder = '1234567890';
+            identityInput.maxLength = 20;
+            break;
+        default:
+            nameLabel.textContent = 'Ad Soyad *';
+            identityLabel.textContent = 'T.C. Kimlik No';
+            nameInput.placeholder = 'Kişinin ad soyadını girin';
+            identityInput.placeholder = '12345678901';
+            identityInput.maxLength = 11;
+    }
+}
+
+function updateModalCapacityOptions(personType) {
+    const fileType = document.getElementById('file-type').value;
+    const capacitySelect = document.getElementById('add-capacity');
+    
+    capacitySelect.innerHTML = '<option value="">Seçiniz</option>';
+    
+    if (capacityOptions[fileType]) {
+        const optionsKey = personType === 'client' ? 'client' : 'opponent';
+        const options = capacityOptions[fileType][optionsKey];
+        
+        if (options && options.length > 0) {
+            options.forEach(capacity => {
+                const option = document.createElement('option');
+                option.value = capacity;
+                option.textContent = capacity;
+                capacitySelect.appendChild(option);
+            });
+        }
+    }
+}
+
+function closeNewPersonModal() {
+    const modal = document.getElementById('newPersonModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function addNewPersonToList(type) {
+    const name = document.getElementById('add-name').value.trim();
+    const capacity = document.getElementById('add-capacity').value.trim();
+    const identity = document.getElementById('add-identity').value.trim();
+    const phone = document.getElementById('add-phone').value.trim();
+    const address = document.getElementById('add-address').value.trim();
+    const entityType = document.getElementById('add-entity-type').value;
+    
+    // Validasyon
+    if (!name) {
+        alert('Ad Soyad/Şirket Unvanı alanı zorunludur!');
         return;
     }
     
-    // Kişi nesnesini oluştur
-    const person = {
-        id: Date.now(), // Unique ID
-        entityType,
-        name: name.trim(),
-        identityNumber: id.trim(),
-        capacity,
-        phone: phone.trim(),
-        address: address.trim()
-    };
-    
-    // Listeye ekle
-    if (isClient) {
-        additionalClients.push(person);
-        renderAdditionalClients();
-    } else {
-        additionalOpponents.push(person);
-        renderAdditionalOpponents();
+    // T.C. kimlik no validasyonu (eğer girilmişse)
+    if (identity && entityType === 'person' && identity.length !== 11) {
+        alert('T.C. Kimlik No 11 haneli olmalıdır!');
+        return;
     }
     
-    // Form alanlarını temizle
-    clearPersonForm(prefix);
+    const person = {
+        id: Date.now() + Math.random(), // Daha unique ID
+        entity_type: entityType, // Backend ile uyumlu
+        name: name,
+        capacity: capacity,
+        identity_number: identity, // Backend ile uyumlu
+        phone: phone,
+        address: address
+    };
+    
+    if (type === 'client') {
+        additionalClients.push(person);
+        renderNewAdditionalClients();
+    } else {
+        additionalOpponents.push(person);
+        renderNewAdditionalOpponents();
+    }
+    
+    closeNewPersonModal();
+    
+    // Başarı mesajı
+    const message = type === 'client' ? 'Ek müvekkil başarıyla eklendi!' : 'Ek karşı taraf başarıyla eklendi!';
+    showSuccessMessage(message);
 }
 
-function clearPersonForm(prefix) {
-    document.getElementById(`${prefix}-name`).value = '';
-    document.getElementById(`${prefix}-id`).value = '';
-    document.getElementById(`${prefix}-phone`).value = '';
-    document.getElementById(`${prefix}-address`).value = '';
-    document.getElementById(`${prefix}-capacity`).selectedIndex = 0;
-}
-
-function renderAdditionalClients() {
+function renderNewAdditionalClients() {
     const container = document.getElementById('additionalClients');
     container.innerHTML = '';
     
-    additionalClients.forEach(client => {
-        const item = createPersonItem(client, 'client');
-        container.appendChild(item);
+    if (additionalClients.length === 0) {
+        container.innerHTML = '<p class="no-additional-info">Henüz ek müvekkil eklenmemiş.</p>';
+        return;
+    }
+    
+    additionalClients.forEach((client, index) => {
+        const card = createNewPersonCard(client, 'client', index);
+        container.appendChild(card);
     });
 }
 
-function renderAdditionalOpponents() {
+function renderNewAdditionalOpponents() {
     const container = document.getElementById('additionalOpponents');
     container.innerHTML = '';
     
-    additionalOpponents.forEach(opponent => {
-        const item = createPersonItem(opponent, 'opponent');
-        container.appendChild(item);
+    if (additionalOpponents.length === 0) {
+        container.innerHTML = '<p class="no-additional-info">Henüz ek karşı taraf eklenmemiş.</p>';
+        return;
+    }
+    
+    additionalOpponents.forEach((opponent, index) => {
+        const card = createNewPersonCard(opponent, 'opponent', index);
+        container.appendChild(card);
     });
 }
 
-function createPersonItem(person, type) {
+// YENİ - Geliştirilmiş person card
+function createNewPersonCard(person, type, index) {
     const div = document.createElement('div');
-    div.className = 'additional-item';
+    div.className = 'person-card-new';
+    div.setAttribute('data-person-id', person.id);
     
-    const displayId = person.identityNumber || 'ID Yok';
-    const idLabel = person.entityType === 'company' ? 'Vergi/Mersis No' : 'T.C. No';
+    const entityLabels = {
+        'person': 'Gerçek Kişi',
+        'company': 'Şirket',
+        'public': 'Kamu Kurumu',
+        'legal_entity': 'Tüzel Kişi'
+    };
+    const entityLabel = entityLabels[person.entity_type] || 'Gerçek Kişi';
+    const idLabels = {
+        'person': 'T.C. Kimlik No',
+        'company': 'Vergi/Mersis No', 
+        'public': 'Vergi/Kurum No',
+        'legal_entity': 'Vergi/Sicil No'
+    };
+    const idLabel = idLabels[person.entity_type] || 'T.C. Kimlik No';
+    const typeLabel = type === 'client' ? 'Ek Müvekkil' : 'Ek Karşı Taraf';
+    const typeIcon = type === 'client' ? 'person_add' : 'group_add';
+    
+    // Özet bilgi oluştur
+    const summaryParts = [];
+    if (person.capacity) summaryParts.push(person.capacity);
+    if (person.identity_number) summaryParts.push(person.identity_number);
+    const summary = summaryParts.length > 0 ? summaryParts.join(' • ') : 'Bilgi yok';
     
     div.innerHTML = `
-        <div class="additional-item-info">
-            <span class="additional-item-name">${person.name}</span>
-            <span class="additional-item-id">${idLabel}: ${displayId}</span>
-            ${person.capacity ? `<span class="additional-item-id">Sıfat: ${person.capacity}</span>` : ''}
+        <div class="person-card-header-new" onclick="toggleNewPersonCard('${person.id}')">
+            <div class="person-header-left">
+                <i class="material-icons collapse-indicator-new expanded" id="indicator-${person.id}">expand_more</i>
+                <div class="person-title-section">
+                    <div class="person-type-badge">
+                        <i class="material-icons">${typeIcon}</i>
+                        ${typeLabel} ${index + 1}
         </div>
-        <button type="button" class="btn-delete" onclick="removePerson(${person.id}, '${type}')">
+                    <div class="person-name-new">${person.name}</div>
+                    <div class="person-summary-new">${summary}</div>
+                </div>
+            </div>
+            <div class="person-actions-new" onclick="event.stopPropagation()">
+                <button type="button" class="btn-icon-new edit" onclick="editNewPerson('${person.id}', '${type}')" title="Düzenle">
+                    <i class="material-icons">edit</i>
+                </button>
+                <button type="button" class="btn-icon-new delete" onclick="removeNewPerson('${person.id}', '${type}')" title="Sil">
             <i class="material-icons">delete</i>
         </button>
+            </div>
+        </div>
+        <div class="person-card-details-new" id="details-${person.id}">
+            <div class="person-details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Tür:</span>
+                    <span class="detail-value">${entityLabel}</span>
+                </div>
+                ${person.capacity ? `
+                <div class="detail-item">
+                    <span class="detail-label">Sıfat:</span>
+                    <span class="detail-value">${person.capacity}</span>
+                </div>` : ''}
+                ${person.identity_number ? `
+                <div class="detail-item">
+                    <span class="detail-label">${idLabel}:</span>
+                    <span class="detail-value">${person.identity_number}</span>
+                </div>` : ''}
+                ${person.phone ? `
+                <div class="detail-item">
+                    <span class="detail-label">Telefon:</span>
+                    <span class="detail-value">${person.phone}</span>
+                </div>` : ''}
+                ${person.address ? `
+                <div class="detail-item full-width">
+                    <span class="detail-label">Adres:</span>
+                    <span class="detail-value">${person.address}</span>
+                </div>` : ''}
+            </div>
+        </div>
     `;
     
     return div;
 }
 
-function removePerson(personId, type) {
+// YENİ - Kişi kartını aç/kapat
+function toggleNewPersonCard(personId) {
+    const details = document.getElementById(`details-${personId}`);
+    const indicator = document.getElementById(`indicator-${personId}`);
+    
+    if (details && indicator) {
+        const isOpen = details.classList.contains('open');
+        
+        if (isOpen) {
+            details.classList.remove('open');
+            indicator.textContent = 'expand_more';
+            indicator.classList.remove('expanded');
+        } else {
+            details.classList.add('open');
+            indicator.textContent = 'expand_less';
+            indicator.classList.add('expanded');
+        }
+    }
+}
+
+function editNewPerson(personId, type) {
+    let person;
     if (type === 'client') {
-        additionalClients = additionalClients.filter(client => client.id !== personId);
-        renderAdditionalClients();
+        person = additionalClients.find(c => c.id == personId);
     } else {
-        additionalOpponents = additionalOpponents.filter(opponent => opponent.id !== personId);
-        renderAdditionalOpponents();
+        person = additionalOpponents.find(o => o.id == personId);
+    }
+    
+    if (!person) return;
+    
+    showNewPersonModal(type);
+    
+    // Modal yüklendikten sonra değerleri doldur
+    setTimeout(() => {
+        document.getElementById('add-name').value = person.name;
+        document.getElementById('add-capacity').value = person.capacity || '';
+        document.getElementById('add-identity').value = person.identity_number || '';
+        document.getElementById('add-phone').value = person.phone || '';
+        document.getElementById('add-address').value = person.address || '';
+        document.getElementById('add-entity-type').value = person.entity_type;
+        
+        // Label'ları güncelle
+        updatePersonModalLabels();
+        
+        // Modal başlığını güncelle
+        const titleSection = document.querySelector('#newPersonModal .modal-title-section h3');
+        if (titleSection) {
+            titleSection.textContent = type === 'client' ? 'Müvekkil Düzenle' : 'Karşı Taraf Düzenle';
+        }
+        
+        // Ekle butonunu güncelle butonuna çevir
+        const addBtn = document.querySelector('#newPersonModal .btn-primary');
+        if (addBtn) {
+            addBtn.innerHTML = '<i class="material-icons">save</i> Güncelle';
+            addBtn.onclick = () => updateNewPersonInList(personId, type);
+        }
+    }, 100);
+}
+
+function updateNewPersonInList(personId, type) {
+    const name = document.getElementById('add-name').value.trim();
+    const capacity = document.getElementById('add-capacity').value.trim();
+    const identity = document.getElementById('add-identity').value.trim();
+    const phone = document.getElementById('add-phone').value.trim();
+    const address = document.getElementById('add-address').value.trim();
+    const entityType = document.getElementById('add-entity-type').value;
+    
+    if (!name) {
+        alert('Ad Soyad/Şirket Unvanı alanı zorunludur!');
+        return;
+    }
+    
+    // T.C. kimlik no validasyonu
+    if (identity && entityType === 'person' && identity.length !== 11) {
+        alert('T.C. Kimlik No 11 haneli olmalıdır!');
+        return;
+    }
+    
+    const updatedPerson = {
+        id: personId,
+        entity_type: entityType,
+        name: name,
+        capacity: capacity,
+        identity_number: identity,
+        phone: phone,
+        address: address
+    };
+    
+    if (type === 'client') {
+        const index = additionalClients.findIndex(c => c.id == personId);
+        if (index !== -1) {
+            additionalClients[index] = updatedPerson;
+            renderNewAdditionalClients();
+        }
+    } else {
+        const index = additionalOpponents.findIndex(o => o.id == personId);
+        if (index !== -1) {
+            additionalOpponents[index] = updatedPerson;
+            renderNewAdditionalOpponents();
+        }
+    }
+    
+    closeNewPersonModal();
+    showSuccessMessage('Bilgiler başarıyla güncellendi!');
+}
+
+function removeNewPerson(personId, type) {
+    const personName = type === 'client' 
+        ? additionalClients.find(c => c.id == personId)?.name
+        : additionalOpponents.find(o => o.id == personId)?.name;
+    
+    if (confirm(`"${personName}" isimli kişiyi silmek istediğinizden emin misiniz?`)) {
+        if (type === 'client') {
+            additionalClients = additionalClients.filter(client => client.id != personId);
+            renderNewAdditionalClients();
+        } else {
+            additionalOpponents = additionalOpponents.filter(opponent => opponent.id != personId);
+            renderNewAdditionalOpponents();
+        }
+        
+        showSuccessMessage('Kişi başarıyla silindi!');
     }
 }
 
@@ -1261,25 +2235,14 @@ function addAdditionalPeopleToForm() {
     const existingInputs = document.querySelectorAll('input[name^="additional_"]');
     existingInputs.forEach(input => input.remove());
     
-    // Ek müvekkilleri ekle
-    additionalClients.forEach((client, index) => {
-        addHiddenInput(`additional_clients[${index}][entity_type]`, client.entityType);
-        addHiddenInput(`additional_clients[${index}][name]`, client.name);
-        addHiddenInput(`additional_clients[${index}][identity_number]`, client.identityNumber);
-        addHiddenInput(`additional_clients[${index}][capacity]`, client.capacity);
-        addHiddenInput(`additional_clients[${index}][phone]`, client.phone);
-        addHiddenInput(`additional_clients[${index}][address]`, client.address);
-    });
+    // Ek kişileri JSON formatında ekle
+    if (additionalClients.length > 0) {
+        addHiddenInput('additional_clients_json', JSON.stringify(additionalClients));
+    }
     
-    // Ek karşı tarafları ekle
-    additionalOpponents.forEach((opponent, index) => {
-        addHiddenInput(`additional_opponents[${index}][entity_type]`, opponent.entityType);
-        addHiddenInput(`additional_opponents[${index}][name]`, opponent.name);
-        addHiddenInput(`additional_opponents[${index}][identity_number]`, opponent.identityNumber);
-        addHiddenInput(`additional_opponents[${index}][capacity]`, opponent.capacity);
-        addHiddenInput(`additional_opponents[${index}][phone]`, opponent.phone);
-        addHiddenInput(`additional_opponents[${index}][address]`, opponent.address);
-    });
+    if (additionalOpponents.length > 0) {
+        addHiddenInput('additional_opponents_json', JSON.stringify(additionalOpponents));
+    }
 }
 
 function addHiddenInput(name, value) {
@@ -1288,6 +2251,253 @@ function addHiddenInput(name, value) {
     input.name = name;
     input.value = value || '';
     document.getElementById('addCaseForm').appendChild(input);
+}
+
+// Yardımcı fonksiyonlar
+function showSuccessMessage(message) {
+    // Geçici başarı mesajı göster
+    const toast = document.createElement('div');
+    toast.className = 'success-toast';
+    toast.innerHTML = `
+        <i class="material-icons">check_circle</i>
+        <span>${message}</span>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // 3 saniye sonra kaldır
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Vekil modal için setup
+function setupLawyerModal() {
+    const addLawyerBtn = document.getElementById('addLawyerBtn');
+    if (addLawyerBtn) {
+        addLawyerBtn.addEventListener('click', showLawyerModal);
+    }
+}
+
+function showLawyerModal() {
+    const modal = document.getElementById('lawyerModal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+function closeLawyerModal() {
+    const modal = document.getElementById('lawyerModal');
+    if (modal) {
+        modal.style.display = 'none';
+        // Form'u temizle
+        document.getElementById('lawyerForm').reset();
+    }
+}
+
+function addLawyer() {
+    const name = document.getElementById('lawyer-name').value.trim();
+    const barNumber = document.getElementById('lawyer-bar-number').value.trim();
+    const phone = document.getElementById('lawyer-phone').value.trim();
+    const address = document.getElementById('lawyer-address').value.trim();
+    
+    // Validasyon
+    if (!name) {
+        alert('Vekil adı soyadı zorunludur!');
+        return;
+    }
+    
+    if (!barNumber) {
+        alert('Baro numarası zorunludur!');
+        return;
+    }
+    
+    // Vekil bilgilerini ana forma ekle
+    document.getElementById('opponent-lawyer').value = name;
+    document.getElementById('opponent-lawyer-bar-number').value = barNumber;
+    document.getElementById('opponent-lawyer-phone').value = phone;
+    document.getElementById('opponent-lawyer-address').value = address;
+    
+    // Vekil kartını oluştur ve göster
+    const lawyerContainer = document.getElementById('lawyer-display');
+    if (lawyerContainer) {
+        const lawyerCard = createLawyerCard(name, barNumber, phone, address);
+        lawyerContainer.innerHTML = '';
+        lawyerContainer.appendChild(lawyerCard);
+        lawyerContainer.style.display = 'block';
+        
+        // Vekil ekleme butonunu gizle
+        const addBtn = document.querySelector('[onclick="showLawyerModal()"]');
+        if (addBtn) {
+            addBtn.style.display = 'none';
+        }
+    }
+    
+    // Modalı kapat
+    closeLawyerModal();
+    
+    // Başarı mesajı
+    showSuccessMessage('Vekil bilgileri başarıyla eklendi!');
+}
+
+function createLawyerCard(name, barNumber, phone, address) {
+    const div = document.createElement('div');
+    div.className = 'person-card-new';
+    div.setAttribute('data-lawyer', 'true');
+    
+    // Özet bilgi oluştur
+    const summaryParts = [];
+    if (barNumber) summaryParts.push(`Baro: ${barNumber}`);
+    if (phone) summaryParts.push(phone);
+    const summary = summaryParts.length > 0 ? summaryParts.join(' • ') : 'Baro numarası girilmedi';
+    
+    div.innerHTML = `
+        <div class="person-card-header-new" onclick="toggleLawyerCard()">
+            <div class="person-header-left">
+                <i class="material-icons collapse-indicator-new expanded" id="lawyer-indicator">expand_more</i>
+                <div class="person-title-section">
+                    <div class="person-type-badge">
+                        <i class="material-icons">account_balance</i>
+                        Vekil
+                    </div>
+                    <div class="person-name-new">${name}</div>
+                    <div class="person-summary-new">${summary}</div>
+                </div>
+            </div>
+            <div class="person-actions-new" onclick="event.stopPropagation()">
+                <button type="button" class="btn-icon-new edit" onclick="editLawyer()" title="Düzenle">
+                    <i class="material-icons">edit</i>
+                </button>
+                <button type="button" class="btn-icon-new delete" onclick="removeLawyer()" title="Sil">
+                    <i class="material-icons">delete</i>
+                </button>
+            </div>
+        </div>
+        <div class="person-card-details-new" id="lawyer-details">
+            <div class="person-details-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Baro Numarası:</span>
+                    <span class="detail-value">${barNumber}</span>
+                </div>
+                ${phone ? `
+                <div class="detail-item">
+                    <span class="detail-label">Telefon:</span>
+                    <span class="detail-value">${phone}</span>
+                </div>` : ''}
+                ${address ? `
+                <div class="detail-item full-width">
+                    <span class="detail-label">Adres:</span>
+                    <span class="detail-value">${address}</span>
+                </div>` : ''}
+            </div>
+        </div>
+    `;
+    
+    return div;
+}
+
+function toggleLawyerCard() {
+    const details = document.getElementById('lawyer-details');
+    const indicator = document.getElementById('lawyer-indicator');
+    
+    if (details && indicator) {
+        const isOpen = details.classList.contains('open');
+        
+        if (isOpen) {
+            details.classList.remove('open');
+            indicator.textContent = 'expand_more';
+            indicator.classList.remove('expanded');
+        } else {
+            details.classList.add('open');
+            indicator.textContent = 'expand_less';
+            indicator.classList.add('expanded');
+        }
+    }
+}
+
+function editLawyer() {
+    // Mevcut değerleri al
+    const name = document.getElementById('opponent-lawyer').value;
+    const barNumber = document.getElementById('opponent-lawyer-bar-number').value;
+    const phone = document.getElementById('opponent-lawyer-phone').value;
+    const address = document.getElementById('opponent-lawyer-address').value;
+    
+    // Modalı aç ve değerleri doldur
+    showLawyerModal();
+    
+    setTimeout(() => {
+        document.getElementById('lawyer-name').value = name;
+        document.getElementById('lawyer-bar-number').value = barNumber;
+        document.getElementById('lawyer-phone').value = phone;
+        document.getElementById('lawyer-address').value = address;
+        
+        // Modal başlığını güncelle
+        const titleSection = document.querySelector('#lawyerModal .modal-title-section h3');
+        if (titleSection) {
+            titleSection.textContent = 'Vekil Düzenle';
+        }
+        
+        // Ekle butonunu güncelle butonuna çevir
+        const addBtn = document.querySelector('#lawyerModal .btn-primary');
+        if (addBtn) {
+            addBtn.innerHTML = '<i class="material-icons">save</i> Güncelle';
+            addBtn.onclick = updateLawyer;
+        }
+    }, 100);
+}
+
+function updateLawyer() {
+    const name = document.getElementById('lawyer-name').value.trim();
+    const barNumber = document.getElementById('lawyer-bar-number').value.trim();
+    const phone = document.getElementById('lawyer-phone').value.trim();
+    const address = document.getElementById('lawyer-address').value.trim();
+    
+    if (!name || !barNumber) {
+        alert('Vekil adı ve baro numarası zorunludur!');
+        return;
+    }
+    
+    // Vekil bilgilerini güncelle
+    document.getElementById('opponent-lawyer').value = name;
+    document.getElementById('opponent-lawyer-bar-number').value = barNumber;
+    document.getElementById('opponent-lawyer-phone').value = phone;
+    document.getElementById('opponent-lawyer-address').value = address;
+    
+    // Kartı yeniden oluştur
+    const lawyerContainer = document.getElementById('lawyer-display');
+    if (lawyerContainer) {
+        const lawyerCard = createLawyerCard(name, barNumber, phone, address);
+        lawyerContainer.innerHTML = '';
+        lawyerContainer.appendChild(lawyerCard);
+    }
+    
+    closeLawyerModal();
+    showSuccessMessage('Vekil bilgileri güncellendi!');
+}
+
+function removeLawyer() {
+    if (confirm('Vekil bilgilerini silmek istediğinizden emin misiniz?')) {
+        // Vekil bilgilerini temizle
+        document.getElementById('opponent-lawyer').value = '';
+        document.getElementById('opponent-lawyer-bar-number').value = '';
+        document.getElementById('opponent-lawyer-phone').value = '';
+        document.getElementById('opponent-lawyer-address').value = '';
+        
+        // Vekil kartını gizle
+        const lawyerContainer = document.getElementById('lawyer-display');
+        if (lawyerContainer) {
+            lawyerContainer.style.display = 'none';
+            lawyerContainer.innerHTML = '';
+        }
+        
+        // Vekil ekleme butonunu göster
+        const addBtn = document.querySelector('[onclick="showLawyerModal()"]');
+        if (addBtn) {
+            addBtn.style.display = 'block';
+        }
+        
+        showSuccessMessage('Vekil bilgileri silindi!');
+    }
 }
 </script>
 
