@@ -684,7 +684,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 9999;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -945,13 +945,20 @@ async function loadUserSettings() {
         const response = await fetch('/get_user_settings');
         const data = await response.json();
         
+        console.log('DEBUG - Ayarlar yüklendi:', data);
+        
         if (data.success) {
             const settings = data.settings;
+            
+            console.log('DEBUG - Settings object:', settings);
+            console.log('DEBUG - twoFactorEnabled değeri:', settings.twoFactorEnabled);
             
             // Toggle ayarlarını uygula
             document.getElementById('emailNotifications').checked = settings.emailNotifications;
             document.getElementById('systemNotifications').checked = settings.systemNotifications;
             document.getElementById('twoFactorAuth').checked = settings.twoFactorEnabled;
+            
+            console.log('DEBUG - 2FA toggle durumu set edildi:', settings.twoFactorEnabled);
             
             // Tema ayarını uygula
             const currentTheme = settings.theme || 'light';
@@ -1029,7 +1036,13 @@ document.getElementById('systemNotifications').addEventListener('change', functi
 });
 
 document.getElementById('twoFactorAuth').addEventListener('change', function() {
-    enable2FA(this.checked);
+    if (this.checked) {
+        // 2FA etkinleştirme - QR kod modalını göster
+        enable2FA(this.checked);
+    } else {
+        // 2FA devre dışı bırakma - direkt güncelle
+        updateSetting('twoFactorEnabled', false);
+    }
 });
 
 // Ayar güncelleme fonksiyonu
@@ -1071,7 +1084,8 @@ async function enable2FA(enabled) {
             if (data.success) {
                 show2FAModal(data.qr_code, data.secret);
             } else {
-                showNotification('2FA QR kod oluşturulurken hata: ' + (data.error || data.message), 'error');
+                const errorMessage = data.message || data.error || 'Bilinmeyen hata';
+                showNotification('2FA QR kod oluşturulurken hata: ' + errorMessage, 'error');
                 document.getElementById('twoFactorAuth').checked = false;
             }
         } catch (error) {
@@ -1094,36 +1108,111 @@ let currentSecret = null;
 
 // 2FA QR kod modalını göster
 function show2FAModal(qrCode, secret) {
+    console.log('show2FAModal çağrıldı', {qrCode: qrCode ? 'var' : 'yok', secret: secret ? 'var' : 'yok'});
     currentSecret = secret; // Secret'ı global değişkende sakla
+    
+    // Mevcut modali temizle
+    const existingModal = document.getElementById('qrModal');
+    if (existingModal) {
+        existingModal.remove();
+        console.log('Mevcut modal temizlendi');
+    }
+    
     const modal = document.createElement('div');
-    modal.className = 'modal-overlay active';
+    modal.className = 'modal-overlay';
     modal.id = 'qrModal';
+    modal.style.cssText = `
+        z-index: 9999 !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transition: none !important;
+    `;
+    console.log('Modal oluşturuldu:', modal);
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h3><i class="fas fa-qrcode"></i> İki Faktörlü Doğrulama Kurulumu</h3>
-                <button class="close-btn" onclick="closeQRModal()">&times;</button>
+        <div style="
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            width: 90%; 
+            max-width: 500px; 
+            position: relative;
+            z-index: 10000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            color: #333;
+            font-family: Arial, sans-serif;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                <h3 style="margin: 0; color: #333;">🔐 İki Faktörlü Doğrulama</h3>
+                <button onclick="closeQRModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
             </div>
-            <div class="modal-body">
-                <div style="text-align: center; margin-bottom: 1.5rem;">
-                    <h4>1. Authenticator uygulamanızla QR kodu tarayın:</h4>
-                    <div style="background: white; padding: 1rem; border-radius: 8px; display: inline-block; margin: 1rem 0;">
-                        <img src="data:image/png;base64,${qrCode}" alt="2FA QR Code" style="width: 200px; height: 200px;">
-                    </div>
-                    <p><small>QR kod okutamıyorsanız, bu kodu manuel olarak girin:<br><code>${secret}</code></small></p>
+            
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h4 style="color: #333; margin-bottom: 15px;">1. QR Kodu Tarayın:</h4>
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; display: inline-block; border: 2px solid #ddd;">
+                    <img src="data:image/png;base64,${qrCode}" style="width: 200px; height: 200px; display: block;">
                 </div>
-                <div class="form-group">
-                    <label for="verification_code">2. Uygulamanızdan aldığınız 6 haneli kodu girin:</label>
-                    <input type="text" id="verification_code" placeholder="123456" maxlength="6" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; text-align: center; font-size: 1.2rem; letter-spacing: 0.2em;">
-                </div>
+                <p style="color: #666; font-size: 12px; margin-top: 10px;">
+                    Manuel kod: <br>
+                    <span style="background: #f0f0f0; padding: 5px 10px; border-radius: 4px; font-family: monospace; font-size: 11px;">${secret}</span>
+                </p>
             </div>
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeQRModal()">İptal</button>
-                <button class="btn btn-primary" onclick="verify2FACode()">Doğrula ve Etkinleştir</button>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: bold;">2. Doğrulama Kodunu Girin:</label>
+                <input type="text" id="verification_code" placeholder="123456" maxlength="6" style="
+                    width: 100%; 
+                    padding: 15px; 
+                    border: 2px solid #ddd; 
+                    border-radius: 8px; 
+                    text-align: center; 
+                    font-size: 18px; 
+                    letter-spacing: 5px;
+                    background: white;
+                    color: #333;
+                    box-sizing: border-box;
+                    font-family: monospace;
+                ">
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closeQRModal()" style="
+                    padding: 12px 20px; 
+                    border: 1px solid #ddd; 
+                    background: #f8f8f8; 
+                    color: #666; 
+                    border-radius: 6px; 
+                    cursor: pointer;
+                    font-size: 14px;
+                ">İptal</button>
+                <button onclick="verify2FACode()" style="
+                    padding: 12px 20px; 
+                    border: none; 
+                    background: #007bff; 
+                    color: white; 
+                    border-radius: 6px; 
+                    cursor: pointer;
+                    font-size: 14px;
+                ">Doğrula</button>
             </div>
         </div>
     `;
+    
     document.body.appendChild(modal);
+    console.log('Modal DOM\'a eklendi ve görünür olmalı:', {
+        opacity: window.getComputedStyle(modal).opacity,
+        visibility: window.getComputedStyle(modal).visibility,
+        display: window.getComputedStyle(modal).display,
+        zIndex: window.getComputedStyle(modal).zIndex
+    });
 }
 
 // 2FA kod doğrulama
@@ -1184,6 +1273,8 @@ async function update2FAStatus(enabled) {
         const data = await response.json();
         if (data.success) {
             document.getElementById('twoFactorAuth').checked = enabled;
+            // Ayarları da güncelle
+            await updateSetting('twoFactorEnabled', enabled);
             showNotification(enabled ? 'İki faktörlü doğrulama etkinleştirildi' : 'İki faktörlü doğrulama devre dışı bırakıldı', 'success');
         } else {
             showNotification('2FA durum güncellenirken hata: ' + data.message, 'error');
@@ -1200,7 +1291,11 @@ async function update2FAStatus(enabled) {
 function closeQRModal() {
     const modal = document.getElementById('qrModal');
     if (modal) {
-        modal.remove();
+        // Fade out efekti için
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.remove();
+        }, 300);
         document.getElementById('twoFactorAuth').checked = false;
         currentSecret = null; // Secret'ı temizle
     }

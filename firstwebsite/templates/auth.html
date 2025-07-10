@@ -228,16 +228,55 @@
                     <h2 class="form-title">Giriş Yap</h2>
                     <div class="form-group">
                         <label for="login-email">E-posta</label>
-                        <input type="email" id="login-email" name="email" class="form-control" required>
+                        <input type="email" id="login-email" name="email" class="form-control" 
+                               {% if require_2fa %}value="{{ user_email }}" readonly style="background-color: #f8f9fa;"{% else %}required{% endif %}>
                     </div>
                     <div class="form-group">
                         <label for="login-password">Şifre</label>
-                        <input type="password" id="login-password" name="password" class="form-control" required>
+                        <input type="password" id="login-password" name="password" class="form-control" 
+                               {% if require_2fa %}placeholder="Doğrulandı ✓" readonly style="background-color: #f8f9fa;"{% else %}required{% endif %}>
                     </div>
-                    <button type="submit" class="btn-submit">Giriş Yap</button>
+                    
+                    {% if require_2fa %}
+                    <!-- 2FA Kod Alanı -->
+                    <div class="form-group" id="twofa-group" style="margin-top: 20px; padding: 20px; background-color: #f0f8ff; border-radius: 8px; border: 2px solid #007bff;">
+                        <div style="text-align: center; margin-bottom: 15px;">
+                            <i class="fas fa-shield-alt" style="font-size: 24px; color: #007bff; margin-bottom: 10px;"></i>
+                            <h4 style="margin: 0; color: #007bff;">İki Faktörlü Doğrulama</h4>
+                            <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">
+                                {% if user_email %}{{ user_email }} hesabı için{% endif %} 
+                                authenticator uygulamanızdaki 6 haneli kodu girin
+                            </p>
+                        </div>
+                        <label for="totp_code">Doğrulama Kodu</label>
+                        <input type="text" 
+                               id="totp_code" 
+                               name="totp_code" 
+                               class="form-control" 
+                               placeholder="123456" 
+                               maxlength="6" 
+                               style="text-align: center; font-size: 18px; letter-spacing: 3px; font-family: monospace;" 
+                               required 
+                               autocomplete="off">
+                        <small style="color: #666; font-size: 12px;">Google Authenticator, Authy, veya benzeri uygulamanızdan kodu alın</small>
+                    </div>
+                    {% endif %}
+                    
+                    <button type="submit" class="btn-submit">
+                        {% if require_2fa %}Doğrula ve Giriş Yap{% else %}Giriş Yap{% endif %}
+                    </button>
+                    
+                    {% if require_2fa %}
+                    <div style="text-align: center; margin-top: 15px;">
+                        <a href="{{ url_for('login') }}" style="color: #666; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-arrow-left"></i> Geri Dön
+                        </a>
+                    </div>
+                    {% else %}
                     <div class="toggle-form">
                         Hesabınız yok mu? <a href="#" onclick="toggleForms()">Kayıt Ol</a>
                     </div>
+                    {% endif %}
                 </form>
 
                 <!-- Kayıt Formu -->
@@ -516,6 +555,35 @@
                 registerForm.style.display = 'block';
                 registerForm.classList.add('active');
             });
+        {% endif %}
+
+        // 2FA Auto-focus ve input formatting
+        {% if require_2fa %}
+        document.addEventListener('DOMContentLoaded', function() {
+            const totpInput = document.getElementById('totp_code');
+            if (totpInput) {
+                // Auto-focus 2FA input
+                totpInput.focus();
+                
+                // Only allow numbers
+                totpInput.addEventListener('input', function(e) {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    if (this.value.length === 6) {
+                        // Auto-submit when 6 digits entered
+                        setTimeout(() => {
+                            document.getElementById('loginForm').submit();
+                        }, 100);
+                    }
+                });
+                
+                // Auto-submit on Enter
+                totpInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && this.value.length === 6) {
+                        document.getElementById('loginForm').submit();
+                    }
+                });
+            }
+        });
         {% endif %}
 
         // Auth sayfası flash mesajları

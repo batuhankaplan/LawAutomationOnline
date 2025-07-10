@@ -2587,41 +2587,41 @@
         return {
             avukatlikUcretiRaw: avukatlikUcretiHam,
             rawFormData: formVerileri,
-            content: [
-                { text: 'AVUKATLIK ÜCRET SÖZLEŞMESİ', style: 'header', alignment: 'center' },
-                { text: '\n\n' },
-                {
-                    columns: [
-                        { width: '*', text: `İŞ SAHİBİ: ${formVerileri.isSahibiAdi}\nADRESİ: ${formVerileri.isSahibiAdresi}`},
-                        { width: '*', text: `AVUKAT: Av. Mustafa KAPLAN\nADRESİ: Güneşli Meydanı Cumhuriyet Cd. No.47 K.3 D.8 (AKBANK ÜSTÜ) GÜNEŞLİ/İST.`}
-                    ], columnGap: 20
-                },
-                { text: '\nYukarıda adı, soyadı (veya ünvanı) ile tebligata elverişli adresleri belirtilen taraflar arasında aşağıda yazılı şartlarla AVUKATLIK ÜCRET SÖZLEŞMESİ yapılmıştır. Bu sözleşmede iş sahibi MÜVEKKİL ve işi üzerine alan AVUKAT diye adlandırılmıştır.\n\n', style: 'paragraph'},
-                { text: `MADDE 1) AVUKATIN ÜZERİNE ALDIĞI İŞ: \n${formVerileri.alinanIs}\n\n`, style: 'paragraph'},
-                { text: `MADDE 2) Sözleşme konusu olan işten dolayı, Avukat'a ${formVerileri.avukatlikUcreti} avukatlık ücreti ödenecektir.\nBu ücret Av. Mustafa KAPLAN'a ait Garanti Bankası Güneşli Şubesi TR930006200029500006684655 İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.\n\n`, style: 'paragraph'},
-                { text: 'MADDE 3) Tespit olunan ücret yalnız bu sözleşmede yazılı işin ve işlerin karşılığıdır. Bunlar dışında kalacak takipler ve bu işle ilgili bağlantılı bulunsa dahi karşı taraf veya üçüncü bir şahıs tarafından karşılıklı dava veya ayrı davalar şeklinde açılacak davalar bu sözleşme ücretin dışındadır. Avukat, bu sözleşmeye göre peşin verilmesi gerekli ücret ve aşağıda yazılı gider avansı kendisine ödenmediği sürece işe başlamak zorunluluğunda değildir. İş sahibi ile ilgili yapılacak hukuki, idari ve adli işlemlerden kaynaklanacak masraflar iş sahibine aittir.\n\n', style: 'paragraph'},
-                { text: 'MADDE 4) Avukat üzerine aldığı işi kanun ve bu sözleşme hükümleri uyarınca sonuna kadar takip edecektir. Avukat, verilen vekaletname ile başkasını tevkile yetkili bulunduğu takdirde, üzerine aldığı işi uygun göreceği diğer Avukatlarla birlikte takip edebileceği gibi, takibi tamamen onlara bırakabilecektir. Müvekkil de, Avukatın yazılı iznini almak şartı ile başka Avukatlara vekalet verebilir. Bu hallerde 1136 sayılı Kanunun 171 ve 172. Maddeleri hükmü uygulanır.\n\n', style: 'paragraph'},
-                { text: `MADDE 5) İşin yapılması için gerekli bütün vergi, resim, harç gibi giderler müvekkile ait olup, Avukatın ilk isteminde Müvekkil tarafından Avukata veya merciine ödenmesi gerekir. Verilen iş için yapılacak giderlerin tümü müvekkile aittir ve bu giderler ödenmedikçe Avukat işi yapmak zorunda değildir. Yukarıda sayılan giderlerin Avukat tarafından yapılabilmesini Sağlamak için müvekkil, giderleri karşılayacak avansı Zamanında vermek zorunluluğundadır. Müvekkil bu iş için Avukata ${formVerileri.giderAvansi}-TL gider avansını peşin olarak verecektir. İş seyahati gerektiğinde uçak 1. mevki yataklı tarifesine göre tren, vapur ve bilet ücretleri müvekkil tarafından ücretten ayrı olarak ödenecektir. Bu giderler verilmeksizin Avukat seyahati yapmak zorunda değildir. Müvekkil yolculuk giderlerinden başka, Avukatın bürosundan ayrı kaldığı her gün için ${formVerileri.gunlukUcret}-TL ödemeyi kabul etmiştir. Yargıtay, Danıştay ve Vergi Temyiz Komisyonları huzurunda duruşma ayrı ücrete tabidir. Bu takdirde yukarıda sayılan yol giderlerinden başka Avukata ${formVerileri.durusmaUcreti}-TL verilecektir. Bu paralar peşin ödenmedikçe Avukat duruşmada bulunmak zorunda değildir.\n\n`, style: 'paragraph'},
-                { text: 'MADDE 6) Müvekkilin bu sözleşmenin akdinden sonra vekalet vermemesi, dosyasını geri alması, Avukatın yazılı iznini almadan başka Avukatları teşrik etmesi veya bir başka Avukata işini vermesi, istenen giderleri ödememesi, iddia veya savunma için gerekli bilgi, belge ve delilleri vermemesi, değiştirdiği halde yeni adresini yazılı olarak bildirmeyip işin takibini bu suretle imkansız hale getirmesi, Avukatın rızası olmadan davanın veya alacağın takibinden kısmen veya tamamen vazgeçmesi, karşı taraf ile sulh olması veya karşı tarafı ibra etmesi veya haklı bir sebep yokken Avukatı engellediği durumlarda Avukat sözleşmeyi bozabilir. Bu durumda sözleşmede belirtilen ücretin tamamı Avukatın ilk isteminde derhal ve bir defada ödenmesi gerekir.\n\n', style: 'paragraph'},
-                { text: 'MADDE 7) Yukarıda yazılı adres müvekkilin tebligat adresidir. Avukat tarafından bu adrese yapılacak bütün ihbar ve tebliğlerin şahsına yapılmış olduğunu kabul eder. Müvekkil adresini değiştirdiği takdirde yeni adresini Avukata derhal bildirmek zorundadır. Yukarıda yazılı adrese gönderilecek yazıların tebliğ edilmesinden ve yeni adresini bildirmemesinden doğacak sonuç 6. maddenin 2.fıkrasında yazılı olup, müvekkil bunları şimdiden kabul eder.\n\n', style: 'paragraph'},
-                { text: 'MADDE 8) İş bu sözleşmenin süresi sözleşmenin imzalandığı tarihten itibaren 1 yıldır. Taraflar anlaşarak 1 yılın sonunda sözleşmeyi karşılıklı olarak feshetmezler ise Avukatlık ücreti 1(bir) yılın sonunda TEFE/TÜFE ortalaması alınarak resen artar.\n\n', style: 'paragraph'},
-                { text: 'MADDE 9) İş bu sözleşmede açıklık bulunmayan durumlarda 1136 sayılı Avukatlık Kanunu hükümleri uygulanır.\n\n', style: 'paragraph'},
-                { text: 'MADDE 10) Bu sözleşmeden doğacak anlaşmazlıklarda yetkili mercii Bakırköy Mahkemeleri ve icra daireleridir.\n\n', style: 'paragraph'},
-                { text: formatliTarih, alignment: 'right', style: 'paragraph' },
-                { text: '\n\n' },
-                {
-                    columns: [
-                        { width: '*', text: `MÜVEKKİL\n\n${formVerileri.isSahibiAdi}\n___________________` },
-                        { width: '*', text: 'AVUKAT\n\n\nAv. Mustafa KAPLAN\n___________________', alignment: 'right' }
-                    ], columnGap: 20, style: 'signature'
-                }
-            ],
+                            content: [
+                    { text: 'AVUKATLIK ÜCRET SÖZLEŞMESİ', style: 'header', alignment: 'center' },
+                    { text: '\n' },
+                    {
+                        columns: [
+                            { width: '*', text: `İŞ SAHİBİ: ${formVerileri.isSahibiAdi}\nADRESİ: ${formVerileri.isSahibiAdresi}`},
+                            { width: '*', text: `AVUKAT: Av. Mustafa KAPLAN\nADRESİ: Güneşli Meydanı Cumhuriyet Cd. No.47 K.3 D.8 (AKBANK ÜSTÜ) GÜNEŞLİ/İST.`}
+                        ], columnGap: 20
+                    },
+                    { text: '\nYukarıda adı, soyadı (veya ünvanı) ile tebligata elverişli adresleri belirtilen taraflar arasında aşağıda yazılı şartlarla AVUKATLIK ÜCRET SÖZLEŞMESİ yapılmıştır. Bu sözleşmede iş sahibi MÜVEKKİL ve işi üzerine alan AVUKAT diye adlandırılmıştır.\n', style: 'paragraph'},
+                    { text: `MADDE 1) AVUKATIN ÜZERİNE ALDIĞI İŞ: \n${formVerileri.alinanIs}\n`, style: 'paragraph'},
+                    { text: `MADDE 2) Sözleşme konusu olan işten dolayı, Avukat'a ${formVerileri.avukatlikUcreti} avukatlık ücreti ödenecektir.\nBu ücret Av. Mustafa KAPLAN'a ait Garanti Bankası Güneşli Şubesi TR930006200029500006684655 İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.\n`, style: 'paragraph'},
+                    { text: 'MADDE 3) Tespit olunan ücret yalnız bu sözleşmede yazılı işin ve işlerin karşılığıdır. Bunlar dışında kalacak takipler ve bu işle ilgili bağlantılı bulunsa dahi karşı taraf veya üçüncü bir şahıs tarafından karşılıklı dava veya ayrı davalar şeklinde açılacak davalar bu sözleşme ücretin dışındadır. Avukat, bu sözleşmeye göre peşin verilmesi gerekli ücret ve aşağıda yazılı gider avansı kendisine ödenmediği sürece işe başlamak zorunluluğunda değildir. İş sahibi ile ilgili yapılacak hukuki, idari ve adli işlemlerden kaynaklanacak masraflar iş sahibine aittir.\n', style: 'paragraph'},
+                    { text: 'MADDE 4) Avukat üzerine aldığı işi kanun ve bu sözleşme hükümleri uyarınca sonuna kadar takip edecektir. Avukat, verilen vekaletname ile başkasını tevkile yetkili bulunduğu takdirde, üzerine aldığı işi uygun göreceği diğer Avukatlarla birlikte takip edebileceği gibi, takibi tamamen onlara bırakabilecektir. Müvekkil de, Avukatın yazılı iznini almak şartı ile başka Avukatlara vekalet verebilir. Bu hallerde 1136 sayılı Kanunun 171 ve 172. Maddeleri hükmü uygulanır.\n', style: 'paragraph'},
+                    { text: `MADDE 5) İşin yapılması için gerekli bütün vergi, resim, harç gibi giderler müvekkile ait olup, Avukatın ilk isteminde Müvekkil tarafından Avukata veya merciine ödenmesi gerekir. Verilen iş için yapılacak giderlerin tümü müvekkile aittir ve bu giderler ödenmedikçe Avukat işi yapmak zorunda değildir. Yukarıda sayılan giderlerin Avukat tarafından yapılabilmesini Sağlamak için müvekkil, giderleri karşılayacak avansı Zamanında vermek zorunluluğundadır. Müvekkil bu iş için Avukata ${formVerileri.giderAvansi}-TL gider avansını peşin olarak verecektir. İş seyahati gerektiğinde uçak 1. mevki yataklı tarifesine göre tren, vapur ve bilet ücretleri müvekkil tarafından ücretten ayrı olarak ödenecektir. Bu giderler verilmeksizin Avukat seyahati yapmak zorunda değildir. Müvekkil yolculuk giderlerinden başka, Avukatın bürosundan ayrı kaldığı her gün için ${formVerileri.gunlukUcret}-TL ödemeyi kabul etmiştir. Yargıtay, Danıştay ve Vergi Temyiz Komisyonları huzurunda duruşma ayrı ücrete tabidir. Bu takdirde yukarıda sayılan yol giderlerinden başka Avukata ${formVerileri.durusmaUcreti}-TL verilecektir. Bu paralar peşin ödenmedikçe Avukat duruşmada bulunmak zorunda değildir.\n`, style: 'paragraph'},
+                    { text: 'MADDE 6) Müvekkilin bu sözleşmenin akdinden sonra vekalet vermemesi, dosyasını geri alması, Avukatın yazılı iznini almadan başka Avukatları teşrik etmesi veya bir başka Avukata işini vermesi, istenen giderleri ödememesi, iddia veya savunma için gerekli bilgi, belge ve delilleri vermemesi, değiştirdiği halde yeni adresini yazılı olarak bildirmeyip işin takibini bu suretle imkansız hale getirmesi, Avukatın rızası olmadan davanın veya alacağın takibinden kısmen veya tamamen vazgeçmesi, karşı taraf ile sulh olması veya karşı tarafı ibra etmesi veya haklı bir sebep yokken Avukatı engellediği durumlarda Avukat sözleşmeyi bozabilir. Bu durumda sözleşmede belirtilen ücretin tamamı Avukatın ilk isteminde derhal ve bir defada ödenmesi gerekir.\n', style: 'paragraph'},
+                    { text: 'MADDE 7) Yukarıda yazılı adres müvekkilin tebligat adresidir. Avukat tarafından bu adrese yapılacak bütün ihbar ve tebliğlerin şahsına yapılmış olduğunu kabul eder. Müvekkil adresini değiştirdiği takdirde yeni adresini Avukata derhal bildirmek zorundadır. Yukarıda yazılı adrese gönderilecek yazıların tebliğ edilmesinden ve yeni adresini bildirmemesinden doğacak sonuç 6. maddenin 2.fıkrasında yazılı olup, müvekkil bunları şimdiden kabul eder.\n', style: 'paragraph'},
+                    { text: 'MADDE 8) İş bu sözleşmenin süresi sözleşmenin imzalandığı tarihten itibaren 1 yıldır. Taraflar anlaşarak 1 yılın sonunda sözleşmeyi karşılıklı olarak feshetmezler ise Avukatlık ücreti 1(bir) yılın sonunda TEFE/TÜFE ortalaması alınarak resen artar.\n', style: 'paragraph'},
+                    { text: 'MADDE 9) İş bu sözleşmede açıklık bulunmayan durumlarda 1136 sayılı Avukatlık Kanunu hükümleri uygulanır.\n', style: 'paragraph'},
+                    { text: 'MADDE 10) Bu sözleşmeden doğacak anlaşmazlıklarda yetkili mercii Bakırköy Mahkemeleri ve icra daireleridir.\n', style: 'paragraph'},
+                    { text: formatliTarih, alignment: 'right', style: 'paragraph' },
+                    { text: '\n' },
+                    {
+                        columns: [
+                            { width: '*', text: `MÜVEKKİL\n\n${formVerileri.isSahibiAdi}\n___________________` },
+                            { width: '*', text: 'AVUKAT\n\n\nAv. Mustafa KAPLAN\n___________________', alignment: 'right' }
+                        ], columnGap: 20, style: 'signature'
+                    }
+                ],
             styles: {
-                header: { fontSize: 16, bold: true, margin: [0, 0, 0, 20] },
-                paragraph: { fontSize: 10, alignment: 'justify', margin: [0, 5, 0, 5] },
-                signature: { fontSize: 10, bold: true, margin: [0, 20, 0, 0] }
+                header: { fontSize: 14, bold: true, margin: [0, 0, 0, 10] },
+                paragraph: { fontSize: 9, alignment: 'justify', margin: [0, 2, 0, 2], lineHeight: 1.1 },
+                signature: { fontSize: 9, bold: true, margin: [0, 10, 0, 0] }
             },
-            defaultStyle: { font: 'Roboto', fontSize: 10 }
+            defaultStyle: { font: 'Roboto', fontSize: 9, lineHeight: 1.1 }
         };
     }
 
@@ -2733,26 +2733,26 @@
                 rawFormData: formVerileri,
                 content: [
                     { text: 'AVUKATLIK ÜCRET SÖZLEŞMESİ', style: 'header', alignment: 'center' },
-                    { text: '\n\n' },
+                    { text: '\n' },
                     {
                         columns: [
                             { width: '*', text: `İŞ SAHİBİ: ${formVerileri.isSahibiAdi}\nADRESİ: ${formVerileri.isSahibiAdresi}`},
                             { width: '*', text: `AVUKAT: ${taslakVerileri.avukatAdi}\nADRESİ: ${taslakVerileri.avukatAdres}`}
                         ], columnGap: 20
                     },
-                    { text: `\n${taslakVerileri.girisMetni}\n\n`, style: 'paragraph'},
-                    { text: `MADDE 1) AVUKATIN ÜZERİNE ALDIĞI İŞ: \n${formVerileri.alinanIs}\n\n`, style: 'paragraph'},
-                    { text: `MADDE 2) Sözleşme konusu olan işten dolayı, Avukat'a ${formVerileri.avukatlikUcreti} avukatlık ücreti ödenecektir.\nBu ücret ${taslakVerileri.avukatAdi}'a ait ${taslakVerileri.bankaBilgisi} ${taslakVerileri.ibanNo} İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.\n\n`, style: 'paragraph'},
-                    { text: `MADDE 3) ${taslakVerileri.madde3}\n\n`, style: 'paragraph'},
-                    { text: `MADDE 4) ${taslakVerileri.madde4}\n\n`, style: 'paragraph'},
-                    { text: `MADDE 5) ${taslakVerileri.madde5.replace('{giderAvansi}', formVerileri.giderAvansi).replace('{gunlukUcret}', formVerileri.gunlukUcret).replace('{durusmaUcreti}', formVerileri.durusmaUcreti)}\n\n`, style: 'paragraph'},
-                    { text: `MADDE 6) ${taslakVerileri.madde6}\n\n`, style: 'paragraph'},
-                    { text: `MADDE 7) ${taslakVerileri.madde7}\n\n`, style: 'paragraph'},
-                    { text: `MADDE 8) ${taslakVerileri.madde8}\n\n`, style: 'paragraph'},
-                    { text: `MADDE 9) ${taslakVerileri.madde9.replace('{kanunNo}', taslakVerileri.kanunNo)}\n\n`, style: 'paragraph'},
-                    { text: `MADDE 10) ${taslakVerileri.madde10.replace('{yetkiliMahkeme}', taslakVerileri.yetkiliMahkeme)}\n\n`, style: 'paragraph'},
+                    { text: `\n${taslakVerileri.girisMetni}\n`, style: 'paragraph'},
+                    { text: `MADDE 1) AVUKATIN ÜZERİNE ALDIĞI İŞ: \n${formVerileri.alinanIs}\n`, style: 'paragraph'},
+                    { text: `MADDE 2) Sözleşme konusu olan işten dolayı, Avukat'a ${formVerileri.avukatlikUcreti} avukatlık ücreti ödenecektir.\nBu ücret ${taslakVerileri.avukatAdi}'a ait ${taslakVerileri.bankaBilgisi} ${taslakVerileri.ibanNo} İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.\n`, style: 'paragraph'},
+                    { text: `MADDE 3) ${taslakVerileri.madde3}\n`, style: 'paragraph'},
+                    { text: `MADDE 4) ${taslakVerileri.madde4}\n`, style: 'paragraph'},
+                    { text: `MADDE 5) ${taslakVerileri.madde5.replace('{giderAvansi}', formVerileri.giderAvansi).replace('{gunlukUcret}', formVerileri.gunlukUcret).replace('{durusmaUcreti}', formVerileri.durusmaUcreti)}\n`, style: 'paragraph'},
+                    { text: `MADDE 6) ${taslakVerileri.madde6}\n`, style: 'paragraph'},
+                    { text: `MADDE 7) ${taslakVerileri.madde7}\n`, style: 'paragraph'},
+                    { text: `MADDE 8) ${taslakVerileri.madde8}\n`, style: 'paragraph'},
+                    { text: `MADDE 9) ${taslakVerileri.madde9.replace('{kanunNo}', taslakVerileri.kanunNo)}\n`, style: 'paragraph'},
+                    { text: `MADDE 10) ${taslakVerileri.madde10.replace('{yetkiliMahkeme}', taslakVerileri.yetkiliMahkeme)}\n`, style: 'paragraph'},
                     { text: formatliTarih, alignment: 'right', style: 'paragraph' },
-                    { text: '\n\n' },
+                    { text: '\n' },
                     {
                         columns: [
                             { width: '*', text: `MÜVEKKİL\n\n${formVerileri.isSahibiAdi}\n___________________` },
@@ -2761,11 +2761,11 @@
                     }
                 ],
                 styles: {
-                    header: { fontSize: 16, bold: true, margin: [0, 0, 0, 20] },
-                    paragraph: { fontSize: 10, alignment: 'justify', margin: [0, 5, 0, 5] },
-                    signature: { fontSize: 10, bold: true, margin: [0, 20, 0, 0] }
+                    header: { fontSize: 14, bold: true, margin: [0, 0, 0, 10] },
+                    paragraph: { fontSize: 9, alignment: 'justify', margin: [0, 2, 0, 2], lineHeight: 1.1 },
+                    signature: { fontSize: 9, bold: true, margin: [0, 10, 0, 0] }
                 },
-                defaultStyle: { font: 'Roboto', fontSize: 10 }
+                defaultStyle: { font: 'Roboto', fontSize: 9, lineHeight: 1.1 }
             };
         };
     };
