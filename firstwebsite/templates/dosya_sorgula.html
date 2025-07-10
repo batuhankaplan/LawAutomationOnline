@@ -3487,7 +3487,7 @@ function editCase(caseId) {
                             <div class="detail-grid">
                                 <div class="detail-group">
                                     <label>Dosya Türü</label>
-                                    <select id="editFileType" onchange="populateEditDepartments(this.value, document.getElementById('editDepartment'), null, document.getElementById('editCourthouse').value);">
+                                    <select id="editFileType" onchange="populateEditDepartments(this.value, document.getElementById('editDepartment'), null, document.getElementById('editCourthouse').value); updateEditCapacityOptions();">
                                         <option value="hukuk" ${data.file_type === 'hukuk' ? 'selected' : ''}>Hukuk</option>
                                         <option value="ceza" ${data.file_type === 'ceza' ? 'selected' : ''}>Ceza</option>
                                         <option value="icra" ${data.file_type === 'icra' ? 'selected' : ''}>İcra</option>
@@ -3541,7 +3541,7 @@ function editCase(caseId) {
                                 <div class="edit-section">
                                     <div class="section-header-with-add">
                                         <h3><i class="material-icons">person</i> Müvekkil Bilgileri</h3>
-                                        <button type="button" class="btn-add-person" onclick="addNewClientInModal(${caseId})" title="Yeni Müvekkil Ekle">
+                                        <button type="button" class="btn-add-person" onclick="addNewClientInModal(${caseId}, '${data.file_type}')" title="Yeni Müvekkil Ekle">
                                             <i class="material-icons">add</i>
                                         </button>
                                     </div>
@@ -3604,7 +3604,9 @@ function editCase(caseId) {
                                             </div>
                                             <div class="detail-group">
                                                 <label>Sıfat</label>
-                                                <input type="text" id="editClientCapacity" value="${data.client_capacity || ''}" placeholder="Müvekkil, Davacı, Davalı vs.">
+                                                <select id="editClientCapacity">
+                                                    <option value="">Seçiniz</option>
+                                                </select>
                                             </div>
                                         </div>
                                         <div class="detail-grid">
@@ -3645,7 +3647,7 @@ function editCase(caseId) {
                                 <div class="edit-section">
                                     <div class="section-header-with-add">
                                         <h3><i class="material-icons">group</i> Karşı Taraf Bilgileri</h3>
-                                        <button type="button" class="btn-add-person" onclick="addNewOpponentInModal(${caseId})" title="Yeni Karşı Taraf Ekle">
+                                        <button type="button" class="btn-add-person" onclick="addNewOpponentInModal(${caseId}, '${data.file_type}')" title="Yeni Karşı Taraf Ekle">
                                             <i class="material-icons">add</i>
                                         </button>
                                     </div>
@@ -3708,7 +3710,9 @@ function editCase(caseId) {
                                             </div>
                                             <div class="detail-group">
                                                 <label>Sıfat</label>
-                                                <input type="text" id="editOpponentCapacity" value="${data.opponent_capacity || ''}" placeholder="Davalı, Davacı vs.">
+                                                <select id="editOpponentCapacity">
+                                                    <option value="">Seçiniz</option>
+                                                </select>
                                             </div>
                                         </div>
                                         <div class="detail-grid">
@@ -4112,8 +4116,53 @@ function editCase(caseId) {
                 editAdditionalLawyersDisplay.appendChild(lawyerDiv);
             });
             
+            // Sıfat seçeneklerini yükle
+            updateEditCapacityOptions();
+            
+            // Mevcut değerleri set et
+            if (data.client_capacity) {
+                document.getElementById('editClientCapacity').value = data.client_capacity;
+            }
+            if (data.opponent_capacity) {
+                document.getElementById('editOpponentCapacity').value = data.opponent_capacity;
+            }
+            
             editModal.style.display = 'flex'; // Modal'ı tüm kurulumlar bittikten sonra göster
         });
+}
+
+// Düzenleme modalında sıfat seçeneklerini güncelle
+function updateEditCapacityOptions() {
+    const fileType = document.getElementById('editFileType')?.value;
+    const clientCapacitySelect = document.getElementById('editClientCapacity');
+    const opponentCapacitySelect = document.getElementById('editOpponentCapacity');
+    
+    if (!fileType || !clientCapacitySelect || !opponentCapacitySelect) return;
+    
+    // Müvekkil sıfat seçeneklerini güncelle
+    clientCapacitySelect.innerHTML = '<option value="">Seçiniz</option>';
+    if (capacityOptions[fileType] && capacityOptions[fileType].client) {
+        capacityOptions[fileType].client.forEach(capacity => {
+            const option = document.createElement('option');
+            option.value = capacity;
+            option.textContent = capacity;
+            clientCapacitySelect.appendChild(option);
+        });
+    }
+    
+    // Karşı taraf sıfat seçeneklerini güncelle
+    opponentCapacitySelect.innerHTML = '<option value="">Seçiniz</option>';
+    if (capacityOptions[fileType] && capacityOptions[fileType].opponent && capacityOptions[fileType].opponent.length > 0) {
+        capacityOptions[fileType].opponent.forEach(capacity => {
+            const option = document.createElement('option');
+            option.value = capacity;
+            option.textContent = capacity;
+            opponentCapacitySelect.appendChild(option);
+        });
+        opponentCapacitySelect.disabled = false;
+    } else {
+        opponentCapacitySelect.disabled = true;
+    }
 }
 
 function updateEditCourthouses(citySelectElement, courthouseSelectElement, selectedCourthouse) {
@@ -5535,12 +5584,12 @@ function deleteMainLawyerInModal(caseId) {
 }
 
 // Yeni kişi ekleme fonksiyonları
-function addNewClientInModal(caseId) {
-    showPersonAddModal('client', caseId);
+function addNewClientInModal(caseId, fileType = 'hukuk') {
+    showPersonAddModal('client', caseId, fileType);
 }
 
-function addNewOpponentInModal(caseId) {
-    showPersonAddModal('opponent', caseId);
+function addNewOpponentInModal(caseId, fileType = 'hukuk') {
+    showPersonAddModal('opponent', caseId, fileType);
 }
 
 function addNewLawyerInModal(caseId) {
@@ -5548,7 +5597,7 @@ function addNewLawyerInModal(caseId) {
 }
 
 // Kişi ekleme modalı göster
-function showPersonAddModal(personType, caseId) {
+function showPersonAddModal(personType, caseId, fileType = 'hukuk') {
     const personTypeText = personType === 'client' ? 'Müvekkil' : 'Karşı Taraf';
     
     const modalHtml = `
@@ -5614,7 +5663,7 @@ function showPersonAddModal(personType, caseId) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
     // Modal açıldıktan sonra sıfat seçeneklerini güncelle
-    updateAddPersonModalCapacity(personType);
+    updateAddPersonModalCapacity(personType, fileType);
 }
 
 // Vekil ekleme modalı göster
@@ -6116,10 +6165,24 @@ function updateAddPersonModalLabels() {
 }
 
 // Sıfat dropdown'ını güncelleme fonksiyonu
-function updateAddPersonModalCapacity(personType) {
-    const fileTypeElement = document.getElementById('editFileType');
-    const fileType = fileTypeElement ? fileTypeElement.value : 'hukuk'; // Default hukuk
+function updateAddPersonModalCapacity(personType, fileType = null) {
+    // Dosya türünü parametre olarak al veya çeşitli kaynaklardan bul
+    if (!fileType) {
+        const editFileTypeElement = document.getElementById('editFileType');
+        const detailFileTypeElement = document.getElementById('detailFileType');
+        
+        if (editFileTypeElement && editFileTypeElement.value) {
+            fileType = editFileTypeElement.value;
+        } else if (detailFileTypeElement && detailFileTypeElement.textContent) {
+            fileType = detailFileTypeElement.textContent.toLowerCase();
+        } else {
+            fileType = 'hukuk'; // Default değer
+        }
+    }
+    
     const capacitySelect = document.getElementById('addPersonCapacity');
+    
+    if (!capacitySelect) return;
     
     capacitySelect.innerHTML = '<option value="">Seçiniz</option>';
     
