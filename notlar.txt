@@ -1,7 +1,7 @@
 YAPILACAKLAR:
 1) Son gün uyarısı.
-2) IA Avukat sistemi.
+2) IA Avukat sistemi. # yapıldı
 3) Örnek dilekçelerden veya dosya detayları modalında kayıtlı belgelerin (udf,pdf,doc,docx gibi) içeriğinden yani içerdiği kelimerden arama yapılabilsin.
-4) Bir dosyaya birden fazla taraf ekleyebilelim. Hemde karşı taraf eklemek opsiyonel olsun.
+4) Avukat sözleşmesi sayfasına isim soy isimden sonra bir de tc ekleme boxu gelsin. tc no girelim ve müvekkil isminden hemen sonra (T.C. Kimlik No:) şeklinde yer alsın.
 HATA VE BUGLAR:
-Birçok hata ve bug var. Dosyalarda isimler buglanmış. Bug fix yapılacak.
+-
