@@ -15,6 +15,15 @@ import os
 from werkzeug.utils import secure_filename
 import locale
 import time as pytime
+
+# Türkçe karakter desteği için encoding ayarı
+try:
+    locale.setlocale(locale.LC_ALL, 'tr_TR.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'Turkish_Turkey.1254')
+    except locale.Error:
+        pass  # Sistem desteklemiyorsa varsayılan encoding kullan
 import subprocess
 import tempfile
 from flask_mail import Mail, Message
@@ -199,13 +208,18 @@ app.config['ORNEK_DILEKCE_UPLOAD_FOLDER'] = os.path.join(app.config['UPLOAD_FOLD
 app.config['WTF_CSRF_ENABLED'] = True
 # SECRET_KEY zaten yukarıda tanımlı, CSRF için de kullanılır.
 
-# E-posta konfigürasyonu (.env dosyasından)
-app.config['MAIL_SERVER'] = 'smtp-mail.outlook.com'
-app.config['MAIL_PORT'] = 587
+# E-posta konfigürasyonu (.env dosyasından) - Gmail kullan
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_ASCII_ATTACHMENTS'] = False  # Türkçe karakter desteği için
+app.config['MAIL_DEFAULT_CHARSET'] = 'utf-8'  # UTF-8 charset ayarla
+app.config['MAIL_SUPPRESS_SEND'] = False
+app.config['MAIL_DEBUG'] = True  # Debug modunu aç
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -1286,6 +1300,15 @@ import os
 from werkzeug.utils import secure_filename
 import locale
 import time as pytime
+
+# Türkçe karakter desteği için encoding ayarı
+try:
+    locale.setlocale(locale.LC_ALL, 'tr_TR.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'Turkish_Turkey.1254')
+    except locale.Error:
+        pass  # Sistem desteklemiyorsa varsayılan encoding kullan
 import subprocess
 import tempfile
 from flask_mail import Mail, Message
@@ -1470,13 +1493,18 @@ app.config['ORNEK_DILEKCE_UPLOAD_FOLDER'] = os.path.join(app.config['UPLOAD_FOLD
 app.config['WTF_CSRF_ENABLED'] = True
 # SECRET_KEY zaten yukarıda tanımlı, CSRF için de kullanılır.
 
-# E-posta konfigürasyonu (.env dosyasından)
-app.config['MAIL_SERVER'] = 'smtp-mail.outlook.com'
-app.config['MAIL_PORT'] = 587
+# E-posta konfigürasyonu (.env dosyasından) - Gmail kullan
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_ASCII_ATTACHMENTS'] = False  # Türkçe karakter desteği için
+app.config['MAIL_DEFAULT_CHARSET'] = 'utf-8'  # UTF-8 charset ayarla
+app.config['MAIL_SUPPRESS_SEND'] = False
+app.config['MAIL_DEBUG'] = True  # Debug modunu aç
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -2830,6 +2858,15 @@ import os
 from werkzeug.utils import secure_filename
 import locale
 import time as pytime
+
+# Türkçe karakter desteği için encoding ayarı
+try:
+    locale.setlocale(locale.LC_ALL, 'tr_TR.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'Turkish_Turkey.1254')
+    except locale.Error:
+        pass  # Sistem desteklemiyorsa varsayılan encoding kullan
 import subprocess
 import tempfile
 from flask_mail import Mail, Message
@@ -3014,13 +3051,18 @@ app.config['ORNEK_DILEKCE_UPLOAD_FOLDER'] = os.path.join(app.config['UPLOAD_FOLD
 app.config['WTF_CSRF_ENABLED'] = True
 # SECRET_KEY zaten yukarıda tanımlı, CSRF için de kullanılır.
 
-# E-posta konfigürasyonu (.env dosyasından)
-app.config['MAIL_SERVER'] = 'smtp-mail.outlook.com'
-app.config['MAIL_PORT'] = 587
+# E-posta konfigürasyonu (.env dosyasından) - Gmail kullan
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_ASCII_ATTACHMENTS'] = False  # Türkçe karakter desteği için
+app.config['MAIL_DEFAULT_CHARSET'] = 'utf-8'  # UTF-8 charset ayarla
+app.config['MAIL_SUPPRESS_SEND'] = False
+app.config['MAIL_DEBUG'] = True  # Debug modunu aç
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -4101,6 +4143,15 @@ import os
 from werkzeug.utils import secure_filename
 import locale
 import time as pytime
+
+# Türkçe karakter desteği için encoding ayarı
+try:
+    locale.setlocale(locale.LC_ALL, 'tr_TR.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'Turkish_Turkey.1254')
+    except locale.Error:
+        pass  # Sistem desteklemiyorsa varsayılan encoding kullan
 import subprocess
 import tempfile
 from flask_mail import Mail, Message
@@ -4285,13 +4336,18 @@ app.config['ORNEK_DILEKCE_UPLOAD_FOLDER'] = os.path.join(app.config['UPLOAD_FOLD
 app.config['WTF_CSRF_ENABLED'] = True
 # SECRET_KEY zaten yukarıda tanımlı, CSRF için de kullanılır.
 
-# E-posta konfigürasyonu (.env dosyasından)
-app.config['MAIL_SERVER'] = 'smtp-mail.outlook.com'
-app.config['MAIL_PORT'] = 587
+# E-posta konfigürasyonu (.env dosyasından) - Gmail kullan
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_ASCII_ATTACHMENTS'] = False  # Türkçe karakter desteği için
+app.config['MAIL_DEFAULT_CHARSET'] = 'utf-8'  # UTF-8 charset ayarla
+app.config['MAIL_SUPPRESS_SEND'] = False
+app.config['MAIL_DEBUG'] = True  # Debug modunu aç
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -6872,11 +6928,9 @@ def send_contact_mail():
     try:
         data = request.get_json()
         
-        msg = Message('Yeni İletişim Formu Mesajı',
-                    sender=app.config['MAIL_USERNAME'],
-                    recipients=[app.config['MAIL_USERNAME']])
-        
-        msg.body = f"""
+        # Türkçe karakter desteği için UTF-8 encoding
+        subject = 'Yeni İletişim Formu Mesajı'
+        body = f"""
         Yeni bir iletişim formu mesajı alındı:
         
         Gönderen: {data['name']}
@@ -6886,7 +6940,50 @@ def send_contact_mail():
         {data['message']}
         """
         
-        mail.send(msg)
+        # E-postayı gönder - Güvenli gönderim
+        email_sent = False
+        
+        # Önce smtplib dene (eğer mümkünse)
+        try:
+            from email_utils import send_email_with_smtplib
+            success, result_message = send_email_with_smtplib(
+                app.config['MAIL_USERNAME'], 
+                subject, 
+                body, 
+                is_html=False
+            )
+            if success:
+                email_sent = True
+                logger.info("İletişim formu e-postası smtplib ile gönderildi")
+        except Exception as e:
+            logger.warning(f"smtplib ile iletişim formu e-postası gönderilemedi: {e}")
+        
+        # Başarısız olduysa Flask-Mail dene
+        if not email_sent:
+            try:
+                # Subject ve body'yi UTF-8 olarak encode et
+                if isinstance(subject, str):
+                    subject = subject.encode('utf-8').decode('utf-8')
+                if isinstance(body, str):
+                    body = body.encode('utf-8').decode('utf-8')
+                
+                msg = Message(
+                    subject=subject,
+                    sender=app.config['MAIL_USERNAME'],
+                    recipients=[app.config['MAIL_USERNAME']],
+                    body=body,
+                    charset='utf-8'
+                )
+                
+                # Message header'larını UTF-8 olarak ayarla
+                msg.extra_headers = {'Content-Type': 'text/plain; charset=utf-8'}
+                
+                mail.send(msg)
+                email_sent = True
+                logger.info("İletişim formu e-postası Flask-Mail ile gönderildi")
+            except Exception as e:
+                logger.error(f"İletişim formu e-postası Flask-Mail ile de gönderilemedi: {e}")
+                raise Exception(f"E-posta gönderim hatası: {str(e)}")
         return jsonify(success=True)
     except Exception as e:
         return jsonify(success=False, message=str(e))
@@ -10877,6 +10974,15 @@ def verify_2fa_code():
 def send_notification_email(to_email, subject, body):
     """Bildirim e-postası gönder"""
     try:
+        # Önce smtplib ile dene (Türkçe karakter desteği için)
+        try:
+            from email_utils import send_email_with_smtplib
+            return send_email_with_smtplib(to_email, subject, body, is_html=True)
+        except ImportError:
+            logger.warning("email_utils import edilemedi, Flask-Mail kullanılacak")
+        except Exception as smtp_error:
+            logger.warning(f"smtplib ile gönderim başarısız, Flask-Mail deneniyor: {smtp_error}")
+        
         # Mail konfigürasyonunu kontrol et
         if not app.config.get('MAIL_SERVER'):
             return False, "E-posta sunucu ayarları yapılmamış. .env dosyasını kontrol edin."
@@ -10884,12 +10990,22 @@ def send_notification_email(to_email, subject, body):
         if not app.config.get('MAIL_USERNAME') or not app.config.get('MAIL_PASSWORD'):
             return False, "E-posta kullanıcı adı ve şifresi yapılandırılmamış."
         
+        # Türkçe karakter encoding sorunu için subject ve body'yi UTF-8 olarak encode et
+        if isinstance(subject, str):
+            subject = subject.encode('utf-8').decode('utf-8')
+        if isinstance(body, str):
+            body = body.encode('utf-8').decode('utf-8')
+        
         msg = Message(
             subject=subject,
             recipients=[to_email],
             html=body,
-            sender=app.config.get('MAIL_DEFAULT_SENDER', app.config.get('MAIL_USERNAME'))
+            sender=app.config.get('MAIL_DEFAULT_SENDER', app.config.get('MAIL_USERNAME')),
+            charset='utf-8'  # Charset'i UTF-8 olarak ayarla
         )
+        
+        # Message header'larını UTF-8 olarak ayarla
+        msg.extra_headers = {'Content-Type': 'text/html; charset=utf-8'}
         
         mail.send(msg)
         return True, "E-posta başarıyla gönderildi"
@@ -10905,6 +11021,12 @@ def send_notification_email(to_email, subject, body):
 def test_email_notification():
     """E-posta bildirim sistemini test et"""
     try:
+        # Safe import
+        try:
+            from email_utils import send_email_with_smtplib
+        except ImportError:
+            send_email_with_smtplib = None
+            logger.warning("email_utils import edilemedi")
         # JSON veya form data kabul et
         if request.is_json:
             data = request.get_json() or {}
@@ -10997,8 +11119,28 @@ def test_email_notification():
             </html>
             """
         
-        # E-postayı gönder
-        success, message = send_notification_email(current_user.email, subject, body)
+        # E-postayı gönder - Güvenli e-posta gönderimi
+        success = False
+        message = "E-posta gönderim hatası"
+        
+        # Önce smtplib dene (eğer import edilebilmişse)
+        if send_email_with_smtplib:
+            try:
+                success, message = send_email_with_smtplib(current_user.email, subject, body, is_html=True)
+                logger.info("smtplib ile e-posta gönderildi")
+            except Exception as e:
+                logger.warning(f"smtplib ile gönderim başarısız: {e}")
+                success = False
+        
+        # Başarısız olduysa Flask-Mail dene
+        if not success:
+            try:
+                success, message = send_notification_email(current_user.email, subject, body)
+                logger.info("Flask-Mail ile e-posta gönderildi")
+            except Exception as e:
+                logger.error(f"Flask-Mail ile gönderim başarısız: {e}")
+                success = False
+                message = f"E-posta gönderim hatası: {str(e)}"
         
         if success:
             # Log oluştur
@@ -11013,12 +11155,17 @@ def test_email_notification():
                 'message': f'Test e-postası {current_user.email} adresine gönderildi!'
             })
         else:
+            # Başarısız durumda 200 OK döndür ama success: false
             return jsonify({
                 'success': False,
-                'message': message
-            }), 500
+                'message': f'E-posta gönderilemedi: {message}'
+            })
             
     except Exception as e:
+        logger.error(f"E-posta test endpoint hatası: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        
         return jsonify({
             'success': False,
             'message': f'E-posta test hatası: {str(e)}'
@@ -11087,6 +11234,10 @@ def send_welcome_email(user):
     subject = "Kaplan Hukuk Otomasyon - Hoş Geldiniz!"
     body = f"""
     <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #2c5aa0;">Hoş Geldiniz!</h2>
