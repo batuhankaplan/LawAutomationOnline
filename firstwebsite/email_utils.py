@@ -116,6 +116,97 @@ def send_notification_email(to_email, subject, body):
     """
     return send_email(to_email, subject, body, is_html=True)
 
+def send_calendar_event_assignment_email(user_email, user_name, event_title, event_date, event_time, event_type, assigned_by_name, courthouse=None, department=None, description=None):
+    """
+    Takvim etkinliği atama bildirimi gönder
+    """
+    event_type_names = {
+        'durusma': 'Duruşma',
+        'e-durusma': 'E-Duruşma',
+        'tahliye': 'Tahliye',
+        'is': 'Yapılacak İş',
+        'randevu': 'Randevu',
+        'diger': 'Diğer'
+    }
+    
+    event_type_display = event_type_names.get(event_type, event_type)
+    
+    subject = f"Yeni Etkinlik Ataması: {event_title}"
+    
+    body = f"""Merhaba {user_name},
+
+Size yeni bir etkinlik atanmıştır:
+
+📅 Etkinlik: {event_title}
+📋 Türü: {event_type_display}
+📅 Tarih: {event_date}
+⏰ Saat: {event_time}
+👤 Atayan: {assigned_by_name}"""
+    
+    # Duruşma ve E-duruşma için adliye ve mahkeme bilgilerini ekle
+    if event_type in ['durusma', 'e-durusma']:
+        if courthouse:
+            body += f"\n🏛️ Adliye: {courthouse}"
+        if department:
+            body += f"\n⚖️ Mahkeme/Birim: {department}"
+    
+    # Açıklama varsa en sona ekle
+    if description and description.strip():
+        body += f"\n\n📝 Açıklama:\n{description.strip()}"
+    
+    body += f"""
+
+Lütfen bu etkinliği takip ediniz.
+
+Hukuk Bürosu Yönetim Sistemi"""
+    
+    return send_email(user_email, subject, body.strip())
+
+def send_calendar_event_reminder_email(user_email, user_name, event_title, event_date, event_time, event_type, courthouse=None, department=None, description=None):
+    """
+    Takvim etkinliği hatırlatma bildirimi gönder
+    """
+    event_type_names = {
+        'durusma': 'Duruşma',
+        'e-durusma': 'E-Duruşma',
+        'tahliye': 'Tahliye',
+        'is': 'Yapılacak İş',
+        'randevu': 'Randevu',
+        'diger': 'Diğer'
+    }
+    
+    event_type_display = event_type_names.get(event_type, event_type)
+    
+    subject = f"Etkinlik Hatırlatması: {event_title}"
+    
+    body = f"""Merhaba {user_name},
+
+Size atanan etkinlik yaklaşıyor:
+
+📅 Etkinlik: {event_title}
+📋 Türü: {event_type_display}
+📅 Tarih: {event_date}
+⏰ Saat: {event_time}"""
+    
+    # Duruşma ve E-duruşma için adliye ve mahkeme bilgilerini ekle
+    if event_type in ['durusma', 'e-durusma']:
+        if courthouse:
+            body += f"\n🏛️ Adliye: {courthouse}"
+        if department:
+            body += f"\n⚖️ Mahkeme/Birim: {department}"
+    
+    # Açıklama varsa en sona ekle
+    if description and description.strip():
+        body += f"\n\n📝 Açıklama:\n{description.strip()}"
+    
+    body += f"""
+
+Lütfen bu etkinliği unutmayınız.
+
+Hukuk Bürosu Yönetim Sistemi"""
+    
+    return send_email(user_email, subject, body.strip())
+
 if __name__ == "__main__":
     # Test e-postasi gonder
     print("Test e-postasi gonderiliyor...")

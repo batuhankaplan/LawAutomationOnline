@@ -4485,10 +4485,28 @@ function saveChanges(caseId) {
         
         // Dosya bilgileri
         status: document.getElementById('editStatus').value,
-        next_hearing: document.getElementById('editNextHearing').value || null,
-        hearing_time: document.getElementById('editHearingTime').value || null,
+        next_hearing: document.querySelector('#editModal #editNextHearing').value || null,
+        hearing_time: document.querySelector('#editModal #editHearingTime').value || null,
         hearing_type: hearingType
     };
+    
+    // Debug: Form verilerini konsola yazdır
+    console.log('Form verileri:', {
+        next_hearing: data.next_hearing,
+        hearing_time: data.hearing_time,
+        hearing_type: data.hearing_type,
+        status: data.status
+    });
+    
+    // Debug: Element kontrolü
+    const nextHearingEl = document.querySelector('#editModal #editNextHearing');
+    const hearingTimeEl = document.querySelector('#editModal #editHearingTime');
+    console.log('Element değerleri:', {
+        nextHearingElement: nextHearingEl,
+        nextHearingValue: nextHearingEl ? nextHearingEl.value : 'Element bulunamadı',
+        hearingTimeElement: hearingTimeEl,
+        hearingTimeValue: hearingTimeEl ? hearingTimeEl.value : 'Element bulunamadı'
+    });
 
 
 
@@ -4528,7 +4546,16 @@ function saveChanges(caseId) {
             
             // Takvim senkronizasyonu için dosya durumunu ve duruşma türünü gönder
             if (data.next_hearing) {
+                console.log('Takvim senkronizasyonu başlatılıyor:', {
+                    caseId: caseId,
+                    next_hearing: data.next_hearing,
+                    hearing_time: data.hearing_time,
+                    status: data.status,
+                    hearingType: hearingType
+                });
                 syncHearingToCalendar(caseId, data.next_hearing, data.hearing_time, data.status, hearingType);
+            } else {
+                console.log('Takvim senkronizasyonu atlandı - next_hearing yok:', data.next_hearing);
             }
             
             closeEditModal();
@@ -6621,6 +6648,14 @@ function saveDescription() {
 
 // Duruşma bilgilerini takvime senkronize et
 function syncHearingToCalendar(caseId, hearingDate, hearingTime, status, hearingType = 'durusma') {
+    console.log('syncHearingToCalendar çağrıldı:', {
+        caseId: caseId,
+        hearingDate: hearingDate,
+        hearingTime: hearingTime,
+        status: status,
+        hearingType: hearingType
+    });
+    
     fetch('/sync_hearing_to_calendar', {
         method: 'POST',
         headers: {
@@ -6635,10 +6670,16 @@ function syncHearingToCalendar(caseId, hearingDate, hearingTime, status, hearing
             hearing_type: hearingType // Duruşma türünü ekle
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Takvim senkronizasyonu yanıtı:', response.status);
+        return response.json();
+    })
     .then(result => {
+        console.log('Takvim senkronizasyonu sonucu:', result);
         if (!result.success) {
             throw new Error(result.message || 'Takvim senkronizasyonu başarısız');
+        } else {
+            console.log('Takvim senkronizasyonu başarılı:', result.message);
         }
     })
     .catch(error => {

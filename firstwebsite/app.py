@@ -28,6 +28,7 @@ import subprocess
 import tempfile
 from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
+from email_utils import send_calendar_event_assignment_email, send_calendar_event_reminder_email
 import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect # CSRF Koruması için eklendi
@@ -795,11 +796,23 @@ def takvim():
         'can_view': current_user.has_permission('etkinlik_goruntule')
     }
     
+    # Onaylı kullanıcıların listesini al
+    approved_users = User.query.filter_by(is_approved=True).all()
+    users_data = []
+    for user in approved_users:
+        users_data.append({
+            'id': user.id,
+            'full_name': user.get_full_name(),
+            'role': user.role,
+            'email': user.email
+        })
+    
     return render_template('takvim.html', 
                          events=events_data,
                          adli_tatil_data=adli_tatil_data,
                          all_courthouses=cities_courthouses, # Tüm adliye verilerini gönder
-                         user_permissions=user_permissions)
+                         user_permissions=user_permissions,
+                         approved_users=users_data)
 
 @app.route('/dosyalarim')
 def dosyalarim():
@@ -1139,6 +1152,7 @@ import subprocess
 import tempfile
 from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
+from email_utils import send_calendar_event_assignment_email, send_calendar_event_reminder_email
 import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect # CSRF Koruması için eklendi
@@ -1906,11 +1920,23 @@ def takvim():
         'can_view': current_user.has_permission('etkinlik_goruntule')
     }
     
+    # Onaylı kullanıcıların listesini al
+    approved_users = User.query.filter_by(is_approved=True).all()
+    users_data = []
+    for user in approved_users:
+        users_data.append({
+            'id': user.id,
+            'full_name': user.get_full_name(),
+            'role': user.role,
+            'email': user.email
+        })
+    
     return render_template('takvim.html', 
                          events=events_data,
                          adli_tatil_data=adli_tatil_data,
                          all_courthouses=cities_courthouses, # Tüm adliye verilerini gönder
-                         user_permissions=user_permissions)
+                         user_permissions=user_permissions,
+                         approved_users=users_data)
 
 @app.route('/dosyalarim')
 def dosyalarim():
@@ -2523,6 +2549,7 @@ import subprocess
 import tempfile
 from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
+from email_utils import send_calendar_event_assignment_email, send_calendar_event_reminder_email
 import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect # CSRF Koruması için eklendi
@@ -3290,11 +3317,23 @@ def takvim():
         'can_view': current_user.has_permission('etkinlik_goruntule')
     }
     
+    # Onaylı kullanıcıların listesini al
+    approved_users = User.query.filter_by(is_approved=True).all()
+    users_data = []
+    for user in approved_users:
+        users_data.append({
+            'id': user.id,
+            'full_name': user.get_full_name(),
+            'role': user.role,
+            'email': user.email
+        })
+    
     return render_template('takvim.html', 
                          events=events_data,
                          adli_tatil_data=adli_tatil_data,
                          all_courthouses=cities_courthouses, # Tüm adliye verilerini gönder
-                         user_permissions=user_permissions)
+                         user_permissions=user_permissions,
+                         approved_users=users_data)
 
 @app.route('/dosyalarim')
 def dosyalarim():
@@ -3634,6 +3673,7 @@ import subprocess
 import tempfile
 from flask_mail import Mail, Message
 from bs4 import BeautifulSoup
+from email_utils import send_calendar_event_assignment_email, send_calendar_event_reminder_email
 import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect # CSRF Koruması için eklendi
@@ -4461,11 +4501,23 @@ def takvim():
         'can_view': current_user.has_permission('etkinlik_goruntule')
     }
     
+    # Onaylı kullanıcıların listesini al
+    approved_users = User.query.filter_by(is_approved=True).all()
+    users_data = []
+    for user in approved_users:
+        users_data.append({
+            'id': user.id,
+            'full_name': user.get_full_name(),
+            'role': user.role,
+            'email': user.email
+        })
+    
     return render_template('takvim.html', 
                          events=events_data,
                          adli_tatil_data=adli_tatil_data,
                          all_courthouses=cities_courthouses, # Tüm adliye verilerini gönder
-                         user_permissions=user_permissions)
+                         user_permissions=user_permissions,
+                         approved_users=users_data)
 
 @app.route('/dosyalarim')
 def dosyalarim():
@@ -5330,6 +5382,40 @@ def add_event():
         db.session.commit()
         app.logger.info(f"Etkinlik başarıyla eklendi: {event.id}")
         
+        # E-posta bildirimi gönder
+        if event.assigned_to:
+            try:
+                # Atanan kişiyi bul
+                assigned_user = User.query.filter_by(is_approved=True).filter(
+                    User.first_name + ' ' + User.last_name == event.assigned_to.replace('Av. ', '').replace('Stj. Av. ', '').replace('Asst. ', '').replace('Ulşm. ', '').replace('Tkp El. ', '')
+                ).first()
+                
+                if not assigned_user:
+                    # Tam isim eşleşmesi yoksa, full_name ile dene
+                    for user in User.query.filter_by(is_approved=True).all():
+                        if user.get_full_name() == event.assigned_to:
+                            assigned_user = user
+                            break
+                
+                if assigned_user:
+                    send_calendar_event_assignment_email(
+                        user_email=assigned_user.email,
+                        user_name=assigned_user.get_full_name(),
+                        event_title=event.title,
+                        event_date=event_date.strftime('%d.%m.%Y'),
+                        event_time=event_time.strftime('%H:%M'),
+                        event_type=event.event_type,
+                        assigned_by_name=current_user.get_full_name(),
+                        courthouse=courthouse,
+                        department=department,
+                        description=description
+                    )
+                    app.logger.info(f"Atama e-postası gönderildi: {assigned_user.email}")
+                else:
+                    app.logger.warning(f"Atanan kullanıcı bulunamadı: {event.assigned_to}")
+            except Exception as e:
+                app.logger.error(f"E-posta gönderme hatası: {str(e)}")
+        
         response_data = {
             'id': event.id,
             'title': event.title,
@@ -5485,6 +5571,41 @@ def update_event():
         
         # Değişiklikleri kaydet
         db.session.commit()
+        
+        # E-posta bildirimi gönder (atanan kişi değiştiğinde)
+        if 'assigned_to' in data and data['assigned_to'] != old_values.get('assigned_to'):
+            if event.assigned_to:
+                try:
+                    # Atanan kişiyi bul
+                    assigned_user = User.query.filter_by(is_approved=True).filter(
+                        User.first_name + ' ' + User.last_name == event.assigned_to.replace('Av. ', '').replace('Stj. Av. ', '').replace('Asst. ', '').replace('Ulşm. ', '').replace('Tkp El. ', '')
+                    ).first()
+                    
+                    if not assigned_user:
+                        # Tam isim eşleşmesi yoksa, full_name ile dene
+                        for user in User.query.filter_by(is_approved=True).all():
+                            if user.get_full_name() == event.assigned_to:
+                                assigned_user = user
+                                break
+                    
+                    if assigned_user:
+                        send_calendar_event_assignment_email(
+                            user_email=assigned_user.email,
+                            user_name=assigned_user.get_full_name(),
+                            event_title=event.title,
+                            event_date=event.date.strftime('%d.%m.%Y'),
+                            event_time=event.time.strftime('%H:%M'),
+                            event_type=event.event_type,
+                            assigned_by_name=current_user.get_full_name(),
+                            courthouse=event.courthouse,
+                            department=event.department,
+                            description=event.description
+                        )
+                        app.logger.info(f"Güncelleme atama e-postası gönderildi: {assigned_user.email}")
+                    else:
+                        app.logger.warning(f"Atanan kullanıcı bulunamadı: {event.assigned_to}")
+                except Exception as e:
+                    app.logger.error(f"E-posta gönderme hatası: {str(e)}")
         
         # Değişiklikleri loglama
         changes = []
@@ -6117,15 +6238,22 @@ def get_udf_manifest(document_id):
 def sync_hearing_to_calendar():
     try:
         data = request.get_json()
+        print(f"Takvim senkronizasyonu isteği alındı: {data}")
+        
         case_id = data.get('case_id')
         hearing_date_str = data.get('hearing_date') # Tarih string olarak alınır
         hearing_time_str = data.get('hearing_time', '09:00') # Saat string olarak alınır
         status = data.get('status')
         hearing_type = data.get('hearing_type', 'durusma').lower()
         
+        print(f"Takvim senkronizasyonu parametreleri: case_id={case_id}, date={hearing_date_str}, time={hearing_time_str}, status={status}, type={hearing_type}")
+        
         case_file = CaseFile.query.get(case_id)
         if not case_file:
+            print(f"Dosya bulunamadı: case_id={case_id}")
             return jsonify(success=False, message="Dosya bulunamadı")
+            
+        print(f"Dosya bulundu: {case_file.client_name} - {case_file.case_number}")
 
         existing_event = CalendarEvent.query.filter_by(
             case_id=case_id,
@@ -6148,8 +6276,7 @@ def sync_hearing_to_calendar():
         event_date = datetime.strptime(hearing_date_str, '%Y-%m-%d').date()
         event_time = datetime.strptime(hearing_time_str, '%H:%M').time()
         
-        event_title_prefix = "E-Duruşma" if hearing_type == 'e-durusma' else "Duruşma"
-        event_title = f"{event_title_prefix} - {case_file.client_name} ({case_file.year}/{case_file.case_number})"
+        event_title = f"{case_file.client_name} ({case_file.year}/{case_file.case_number})"
         event_description = '' # Açıklamayı boş bırak
 
         if existing_event:
@@ -11207,7 +11334,11 @@ def login():
                     return redirect(next_page or url_for('anasayfa'))
             else:
                 print("DEBUG - Password check failed")
-                flash('Geçersiz e-posta veya şifre.', 'error')
+                # Kullanıcı var mı kontrol et
+                if user and not user.is_approved and not user.is_admin:
+                    flash('Hesabınız henüz onaylanmamış. Lütfen yönetici onayını bekleyin.', 'warning')
+                else:
+                    flash('Geçersiz e-posta veya şifre.', 'error')
     
     print("DEBUG - Rendering auth.html")
     return render_template('auth.html')
