@@ -1075,18 +1075,19 @@ def bildirimler():
 @login_required
 @permission_required('dosya_sorgula')
 def dosya_sorgula():
-    if request.method == 'POST':
-        # Form verilerini al
-        file_type = request.form.get('file-type')
-        city = request.form.get('city')  # Yeni eklenen şehir filtresi
-        courthouse = request.form.get('courthouse')
-        department = request.form.get('department')
-        court_number = request.form.get('court-number')  # Yeni eklenen mahkeme numarası filtresi
-        year = request.form.get('year')
-        case_number = request.form.get('case-number')
-        client_name = request.form.get('client-name')
-        status = request.form.get('status')
-        
+    # Form verilerini al (POST veya GET parametrelerinden)
+    file_type = request.form.get('file-type') or request.args.get('file_type')
+    city = request.form.get('city') or request.args.get('city')
+    courthouse = request.form.get('courthouse') or request.args.get('courthouse')
+    department = request.form.get('department') or request.args.get('department')
+    court_number = request.form.get('court-number') or request.args.get('court_number')
+    year = request.form.get('year') or request.args.get('year')
+    case_number = request.form.get('case-number') or request.args.get('case_number')
+    client_name = request.form.get('client-name') or request.args.get('client_name')
+    status = request.form.get('status') or request.args.get('status')
+    
+    # Eğer herhangi bir filtre varsa sorguyu çalıştır
+    if request.method == 'POST' or any([file_type, city, courthouse, department, court_number, year, case_number, client_name, status]):
         # Sorguyu başlat (Kullanıcı filtresi kaldırıldı)
         query = CaseFile.query
         
@@ -2199,18 +2200,19 @@ def bildirimler():
 @login_required
 @permission_required('dosya_sorgula')
 def dosya_sorgula():
-    if request.method == 'POST':
-        # Form verilerini al
-        file_type = request.form.get('file-type')
-        city = request.form.get('city')  # Yeni eklenen şehir filtresi
-        courthouse = request.form.get('courthouse')
-        department = request.form.get('department')
-        court_number = request.form.get('court-number')  # Yeni eklenen mahkeme numarası filtresi
-        year = request.form.get('year')
-        case_number = request.form.get('case-number')
-        client_name = request.form.get('client-name')
-        status = request.form.get('status')
-        
+    # Form verilerini al (POST veya GET parametrelerinden)
+    file_type = request.form.get('file-type') or request.args.get('file_type')
+    city = request.form.get('city') or request.args.get('city')
+    courthouse = request.form.get('courthouse') or request.args.get('courthouse')
+    department = request.form.get('department') or request.args.get('department')
+    court_number = request.form.get('court-number') or request.args.get('court_number')
+    year = request.form.get('year') or request.args.get('year')
+    case_number = request.form.get('case-number') or request.args.get('case_number')
+    client_name = request.form.get('client-name') or request.args.get('client_name')
+    status = request.form.get('status') or request.args.get('status')
+    
+    # Eğer herhangi bir filtre varsa sorguyu çalıştır
+    if request.method == 'POST' or any([file_type, city, courthouse, department, court_number, year, case_number, client_name, status]):
         # Sorguyu başlat (Kullanıcı filtresi kaldırıldı)
         query = CaseFile.query
         
@@ -3596,18 +3598,19 @@ def bildirimler():
 @login_required
 @permission_required('dosya_sorgula')
 def dosya_sorgula():
-    if request.method == 'POST':
-        # Form verilerini al
-        file_type = request.form.get('file-type')
-        city = request.form.get('city')  # Yeni eklenen şehir filtresi
-        courthouse = request.form.get('courthouse')
-        department = request.form.get('department')
-        court_number = request.form.get('court-number')  # Yeni eklenen mahkeme numarası filtresi
-        year = request.form.get('year')
-        case_number = request.form.get('case-number')
-        client_name = request.form.get('client-name')
-        status = request.form.get('status')
-        
+    # Form verilerini al (POST veya GET parametrelerinden)
+    file_type = request.form.get('file-type') or request.args.get('file_type')
+    city = request.form.get('city') or request.args.get('city')
+    courthouse = request.form.get('courthouse') or request.args.get('courthouse')
+    department = request.form.get('department') or request.args.get('department')
+    court_number = request.form.get('court-number') or request.args.get('court_number')
+    year = request.form.get('year') or request.args.get('year')
+    case_number = request.form.get('case-number') or request.args.get('case_number')
+    client_name = request.form.get('client-name') or request.args.get('client_name')
+    status = request.form.get('status') or request.args.get('status')
+    
+    # Eğer herhangi bir filtre varsa sorguyu çalıştır
+    if request.method == 'POST' or any([file_type, city, courthouse, department, court_number, year, case_number, client_name, status]):
         # Sorguyu başlat (Kullanıcı filtresi kaldırıldı)
         query = CaseFile.query
         
@@ -4780,18 +4783,19 @@ def bildirimler():
 @login_required
 @permission_required('dosya_sorgula')
 def dosya_sorgula():
-    if request.method == 'POST':
-        # Form verilerini al
-        file_type = request.form.get('file-type')
-        city = request.form.get('city')  # Yeni eklenen şehir filtresi
-        courthouse = request.form.get('courthouse')
-        department = request.form.get('department')
-        court_number = request.form.get('court-number')  # Yeni eklenen mahkeme numarası filtresi
-        year = request.form.get('year')
-        case_number = request.form.get('case-number')
-        client_name = request.form.get('client-name')
-        status = request.form.get('status')
-        
+    # Form verilerini al (POST veya GET parametrelerinden)
+    file_type = request.form.get('file-type') or request.args.get('file_type')
+    city = request.form.get('city') or request.args.get('city')
+    courthouse = request.form.get('courthouse') or request.args.get('courthouse')
+    department = request.form.get('department') or request.args.get('department')
+    court_number = request.form.get('court-number') or request.args.get('court_number')
+    year = request.form.get('year') or request.args.get('year')
+    case_number = request.form.get('case-number') or request.args.get('case_number')
+    client_name = request.form.get('client-name') or request.args.get('client_name')
+    status = request.form.get('status') or request.args.get('status')
+    
+    # Eğer herhangi bir filtre varsa sorguyu çalıştır
+    if request.method == 'POST' or any([file_type, city, courthouse, department, court_number, year, case_number, client_name, status]):
         # Sorguyu başlat (Kullanıcı filtresi kaldırıldı)
         query = CaseFile.query
         

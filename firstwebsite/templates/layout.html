@@ -425,6 +425,7 @@
     .small-text { font-size: 0.875rem; }
     .search-wrapper {
         width: 100%;
+        position: relative;
     }
 
     #search-input {
@@ -479,6 +480,11 @@
         .search-button i {
             margin: 0;
         }
+
+        .search-box {
+            max-width: 280px;
+            min-width: 200px;
+        }
     }
 
     /* Sidebar genişliğini güncelle */
@@ -518,21 +524,23 @@
         right: 0;
         background: white;
         border: 1px solid #dee2e6;
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 1000;
-        max-height: 300px;
+        max-height: 400px;
         overflow-y: auto;
         display: none;
+        margin-top: 4px;
     }
 
     .search-result-item {
-        padding: 10px 15px;
+        padding: 12px 16px;
         cursor: pointer;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         border-bottom: 1px solid #eee;
+        transition: background-color 0.2s ease;
     }
 
     .search-result-item:last-child {
@@ -564,7 +572,8 @@
         border-radius: 6px;
         padding: 0 12px;
         border: 1px solid #dee2e6;
-        max-width: 300px;
+        max-width: 500px;
+        min-width: 350px;
         transition: all 0.2s ease;
     }
 
@@ -582,9 +591,9 @@
     .search-box input {
         border: none;
         outline: none;
-        padding: 8px 0;
+        padding: 12px 0;
         width: 100%;
-        font-size: 0.9rem;
+        font-size: 1rem;
         color: #495057;
         background: transparent;
     }

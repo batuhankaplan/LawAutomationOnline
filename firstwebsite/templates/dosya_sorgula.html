@@ -19,13 +19,13 @@
                     <label for="file-type">Dosya Türü</label>
                     <select id="file-type" name="file-type" onchange="handleFileTypeChange()">
                         <option value="">Tümü</option>
-                        <option value="hukuk">Hukuk</option>
-                        <option value="ceza">Ceza</option>
-                        <option value="icra">İcra</option>
-                        <option value="savcilik">Savcılık</option>
-                        <option value="ARABULUCULUK">Arabuluculuk</option>
-                        <option value="AİHM">AİHM</option>
-                        <option value="AYM">AYM</option>
+                        <option value="hukuk" {{ 'selected' if request.args.get('file_type') == 'hukuk' else '' }}>Hukuk</option>
+                        <option value="ceza" {{ 'selected' if request.args.get('file_type') == 'ceza' else '' }}>Ceza</option>
+                        <option value="icra" {{ 'selected' if request.args.get('file_type') == 'icra' else '' }}>İcra</option>
+                        <option value="savcilik" {{ 'selected' if request.args.get('file_type') == 'savcilik' else '' }}>Savcılık</option>
+                        <option value="ARABULUCULUK" {{ 'selected' if request.args.get('file_type') == 'ARABULUCULUK' else '' }}>Arabuluculuk</option>
+                        <option value="AİHM" {{ 'selected' if request.args.get('file_type') == 'AİHM' else '' }}>AİHM</option>
+                        <option value="AYM" {{ 'selected' if request.args.get('file_type') == 'AYM' else '' }}>AYM</option>
                     </select>
                 </div>
                 
@@ -81,8 +81,8 @@
                     <label for="status">Dosya Durumu</label>
                     <select id="status" name="status">
                         <option value="">Tümü</option>
-                        <option value="Aktif">Aktif</option>
-                        <option value="Kapalı">Kapalı</option>
+                        <option value="Aktif" {{ 'selected' if request.args.get('status') == 'Aktif' else '' }}>Aktif</option>
+                        <option value="Kapalı" {{ 'selected' if request.args.get('status') == 'Kapalı' else '' }}>Kapalı</option>
                     </select>
                 </div>
             </div>
@@ -2781,13 +2781,44 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCourthouses();
     }
     
-    // URL'den show_details parametresini al
+    // URL'den parametreleri al
     const urlParams = new URLSearchParams(window.location.search);
     const showDetailsId = urlParams.get('show_details');
+    const fileType = urlParams.get('file_type');
+    const status = urlParams.get('status');
     
     // Eğer show_details parametresi varsa, dosya detaylarını göster
     if (showDetailsId) {
         showDetails(showDetailsId);
+    }
+    
+    // URL'den gelen parametrelere göre otomatik arama yap
+    if (fileType || status) {
+        // Parametrelere göre form alanlarını doldur
+        if (fileType) {
+            const fileTypeSelect = document.getElementById('file-type');
+            if (fileTypeSelect) {
+                fileTypeSelect.value = fileType;
+                handleFileTypeChange(); // Dosya türü değiştiğinde gerekli işlemleri yap
+            }
+        }
+        
+        if (status) {
+            const statusSelect = document.getElementById('status');
+            if (statusSelect) {
+                statusSelect.value = status;
+            }
+        }
+        
+        // Otomatik aramayı bir süre bekleyerek yap (DOM güncellemelerinin tamamlanması için)
+        setTimeout(function() {
+            const searchForm = document.querySelector('.search-form');
+            if (searchForm) {
+                // Form submit event'ini tetikle
+                const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                searchForm.dispatchEvent(submitEvent);
+            }
+        }, 500);
     }
     
     // Modal dışına tıklama event handler'ı

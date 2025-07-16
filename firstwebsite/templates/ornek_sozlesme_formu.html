@@ -359,6 +359,12 @@
                                         <div class="invalid-feedback">Ad/Ünvan gerekli</div>
                                     </div>
                                     <div class="mb-0">
+                                        <label for="isSahibiTc" class="form-label fw-semibold">
+                                            <i class="material-icons me-1 text-secondary" style="font-size: 1rem;">badge</i>T.C. Kimlik No
+                                        </label>
+                                        <input type="text" class="form-control" id="isSahibiTc" placeholder="T.C. Kimlik numarası giriniz" maxlength="11">
+                                    </div>
+                                    <div class="mb-0">
                                         <label for="isSahibiAdresi" class="form-label fw-semibold">
                                             <i class="material-icons me-1 text-secondary" style="font-size: 1rem;">location_on</i>Adres *
                                         </label>
@@ -513,6 +519,12 @@
                                         </label>
                                         <input type="text" class="form-control" id="yeniIsSahibiAdi" placeholder="Müvekkil adı giriniz" required>
                                         <div class="invalid-feedback">Ad/Ünvan gerekli</div>
+                                    </div>
+                                    <div class="mb-0">
+                                        <label for="yeniIsSahibiTc" class="form-label fw-semibold">
+                                            <i class="material-icons me-1 text-secondary" style="font-size: 1rem;">badge</i>T.C. Kimlik No
+                                        </label>
+                                        <input type="text" class="form-control" id="yeniIsSahibiTc" placeholder="T.C. Kimlik numarası giriniz" maxlength="11">
                                     </div>
                                     <div class="mb-0">
                                         <label for="yeniIsSahibiAdresi" class="form-label fw-semibold">
@@ -900,10 +912,34 @@
     
     // ÜCRET ALANI VALIDASYON FONKSİYONU - EN BAŞTA
     window.ucretAlaniniTemizle = function(deger) {
-        if (!deger || deger.toString().trim() === '' || deger.toString().trim() === '-') {
-            return '0';
+        if (!deger || deger.toString().trim() === '') {
+            return '';
+        }
+        if (deger.toString().trim() === '-') {
+            return '-';
         }
         return deger.toString().trim();
+    };
+
+    // Ücret metni oluştur - sadece değer varsa göster
+    window.ucretMetniOlustur = function(formVerileri) {
+        let giderAvansiMetni = '';
+        let gunlukUcretMetni = '';
+        let durusmaUcretiMetni = '';
+
+        if (formVerileri.giderAvansi && formVerileri.giderAvansi.trim() !== '') {
+            giderAvansiMetni = `Müvekkil bu iş için Avukata ${formVerileri.giderAvansi}-TL gider avansını peşin olarak verecektir. `;
+        }
+
+        if (formVerileri.gunlukUcret && formVerileri.gunlukUcret.trim() !== '') {
+            gunlukUcretMetni = `Müvekkil yolculuk giderlerinden başka, Avukatın bürosundan ayrı kaldığı her gün için ${formVerileri.gunlukUcret}-TL ödemeyi kabul etmiştir. `;
+        }
+
+        if (formVerileri.durusmaUcreti && formVerileri.durusmaUcreti.trim() !== '') {
+            durusmaUcretiMetni = `Yargıtay, Danıştay ve Vergi Temyiz Komisyonları huzurunda duruşma ayrı ücrete tabidir. Bu takdirde yukarıda sayılan yol giderlerinden başka Avukata ${formVerileri.durusmaUcreti}-TL verilecektir. Bu paralar peşin ödenmedikçe Avukat duruşmada bulunmak zorunda değildir.`;
+        }
+
+        return `İşin yapılması için gerekli bütün vergi, resim, harç gibi giderler müvekkile ait olup, Avukatın ilk isteminde Müvekkil tarafından Avukata veya merciine ödenmesi gerekir. Verilen iş için yapılacak giderlerin tümü müvekkile aittir ve bu giderler ödenmedikçe Avukat işi yapmak zorunda değildir. Yukarıda sayılan giderlerin Avukat tarafından yapılabilmesini Sağlamak için müvekkil, giderleri karşılayacak avansı Zamanında vermek zorunluluğundadır. ${giderAvansiMetni}İş seyahati gerektiğinde uçak 1. mevki yataklı tarifesine göre tren, vapur ve bilet ücretleri müvekkil tarafından ücretten ayrı olarak ödenecektir. Bu giderler verilmeksizin Avukat seyahati yapmak zorunda değildir. ${gunlukUcretMetni}${durusmaUcretiMetni}`;
     };
 
     // Bildirim göster fonksiyonu - EN ÖNCE TANıMLANDI
@@ -1277,12 +1313,13 @@
                 // Yeni sözleşme oluşturma işlemi - formdan verileri al
                 const formVerileri = {
                     isSahibiAdi: document.getElementById('yeniIsSahibiAdi').value,
+                    isSahibiTc: document.getElementById('yeniIsSahibiTc').value,
                     isSahibiAdresi: document.getElementById('yeniIsSahibiAdresi').value,
                     alinanIs: document.getElementById('yeniAlinanIs').value,
                     avukatlikUcreti: document.getElementById('yeniAvukatlikUcreti').value,
-                    giderAvansi: window.ucretAlaniniTemizle(document.getElementById('yeniGiderAvansi').value),
-                    gunlukUcret: window.ucretAlaniniTemizle(document.getElementById('yeniGunlukUcret').value),
-                    durusmaUcreti: window.ucretAlaniniTemizle(document.getElementById('yeniDurusmaUcreti').value),
+                    giderAvansi: document.getElementById('yeniGiderAvansi').value || '',
+                    gunlukUcret: document.getElementById('yeniGunlukUcret').value || '',
+                    durusmaUcreti: document.getElementById('yeniDurusmaUcreti').value || '',
                     sozlesmeTarihi: document.getElementById('yeniSozlesmeTarihi').value
                 };
 
@@ -1358,12 +1395,13 @@
                 // Formdaki verileri toplayıp PDF oluştur ve kaydet
                 const formVerileri = {
                     isSahibiAdi: document.getElementById('isSahibiAdi').value,
+                    isSahibiTc: document.getElementById('isSahibiTc').value,
                     isSahibiAdresi: document.getElementById('isSahibiAdresi').value,
                     alinanIs: document.getElementById('alinanIs').value,
                     avukatlikUcreti: document.getElementById('avukatlikUcreti').value,
-                    giderAvansi: window.ucretAlaniniTemizle(document.getElementById('giderAvansi').value),
-                    gunlukUcret: window.ucretAlaniniTemizle(document.getElementById('gunlukUcret').value),
-                    durusmaUcreti: window.ucretAlaniniTemizle(document.getElementById('durusmaUcreti').value),
+                    giderAvansi: document.getElementById('giderAvansi').value || '',
+                    gunlukUcret: document.getElementById('gunlukUcret').value || '',
+                    durusmaUcreti: document.getElementById('durusmaUcreti').value || '',
                     sozlesmeTarihi: document.getElementById('sozlesmeTarihi').value
                 };
 
@@ -2046,6 +2084,7 @@
                         // Raw verilerden formu doldurmaya çalış (öncelikli)
                         if (icerikJson.rawFormData) {
                             // Raw form verilerinden doldur
+                            document.getElementById('isSahibiTc').value = icerikJson.rawFormData.isSahibiTc || '';
                             document.getElementById('isSahibiAdresi').value = icerikJson.rawFormData.isSahibiAdresi || '';
                             document.getElementById('alinanIs').value = icerikJson.rawFormData.alinanIs || '';
                             document.getElementById('avukatlikUcreti').value = icerikJson.rawFormData.avukatlikUcreti || '';
@@ -2592,7 +2631,7 @@
                     { text: '\n' },
                     {
                         columns: [
-                            { width: '*', text: `İŞ SAHİBİ: ${formVerileri.isSahibiAdi}\nADRESİ: ${formVerileri.isSahibiAdresi}`},
+                            { width: '*', text: `İŞ SAHİBİ: ${formVerileri.isSahibiAdi}${formVerileri.isSahibiTc ? '\nT.C. Kimlik No: ' + formVerileri.isSahibiTc : ''}\nADRESİ: ${formVerileri.isSahibiAdresi}`},
                             { width: '*', text: `AVUKAT: Av. Mustafa KAPLAN\nADRESİ: Güneşli Meydanı Cumhuriyet Cd. No.47 K.3 D.8 (AKBANK ÜSTÜ) GÜNEŞLİ/İST.`}
                         ], columnGap: 20
                     },
@@ -2601,7 +2640,14 @@
                     { text: `MADDE 2) Sözleşme konusu olan işten dolayı, Avukat'a ${formVerileri.avukatlikUcreti} avukatlık ücreti ödenecektir.\nBu ücret Av. Mustafa KAPLAN'a ait Garanti Bankası Güneşli Şubesi TR930006200029500006684655 İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.\n`, style: 'paragraph'},
                     { text: 'MADDE 3) Tespit olunan ücret yalnız bu sözleşmede yazılı işin ve işlerin karşılığıdır. Bunlar dışında kalacak takipler ve bu işle ilgili bağlantılı bulunsa dahi karşı taraf veya üçüncü bir şahıs tarafından karşılıklı dava veya ayrı davalar şeklinde açılacak davalar bu sözleşme ücretin dışındadır. Avukat, bu sözleşmeye göre peşin verilmesi gerekli ücret ve aşağıda yazılı gider avansı kendisine ödenmediği sürece işe başlamak zorunluluğunda değildir. İş sahibi ile ilgili yapılacak hukuki, idari ve adli işlemlerden kaynaklanacak masraflar iş sahibine aittir.\n', style: 'paragraph'},
                     { text: 'MADDE 4) Avukat üzerine aldığı işi kanun ve bu sözleşme hükümleri uyarınca sonuna kadar takip edecektir. Avukat, verilen vekaletname ile başkasını tevkile yetkili bulunduğu takdirde, üzerine aldığı işi uygun göreceği diğer Avukatlarla birlikte takip edebileceği gibi, takibi tamamen onlara bırakabilecektir. Müvekkil de, Avukatın yazılı iznini almak şartı ile başka Avukatlara vekalet verebilir. Bu hallerde 1136 sayılı Kanunun 171 ve 172. Maddeleri hükmü uygulanır.\n', style: 'paragraph'},
-                    { text: `MADDE 5) İşin yapılması için gerekli bütün vergi, resim, harç gibi giderler müvekkile ait olup, Avukatın ilk isteminde Müvekkil tarafından Avukata veya merciine ödenmesi gerekir. Verilen iş için yapılacak giderlerin tümü müvekkile aittir ve bu giderler ödenmedikçe Avukat işi yapmak zorunda değildir. Yukarıda sayılan giderlerin Avukat tarafından yapılabilmesini Sağlamak için müvekkil, giderleri karşılayacak avansı Zamanında vermek zorunluluğundadır. Müvekkil bu iş için Avukata ${formVerileri.giderAvansi}-TL gider avansını peşin olarak verecektir. İş seyahati gerektiğinde uçak 1. mevki yataklı tarifesine göre tren, vapur ve bilet ücretleri müvekkil tarafından ücretten ayrı olarak ödenecektir. Bu giderler verilmeksizin Avukat seyahati yapmak zorunda değildir. Müvekkil yolculuk giderlerinden başka, Avukatın bürosundan ayrı kaldığı her gün için ${formVerileri.gunlukUcret}-TL ödemeyi kabul etmiştir. Yargıtay, Danıştay ve Vergi Temyiz Komisyonları huzurunda duruşma ayrı ücrete tabidir. Bu takdirde yukarıda sayılan yol giderlerinden başka Avukata ${formVerileri.durusmaUcreti}-TL verilecektir. Bu paralar peşin ödenmedikçe Avukat duruşmada bulunmak zorunda değildir.\n`, style: 'paragraph'},
+                    { text: `MADDE 5) ${(() => {
+                        // Boş alanlar için "-" göster
+                        let giderAvansi = (formVerileri.giderAvansi && formVerileri.giderAvansi.trim() !== '' && formVerileri.giderAvansi.trim() !== '0') ? formVerileri.giderAvansi : '-';
+                        let gunlukUcret = (formVerileri.gunlukUcret && formVerileri.gunlukUcret.trim() !== '' && formVerileri.gunlukUcret.trim() !== '0') ? formVerileri.gunlukUcret : '-';
+                        let durusmaUcreti = (formVerileri.durusmaUcreti && formVerileri.durusmaUcreti.trim() !== '' && formVerileri.durusmaUcreti.trim() !== '0') ? formVerileri.durusmaUcreti : '-';
+
+                        return `İşin yapılması için gerekli bütün vergi, resim, harç gibi giderler müvekkile ait olup, Avukatın ilk isteminde Müvekkil tarafından Avukata veya merciine ödenmesi gerekir. Verilen iş için yapılacak giderlerin tümü müvekkile aittir ve bu giderler ödenmedikçe Avukat işi yapmak zorunda değildir. Yukarıda sayılan giderlerin Avukat tarafından yapılabilmesini Sağlamak için müvekkil, giderleri karşılayacak avansı Zamanında vermek zorunluluğundadır. Müvekkil bu iş için Avukata ${giderAvansi}-TL gider avansını peşin olarak verecektir. İş seyahati gerektiğinde uçak 1. mevki yataklı tarifesine göre tren, vapur ve bilet ücretleri müvekkil tarafından ücretten ayrı olarak ödenecektir. Bu giderler verilmeksizin Avukat seyahati yapmak zorunda değildir. Müvekkil yolculuk giderlerinden başka, Avukatın bürosundan ayrı kaldığı her gün için ${gunlukUcret}-TL ödemeyi kabul etmiştir. Yargıtay, Danıştay ve Vergi Temyiz Komisyonları huzurunda duruşma ayrı ücrete tabidir. Bu takdirde yukarıda sayılan yol giderlerinden başka Avukata ${durusmaUcreti}-TL verilecektir. Bu paralar peşin ödenmedikçe Avukat duruşmada bulunmak zorunda değildir.`;
+                    })()}\n`, style: 'paragraph'},
                     { text: 'MADDE 6) Müvekkilin bu sözleşmenin akdinden sonra vekalet vermemesi, dosyasını geri alması, Avukatın yazılı iznini almadan başka Avukatları teşrik etmesi veya bir başka Avukata işini vermesi, istenen giderleri ödememesi, iddia veya savunma için gerekli bilgi, belge ve delilleri vermemesi, değiştirdiği halde yeni adresini yazılı olarak bildirmeyip işin takibini bu suretle imkansız hale getirmesi, Avukatın rızası olmadan davanın veya alacağın takibinden kısmen veya tamamen vazgeçmesi, karşı taraf ile sulh olması veya karşı tarafı ibra etmesi veya haklı bir sebep yokken Avukatı engellediği durumlarda Avukat sözleşmeyi bozabilir. Bu durumda sözleşmede belirtilen ücretin tamamı Avukatın ilk isteminde derhal ve bir defada ödenmesi gerekir.\n', style: 'paragraph'},
                     { text: 'MADDE 7) Yukarıda yazılı adres müvekkilin tebligat adresidir. Avukat tarafından bu adrese yapılacak bütün ihbar ve tebliğlerin şahsına yapılmış olduğunu kabul eder. Müvekkil adresini değiştirdiği takdirde yeni adresini Avukata derhal bildirmek zorundadır. Yukarıda yazılı adrese gönderilecek yazıların tebliğ edilmesinden ve yeni adresini bildirmemesinden doğacak sonuç 6. maddenin 2.fıkrasında yazılı olup, müvekkil bunları şimdiden kabul eder.\n', style: 'paragraph'},
                     { text: 'MADDE 8) İş bu sözleşmenin süresi sözleşmenin imzalandığı tarihten itibaren 1 yıldır. Taraflar anlaşarak 1 yılın sonunda sözleşmeyi karşılıklı olarak feshetmezler ise Avukatlık ücreti 1(bir) yılın sonunda TEFE/TÜFE ortalaması alınarak resen artar.\n', style: 'paragraph'},
@@ -2611,7 +2657,7 @@
                     { text: '\n' },
                     {
                         columns: [
-                            { width: '*', text: `MÜVEKKİL\n\n${formVerileri.isSahibiAdi}\n___________________` },
+                            { width: '*', text: `MÜVEKKİL\n\n${formVerileri.isSahibiAdi}${formVerileri.isSahibiTc ? '\nT.C. Kimlik No: ' + formVerileri.isSahibiTc : ''}\n___________________` },
                             { width: '*', text: 'AVUKAT\n\n\nAv. Mustafa KAPLAN\n___________________', alignment: 'right' }
                         ], columnGap: 20, style: 'signature'
                     }
@@ -2736,7 +2782,7 @@
                     { text: '\n' },
                     {
                         columns: [
-                            { width: '*', text: `İŞ SAHİBİ: ${formVerileri.isSahibiAdi}\nADRESİ: ${formVerileri.isSahibiAdresi}`},
+                            { width: '*', text: `İŞ SAHİBİ: ${formVerileri.isSahibiAdi}${formVerileri.isSahibiTc ? '\nT.C. Kimlik No: ' + formVerileri.isSahibiTc : ''}\nADRESİ: ${formVerileri.isSahibiAdresi}`},
                             { width: '*', text: `AVUKAT: ${taslakVerileri.avukatAdi}\nADRESİ: ${taslakVerileri.avukatAdres}`}
                         ], columnGap: 20
                     },
@@ -2745,7 +2791,14 @@
                     { text: `MADDE 2) Sözleşme konusu olan işten dolayı, Avukat'a ${formVerileri.avukatlikUcreti} avukatlık ücreti ödenecektir.\nBu ücret ${taslakVerileri.avukatAdi}'a ait ${taslakVerileri.bankaBilgisi} ${taslakVerileri.ibanNo} İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.\n`, style: 'paragraph'},
                     { text: `MADDE 3) ${taslakVerileri.madde3}\n`, style: 'paragraph'},
                     { text: `MADDE 4) ${taslakVerileri.madde4}\n`, style: 'paragraph'},
-                    { text: `MADDE 5) ${taslakVerileri.madde5.replace('{giderAvansi}', formVerileri.giderAvansi).replace('{gunlukUcret}', formVerileri.gunlukUcret).replace('{durusmaUcreti}', formVerileri.durusmaUcreti)}\n`, style: 'paragraph'},
+                    { text: `MADDE 5) ${(() => {
+                        // Boş alanlar için "-" göster
+                        let giderAvansi = (formVerileri.giderAvansi && formVerileri.giderAvansi.trim() !== '' && formVerileri.giderAvansi.trim() !== '0') ? formVerileri.giderAvansi : '-';
+                        let gunlukUcret = (formVerileri.gunlukUcret && formVerileri.gunlukUcret.trim() !== '' && formVerileri.gunlukUcret.trim() !== '0') ? formVerileri.gunlukUcret : '-';
+                        let durusmaUcreti = (formVerileri.durusmaUcreti && formVerileri.durusmaUcreti.trim() !== '' && formVerileri.durusmaUcreti.trim() !== '0') ? formVerileri.durusmaUcreti : '-';
+
+                        return `İşin yapılması için gerekli bütün vergi, resim, harç gibi giderler müvekkile ait olup, Avukatın ilk isteminde Müvekkil tarafından Avukata veya merciine ödenmesi gerekir. Verilen iş için yapılacak giderlerin tümü müvekkile aittir ve bu giderler ödenmedikçe Avukat işi yapmak zorunda değildir. Yukarıda sayılan giderlerin Avukat tarafından yapılabilmesini Sağlamak için müvekkil, giderleri karşılayacak avansı Zamanında vermek zorunluluğundadır. Müvekkil bu iş için Avukata ${giderAvansi}-TL gider avansını peşin olarak verecektir. İş seyahati gerektiğinde uçak 1. mevki yataklı tarifesine göre tren, vapur ve bilet ücretleri müvekkil tarafından ücretten ayrı olarak ödenecektir. Bu giderler verilmeksizin Avukat seyahati yapmak zorunda değildir. Müvekkil yolculuk giderlerinden başka, Avukatın bürosundan ayrı kaldığı her gün için ${gunlukUcret}-TL ödemeyi kabul etmiştir. Yargıtay, Danıştay ve Vergi Temyiz Komisyonları huzurunda duruşma ayrı ücrete tabidir. Bu takdirde yukarıda sayılan yol giderlerinden başka Avukata ${durusmaUcreti}-TL verilecektir. Bu paralar peşin ödenmedikçe Avukat duruşmada bulunmak zorunda değildir.`;
+                    })()}\n`, style: 'paragraph'},
                     { text: `MADDE 6) ${taslakVerileri.madde6}\n`, style: 'paragraph'},
                     { text: `MADDE 7) ${taslakVerileri.madde7}\n`, style: 'paragraph'},
                     { text: `MADDE 8) ${taslakVerileri.madde8}\n`, style: 'paragraph'},
@@ -2755,7 +2808,7 @@
                     { text: '\n' },
                     {
                         columns: [
-                            { width: '*', text: `MÜVEKKİL\n\n${formVerileri.isSahibiAdi}\n___________________` },
+                            { width: '*', text: `MÜVEKKİL\n\n${formVerileri.isSahibiAdi}${formVerileri.isSahibiTc ? '\nT.C. Kimlik No: ' + formVerileri.isSahibiTc : ''}\n___________________` },
                             { width: '*', text: `AVUKAT\n\n\n${taslakVerileri.avukatAdi}\n___________________`, alignment: 'right' }
                         ], columnGap: 20, style: 'signature'
                     }
