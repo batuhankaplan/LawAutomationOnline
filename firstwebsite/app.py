@@ -375,180 +375,6 @@ admin.add_view(SecureModelView(OrnekSozlesme, db.session, name='Örnek Sözleşm
 # --- End Flask-Admin Setup ---
 
 # Auth routes
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('anasayfa'))
-    
-    # Eğer 2FA session'ı varsa ve GET request ise, session'ı temizle
-    if request.method == 'GET' and 'temp_user_id' in session:
-        session.pop('temp_user_id', None)
-        session.pop('next_page', None)
-        
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        totp_code = request.form.get('totp_code')
-        
-        # 2FA doğrulama aşaması - GEÇİCİ OLARAK DEVRE DIŞI
-        if False and 'temp_user_id' in session and totp_code:
-            try:
-                import pyotp
-                user = User.query.get(session['temp_user_id'])
-                
-                if user and user.permissions and user.permissions.get('two_factor_secret'):
-                    secret = user.permissions['two_factor_secret']
-                    totp = pyotp.TOTP(secret)
-                    
-                    print(f"DEBUG - Secret exists, verifying code {totp_code}")
-                    verification_result = totp.verify(totp_code, valid_window=1)
-                    print(f"DEBUG - Verification result: {verification_result}")
-                    
-                    if verification_result:
-                        # 2FA doğru, giriş yap
-                        login_user(user)
-                        next_page = session.pop('next_page', url_for('anasayfa'))
-                        session.pop('temp_user_id', None)
-                        
-                        # Log oluştur
-                        log_activity(
-                            activity_type='giris',
-                            description='2FA ile başarılı giriş',
-                            user_id=user.id
-                        )
-                        
-                        return redirect(next_page)
-                    else:
-                        flash('Geçersiz doğrulama kodu.', 'error')
-                        return render_template('auth.html', require_2fa=True, user_email=user.email)
-                else:
-                    flash('2FA yapılandırma hatası.', 'error')
-                    session.pop('temp_user_id', None)
-                    session.pop('next_page', None)
-                    return render_template('auth.html')
-            except ImportError:
-                flash('2FA kütüphanesi eksik.', 'error')
-                session.pop('temp_user_id', None)
-                session.pop('next_page', None)
-                return render_template('auth.html')
-            except Exception as e:
-                logger.error(f"2FA doğrulama hatası: {str(e)}")
-                flash('2FA doğrulama sırasında hata oluştu.', 'error')
-                session.pop('temp_user_id', None)
-                session.pop('next_page', None)
-                return render_template('auth.html')
-        
-        # Normal email/password doğrulama
-        if email and password:
-            user = User.query.filter_by(email=email).first()
-            if user and user.check_password(password):
-                if not user.is_approved and not user.is_admin:
-                    flash('Hesabınız henüz onaylanmamış. Lütfen yönetici onayını bekleyin.', 'warning')
-                    return render_template('auth.html')
-                
-                # Admin kullanıcısı için varsayılan yetkileri ayarla
-                if user.is_admin and not user.permissions:
-                    user.permissions = {
-                        'takvim_goruntule': True,
-                        'etkinlik_goruntule': True,
-                        'etkinlik_ekle': True,
-                        'etkinlik_duzenle': True,
-                        'etkinlik_sil': True,
-                        'duyuru_goruntule': True,
-                        'duyuru_ekle': True,
-                        'duyuru_duzenle': True,
-                        'duyuru_sil': True,
-                        'odeme_goruntule': True,
-                        'odeme_ekle': True,
-                        'odeme_duzenle': True,
-                        'odeme_sil': True,
-                        'dosya_sorgula': True,
-                        'dosya_ekle': True,
-                        'dosya_duzenle': True,
-                        'dosya_sil': True
-                    }
-                    db.session.commit()
-                
-                # 2FA kontrolü - GEÇİCİ OLARAK DEVRE DIŞI
-                # if user.permissions and user.permissions.get('two_factor_auth', False):
-                #     # 2FA etkinse, kullanıcıyı session'da sakla ve 2FA sayfasına yönlendir
-                #     session['temp_user_id'] = user.id
-                #     session['next_page'] = request.args.get('next') or url_for('anasayfa')
-                #     return render_template('auth.html', require_2fa=True, user_email=user.email)
-                else:
-                    # 2FA yoksa direkt giriş yap
-                    login_user(user)
-                    next_page = request.args.get('next')
-                    
-                    # Log oluştur
-                    log_activity(
-                        activity_type='giris',
-                        description='Başarılı giriş',
-                        user_id=user.id
-                    )
-                    
-                    return redirect(next_page or url_for('anasayfa'))
-            else:
-                flash('Geçersiz e-posta veya şifre.', 'error')
-    
-    return render_template('auth.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('anasayfa'))
-        
-    if request.method == 'POST':
-        email = request.form.get('email')
-        username = request.form.get('username')
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        password = request.form.get('password')
-        role = request.form.get('role')
-        gender = request.form.get('gender').lower()
-        phone = request.form.get('phone')
-        
-        try:
-            birth_day = int(request.form.get('birth_day'))
-            birth_month = int(request.form.get('birth_month'))
-            birth_year = int(request.form.get('birth_year'))
-            birthdate = datetime(birth_year, birth_month, birth_day).date()
-        except (ValueError, TypeError):
-            flash('Geçersiz doğum tarihi.', 'error')
-            return render_template('auth.html', show_register=True)
-        
-        if User.query.filter_by(email=email).first():
-            flash('Bu e-posta adresi zaten kayıtlı.', 'error')
-            return render_template('auth.html', show_register=True)
-            
-        if User.query.filter_by(username=username).first():
-            flash('Bu kullanıcı adı zaten kullanılıyor.', 'error')
-            return render_template('auth.html', show_register=True)
-        
-        user = User(
-            email=email,
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            role=role,
-            gender=gender,
-            birthdate=birthdate,
-            phone=phone,
-            is_admin=False,
-            is_approved=False
-        )
-        user.set_password(password)
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        flash('Kayıt başarılı! Hesabınız yönetici onayı bekliyor.', 'info')
-        return redirect(url_for('login'))
-    
-    return render_template('auth.html', show_register=True)
-
-@app.route('/logout')
-@login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
@@ -1660,180 +1486,6 @@ admin.add_view(SecureModelView(OrnekSozlesme, db.session, name='Örnek Sözleşm
 # --- End Flask-Admin Setup ---
 
 # Auth routes
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('anasayfa'))
-    
-    # Eğer 2FA session'ı varsa ve GET request ise, session'ı temizle
-    if request.method == 'GET' and 'temp_user_id' in session:
-        session.pop('temp_user_id', None)
-        session.pop('next_page', None)
-        
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        totp_code = request.form.get('totp_code')
-        
-        # 2FA doğrulama aşaması - GEÇİCİ OLARAK DEVRE DIŞI
-        if False and 'temp_user_id' in session and totp_code:
-            try:
-                import pyotp
-                user = User.query.get(session['temp_user_id'])
-                
-                if user and user.permissions and user.permissions.get('two_factor_secret'):
-                    secret = user.permissions['two_factor_secret']
-                    totp = pyotp.TOTP(secret)
-                    
-                    print(f"DEBUG - Secret exists, verifying code {totp_code}")
-                    verification_result = totp.verify(totp_code, valid_window=1)
-                    print(f"DEBUG - Verification result: {verification_result}")
-                    
-                    if verification_result:
-                        # 2FA doğru, giriş yap
-                        login_user(user)
-                        next_page = session.pop('next_page', url_for('anasayfa'))
-                        session.pop('temp_user_id', None)
-                        
-                        # Log oluştur
-                        log_activity(
-                            activity_type='giris',
-                            description='2FA ile başarılı giriş',
-                            user_id=user.id
-                        )
-                        
-                        return redirect(next_page)
-                    else:
-                        flash('Geçersiz doğrulama kodu.', 'error')
-                        return render_template('auth.html', require_2fa=True, user_email=user.email)
-                else:
-                    flash('2FA yapılandırma hatası.', 'error')
-                    session.pop('temp_user_id', None)
-                    session.pop('next_page', None)
-                    return render_template('auth.html')
-            except ImportError:
-                flash('2FA kütüphanesi eksik.', 'error')
-                session.pop('temp_user_id', None)
-                session.pop('next_page', None)
-                return render_template('auth.html')
-            except Exception as e:
-                logger.error(f"2FA doğrulama hatası: {str(e)}")
-                flash('2FA doğrulama sırasında hata oluştu.', 'error')
-                session.pop('temp_user_id', None)
-                session.pop('next_page', None)
-                return render_template('auth.html')
-        
-        # Normal email/password doğrulama
-        if email and password:
-            user = User.query.filter_by(email=email).first()
-            if user and user.check_password(password):
-                if not user.is_approved and not user.is_admin:
-                    flash('Hesabınız henüz onaylanmamış. Lütfen yönetici onayını bekleyin.', 'warning')
-                    return render_template('auth.html')
-                
-                # Admin kullanıcısı için varsayılan yetkileri ayarla
-                if user.is_admin and not user.permissions:
-                    user.permissions = {
-                        'takvim_goruntule': True,
-                        'etkinlik_goruntule': True,
-                        'etkinlik_ekle': True,
-                        'etkinlik_duzenle': True,
-                        'etkinlik_sil': True,
-                        'duyuru_goruntule': True,
-                        'duyuru_ekle': True,
-                        'duyuru_duzenle': True,
-                        'duyuru_sil': True,
-                        'odeme_goruntule': True,
-                        'odeme_ekle': True,
-                        'odeme_duzenle': True,
-                        'odeme_sil': True,
-                        'dosya_sorgula': True,
-                        'dosya_ekle': True,
-                        'dosya_duzenle': True,
-                        'dosya_sil': True
-                    }
-                    db.session.commit()
-                
-                # 2FA kontrolü - GEÇİCİ OLARAK DEVRE DIŞI
-                # if user.permissions and user.permissions.get('two_factor_auth', False):
-                #     # 2FA etkinse, kullanıcıyı session'da sakla ve 2FA sayfasına yönlendir
-                #     session['temp_user_id'] = user.id
-                #     session['next_page'] = request.args.get('next') or url_for('anasayfa')
-                #     return render_template('auth.html', require_2fa=True, user_email=user.email)
-                else:
-                    # 2FA yoksa direkt giriş yap
-                    login_user(user)
-                    next_page = request.args.get('next')
-                    
-                    # Log oluştur
-                    log_activity(
-                        activity_type='giris',
-                        description='Başarılı giriş',
-                        user_id=user.id
-                    )
-                    
-                    return redirect(next_page or url_for('anasayfa'))
-            else:
-                flash('Geçersiz e-posta veya şifre.', 'error')
-    
-    return render_template('auth.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('anasayfa'))
-        
-    if request.method == 'POST':
-        email = request.form.get('email')
-        username = request.form.get('username')
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        password = request.form.get('password')
-        role = request.form.get('role')
-        gender = request.form.get('gender').lower()
-        phone = request.form.get('phone')
-        
-        try:
-            birth_day = int(request.form.get('birth_day'))
-            birth_month = int(request.form.get('birth_month'))
-            birth_year = int(request.form.get('birth_year'))
-            birthdate = datetime(birth_year, birth_month, birth_day).date()
-        except (ValueError, TypeError):
-            flash('Geçersiz doğum tarihi.', 'error')
-            return render_template('auth.html', show_register=True)
-        
-        if User.query.filter_by(email=email).first():
-            flash('Bu e-posta adresi zaten kayıtlı.', 'error')
-            return render_template('auth.html', show_register=True)
-            
-        if User.query.filter_by(username=username).first():
-            flash('Bu kullanıcı adı zaten kullanılıyor.', 'error')
-            return render_template('auth.html', show_register=True)
-        
-        user = User(
-            email=email,
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            role=role,
-            gender=gender,
-            birthdate=birthdate,
-            phone=phone,
-            is_admin=False,
-            is_approved=False
-        )
-        user.set_password(password)
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        flash('Kayıt başarılı! Hesabınız yönetici onayı bekliyor.', 'info')
-        return redirect(url_for('login'))
-    
-    return render_template('auth.html', show_register=True)
-
-@app.route('/logout')
-@login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
@@ -3218,180 +2870,6 @@ admin.add_view(SecureModelView(OrnekSozlesme, db.session, name='Örnek Sözleşm
 # --- End Flask-Admin Setup ---
 
 # Auth routes
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('anasayfa'))
-    
-    # Eğer 2FA session'ı varsa ve GET request ise, session'ı temizle
-    if request.method == 'GET' and 'temp_user_id' in session:
-        session.pop('temp_user_id', None)
-        session.pop('next_page', None)
-        
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        totp_code = request.form.get('totp_code')
-        
-        # 2FA doğrulama aşaması - GEÇİCİ OLARAK DEVRE DIŞI
-        if False and 'temp_user_id' in session and totp_code:
-            try:
-                import pyotp
-                user = User.query.get(session['temp_user_id'])
-                
-                if user and user.permissions and user.permissions.get('two_factor_secret'):
-                    secret = user.permissions['two_factor_secret']
-                    totp = pyotp.TOTP(secret)
-                    
-                    print(f"DEBUG - Secret exists, verifying code {totp_code}")
-                    verification_result = totp.verify(totp_code, valid_window=1)
-                    print(f"DEBUG - Verification result: {verification_result}")
-                    
-                    if verification_result:
-                        # 2FA doğru, giriş yap
-                        login_user(user)
-                        next_page = session.pop('next_page', url_for('anasayfa'))
-                        session.pop('temp_user_id', None)
-                        
-                        # Log oluştur
-                        log_activity(
-                            activity_type='giris',
-                            description='2FA ile başarılı giriş',
-                            user_id=user.id
-                        )
-                        
-                        return redirect(next_page)
-                    else:
-                        flash('Geçersiz doğrulama kodu.', 'error')
-                        return render_template('auth.html', require_2fa=True, user_email=user.email)
-                else:
-                    flash('2FA yapılandırma hatası.', 'error')
-                    session.pop('temp_user_id', None)
-                    session.pop('next_page', None)
-                    return render_template('auth.html')
-            except ImportError:
-                flash('2FA kütüphanesi eksik.', 'error')
-                session.pop('temp_user_id', None)
-                session.pop('next_page', None)
-                return render_template('auth.html')
-            except Exception as e:
-                logger.error(f"2FA doğrulama hatası: {str(e)}")
-                flash('2FA doğrulama sırasında hata oluştu.', 'error')
-                session.pop('temp_user_id', None)
-                session.pop('next_page', None)
-                return render_template('auth.html')
-        
-        # Normal email/password doğrulama
-        if email and password:
-            user = User.query.filter_by(email=email).first()
-            if user and user.check_password(password):
-                if not user.is_approved and not user.is_admin:
-                    flash('Hesabınız henüz onaylanmamış. Lütfen yönetici onayını bekleyin.', 'warning')
-                    return render_template('auth.html')
-                
-                # Admin kullanıcısı için varsayılan yetkileri ayarla
-                if user.is_admin and not user.permissions:
-                    user.permissions = {
-                        'takvim_goruntule': True,
-                        'etkinlik_goruntule': True,
-                        'etkinlik_ekle': True,
-                        'etkinlik_duzenle': True,
-                        'etkinlik_sil': True,
-                        'duyuru_goruntule': True,
-                        'duyuru_ekle': True,
-                        'duyuru_duzenle': True,
-                        'duyuru_sil': True,
-                        'odeme_goruntule': True,
-                        'odeme_ekle': True,
-                        'odeme_duzenle': True,
-                        'odeme_sil': True,
-                        'dosya_sorgula': True,
-                        'dosya_ekle': True,
-                        'dosya_duzenle': True,
-                        'dosya_sil': True
-                    }
-                    db.session.commit()
-                
-                # 2FA kontrolü - GEÇİCİ OLARAK DEVRE DIŞI
-                # if user.permissions and user.permissions.get('two_factor_auth', False):
-                #     # 2FA etkinse, kullanıcıyı session'da sakla ve 2FA sayfasına yönlendir
-                #     session['temp_user_id'] = user.id
-                #     session['next_page'] = request.args.get('next') or url_for('anasayfa')
-                #     return render_template('auth.html', require_2fa=True, user_email=user.email)
-                else:
-                    # 2FA yoksa direkt giriş yap
-                    login_user(user)
-                    next_page = request.args.get('next')
-                    
-                    # Log oluştur
-                    log_activity(
-                        activity_type='giris',
-                        description='Başarılı giriş',
-                        user_id=user.id
-                    )
-                    
-                    return redirect(next_page or url_for('anasayfa'))
-            else:
-                flash('Geçersiz e-posta veya şifre.', 'error')
-    
-    return render_template('auth.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('anasayfa'))
-        
-    if request.method == 'POST':
-        email = request.form.get('email')
-        username = request.form.get('username')
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        password = request.form.get('password')
-        role = request.form.get('role')
-        gender = request.form.get('gender').lower()
-        phone = request.form.get('phone')
-        
-        try:
-            birth_day = int(request.form.get('birth_day'))
-            birth_month = int(request.form.get('birth_month'))
-            birth_year = int(request.form.get('birth_year'))
-            birthdate = datetime(birth_year, birth_month, birth_day).date()
-        except (ValueError, TypeError):
-            flash('Geçersiz doğum tarihi.', 'error')
-            return render_template('auth.html', show_register=True)
-        
-        if User.query.filter_by(email=email).first():
-            flash('Bu e-posta adresi zaten kayıtlı.', 'error')
-            return render_template('auth.html', show_register=True)
-            
-        if User.query.filter_by(username=username).first():
-            flash('Bu kullanıcı adı zaten kullanılıyor.', 'error')
-            return render_template('auth.html', show_register=True)
-        
-        user = User(
-            email=email,
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            role=role,
-            gender=gender,
-            birthdate=birthdate,
-            phone=phone,
-            is_admin=False,
-            is_approved=False
-        )
-        user.set_password(password)
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        flash('Kayıt başarılı! Hesabınız yönetici onayı bekliyor.', 'info')
-        return redirect(url_for('login'))
-    
-    return render_template('auth.html', show_register=True)
-
-@app.route('/logout')
-@login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
@@ -4503,124 +3981,6 @@ admin.add_view(SecureModelView(OrnekSozlesme, db.session, name='Örnek Sözleşm
 # --- End Flask-Admin Setup ---
 
 # Auth routes
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('anasayfa'))
-    
-    # Eğer 2FA session'ı varsa ve GET request ise, session'ı temizle
-    if request.method == 'GET' and 'temp_user_id' in session:
-        session.pop('temp_user_id', None)
-        session.pop('next_page', None)
-        
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        totp_code = request.form.get('totp_code')
-        
-        # 2FA doğrulama aşaması - GEÇİCİ OLARAK DEVRE DIŞI
-        if False and 'temp_user_id' in session and totp_code:
-            try:
-                import pyotp
-                user = User.query.get(session['temp_user_id'])
-                
-                if user and user.permissions and user.permissions.get('two_factor_secret'):
-                    secret = user.permissions['two_factor_secret']
-                    totp = pyotp.TOTP(secret)
-                    
-                    print(f"DEBUG - Secret exists, verifying code {totp_code}")
-                    verification_result = totp.verify(totp_code, valid_window=1)
-                    print(f"DEBUG - Verification result: {verification_result}")
-                    
-                    if verification_result:
-                        # 2FA doğru, giriş yap
-                        login_user(user)
-                        next_page = session.pop('next_page', url_for('anasayfa'))
-                        session.pop('temp_user_id', None)
-                        
-                        # Log oluştur
-                        log_activity(
-                            activity_type='giris',
-                            description='2FA ile başarılı giriş',
-                            user_id=user.id
-                        )
-                        
-                        return redirect(next_page)
-                    else:
-                        flash('Geçersiz doğrulama kodu.', 'error')
-                        return render_template('auth.html', require_2fa=True, user_email=user.email)
-                else:
-                    flash('2FA yapılandırma hatası.', 'error')
-                    session.pop('temp_user_id', None)
-                    session.pop('next_page', None)
-                    return render_template('auth.html')
-            except ImportError:
-                flash('2FA kütüphanesi eksik.', 'error')
-                session.pop('temp_user_id', None)
-                session.pop('next_page', None)
-                return render_template('auth.html')
-            except Exception as e:
-                logger.error(f"2FA doğrulama hatası: {str(e)}")
-                flash('2FA doğrulama sırasında hata oluştu.', 'error')
-                session.pop('temp_user_id', None)
-                session.pop('next_page', None)
-                return render_template('auth.html')
-        
-        # Normal email/password doğrulama
-        if email and password:
-            user = User.query.filter_by(email=email).first()
-            if user and user.check_password(password):
-                if not user.is_approved and not user.is_admin:
-                    flash('Hesabınız henüz onaylanmamış. Lütfen yönetici onayını bekleyin.', 'warning')
-                    return render_template('auth.html')
-                
-                # Admin kullanıcısı için varsayılan yetkileri ayarla
-                if user.is_admin and not user.permissions:
-                    user.permissions = {
-                        'takvim_goruntule': True,
-                        'etkinlik_goruntule': True,
-                        'etkinlik_ekle': True,
-                        'etkinlik_duzenle': True,
-                        'etkinlik_sil': True,
-                        'duyuru_goruntule': True,
-                        'duyuru_ekle': True,
-                        'duyuru_duzenle': True,
-                        'duyuru_sil': True,
-                        'odeme_goruntule': True,
-                        'odeme_ekle': True,
-                        'odeme_duzenle': True,
-                        'odeme_sil': True,
-                        'dosya_sorgula': True,
-                        'dosya_ekle': True,
-                        'dosya_duzenle': True,
-                        'dosya_sil': True
-                    }
-                    db.session.commit()
-                
-                # 2FA kontrolü - GEÇİCİ OLARAK DEVRE DIŞI
-                # if user.permissions and user.permissions.get('two_factor_auth', False):
-                #     # 2FA etkinse, kullanıcıyı session'da sakla ve 2FA sayfasına yönlendir
-                #     session['temp_user_id'] = user.id
-                #     session['next_page'] = request.args.get('next') or url_for('anasayfa')
-                #     return render_template('auth.html', require_2fa=True, user_email=user.email)
-                else:
-                    # 2FA yoksa direkt giriş yap
-                    login_user(user)
-                    next_page = request.args.get('next')
-                    
-                    # Log oluştur
-                    log_activity(
-                        activity_type='giris',
-                        description='Başarılı giriş',
-                        user_id=user.id
-                    )
-                    
-                    return redirect(next_page or url_for('anasayfa'))
-            else:
-                flash('Geçersiz e-posta veya şifre.', 'error')
-    
-    return render_template('auth.html')
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -4633,7 +3993,11 @@ def register():
         last_name = request.form.get('last_name')
         password = request.form.get('password')
         role = request.form.get('role')
-        gender = request.form.get('gender').lower()
+        gender = request.form.get('gender')
+        if gender:
+            gender = gender.lower()
+        else:
+            gender = None
         phone = request.form.get('phone')
         
         try:
@@ -10974,42 +10338,8 @@ def verify_2fa_code():
 def send_notification_email(to_email, subject, body):
     """Bildirim e-postası gönder"""
     try:
-        # Önce smtplib ile dene (Türkçe karakter desteği için)
-        try:
-            from email_utils import send_email_with_smtplib
-            return send_email_with_smtplib(to_email, subject, body, is_html=True)
-        except ImportError:
-            logger.warning("email_utils import edilemedi, Flask-Mail kullanılacak")
-        except Exception as smtp_error:
-            logger.warning(f"smtplib ile gönderim başarısız, Flask-Mail deneniyor: {smtp_error}")
-        
-        # Mail konfigürasyonunu kontrol et
-        if not app.config.get('MAIL_SERVER'):
-            return False, "E-posta sunucu ayarları yapılmamış. .env dosyasını kontrol edin."
-        
-        if not app.config.get('MAIL_USERNAME') or not app.config.get('MAIL_PASSWORD'):
-            return False, "E-posta kullanıcı adı ve şifresi yapılandırılmamış."
-        
-        # Türkçe karakter encoding sorunu için subject ve body'yi UTF-8 olarak encode et
-        if isinstance(subject, str):
-            subject = subject.encode('utf-8').decode('utf-8')
-        if isinstance(body, str):
-            body = body.encode('utf-8').decode('utf-8')
-        
-        msg = Message(
-            subject=subject,
-            recipients=[to_email],
-            html=body,
-            sender=app.config.get('MAIL_DEFAULT_SENDER', app.config.get('MAIL_USERNAME')),
-            charset='utf-8'  # Charset'i UTF-8 olarak ayarla
-        )
-        
-        # Message header'larını UTF-8 olarak ayarla
-        msg.extra_headers = {'Content-Type': 'text/html; charset=utf-8'}
-        
-        mail.send(msg)
-        return True, "E-posta başarıyla gönderildi"
-        
+        from email_utils import send_notification_email as send_email_func
+        return send_email_func(to_email, subject, body)
     except Exception as e:
         logger.error(f"E-posta gönderme hatası: {e}")
         return False, f"E-posta gönderim hatası: {str(e)}"
@@ -11021,12 +10351,7 @@ def send_notification_email(to_email, subject, body):
 def test_email_notification():
     """E-posta bildirim sistemini test et"""
     try:
-        # Safe import
-        try:
-            from email_utils import send_email_with_smtplib
-        except ImportError:
-            send_email_with_smtplib = None
-            logger.warning("email_utils import edilemedi")
+        from email_utils import send_test_email
         # JSON veya form data kabul et
         if request.is_json:
             data = request.get_json() or {}
@@ -11037,12 +10362,12 @@ def test_email_notification():
         
         # Test e-postası içeriği
         if test_type == 'welcome':
-            subject = "Kaplan Hukuk Otomasyon - Hoş Geldiniz!"
+            subject = "Kaplan Hukuk Otomasyon - Hos Geldiniz!"
             body = f"""
             <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #2c5aa0;">Hoş Geldiniz!</h2>
+                    <h2 style="color: #2c5aa0;">Hos Geldiniz!</h2>
                     <p>Sayın <strong>{current_user.get_full_name()}</strong>,</p>
                     <p>Kaplan Hukuk Otomasyon sistemine hoş geldiniz! Hesabınız başarıyla aktifleştirilmiştir.</p>
                     
@@ -11068,17 +10393,17 @@ def test_email_notification():
             """
         
         elif test_type == 'reminder':
-            subject = "Kaplan Hukuk Otomasyon - Hatırlatma"
+            subject = "Kaplan Hukuk Otomasyon - Hatirlatma"
             body = f"""
             <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #d4642a;">Sistem Hatırlatması</h2>
+                    <h2 style="color: #d4642a;">Sistem Hatirlatmasi</h2>
                     <p>Sayın <strong>{current_user.get_full_name()}</strong>,</p>
                     <p>Bu bir test hatırlatması e-postasıdır.</p>
                     
                     <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107;">
-                        <p><strong>📅 Hatırlatma:</strong> Sistemde bekleyen işlemleriniz olabilir.</p>
+                        <p><strong>Hatırlatma:</strong> Sistemde bekleyen işlemleriniz olabilir.</p>
                         <p><strong>⏰ Tarih:</strong> {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
                     </div>
                     
@@ -11119,28 +10444,8 @@ def test_email_notification():
             </html>
             """
         
-        # E-postayı gönder - Güvenli e-posta gönderimi
-        success = False
-        message = "E-posta gönderim hatası"
-        
-        # Önce smtplib dene (eğer import edilebilmişse)
-        if send_email_with_smtplib:
-            try:
-                success, message = send_email_with_smtplib(current_user.email, subject, body, is_html=True)
-                logger.info("smtplib ile e-posta gönderildi")
-            except Exception as e:
-                logger.warning(f"smtplib ile gönderim başarısız: {e}")
-                success = False
-        
-        # Başarısız olduysa Flask-Mail dene
-        if not success:
-            try:
-                success, message = send_notification_email(current_user.email, subject, body)
-                logger.info("Flask-Mail ile e-posta gönderildi")
-            except Exception as e:
-                logger.error(f"Flask-Mail ile gönderim başarısız: {e}")
-                success = False
-                message = f"E-posta gönderim hatası: {str(e)}"
+        # E-postayı gönder
+        success, message = send_notification_email(current_user.email, subject, body)
         
         if success:
             # Log oluştur
@@ -11231,7 +10536,7 @@ def send_system_notification(user_id, notification_type, subject, body, **kwargs
 # Özel bildirim fonksiyonları
 def send_welcome_email(user):
     """Hoş geldin e-postası gönder"""
-    subject = "Kaplan Hukuk Otomasyon - Hoş Geldiniz!"
+    subject = "Kaplan Hukuk Otomasyon - Hos Geldiniz!"
     body = f"""
     <html>
     <head>
@@ -11240,7 +10545,7 @@ def send_welcome_email(user):
     </head>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #2c5aa0;">Hoş Geldiniz!</h2>
+            <h2 style="color: #2c5aa0;">Hos Geldiniz!</h2>
             <p>Sayın <strong>{user.get_full_name()}</strong>,</p>
             <p>Kaplan Hukuk Otomasyon sistemine hoş geldiniz! Hesabınız başarıyla onaylanmıştır.</p>
             
@@ -11302,12 +10607,12 @@ def send_case_notification(user_id, case, notification_type):
 
 def send_event_reminder(user_id, event):
     """Etkinlik hatırlatması gönder"""
-    subject = f"Etkinlik Hatırlatması - {event.title}"
+    subject = f"Etkinlik Hatirlatmasi - {event.title}"
     body = f"""
     <html>
     <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #d4642a;">⏰ Etkinlik Hatırlatması</h2>
+            <h2 style="color: #d4642a;">Etkinlik Hatirlatmasi</h2>
             
             <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107;">
                 <h3 style="margin-top: 0;">{event.title}</h3>
@@ -11785,6 +11090,132 @@ def update_case_basic_info():
             'success': False,
             'message': str(e)
         }), 500
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    print("=" * 50)
+    print("LOGIN FUNCTION CALLED!!!")
+    print("=" * 50)
+    print(f"DEBUG LOGIN FUNCTION CALLED - Method: {request.method}")
+    if current_user.is_authenticated:
+        print("DEBUG - User already authenticated, redirecting")
+        return redirect(url_for('anasayfa'))
+    
+    # GET request'te session'ı temizleme - kapatıldı
+    # if request.method == 'GET' and 'temp_user_id' in session:
+    #     print("DEBUG - GET request, clearing 2FA session")
+    #     session.pop('temp_user_id', None)
+    #     session.pop('next_page', None)
+        
+    if request.method == 'POST':
+        print("DEBUG - POST request received")
+        email = request.form.get('email')
+        password = request.form.get('password')
+        totp_code = request.form.get('totp_code')
+        csrf_token = request.form.get('csrf_token')
+        
+        print(f"DEBUG LOGIN - Email: {email}")
+        print(f"DEBUG LOGIN - Password provided: {password is not None}")
+        print(f"DEBUG LOGIN - TOTP code: {totp_code}")
+        print(f"DEBUG LOGIN - CSRF token: {csrf_token}")
+        print(f"DEBUG LOGIN - Session before: {dict(session)}")
+        print(f"DEBUG LOGIN - Form data: {dict(request.form)}")
+        
+        # 2FA doğrulama aşaması
+        if 'temp_user_id' in session and totp_code:
+            print("DEBUG - 2FA doğrulama aşaması")
+            try:
+                import pyotp
+                user = User.query.get(session['temp_user_id'])
+                print(f"DEBUG - User found: {user is not None}")
+                
+                if user and user.permissions and user.permissions.get('two_factor_secret'):
+                    secret = user.permissions['two_factor_secret']
+                    totp = pyotp.TOTP(secret)
+                    
+                    print(f"DEBUG - Secret exists, verifying code {totp_code}")
+                    print(f"DEBUG - Current time: {totp.now()}")
+                    verification_result = totp.verify(totp_code, valid_window=1)
+                    print(f"DEBUG - Verification result: {verification_result}")
+                    
+                    if verification_result:
+                        # 2FA doğru, giriş yap
+                        print("DEBUG - 2FA verification successful, logging in user")
+                        login_user(user)
+                        next_page = session.pop('next_page', url_for('anasayfa'))
+                        session.pop('temp_user_id', None)
+                        
+                        # Log oluştur
+                        log_activity(
+                            activity_type='giris',
+                            description='2FA ile başarılı giriş',
+                            user_id=user.id
+                        )
+                        
+                        print(f"DEBUG - Redirecting to: {next_page}")
+                        return redirect(next_page)
+                    else:
+                        print("DEBUG - 2FA verification failed")
+                        print(f"DEBUG - Expected code: {totp.now()}")
+                        print(f"DEBUG - Received code: {totp_code}")
+                        flash('Geçersiz doğrulama kodu.', 'error')
+                        return render_template('auth.html', require_2fa=True, user_email=user.email)
+                else:
+                    print("DEBUG - 2FA secret not found")
+                    flash('2FA yapılandırma hatası.', 'error')
+                    session.pop('temp_user_id', None)
+                    session.pop('next_page', None)
+                    return render_template('auth.html')
+            except Exception as e:
+                print(f"DEBUG - 2FA exception: {str(e)}")
+                flash('2FA doğrulama sırasında hata oluştu.', 'error')
+                session.pop('temp_user_id', None)
+                session.pop('next_page', None)
+                return render_template('auth.html')
+        
+        # Normal email/password doğrulama
+        if email and password:
+            print("DEBUG - Normal email/password doğrulama")
+            user = User.query.filter_by(email=email).first()
+            if user and user.check_password(password):
+                print(f"DEBUG - Password check passed for user: {user.email}")
+                if not user.is_approved and not user.is_admin:
+                    flash('Hesabınız henüz onaylanmamış. Lütfen yönetici onayını bekleyin.', 'warning')
+                    return render_template('auth.html')
+                
+                # 2FA kontrolü
+                if user.permissions and user.permissions.get('two_factor_auth', False):
+                    print("DEBUG - 2FA required, setting session")
+                    # 2FA etkinse, kullanıcıyı session'da sakla ve 2FA sayfasına yönlendir
+                    session['temp_user_id'] = user.id
+                    session['next_page'] = request.args.get('next') or url_for('anasayfa')
+                    print(f"DEBUG - Session after 2FA setup: {dict(session)}")
+                    return render_template('auth.html', require_2fa=True, user_email=user.email)
+                else:
+                    print("DEBUG - No 2FA required, direct login")
+                    # 2FA yoksa direkt giriş yap
+                    login_user(user)
+                    next_page = request.args.get('next')
+                    
+                    # Log oluştur
+                    log_activity(
+                        activity_type='giris',
+                        description='Başarılı giriş',
+                        user_id=user.id
+                    )
+                    
+                    return redirect(next_page or url_for('anasayfa'))
+            else:
+                print("DEBUG - Password check failed")
+                flash('Geçersiz e-posta veya şifre.', 'error')
+    
+    print("DEBUG - Rendering auth.html")
+    return render_template('auth.html')
+
+@app.route('/test_route')
+def test_route():
+    print("TEST ROUTE CALLED!!!")
+    return "Test route works!"
 
 if __name__ == '__main__':
     with app.app_context():
