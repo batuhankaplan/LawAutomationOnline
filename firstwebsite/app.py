@@ -9076,6 +9076,45 @@ def api_dilekce_kategori_sil(kategori_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/dilekce_kategorileri/<int:kategori_id>', methods=['PUT'])
+@login_required
+# @permission_required('ornek_dilekce_kategori_duzenle') # İzin eklenebilir
+def api_dilekce_kategori_duzenle(kategori_id):
+    data = request.get_json()
+    if not data or not data.get('ad'):
+        return jsonify({'success': False, 'message': 'Kategori adı gerekli.'}), 400
+    
+    kategori_adi = data['ad'].strip()
+    if not kategori_adi:
+        return jsonify({'success': False, 'message': 'Kategori adı boş olamaz.'}), 400
+
+    try:
+        kategori = DilekceKategori.query.get_or_404(kategori_id)
+        
+        # Aynı isimde başka kategori var mı kontrol et
+        existing_kategori = DilekceKategori.query.filter(
+            DilekceKategori.ad == kategori_adi, 
+            DilekceKategori.id != kategori_id
+        ).first()
+        if existing_kategori:
+            return jsonify({'success': False, 'message': 'Bu kategori adı zaten mevcut.'}), 400
+        
+        eski_ad = kategori.ad
+        kategori.ad = kategori_adi
+        db.session.commit()
+        
+        log_activity(
+            activity_type='Örnek Dilekçe Kategorisi Güncellendi',
+            description=f'Örnek dilekçe kategorisi güncellendi: {eski_ad} → {kategori.ad}',
+            user_id=current_user.id
+        )
+        
+        return jsonify({'success': True, 'kategori': {'id': kategori.id, 'ad': kategori.ad}}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 # --- Örnek Dilekçe Kategori API Route'ları SONU ---
 
 # --- Örnek Dilekçe CRUD API Route'ları ---

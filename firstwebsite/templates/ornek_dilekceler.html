@@ -352,6 +352,438 @@ div.file-detail-modal[style*="flex"],
 #previewModal[style*="flex"] {
     z-index: 2147483647 !important;
 }
+
+/* Kategori Yönetimi Modern Grid ve Kart Stilleri - Geliştirilmiş */
+.kategori-yonetimi-box {
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08) !important;
+    padding: 28px 24px 24px 24px !important;
+    margin-bottom: 32px !important;
+    border: 1px solid #e5e7eb !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.kategori-yonetimi-box h5 {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin-bottom: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.kategori-yonetimi-box h5 i {
+    color: #3b82f6 !important;
+    font-size: 1.3rem !important;
+}
+
+.mevcut-kategoriler-box {
+    min-height: 100px !important;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border-radius: 16px !important;
+    padding: 20px 16px 16px 16px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.04) !important;
+}
+
+.kategori-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+}
+
+.kategori-card-pro {
+    position: relative !important;
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+    padding: 20px 16px 16px 16px !important;
+    min-height: 100px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: 1px solid #e5e7eb !important;
+    cursor: pointer !important;
+    overflow: hidden !important;
+}
+
+.kategori-card-pro::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #6366f1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.kategori-card-pro:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15) !important;
+    transform: translateY(-4px) scale(1.02) !important;
+    border-color: #3b82f6 !important;
+}
+
+.kategori-card-pro:hover::before {
+    opacity: 1;
+}
+
+.kategori-sil-btn-pro {
+    position: absolute !important;
+    top: 8px !important;
+    right: 8px !important;
+    border: none !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #94a3b8 !important;
+    font-size: 0.9rem !important;
+    padding: 6px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    z-index: 3 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 28px !important;
+    height: 28px !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: scale(0.8) !important;
+}
+
+.kategori-card-pro:hover .kategori-sil-btn-pro {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: scale(1) !important;
+}
+
+.kategori-sil-btn-pro:hover {
+    background: rgba(239, 68, 68, 0.1) !important;
+    color: #ef4444 !important;
+    transform: scale(1.1) !important;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2) !important;
+}
+
+.kategori-folder-icon-pro {
+    font-size: 1.8rem !important;
+    color: #3b82f6 !important;
+    margin-bottom: 8px !important;
+    margin-right: 4px !important;
+    transition: all 0.3s ease !important;
+}
+
+.kategori-card-pro:hover .kategori-folder-icon-pro {
+    color: #1d4ed8 !important;
+    transform: scale(1.1) !important;
+}
+
+.kategori-adi-pro {
+    font-size: 1.05rem !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin-bottom: 4px !important;
+    margin-top: 4px !important;
+    letter-spacing: 0.02em !important;
+    transition: color 0.3s ease !important;
+}
+
+.kategori-card-pro:hover .kategori-adi-pro {
+    color: #0f172a !important;
+}
+
+/* Kategori ekleme formu geliştirilmiş stili */
+.kategori-yonetimi-box .input-group {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+.kategori-yonetimi-box .form-control {
+    border: none !important;
+    padding: 14px 16px !important;
+    font-size: 1rem !important;
+    background: #ffffff !important;
+    color: #1e293b !important;
+    font-weight: 500 !important;
+}
+
+.kategori-yonetimi-box .form-control:focus {
+    box-shadow: none !important;
+    border-color: transparent !important;
+    background: #ffffff !important;
+}
+
+.kategori-yonetimi-box .btn-dark {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+    border: none !important;
+    padding: 14px 24px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+    transition: all 0.3s ease !important;
+}
+
+.kategori-yonetimi-box .btn-dark:hover {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important;
+}
+
+/* Boş kategori mesajı */
+.mevcut-kategoriler-box .text-muted {
+    font-size: 1rem !important;
+    color: #64748b !important;
+    font-weight: 500 !important;
+    padding: 24px !important;
+    text-align: center !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    border-radius: 12px !important;
+    border: 2px dashed #cbd5e1 !important;
+}
+
+/* Responsive düzeltmeleri */
+@media (max-width: 768px) {
+    .kategori-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+        gap: 12px !important;
+    }
+    
+    .kategori-card-pro {
+        min-height: 85px !important;
+        padding: 16px 12px 12px 12px !important;
+    }
+    
+    .kategori-yonetimi-box {
+        padding: 20px 16px 16px 16px !important;
+    }
+}
+
+/* Kategori Yönetimi Modern Grid ve Kart Stilleri - Geliştirilmiş */
+.kategori-yonetimi-box {
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08) !important;
+    padding: 28px 24px 24px 24px !important;
+    margin-bottom: 32px !important;
+    border: 1px solid #e5e7eb !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.kategori-yonetimi-box h5 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kategori-yonetimi-box h5 i {
+    color: #3b82f6;
+    font-size: 1.3rem;
+}
+
+.mevcut-kategoriler-box {
+    min-height: 100px !important;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border-radius: 16px !important;
+    padding: 20px 16px 16px 16px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.04) !important;
+}
+
+.kategori-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+}
+
+.kategori-card-pro {
+    position: relative !important;
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+    padding: 20px 16px 16px 16px !important;
+    min-height: 100px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: 1px solid #e5e7eb !important;
+    cursor: pointer !important;
+    overflow: hidden !important;
+}
+
+.kategori-card-pro::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6, #6366f1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.kategori-card-pro:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    transform: translateY(-4px) scale(1.02);
+    border-color: #3b82f6;
+}
+
+.kategori-card-pro:hover::before {
+    opacity: 1;
+}
+
+.kategori-sil-btn-pro {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    color: #94a3b8;
+    font-size: 0.9rem;
+    padding: 6px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8);
+}
+
+.kategori-card-pro:hover .kategori-sil-btn-pro {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+.kategori-sil-btn-pro:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2);
+}
+
+.kategori-folder-icon-pro {
+    font-size: 1.8rem;
+    color: #3b82f6;
+    margin-bottom: 8px;
+    margin-right: 4px;
+    transition: all 0.3s ease;
+}
+
+.kategori-card-pro:hover .kategori-folder-icon-pro {
+    color: #1d4ed8;
+    transform: scale(1.1);
+}
+
+.kategori-adi-pro {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1e293b;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+    margin-top: 4px;
+    letter-spacing: 0.02em;
+    transition: color 0.3s ease;
+}
+
+.kategori-card-pro:hover .kategori-adi-pro {
+    color: #0f172a;
+}
+
+/* Kategori ekleme formu geliştirilmiş stili */
+.kategori-yonetimi-box .input-group {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+.kategori-yonetimi-box .form-control {
+    border: none !important;
+    padding: 14px 16px !important;
+    font-size: 1rem !important;
+    background: #ffffff !important;
+    color: #1e293b !important;
+    font-weight: 500 !important;
+}
+
+.kategori-yonetimi-box .form-control:focus {
+    box-shadow: none !important;
+    border-color: transparent !important;
+    background: #ffffff !important;
+}
+
+.kategori-yonetimi-box .btn-dark {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+    border: none !important;
+    padding: 14px 24px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+    transition: all 0.3s ease !important;
+}
+
+.kategori-yonetimi-box .btn-dark:hover {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important;
+}
+
+/* Boş kategori mesajı */
+.mevcut-kategoriler-box .text-muted {
+    font-size: 1rem;
+    color: #64748b;
+    font-weight: 500;
+    padding: 24px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    border: 2px dashed #cbd5e1;
+}
+
+/* Responsive düzeltmeleri */
+@media (max-width: 768px) {
+    .kategori-grid {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+        gap: 12px !important;
+    }
+    
+    .kategori-card-pro {
+        min-height: 85px !important;
+        padding: 16px 12px 12px 12px !important;
+    }
+    
+    .kategori-yonetimi-box {
+        padding: 20px 16px 16px 16px !important;
+    }
+}
 </style>
 {% endblock %}
 
@@ -367,23 +799,16 @@ div.file-detail-modal[style*="flex"],
     </div>
 
     <div class="row">
-        <!-- Kategori Yönetimi -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-light">
-                    <h2 class="h5 mb-0 text-primary"><i class="material-icons align-middle me-2">category</i>Kategori Yönetimi</h2>
+        <!-- Kategori Yönetimi kutusu -->
+        <div class="col-md-6">
+            <div class="kategori-yonetimi-box" style="background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%) !important; border-radius: 16px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.08) !important; padding: 28px 24px 24px 24px !important; margin-bottom: 32px !important; border: 1px solid #e5e7eb !important; backdrop-filter: blur(10px) !important;">
+                <h5 class="mb-3" style="font-size: 1.25rem !important; font-weight: 700 !important; color: #1e293b !important; margin-bottom: 20px !important; display: flex !important; align-items: center !important; gap: 8px !important;"><i class="fas fa-sitemap" style="color: #2d313c !important; font-size: 1.3rem !important;"></i> Kategori Yönetimi</h5>
+                <div class="input-group mb-3" style="box-shadow: 0 2px 12px rgba(0,0,0,0.04) !important; border-radius: 12px !important; overflow: hidden !important; border: 1px solid #e5e7eb !important;">
+                    <input type="text" class="form-control" placeholder="Yeni Kategori Adı" id="yeniKategoriAdi" style="border: none !important; padding: 14px 16px !important; font-size: 1rem !important; background: #ffffff !important; color: #1e293b !important; font-weight: 500 !important;">
+                    <button class="btn btn-dark" id="kategoriEkleBtn" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important; border: none !important; padding: 14px 24px !important; font-weight: 600 !important; letter-spacing: 0.02em !important; transition: all 0.3s ease !important;">+ Ekle</button>
                 </div>
-                <div class="card-body">
-                    <div class="input-group mb-3">
-                        <input type="text" id="yeniKategoriAdi" class="form-control form-control-lg" placeholder="Yeni Kategori Adı" style="min-width: 200px;">
-                        <button class="btn btn-outline-primary btn-lg" type="button" onclick="kategoriEkle()">
-                            <i class="material-icons align-middle">add</i> Ekle
-                        </button>
-                    </div>
-                    <h3 class="h5 mt-4 mb-3">Mevcut Kategoriler</h3>
-                    <div id="kategoriListesi" class="row row-cols-1 row-cols-md-3 g-2">
-                        <!-- Kategoriler buraya dinamik olarak eklenecek -->
-                    </div>
+                <div class="mevcut-kategoriler-box" style="min-height: 100px !important; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important; border-radius: 16px !important; padding: 20px 16px 16px 16px !important; border: 1px solid #e2e8f0 !important; box-shadow: inset 0 1px 3px rgba(0,0,0,0.04) !important;">
+                    <!-- Sadece grid buraya JS ile eklenecek -->
                 </div>
             </div>
         </div>
@@ -500,6 +925,17 @@ div.file-detail-modal[style*="flex"],
     // Global değişkenler
     let dosyaOnizlemeModal;
 
+    // CSRF_TOKEN değişkeni yoksa, meta tag'dan al
+    if (typeof CSRF_TOKEN === 'undefined') {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) {
+            window.CSRF_TOKEN = meta.getAttribute('content');
+        } else {
+            // Eğer meta tag yoksa, CSRF token kullanmadan dene
+            window.CSRF_TOKEN = null;
+        }
+    }
+
     // Kategori Fonksiyonları
     async function kategoriEkle() {
         const yeniKategoriAdi = document.getElementById('yeniKategoriAdi').value;
@@ -509,12 +945,18 @@ div.file-detail-modal[style*="flex"],
         }
         
         try {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            // CSRF token varsa ekle
+            if (CSRF_TOKEN) {
+                headers['X-CSRFToken'] = CSRF_TOKEN;
+            }
+            
             const response = await fetch('/api/dilekce_kategorileri', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': CSRF_TOKEN // Global CSRF_TOKEN'ı kullan
-                },
+                headers: headers,
                 body: JSON.stringify({ ad: yeniKategoriAdi.trim() })
             });
             const result = await response.json();
@@ -546,48 +988,142 @@ div.file-detail-modal[style*="flex"],
             }
             const kategoriler = result.kategoriler || [];
 
-            const kategoriListesiDiv = document.getElementById('kategoriListesi');
+            // Mevcut Kategoriler kutusunu güncelle
+            const mevcutKategorilerBox = document.querySelector('.mevcut-kategoriler-box');
+            if (mevcutKategorilerBox) {
+                mevcutKategorilerBox.innerHTML = '';
+                if (kategoriler.length === 0) {
+                    mevcutKategorilerBox.innerHTML = '<div class="text-muted text-center w-100">Hiç kategori yok.</div>';
+                } else {
+                    // Grid container
+                    const grid = document.createElement('div');
+                    grid.className = 'kategori-grid';
+                    grid.style.cssText = 'display: grid !important; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important; gap: 10px !important; align-items: stretch !important;';
+                    
+                    kategoriler.forEach(kat => {
+                        const card = document.createElement('div');
+                        card.className = 'kategori-card-pro';
+                        card.style.cssText = 'position: relative !important; background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%) !important; border-radius: 10px !important; box-shadow: 0 2px 12px rgba(0,0,0,0.06) !important; padding: 12px 8px 8px 8px !important; min-height: 65px !important; display: flex !important; flex-direction: column !important; align-items: flex-start !important; justify-content: space-between !important; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; border: 1px solid #e5e7eb !important; cursor: pointer !important; overflow: visible !important;';
+                        
+                        // Folder icon oluştur
+                        const folderIcon = document.createElement('div');
+                        folderIcon.className = 'kategori-folder-icon-pro';
+                        folderIcon.style.cssText = 'font-size: 1.2rem !important; color: #2d313c !important; margin-bottom: 4px !important; margin-right: 4px !important; transition: all 0.3s ease !important;';
+                        folderIcon.innerHTML = '<i class="fas fa-folder"></i>';
+                        
+                        // Kategori adı oluştur
+                        const kategoriAdi = document.createElement('div');
+                        kategoriAdi.className = 'kategori-adi-pro';
+                        kategoriAdi.title = kat.ad;
+                        kategoriAdi.style.cssText = 'font-size: 0.85rem !important; font-weight: 600 !important; color: #1e293b !important; max-width: 100% !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; margin-bottom: 2px !important; margin-top: 2px !important; letter-spacing: 0.02em !important; transition: color 0.3s ease !important;';
+                        kategoriAdi.textContent = kat.ad;
+                        
+                        // Buton container oluştur
+                        const buttonsContainer = document.createElement('div');
+                        buttonsContainer.className = 'kategori-buttons';
+                        buttonsContainer.style.cssText = 'position: absolute !important; top: 6px !important; right: 6px !important; display: flex !important; gap: 4px !important; opacity: 0 !important; visibility: hidden !important; transform: scale(0.8) !important; transition: all 0.3s ease !important; z-index: 999 !important;';
+                        
+                        // Düzenle butonu
+                        const duzenleBtn = document.createElement('button');
+                        duzenleBtn.className = 'kategori-duzenle-btn-pro';
+                        duzenleBtn.title = 'Kategoriyi Düzenle';
+                        duzenleBtn.style.cssText = 'background: rgba(59, 130, 246, 0.9) !important; color: white !important; border: none !important; width: 22px !important; height: 22px !important; border-radius: 4px !important; font-size: 10px !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; backdrop-filter: blur(10px) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important; transition: all 0.2s ease !important;';
+                        duzenleBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                        
+                        // Sil butonu
+                        const silBtn = document.createElement('button');
+                        silBtn.className = 'kategori-sil-btn-pro';
+                        silBtn.title = 'Kategoriyi Sil';
+                        silBtn.style.cssText = 'background: rgba(239, 68, 68, 0.9) !important; color: white !important; border: none !important; width: 22px !important; height: 22px !important; border-radius: 4px !important; font-size: 10px !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; backdrop-filter: blur(10px) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important; transition: all 0.2s ease !important;';
+                        silBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                        
+                        // Butonları container'a ekle
+                        buttonsContainer.appendChild(duzenleBtn);
+                        buttonsContainer.appendChild(silBtn);
+                        
+                        // Elementleri card'a ekle
+                        card.appendChild(buttonsContainer);
+                        card.appendChild(folderIcon);
+                        card.appendChild(kategoriAdi);
+                        
+                        // Hover effects
+                        card.addEventListener('mouseenter', function() {
+                            console.log('🎯 Kategori kartına mouse geldi:', kat.ad);
+                            this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.12) !important';
+                            this.style.transform = 'translateY(-2px) scale(1.01) !important';
+                            this.style.borderColor = '#3b82f6 !important';
+                            
+                            // Direkt buttonsContainer referansını kullan
+                            buttonsContainer.style.setProperty('opacity', '1', 'important');
+                            buttonsContainer.style.setProperty('visibility', 'visible', 'important');
+                            buttonsContainer.style.setProperty('transform', 'scale(1)', 'important');
+                            console.log('👀 Butonlar görünür yapıldı');
+                        });
+                        
+                        card.addEventListener('mouseleave', function() {
+                            console.log('🚪 Kategori kartından mouse ayrıldı:', kat.ad);
+                            this.style.boxShadow = '0 2px 12px rgba(0,0,0,0.06) !important';
+                            this.style.transform = 'translateY(0) scale(1) !important';
+                            this.style.borderColor = '#e5e7eb !important';
+                            
+                            // Direkt buttonsContainer referansını kullan
+                            buttonsContainer.style.setProperty('opacity', '0', 'important');
+                            buttonsContainer.style.setProperty('visibility', 'hidden', 'important');
+                            buttonsContainer.style.setProperty('transform', 'scale(0.8)', 'important');
+                            console.log('🙈 Butonlar gizlendi');
+                        });
+                        
+                        // Kategori kartına tıklandığında o kategoriye göre arama yap
+                        card.addEventListener('click', function(e) {
+                            // Eğer butonlara tıklanmışsa card click'i çalıştırma
+                            if (e.target.closest('.kategori-buttons')) {
+                                return;
+                            }
+                            
+                            // Kategori seçimini yap
+                            const listelenecekKategoriSelect = document.getElementById('listelenecekKategori');
+                            if (listelenecekKategoriSelect) {
+                                listelenecekKategoriSelect.value = kat.id;
+                                // Arama fonksiyonunu çağır
+                                dilekceleriListele(kat.id);
+                            }
+                        });
+                        
+                        // Buton event'leri
+                        silBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            kategoriSil(kat.id, kat.ad);
+                        });
+                        
+                        duzenleBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            kategoriDuzenle(kat.id, kat.ad);
+                        });
+                        grid.appendChild(card);
+                    });
+                    mevcutKategorilerBox.appendChild(grid);
+                }
+            }
+
+            // Select'leri güncelle
             const dilekceKategorisiSelect = document.getElementById('dilekceKategorisi');
             const listelenecekKategoriSelect = document.getElementById('listelenecekKategori');
-
-            kategoriListesiDiv.innerHTML = ''; 
-            dilekceKategorisiSelect.innerHTML = '<option selected value="">Kategori Seçiniz...</option>'; 
-            listelenecekKategoriSelect.innerHTML = '<option selected value="">Tüm Kategoriler</option>';
-
-            if (kategoriler.length === 0) {
-                const div = document.createElement('div');
-                div.className = 'col-12 text-center text-muted';
-                div.innerHTML = '<i class="material-icons">info</i> Henüz kategori eklenmemiş.';
-                kategoriListesiDiv.appendChild(div);
-            } else {
+            if (dilekceKategorisiSelect) {
+                dilekceKategorisiSelect.innerHTML = '<option selected value="">Kategori Seçiniz...</option>';
                 kategoriler.forEach(kat => {
-                    const div = document.createElement('div');
-                    div.className = 'col';
-                    const card = document.createElement('div');
-                    card.className = 'card border-0 shadow-sm h-100';
-                    
-                    const cardBody = document.createElement('div');
-                    cardBody.className = 'd-flex justify-content-between align-items-center p-2';
-                    cardBody.innerHTML = `<span><i class="material-icons align-middle me-2 text-secondary">folder</i>${kat.ad}</span>`;
-                    
-                    const silButton = document.createElement('button');
-                    silButton.className = 'btn btn-sm btn-outline-secondary';
-                    silButton.innerHTML = '<i class="material-icons">delete</i>';
-                    silButton.onclick = () => kategoriSil(kat.id, kat.ad);
-                    cardBody.appendChild(silButton);
-                    card.appendChild(cardBody);
-                    div.appendChild(card);
-                    kategoriListesiDiv.appendChild(div);
-
-                    const optionDilekce = document.createElement('option');
-                    optionDilekce.value = kat.id;
-                    optionDilekce.textContent = kat.ad;
-                    dilekceKategorisiSelect.appendChild(optionDilekce);
-
-                    const optionListele = document.createElement('option');
-                    optionListele.value = kat.id;
-                    optionListele.textContent = kat.ad;
-                    listelenecekKategoriSelect.appendChild(optionListele.cloneNode(true));
+                    const option = document.createElement('option');
+                    option.value = kat.id;
+                    option.textContent = kat.ad;
+                    dilekceKategorisiSelect.appendChild(option);
+                });
+            }
+            if (listelenecekKategoriSelect) {
+                listelenecekKategoriSelect.innerHTML = '<option selected value="">Tüm Kategoriler</option>';
+                kategoriler.forEach(kat => {
+                    const option = document.createElement('option');
+                    option.value = kat.id;
+                    option.textContent = kat.ad;
+                    listelenecekKategoriSelect.appendChild(option.cloneNode(true));
                 });
             }
             console.log('Kategoriler yüklendi.');
@@ -597,26 +1133,70 @@ div.file-detail-modal[style*="flex"],
         }
     }
 
-    function kategoriSil(kategoriId, kategoriAdi) {
-        const silOnayModalEl = document.getElementById('silOnayModal');
-        const silOnayModal = bootstrap.Modal.getInstance(silOnayModalEl) || new bootstrap.Modal(silOnayModalEl);
-        document.getElementById('silinecekOgeId').value = kategoriId;
-        document.getElementById('silinecekOgeTuru').value = 'kategori';
-        const modalBody = silOnayModalEl.querySelector('.modal-body');
-        if (modalBody) {
-            // Mevcut metin düğümünü veya ilk çocuğu güncelle
-            let textNode = modalBody.firstChild;
-            while(textNode && textNode.nodeType !== Node.TEXT_NODE) {
-                textNode = textNode.firstChild; // Daha derine inebilir
-            }
-            if (textNode) {
-                 textNode.textContent = `"${kategoriAdi}" kategorisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. `;
-            } else {
-                // Fallback eğer metin düğümü bulunamazsa
-                modalBody.insertBefore(document.createTextNode(`"${kategoriAdi}" kategorisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz. `), modalBody.firstChild);
-            }
+    async function kategoriSil(kategoriId, kategoriAdi) {
+        if (!confirm(`"${kategoriAdi}" kategorisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
+            return;
         }
-        silOnayModal.show();
+        
+        try {
+            const headers = {};
+            
+            // CSRF token varsa ekle
+            if (CSRF_TOKEN) {
+                headers['X-CSRFToken'] = CSRF_TOKEN;
+            }
+            
+            const response = await fetch(`/api/dilekce_kategorileri/${kategoriId}`, {
+                method: 'DELETE',
+                headers: headers
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showToast('Başarılı', 'Kategori başarıyla silindi.', 'success');
+                kategorileriListele();
+            } else {
+                showToast('Hata', 'Kategori silinirken hata: ' + result.message, 'error');
+            }
+        } catch (error) {
+            console.error('Kategori silme hatası:', error);
+            showToast('Hata', 'Kategori silinirken bir ağ hatası oluştu.', 'error');
+        }
+    }
+
+    async function kategoriDuzenle(kategoriId, mevcutAd) {
+        const yeniAd = prompt('Yeni kategori adını girin:', mevcutAd);
+        if (!yeniAd || yeniAd.trim() === '' || yeniAd.trim() === mevcutAd) {
+            return;
+        }
+        
+        try {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            // CSRF token varsa ekle
+            if (CSRF_TOKEN) {
+                headers['X-CSRFToken'] = CSRF_TOKEN;
+            }
+            
+            const response = await fetch(`/api/dilekce_kategorileri/${kategoriId}`, {
+                method: 'PUT',
+                headers: headers,
+                body: JSON.stringify({ ad: yeniAd.trim() })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                showToast('Başarılı', 'Kategori başarıyla güncellendi.', 'success');
+                kategorileriListele();
+            } else {
+                showToast('Hata', 'Kategori güncellenirken hata: ' + result.message, 'error');
+            }
+        } catch (error) {
+            console.error('Kategori güncelleme hatası:', error);
+            showToast('Hata', 'Kategori güncellenirken bir ağ hatası oluştu.', 'error');
+        }
     }
 
     // Dilekçe Fonksiyonları
@@ -1172,7 +1752,7 @@ div.file-detail-modal[style*="flex"],
             fetch(`/api/ornek_dilekceler/${dilekceId}`, {
                 method: 'DELETE',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'X-CSRFToken': CSRF_TOKEN
                 }
             })
             .then(response => response.json())
@@ -1288,6 +1868,18 @@ div.file-detail-modal[style*="flex"],
     document.addEventListener('DOMContentLoaded', function () {
         console.log('🚀 Örnek dilekçeler sayfası yüklendi');
         
+        // Modern CSS test
+        const testBox = document.querySelector('.kategori-yonetimi-box');
+        if (testBox) {
+            const computedStyle = window.getComputedStyle(testBox);
+            console.log('✅ Kategori yönetimi box bulundu');
+            console.log('📋 Background:', computedStyle.background);
+            console.log('📋 Border-radius:', computedStyle.borderRadius);
+            console.log('📋 Box-shadow:', computedStyle.boxShadow);
+        } else {
+            console.log('❌ Kategori yönetimi box bulunamadı');
+        }
+        
         console.log('📋 Kategoriler ve dilekçeler yükleniyor...');
         kategorileriListele();
         dilekceleriListele(); // Başlangıçta tüm dilekçeleri listele
@@ -1305,6 +1897,11 @@ div.file-detail-modal[style*="flex"],
         genisElementler.forEach(element => {
             element.style.minWidth = '100%';
         });
+
+        const kategoriEkleBtn = document.getElementById('kategoriEkleBtn');
+        if (kategoriEkleBtn) {
+            kategoriEkleBtn.addEventListener('click', kategoriEkle);
+        }
     });
 </script>
 {% endblock %} 
