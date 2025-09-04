@@ -78,11 +78,14 @@
 .saved-form-item {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     padding: 1rem;
     background: #f8f9fa;
     border-radius: 8px;
     transition: all 0.3s ease;
+    min-height: auto;
+    height: auto;
+    flex-wrap: nowrap;
 }
 
 .saved-form-item:hover {
@@ -94,6 +97,12 @@
     margin: 0;
     font-size: 1rem;
     color: #2c3e50;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    white-space: normal;
+    max-width: 100%;
+    line-height: 1.3;
 }
 
 .form-info p {
@@ -107,16 +116,17 @@
     gap: 0.5rem;
 }
 
-.edit-btn, .delete-btn, .preview-btn {
+.edit-btn, .delete-btn, .preview-btn, .download-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
+    font-size: 0.8rem;
 }
 
 .edit-btn {
@@ -134,7 +144,12 @@
     color: white;
 }
 
-.edit-btn:hover, .delete-btn:hover, .preview-btn:hover {
+.download-btn {
+    background: #6f42c1;
+    color: white;
+}
+
+.edit-btn:hover, .delete-btn:hover, .preview-btn:hover, .download-btn:hover {
     transform: translateY(-2px);
 }
 
@@ -246,13 +261,35 @@
     font-weight: 500;
 }
 
-.input-item input,
+.input-item input {
+    padding: 0.6rem;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+    height: 38px;
+    min-height: 38px;
+}
+
 .input-item textarea {
     padding: 0.6rem;
     border: 1px solid #dee2e6;
     border-radius: 6px;
     font-size: 0.85rem;
     transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
+    overflow: hidden;
+    min-height: 38px;
+    height: 38px;
+}
+
+.input-item textarea.auto-resize {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .input-item input:focus,
@@ -322,7 +359,7 @@
 @media print {
     @page {
         size: A4;
-        margin: 0.5cm;
+        margin: 0.3cm;
     }
     
     body * {
@@ -343,58 +380,67 @@
         background: white !important;
         box-shadow: none !important;
         font-family: Arial, sans-serif;
+        transform: scale(0.9);
+        transform-origin: top left;
     }
     
     .form-header h1 {
-        font-size: 12pt;
-        margin-bottom: 0.2cm;
+        font-size: 10pt;
+        margin-bottom: 0.1cm;
         text-align: center;
         border-bottom: 1pt solid #000;
-        padding-bottom: 0.1cm;
+        padding-bottom: 0.05cm;
         font-weight: bold;
     }
     
     .form-header {
-        margin-bottom: 0.2cm;
+        margin-bottom: 0.1cm;
         border-bottom: none;
     }
     
     .form-group {
-        margin-bottom: 0.1cm;
-        padding: 0.1cm;
+        margin-bottom: 0.02cm;
+        padding: 0.05cm;
         background: none;
         border: 0.5pt solid #333;
-        border-radius: 2pt;
+        border-radius: 1pt;
         page-break-inside: avoid;
+        font-size: 5pt;
     }
     
     .form-group h3 {
-        font-size: 8pt;
-        margin-bottom: 0.05cm;
-        padding-bottom: 0.05cm;
+        font-size: 6pt;
+        margin-bottom: 0.02cm;
+        padding-bottom: 0.02cm;
         border-bottom: 0.5pt solid #333;
         font-weight: bold;
     }
     
     .input-item {
-        margin-bottom: 0.05cm;
+        margin-bottom: 0.02cm;
     }
     
     .input-item label {
         display: block;
         font-weight: bold;
         color: black;
-        margin-bottom: 0.05cm;
-        font-size: 7pt;
+        margin-bottom: 0.02cm;
+        font-size: 5pt;
     }
     
     input, select, textarea {
-        font-size: 7pt;
-        line-height: 1.2;
+        font-size: 5pt;
+        line-height: 1.0;
         border: none;
         background: none;
         color: black;
-        padding: 0.05cm;
+        padding: 0.02cm;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+        box-sizing: border-box;
+        height: auto !important;
+        min-height: auto !important;
     }
     
     textarea {
@@ -406,11 +452,11 @@
     
     /* İşten ayrılma nedeni için özel stil */
     #terminationReason {
-        font-size: 7pt;
-        line-height: 1.3;
-        min-height: 2.5cm !important;
-        height: 2.5cm !important;
-        padding: 0.1cm;
+        font-size: 5pt;
+        line-height: 1.2;
+        min-height: 1cm !important;
+        height: auto !important;
+        padding: 0.05cm;
         white-space: pre-wrap;
         word-wrap: break-word;
         overflow: visible !important;
@@ -420,23 +466,19 @@
     }
     
     .form-container {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.1cm;
-    }
-    
-    .form-group.full-width {
-        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.02cm;
     }
     
     .alacak-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 0.05cm;
+        gap: 0.02cm;
     }
     
     .signature-section {
-        margin-top: 0.1cm;
+        margin-top: 0.05cm;
         text-align: center;
         background: none;
         border: none;
@@ -444,21 +486,27 @@
     }
     
     .signature-text p {
-        margin: 0.05cm 0;
-        font-size: 7pt;
+        margin: 0.02cm 0;
+        font-size: 5pt;
         color: black;
     }
     
     .signature-line {
-        margin-top: 0.1cm;
+        margin-top: 0.05cm;
         border-top: 1pt solid #000;
-        width: 3cm;
+        width: 2cm;
         margin-left: auto;
         margin-right: auto;
     }
     
     .input-grid {
-        gap: 0.05cm;
+        gap: 0.02cm;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .input-item.full-width {
+        grid-column: 1 / -1;
     }
     
     .bottom-form-actions, button, .btn {
@@ -467,9 +515,9 @@
     
     /* Tanıklar bölümü için özel stil */
     .witness-group {
-        margin-top: 0.1cm;
-        margin-bottom: 0.1cm;
-        padding: 0.1cm;
+        margin-top: 0.02cm;
+        margin-bottom: 0.02cm;
+        padding: 0.05cm;
         page-break-before: avoid !important;
         page-break-inside: avoid !important;
     }
@@ -478,39 +526,19 @@
     .witness-container {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 0.05cm;
-    }
-    
-    /* Tanık bölümünü gizle eğer tanık yoksa */
-    .witness-fields-hidden {
-        display: none !important;
-    }
-    
-    /* İşten ayrılma nedeni bölümü için özel stil */
-    .form-group:has(#terminationReason) {
-        padding: 0.1cm;
-        height: auto !important;
-        min-height: 3cm !important;
-        overflow: visible !important;
-        page-break-inside: avoid !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
-    
-    /* İşten ayrılma nedeni input-item için özel stil */
-    .input-item:has(#terminationReason) {
-        min-height: 2.5cm !important;
-        height: auto !important;
-        overflow: visible !important;
+        gap: 0.02cm;
     }
     
     /* Radio butonları için özel stil */
     .radio-group {
-        font-size: 7pt;
+        font-size: 5pt;
+        display: flex;
+        gap: 0.1cm;
     }
     
     .radio-group label {
-        margin-right: 0.05cm;
+        margin-right: 0.02cm;
+        font-size: 5pt;
     }
 }
 
@@ -866,31 +894,29 @@ input[type="text"][name$="Date"] {
             <!-- İşçi Bilgileri ve İş Bilgileri yan yana -->
             <div class="form-group">
                 <h3>İşçi Bilgileri</h3>
-                <div class="input-grid" style="grid-template-columns: 1fr 1fr;">
-                    <div class="input-item" style="display: flex; flex-direction: column; gap: 0.1rem;">
-                        <div class="input-item" style="margin-bottom: 0.1rem;">
-                            <label for="name">Adı Soyadı</label>
-                            <input type="text" id="name" name="name">
-                        </div>
-                        <div class="input-item" style="margin-bottom: 0.1rem;">
-                            <label for="tcNo">TC Kimlik No</label>
-                            <input type="text" id="tcNo" name="tcNo">
-                        </div>
-                        <div class="input-item">
-                            <label for="phone">Telefon</label>
-                            <input type="text" id="phone" name="phone">
-                        </div>
+                <div class="input-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="input-item">
+                        <label for="name">Adı Soyadı</label>
+                        <input type="text" id="name" name="name">
+                    </div>
+                    <div class="input-item">
+                        <label for="tcNo">TC Kimlik No</label>
+                        <input type="text" id="tcNo" name="tcNo">
+                    </div>
+                    <div class="input-item">
+                        <label for="phone">Telefon</label>
+                        <input type="text" id="phone" name="phone">
                     </div>
                     <div class="input-item">
                         <label for="address">Adres</label>
-                        <textarea id="address" name="address" style="height: calc(100% - 24px);"></textarea>
+                        <textarea id="address" name="address" class="auto-resize"></textarea>
                     </div>
                 </div>
             </div>
 
             <div class="form-group">
                 <h3>İş Bilgileri</h3>
-                <div class="input-grid">
+                <div class="input-grid" style="grid-template-columns: repeat(2, 1fr);">
                     <div class="input-item">
                         <label for="startDate">İşe Başlama Tarihi / SGK Giriş Tarihi</label>
                         <input type="text" id="startDate" name="startDate" placeholder="GG.AA.YYYY/GG.AA.YYYY" maxlength="21" onkeypress="return isDateInputChar(event)" onblur="formatDateInput(this)">
@@ -913,31 +939,29 @@ input[type="text"][name$="Date"] {
             <!-- Sigorta Bilgileri ve Çalışma Koşulları yan yana -->
             <div class="form-group">
                 <h3>Şirket Bilgileri</h3>
-                <div class="input-grid" style="grid-template-columns: 1fr 1fr;">
-                    <div class="input-item" style="display: flex; flex-direction: column; gap: 0.1rem;">
-                        <div class="input-item" style="margin-bottom: 0.1rem;">
-                            <label for="insuranceStatus">Şirket İsmi</label>
-                            <input type="text" id="insuranceStatus" name="insuranceStatus">
-                        </div>
-                        <div class="input-item" style="margin-bottom: 0.1rem;">
-                            <label for="salary">İşyeri Faaliyeti/Konusu</label>
-                            <input type="text" id="salary" name="salary">
-                        </div>
-                        <div class="input-item">
-                            <label for="insuranceNo">Mersis/Vergi/Ticaret Sicil No</label>
-                            <input type="text" id="insuranceNo" name="insuranceNo">
-                        </div>
+                <div class="input-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="input-item">
+                        <label for="insuranceStatus">Şirket İsmi</label>
+                        <input type="text" id="insuranceStatus" name="insuranceStatus">
                     </div>
                     <div class="input-item">
-                        <label for="insuranceDate">Şirket Adresi</label>
-                        <textarea id="insuranceDate" name="insuranceDate" style="height: calc(100% - 24px);"></textarea>
+                        <label for="salary">İşyeri Faaliyeti/Konusu</label>
+                        <input type="text" id="salary" name="salary">
+                    </div>
+                    <div class="input-item">
+                        <label for="insuranceNo">Mersis/Vergi/Ticaret Sicil No</label>
+                        <input type="text" id="insuranceNo" name="insuranceNo">
+                    </div>
+                    <div class="input-item">
+                        <label for="insuranceDate">Şirket Adresi-Telefonu</label>
+                        <textarea id="insuranceDate" name="insuranceDate" class="auto-resize"></textarea>
                     </div>
                 </div>
             </div>
 
             <div class="form-group">
                 <h3>Çalışma Koşulları</h3>
-                <div class="input-grid">
+                <div class="input-grid" style="grid-template-columns: repeat(2, 1fr);">
                     <div class="input-item">
                         <label for="workingHours">Çalışma Saatleri</label>
                         <input type="text" id="workingHours" name="workingHours">
@@ -962,7 +986,7 @@ input[type="text"][name$="Date"] {
                 <h3>İşten Ayrılma Nedeni/Şekli</h3>
                 <div class="input-grid">
                     <div class="input-item full-width">
-                        <textarea id="terminationReason" name="terminationReason" placeholder="İşten ayrılma nedeni, şekli ve ihbar süresi uygulaması hakkında bilgiler..."></textarea>
+                        <textarea id="terminationReason" name="terminationReason" class="auto-resize" placeholder="İşten ayrılma nedeni, şekli ve ihbar süresi uygulaması hakkında bilgiler..."></textarea>
                     </div>
                 </div>
             </div>
@@ -970,7 +994,7 @@ input[type="text"][name$="Date"] {
             <!-- Alacak Bilgileri -->
             <div class="form-group full-width">
                 <h3>Alacak Bilgileri</h3>
-                <div class="input-grid alacak-grid">
+                <div class="input-grid alacak-grid" style="grid-template-columns: repeat(3, 1fr);">
                     <div class="input-item">
                         <label for="severancePay">Kıdem Tazminatı</label>
                         <div class="radio-group">
@@ -1016,7 +1040,7 @@ input[type="text"][name$="Date"] {
                 </div>
             </div>
 
-            <!-- Tanıklar ve İmza Bölümü tam genişlikte -->
+            <!-- Tanık Bilgileri -->
             <div class="form-group full-width witness-group">
                 <h3>Tanıklar</h3>
                 <div class="witness-option-container">
@@ -1030,12 +1054,16 @@ input[type="text"][name$="Date"] {
                     <div id="witnessCountContainer" style="display: none; margin-left: 20px;">
                         <label for="witnessCount">Tanık Sayısı:</label>
                         <select id="witnessCount" name="witnessCount" onchange="generateWitnessFields()">
+                            <option value="0">0</option>
                             <option value="1">1</option>
                             <option value="2">2</option>
                             <option value="3">3</option>
                             <option value="4">4</option>
                             <option value="5">5</option>
                         </select>
+                    </div>
+                    <div id="witnessSimpleContainer" style="display: none; margin-top: 10px;">
+                        <!-- Tanık var ama bilgiler girilmediğinde buraya basit bilgi gelecek -->
                     </div>
                 </div>
                 <div id="witnessFieldsContainer" class="witness-container" style="display: none; margin-top: 10px;">
@@ -1059,9 +1087,6 @@ input[type="text"][name$="Date"] {
                 </button>
                 <button class="action-btn print-btn" id="printButton">
                     <i class="fas fa-print"></i> Yazdır
-                </button>
-                <button class="action-btn download-btn" id="downloadButton">
-                    <i class="fas fa-download"></i> PDF İndir
                 </button>
             </div>
         </div>
@@ -1091,13 +1116,12 @@ input[type="text"][name$="Date"] {
         // Butonlara olay dinleyicileri ekle
         document.getElementById('saveButton').addEventListener('click', saveForm);
         document.getElementById('printButton').addEventListener('click', printForm);
-        document.getElementById('downloadButton').addEventListener('click', downloadPDF);
         
         // Textarea'ların yüksekliğini otomatik ayarla
         autoResizeTextareas();
         
-        // Textarea'lara input olayı ekle
-        document.querySelectorAll('textarea').forEach(textarea => {
+        // Sadece auto-resize sınıfına sahip textarea'lara input olayı ekle
+        document.querySelectorAll('textarea.auto-resize').forEach(textarea => {
             textarea.addEventListener('input', function() {
                 autoResizeTextarea(this);
             });
@@ -1603,19 +1627,32 @@ input[type="text"][name$="Date"] {
     // Form silme fonksiyonu
     function deleteForm(formId) {
         if (confirm('Bu formu silmek istediğinizden emin misiniz?')) {
+            // CSRF token al
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
             fetch(`/delete_isci_gorusme_form/${formId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showGlobalNotification('Form başarıyla silindi!', 'success');
                     loadSavedForms(); // Kaydedilen formları yeniden yükle
                 } else {
-                    alert('Form silinirken bir hata oluştu: ' + data.error);
+                    alert('Form silinirken bir hata oluştu: ' + (data.error || data.message));
                 }
             })
             .catch(error => {
+                console.error('Delete error:', error);
                 alert('Form silinirken bir hata oluştu: ' + error.message);
             });
         }
@@ -1636,24 +1673,123 @@ input[type="text"][name$="Date"] {
         updateCurrentDate();
     }
 
+    // PDF tanık layout'ını hazırlama fonksiyonu
+    function preparePDFWitnessLayout() {
+        const witnessOption = document.querySelector('input[name="witnessOption"]:checked')?.value;
+        const witnessCount = parseInt(document.getElementById('witnessCount').value) || 0;
+        const alacakGroup = document.querySelector('.form-group.full-width:has(.alacak-grid)');
+        const witnessGroup = document.querySelector('.witness-group');
+        
+        if (!alacakGroup || !witnessGroup) return;
+        
+        // Orijinal durumu sakla
+        witnessGroup.setAttribute('data-original-layout', 'true');
+        
+        if (witnessOption === 'yes') {
+            if (witnessCount === 0) {
+                // Tanık var ama 0 seçili - yan yana layout
+                const wrapper = document.createElement('div');
+                wrapper.className = 'pdf-witness-wrapper';
+                wrapper.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;';
+                wrapper.setAttribute('data-pdf-layout', 'true');
+                
+                // Alacak bilgilerini wrapper'a taşı
+                const alacakDiv = document.createElement('div');
+                alacakDiv.innerHTML = alacakGroup.innerHTML;
+                
+                // Tanık bilgilerini wrapper'a ekle
+                const witnessDiv = document.createElement('div');
+                witnessDiv.innerHTML = `
+                    <h3>Tanıklar</h3>
+                    <div style="padding: 0.6rem; background: #e8f5e8; border: 1px solid #28a745; border-radius: 6px; margin: 0; text-align: center;">
+                        <strong>Tanık Var</strong>
+                    </div>
+                `;
+                
+                wrapper.appendChild(alacakDiv);
+                wrapper.appendChild(witnessDiv);
+                
+                // Alacak grubunu wrapper ile değiştir
+                alacakGroup.parentNode.insertBefore(wrapper, alacakGroup);
+                alacakGroup.style.display = 'none';
+                witnessGroup.style.display = 'none';
+                
+            } else if (witnessCount > 0) {
+                // Tanık bilgileri var - önce yan yana, sonra alt satırda detay
+                const wrapper = document.createElement('div');
+                wrapper.className = 'pdf-witness-wrapper';
+                wrapper.style.cssText = 'display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;';
+                wrapper.setAttribute('data-pdf-layout', 'true');
+                
+                // Alacak bilgilerini wrapper'a taşı
+                const alacakDiv = document.createElement('div');
+                alacakDiv.innerHTML = alacakGroup.innerHTML;
+                
+                // Tanık durumu için basit div
+                const witnessDiv = document.createElement('div');
+                witnessDiv.innerHTML = `
+                    <h3>Tanıklar</h3>
+                    <div style="padding: 0.6rem; background: #e8f5e8; border: 1px solid #28a745; border-radius: 6px; margin: 0; text-align: center;">
+                        <strong>Tanık Var</strong>
+                    </div>
+                `;
+                
+                wrapper.appendChild(alacakDiv);
+                wrapper.appendChild(witnessDiv);
+                
+                // Alacak grubunu wrapper ile değiştir
+                alacakGroup.parentNode.insertBefore(wrapper, alacakGroup);
+                alacakGroup.style.display = 'none';
+                
+                // Tanık detaylarını alt satırda göster
+                witnessGroup.style.display = 'block';
+                const witnessTitle = witnessGroup.querySelector('h3');
+                if (witnessTitle) witnessTitle.textContent = 'Tanık Bilgileri Detayı';
+                
+                // Tanık seçim bölümünü gizle, sadece detayları göster
+                const witnessOptionContainer = witnessGroup.querySelector('.witness-option-container');
+                if (witnessOptionContainer) witnessOptionContainer.style.display = 'none';
+            }
+        }
+    }
+    
+    // PDF layout'ını temizleme fonksiyonu
+    function cleanupPDFWitnessLayout() {
+        // PDF layout için oluşturulan wrapper'ları kaldır
+        const pdfWrappers = document.querySelectorAll('[data-pdf-layout="true"]');
+        pdfWrappers.forEach(wrapper => wrapper.remove());
+        
+        // Orijinal elementleri geri göster
+        const alacakGroup = document.querySelector('.form-group.full-width:has(.alacak-grid)');
+        const witnessGroup = document.querySelector('.witness-group[data-original-layout]');
+        
+        if (alacakGroup) alacakGroup.style.display = 'block';
+        if (witnessGroup) {
+            witnessGroup.style.display = 'block';
+            witnessGroup.removeAttribute('data-original-layout');
+            
+            // Tanık seçim bölümünü geri göster
+            const witnessOptionContainer = witnessGroup.querySelector('.witness-option-container');
+            if (witnessOptionContainer) witnessOptionContainer.style.display = 'block';
+            
+            // Başlığı geri değiştir
+            const witnessTitle = witnessGroup.querySelector('h3');
+            if (witnessTitle) witnessTitle.textContent = 'Tanıklar';
+        }
+    }
+
     // Form yazdırma fonksiyonu
     function printForm() {
-        // Yazdırma öncesi tanık bölümünü kontrol et
-        const witnessOption = document.querySelector('input[name="witnessOption"]:checked').value;
-        const witnessFieldsContainer = document.getElementById('witnessFieldsContainer');
-        
-        // Tanık yoksa tanık alanlarını geçici olarak gizle
-        if (witnessOption === 'no') {
-            if (witnessFieldsContainer) witnessFieldsContainer.classList.add('witness-fields-hidden');
-        }
+        // PDF için tanık layout'ını hazırla
+        preparePDFWitnessLayout();
         
         // Yazdır
         window.print();
         
-        // Yazdırma sonrası sınıfları geri al
-        if (witnessOption === 'no') {
-            if (witnessFieldsContainer) witnessFieldsContainer.classList.remove('witness-fields-hidden');
-        }
+        // Yazdırma sonrası layout'ı temizle
+        setTimeout(() => {
+            cleanupPDFWitnessLayout();
+        }, 1000);
     }
 
     // PDF indirme fonksiyonu
@@ -1770,32 +1906,31 @@ input[type="text"][name$="Date"] {
                 terminationParent.appendChild(terminationDiv);
             }
             
-            // PDF oluşturma seçenekleri
+            // PDF oluşturma seçenekleri - print media query'i kullan
             const opt = {
-                margin: [0, 0, 0, 0], // Kenar boşluklarını sıfıra indirdim
+                margin: [3, 3, 3, 3], 
                 filename: 'isci_gorusme_tutanagi.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
+                image: { type: 'jpeg', quality: 0.95 },
                 html2canvas: { 
-                    scale: 1.5, 
+                    scale: 2,
                     useCORS: true,
                     letterRendering: true,
                     logging: false,
                     dpi: 300,
                     scrollX: 0,
                     scrollY: 0,
-                    windowWidth: document.documentElement.offsetWidth,
-                    windowHeight: document.documentElement.offsetHeight
+                    width: 210 * 3.78, // A4 genişliği mm to px
+                    height: 297 * 3.78, // A4 yüksekliği mm to px
+                    windowWidth: 1280,
+                    windowHeight: 1024
                 },
                 jsPDF: { 
                     unit: 'mm', 
                     format: 'a4', 
                     orientation: 'portrait',
-                    compress: true,
-                    precision: 2,
-                    putOnlyUsedFonts: true,
-                    floatPrecision: 16
+                    compress: true
                 },
-                pagebreak: { mode: ['css', 'legacy'] } // 'avoid-all' kaldırıldı, sayfa kırılımlarının doğru işlenmesi için
+                pagebreak: { mode: ['css'] }
             };
             
             // PDF oluştur ve indir
@@ -1897,80 +2032,136 @@ input[type="text"][name$="Date"] {
     function toggleWitnessOptions() {
         const witnessOption = document.querySelector('input[name="witnessOption"]:checked').value;
         const witnessCountContainer = document.getElementById('witnessCountContainer');
+        const witnessSimpleContainer = document.getElementById('witnessSimpleContainer');
         const witnessFieldsContainer = document.getElementById('witnessFieldsContainer');
         
         if (witnessOption === 'yes') {
             witnessCountContainer.style.display = 'block';
-            witnessFieldsContainer.style.display = 'block';
             generateWitnessFields(); // Tanık alanlarını oluştur
         } else {
             witnessCountContainer.style.display = 'none';
+            witnessSimpleContainer.style.display = 'none';
             witnessFieldsContainer.style.display = 'none';
         }
     }
 
     function generateWitnessFields() {
         const witnessCount = parseInt(document.getElementById('witnessCount').value);
-        const container = document.getElementById('witnessFieldsContainer');
+        const fieldsContainer = document.getElementById('witnessFieldsContainer');
+        const simpleContainer = document.getElementById('witnessSimpleContainer');
         
         // Mevcut alanları temizle
-        container.innerHTML = '';
+        fieldsContainer.innerHTML = '';
+        simpleContainer.innerHTML = '';
         
-        // Seçilen sayıda tanık alanı oluştur
-        for (let i = 1; i <= witnessCount; i++) {
-            const witnessField = document.createElement('div');
-            witnessField.className = 'form-group';
-            witnessField.innerHTML = `
-                <h3>Tanık ${i} Bilgileri</h3>
-                <div class="input-grid">
-                    <div class="input-item">
-                        <label for="witness${i}Name">Adı Soyadı:</label>
-                        <input type="text" id="witness${i}Name" name="witness${i}Name" placeholder="Tanık adı soyadı">
-                    </div>
-                    <div class="input-item">
-                        <label for="witness${i}Info">Tanık Bilgileri:</label>
-                        <textarea id="witness${i}Info" name="witness${i}Info" placeholder="Tanık hakkında bilgiler"></textarea>
-                    </div>
+        if (witnessCount === 0) {
+            // Tanık sayısı 0 ise sadece "Tanık Var" yazan alan ekle
+            simpleContainer.innerHTML = `
+                <div style="padding: 0.6rem; background: #e8f5e8; border: 1px solid #28a745; border-radius: 6px; margin: 0; text-align: center;">
+                    <strong>Tanık Var</strong>
                 </div>
             `;
-            container.appendChild(witnessField);
+            simpleContainer.style.display = 'block';
+            fieldsContainer.style.display = 'none';
+        } else {
+            // Tanık bilgileri girilecekse detaylı alanları göster
+            simpleContainer.style.display = 'none';
+            fieldsContainer.style.display = 'block';
+            
+            // Seçilen sayıda tanık alanı oluştur
+            for (let i = 1; i <= witnessCount; i++) {
+                const witnessField = document.createElement('div');
+                witnessField.className = 'form-group';
+                witnessField.innerHTML = `
+                    <h4 style="margin-bottom: 0.5rem;">Tanık ${i} Bilgileri</h4>
+                    <div class="input-grid" style="grid-template-columns: repeat(2, 1fr);">
+                        <div class="input-item">
+                            <label for="witness${i}Name">Adı Soyadı:</label>
+                            <input type="text" id="witness${i}Name" name="witness${i}Name" placeholder="Tanık adı soyadı">
+                        </div>
+                        <div class="input-item">
+                            <label for="witness${i}Info">Tanık Bilgileri:</label>
+                            <textarea id="witness${i}Info" name="witness${i}Info" placeholder="Tanık hakkında bilgiler"></textarea>
+                        </div>
+                    </div>
+                `;
+                fieldsContainer.appendChild(witnessField);
+            }
         }
     }
 
     // Textarea'ların yüksekliğini otomatik ayarlama fonksiyonu
     function autoResizeTextareas() {
-        document.querySelectorAll('textarea').forEach(textarea => {
+        document.querySelectorAll('textarea.auto-resize').forEach(textarea => {
             autoResizeTextarea(textarea);
         });
     }
     
     // Tek bir textarea'nın yüksekliğini otomatik ayarlama fonksiyonu
     function autoResizeTextarea(textarea) {
+        // Sadece auto-resize sınıfına sahip textarea'ları işle
+        if (!textarea.classList.contains('auto-resize')) {
+            return;
+        }
+        
         // Önce yüksekliği sıfırla
         textarea.style.height = 'auto';
         
         // Sonra içeriğe göre ayarla
         const scrollHeight = textarea.scrollHeight;
         
-        // Adres ve işten ayrılma nedeni için minimum yükseklik ayarla
-        if (textarea.id === 'address' || textarea.id === 'terminationReason' || textarea.id === 'insuranceDate') {
-            // İşten ayrılma nedeni için daha büyük minimum yükseklik
-            const minHeight = textarea.id === 'terminationReason' ? 120 : 60;
-            
-            // Sadece gerçek içerik varsa büyüt, boşluk tuşuna basınca büyütme
-            const content = textarea.value.trim();
-            if (content.length > 0) {
-                const calculatedHeight = Math.max(minHeight, scrollHeight);
-                textarea.style.height = calculatedHeight + 'px';
-                textarea.style.minHeight = minHeight + 'px';
-            } else {
-                textarea.style.height = minHeight + 'px';
-                textarea.style.minHeight = minHeight + 'px';
-            }
-        } else {
-            textarea.style.height = scrollHeight + 'px';
-        }
+        // Minimum yükseklik ayarla
+        const minHeight = 60;
+        const calculatedHeight = Math.max(minHeight, scrollHeight);
+        
+        textarea.style.height = calculatedHeight + 'px';
+        textarea.style.minHeight = minHeight + 'px';
     }
+    
+    // Input alanlarının yüksekliğini otomatik ayarlama fonksiyonu
+    function autoResizeInput(input) {
+        // Geçici bir textarea oluştur ve içeriği kopyala
+        const tempTextarea = document.createElement('textarea');
+        tempTextarea.style.position = 'absolute';
+        tempTextarea.style.visibility = 'hidden';
+        tempTextarea.style.height = 'auto';
+        tempTextarea.style.width = input.offsetWidth + 'px';
+        tempTextarea.style.fontSize = window.getComputedStyle(input).fontSize;
+        tempTextarea.style.fontFamily = window.getComputedStyle(input).fontFamily;
+        tempTextarea.style.padding = window.getComputedStyle(input).padding;
+        tempTextarea.style.border = window.getComputedStyle(input).border;
+        tempTextarea.style.boxSizing = 'border-box';
+        tempTextarea.value = input.value;
+        
+        // DOM'a ekle
+        document.body.appendChild(tempTextarea);
+        
+        // Yüksekliği al
+        const scrollHeight = tempTextarea.scrollHeight;
+        
+        // Minimum yükseklik (tek satır)
+        const minHeight = 38;
+        const newHeight = Math.max(minHeight, scrollHeight);
+        
+        // Input'un yüksekliğini ayarla
+        input.style.height = newHeight + 'px';
+        input.style.minHeight = minHeight + 'px';
+        
+        // Geçici textarea'yı kaldır
+        document.body.removeChild(tempTextarea);
+    }
+
+    // Form PDF indirme fonksiyonu
+    function downloadFormPDF(formId) {
+        // Formu düzenle butonuna tıklayarak yükle, sonra PDF indir
+        editForm(formId);
+        
+        // Form yüklendikten sonra PDF'i indir
+        setTimeout(() => {
+            downloadPDF();
+        }, 2000);
+    }
+
 
     // PDF önizleme fonksiyonu - belirtilen form ID'sine göre formu yükler ve PDF olarak görüntüler
     function previewFormPDF(formId) {

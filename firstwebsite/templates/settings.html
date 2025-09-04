@@ -198,36 +198,60 @@
             </button>
         </div>
         <form id="passwordForm">
-            <div class="form-group">
-                <label for="currentPassword">Mevcut Şifre</label>
-                <div class="input-group">
-                    <input type="password" id="currentPassword" name="current_password" required>
-                    <button type="button" class="input-toggle" onclick="togglePassword('currentPassword')">
-                        <i class="fas fa-eye"></i>
-                    </button>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div style="padding: 2rem 2.5rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <div class="form-group">
+                        <label for="currentPassword">Mevcut Şifre</label>
+                        <div class="input-group">
+                            <input type="password" id="currentPassword" name="current_password" required placeholder="Mevcut şifrenizi girin">
+                            <button type="button" class="input-toggle" onclick="togglePassword('currentPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div></div>
                 </div>
-            </div>
-            <div class="form-group">
-                <label for="newPassword">Yeni Şifre</label>
-                <div class="input-group">
-                    <input type="password" id="newPassword" name="new_password" required>
-                    <button type="button" class="input-toggle" onclick="togglePassword('newPassword')">
-                        <i class="fas fa-eye"></i>
-                    </button>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div class="form-group">
+                        <label for="newPassword">Yeni Şifre</label>
+                        <div class="input-group">
+                            <input type="password" id="newPassword" name="new_password" required placeholder="Yeni şifrenizi girin">
+                            <button type="button" class="input-toggle" onclick="togglePassword('newPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Yeni Şifre Tekrar</label>
+                        <div class="input-group">
+                            <input type="password" id="confirmPassword" name="confirm_password" required placeholder="Yeni şifrenizi tekrar girin">
+                            <button type="button" class="input-toggle" onclick="togglePassword('confirmPassword')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="form-group">
-                <label for="confirmPassword">Yeni Şifre Tekrar</label>
-                <div class="input-group">
-                    <input type="password" id="confirmPassword" name="confirm_password" required>
-                    <button type="button" class="input-toggle" onclick="togglePassword('confirmPassword')">
-                        <i class="fas fa-eye"></i>
-                    </button>
+                
+                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); padding: 1.5rem; border-radius: 12px; margin-top: 2rem; border-left: 4px solid var(--primary-color);">
+                    <h4 style="color: var(--primary-color); margin: 0 0 0.5rem 0; font-size: 1rem;">🛡️ Güvenlik Kuralları</h4>
+                    <ul style="margin: 0; padding-left: 1.2rem; color: #666; font-size: 0.9rem; line-height: 1.6;">
+                        <li>Şifreniz en az 8 karakter uzunluğunda olmalıdır</li>
+                        <li>Büyük ve küçük harf, rakam ve özel karakter kullanın</li>
+                        <li>Başka yerlerde kullandığınız şifreleri kullanmayın</li>
+                    </ul>
                 </div>
             </div>
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" onclick="closeModal('passwordModal')">İptal</button>
-                <button type="submit" class="btn btn-primary">Şifreyi Değiştir</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('passwordModal')">
+                    <i class="fas fa-times"></i>
+                    İptal
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-shield-alt"></i>
+                    Şifreyi Güncelle
+                </button>
             </div>
         </form>
     </div>
@@ -684,27 +708,33 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: 999999 !important;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
 }
 
 .modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
 }
 
 .modal {
-    background-color: var(--bg-color);
-    border-radius: 12px;
-    width: 90%;
-    max-width: 500px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
+    width: 95%;
+    max-width: 800px;
+    min-height: 400px;
     max-height: 80vh;
     overflow-y: auto;
-    box-shadow: var(--shadow-lg);
-    transform: scale(0.9);
-    transition: transform 0.3s ease;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    transform: scale(1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    position: relative;
+    margin: auto;
 }
 
 .modal-overlay.active .modal {
@@ -715,22 +745,49 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+    padding: 2rem 2.5rem 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, var(--primary-color), #4a5568);
+    color: white;
+    border-radius: 20px 20px 0 0;
+    position: relative;
+    margin: -1px -1px 0 -1px;
 }
 
 .modal-header h3 {
     margin: 0;
-    color: var(--text-color);
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-header h3:before {
+    content: '🔒';
+    font-size: 1.8rem;
 }
 
 .close-btn {
-    background: none;
+    background: rgba(255, 255, 255, 0.1);
     border: none;
-    font-size: 1.25rem;
-    color: var(--text-secondary);
+    font-size: 1.5rem;
+    color: white;
     cursor: pointer;
-    padding: 0.25rem;
+    padding: 0.75rem;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
 }
 
 .danger-icon {
@@ -741,14 +798,15 @@
 
 /* Form Styles */
 .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.8rem;
     color: var(--text-color);
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 1rem;
 }
 
 .input-group {
@@ -757,18 +815,22 @@
 
 .input-group input {
     width: 100%;
-    padding: 0.75rem;
-    padding-right: 3rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    padding-right: 3.5rem;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
     background-color: var(--bg-color);
     color: var(--text-color);
-    transition: border-color 0.2s ease;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .input-group input:focus {
     outline: none;
     border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(45, 49, 60, 0.1);
+    transform: translateY(-1px);
 }
 
 .input-toggle {
@@ -808,8 +870,11 @@
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
-    padding: 1.5rem;
-    border-top: 1px solid var(--border-color);
+    padding: 2rem 2.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 0 0 20px 20px;
+    margin: 0 -1px -1px -1px;
 }
 
 /* Responsive Design */
@@ -1358,7 +1423,59 @@ function testSystemNotification() {
 
 // Modal fonksiyonları
 function openPasswordModal() {
-    document.getElementById('passwordModal').classList.add('active');
+    console.log('DEBUG: openPasswordModal function called');
+    const modal = document.getElementById('passwordModal');
+    console.log('DEBUG: passwordModal element found:', modal);
+    if (modal) {
+        // Remove transition temporarily to force immediate visibility
+        modal.style.transition = 'none';
+        // Force styles to make modal visible
+        modal.style.display = 'flex';
+        modal.style.opacity = '1';
+        modal.style.visibility = 'visible';
+        modal.style.zIndex = '999999';
+        modal.classList.add('active');
+        
+        // Re-enable transition after a short delay
+        setTimeout(() => {
+            modal.style.transition = 'all 0.3s ease';
+        }, 50);
+        
+        console.log('DEBUG: active class added and forced styles applied');
+        console.log('DEBUG: Modal classes:', modal.classList.toString());
+        
+        // Check styles after a brief delay to ensure they've taken effect
+        setTimeout(() => {
+            console.log('DEBUG: Modal computed styles after timeout:', {
+                display: window.getComputedStyle(modal).display,
+                opacity: window.getComputedStyle(modal).opacity,
+                visibility: window.getComputedStyle(modal).visibility,
+                zIndex: window.getComputedStyle(modal).zIndex
+            });
+            
+            // Also check the inner modal div
+            const innerModal = modal.querySelector('.modal');
+            if (innerModal) {
+                console.log('DEBUG: Inner modal found:', innerModal);
+                console.log('DEBUG: Inner modal styles:', {
+                    display: window.getComputedStyle(innerModal).display,
+                    transform: window.getComputedStyle(innerModal).transform,
+                    opacity: window.getComputedStyle(innerModal).opacity,
+                    maxHeight: window.getComputedStyle(innerModal).maxHeight,
+                    width: window.getComputedStyle(innerModal).width
+                });
+                
+                // Force inner modal to be visible too
+                innerModal.style.transform = 'scale(1)';
+                innerModal.style.opacity = '1';
+                innerModal.style.display = 'block';
+            } else {
+                console.error('DEBUG: Inner modal not found!');
+            }
+        }, 100);
+    } else {
+        console.error('DEBUG: passwordModal element not found!');
+    }
 }
 
 function openDeleteModal() {
@@ -1366,7 +1483,19 @@ function openDeleteModal() {
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('active');
+    console.log('DEBUG: closeModal called for:', modalId);
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+        // Also reset inline styles that were set during opening
+        modal.style.display = 'none';
+        modal.style.opacity = '0';
+        modal.style.visibility = 'hidden';
+        modal.style.zIndex = '9999';
+        console.log('DEBUG: Modal closed and styles reset');
+    } else {
+        console.error('DEBUG: Modal not found:', modalId);
+    }
 }
 
 // Şifre görünürlüğü
@@ -1403,11 +1532,26 @@ document.getElementById('passwordForm').addEventListener('submit', async functio
         return;
     }
     
+    // CSRF token ekle
+    const csrfToken = getCSRFToken();
+    if (csrfToken) {
+        formData.append('csrf_token', csrfToken);
+    }
+    
     try {
         const response = await fetch('/change_password', {
             method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
             body: formData
         });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server error response:', errorText);
+            throw new Error(`Server error: ${response.status}`);
+        }
         
         const data = await response.json();
         if (data.success) {

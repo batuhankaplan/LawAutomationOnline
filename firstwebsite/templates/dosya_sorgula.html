@@ -3423,9 +3423,19 @@ function showDetails(caseId) {
         });
 }
 
-// Dosya türünü büyük harfe çevir
+// Dosya türünü doğru şekilde büyük harfe çevir
 function capitalizeFileType(fileType) {
-    return fileType.charAt(0).toUpperCase() + fileType.slice(1);
+    const typeMapping = {
+        'hukuk': 'Hukuk',
+        'ceza': 'Ceza', 
+        'icra': 'İcra',
+        'savcilik': 'Savcılık',
+        'ARABULUCULUK': 'Arabuluculuk',
+        'AİHM': 'AİHM',
+        'AYM': 'AYM'
+    };
+    
+    return typeMapping[fileType] || fileType.charAt(0).toUpperCase() + fileType.slice(1);
 }
 
 // Dosya uzantısına göre ikon seç
@@ -3485,6 +3495,10 @@ function editCase(caseId) {
             return response.json();
         })
         .then(data => {
+            // Debug: Server'dan gelen data'yı logla
+            console.log('DEBUG: Edit modal data from server:', data);
+            console.log('DEBUG: file_type in modal data:', data.file_type);
+            
             // Devam eden kod
             // Tarihi YYYY-MM-DD formatına çevir
             const openDate = data.open_date ? data.open_date.split('.').reverse().join('-') : '';
@@ -3891,6 +3905,13 @@ function editCase(caseId) {
                 </div>
             `;
             
+            // Eski modal'ları temizle
+            const existingModal = document.getElementById('editModal');
+            if (existingModal) {
+                existingModal.remove();
+                console.log('DEBUG: Removed existing modal');
+            }
+            
             const editModal = document.createElement('div');
             editModal.id = 'editModal';
             editModal.className = 'file-detail-modal';
@@ -3899,6 +3920,10 @@ function editCase(caseId) {
             // editModal.style.display = 'flex'; // Bu satırı aşağı taşıdık
 
             const editFileTypeSelect = editModal.querySelector('#editFileType');
+            
+            // Debug: Modal oluşturulduktan sonra seçili değeri kontrol et
+            console.log('DEBUG: editFileType select value after modal creation:', editFileTypeSelect.value);
+            console.log('DEBUG: editFileType select HTML:', editFileTypeSelect.outerHTML);
             const editCitySelect = editModal.querySelector('#editCity');
             const editCourthouseSelect = editModal.querySelector('#editCourthouse');
             const editDepartmentSelect = editModal.querySelector('#editDepartment');
@@ -4158,7 +4183,27 @@ function editCase(caseId) {
                 document.getElementById('editOpponentCapacity').value = data.opponent_capacity;
             }
             
+            // Debug: Capacity'ler set edildikten sonra file type'ı kontrol et
+            const currentFileTypeValue = document.getElementById('editFileType')?.value;
+            console.log('DEBUG: editFileType after setting capacities:', currentFileTypeValue);
+            
+            // Manuel olarak file type'ı set et - SADECE yanlış değer alınmışsa
+            if (currentFileTypeValue !== data.file_type) {
+                console.log('DEBUG: Select value mismatch! Expected:', data.file_type, 'Got:', currentFileTypeValue);
+                console.log('DEBUG: Manually correcting file type to:', data.file_type);
+                document.getElementById('editFileType').value = data.file_type;
+                console.log('DEBUG: After manual correction, value is:', document.getElementById('editFileType').value);
+            } else {
+                console.log('DEBUG: Select value is correct, no manual correction needed');
+            }
+            
             editModal.style.display = 'flex'; // Modal'ı tüm kurulumlar bittikten sonra göster
+            
+            // Debug: Modal tamamen açıldıktan sonra select değerini kontrol et
+            setTimeout(() => {
+                const finalFileType = document.getElementById('editFileType')?.value;
+                console.log('DEBUG: Final editFileType value after modal fully loaded:', finalFileType);
+            }, 100);
         });
 }
 
@@ -4482,8 +4527,34 @@ function saveChanges(caseId) {
         additionalLawyers.push(lawyer);
     });
 
+    // Çoklu select sorunu için en son (aktif) olanı al
+    const allFileTypeSelects = document.querySelectorAll('#editFileType');
+    const fileTypeElement = allFileTypeSelects[allFileTypeSelects.length - 1]; // En son olanı al
+    console.log('DEBUG: Using select index:', allFileTypeSelects.length - 1, 'out of', allFileTypeSelects.length);
+    const fileTypeValue = fileTypeElement.value;
+    const selectedOption = fileTypeElement.options[fileTypeElement.selectedIndex];
+    
+    console.log('DEBUG: saveChanges - editFileType element:', fileTypeElement);
+    console.log('DEBUG: saveChanges - selected file_type value:', fileTypeValue);
+    console.log('DEBUG: saveChanges - selectedIndex:', fileTypeElement.selectedIndex);
+    console.log('DEBUG: saveChanges - selected option:', selectedOption);
+    console.log('DEBUG: saveChanges - all select options:', Array.from(fileTypeElement.options).map(opt => ({value: opt.value, selected: opt.selected, text: opt.text})));
+    
+    // Manuel kontrol: Gerçekten hangi option seçili?
+    const actuallySelectedOptions = Array.from(fileTypeElement.options).filter(opt => opt.selected);
+    console.log('DEBUG: saveChanges - actually selected options:', actuallySelectedOptions);
+    
+    // Çoklu element kontrolü (artık düzeltildi ama debug için bırakıyoruz)
+    console.log('DEBUG: saveChanges - found editFileType selects:', allFileTypeSelects.length);
+    if (allFileTypeSelects.length > 1) {
+        console.warn('DEBUG: Multiple selects found! Using the last one.');
+        allFileTypeSelects.forEach((select, index) => {
+            console.log(`DEBUG: Select ${index}:`, select.value, index === allFileTypeSelects.length - 1 ? '(USING THIS)' : '(ignored)');
+        });
+    }
+    
     const data = {
-        file_type: document.getElementById('editFileType').value,
+        file_type: fileTypeValue,
         courthouse: document.getElementById('editCourthouse').value,
         department: finalDepartmentValue, // Güncellenmiş departman değeri
         
@@ -4547,6 +4618,9 @@ function saveChanges(caseId) {
         return;
     }
 
+    console.log('DEBUG: Data being sent to server:', data);
+    console.log('DEBUG: file_type in data:', data.file_type);
+    
     fetch(`/edit_case/${caseId}`, {
         method: 'POST',
         headers: {
@@ -7013,8 +7087,34 @@ function loadFileInfoToEdit() {
     const hearingTime = document.getElementById('detailHearingTime').textContent;
     const hearingType = document.getElementById('detailHearingType').textContent;
     
+    // Dosya türünü doğru şekilde eşleştir - büyük harfli değerler olduğu gibi kalsın
+    console.log('DEBUG: Original fileType from DOM:', fileType);
+    let normalizedFileType = fileType.toLowerCase();
+    
+    // Türkçe büyük harf -> option value mapping
+    if (fileType === 'Hukuk') {
+        normalizedFileType = 'hukuk';
+    } else if (fileType === 'Ceza') {
+        normalizedFileType = 'ceza';
+    } else if (fileType === 'İcra') {
+        normalizedFileType = 'icra';
+    } else if (fileType === 'Savcılık') {
+        normalizedFileType = 'savcilik';
+    } else if (fileType === 'Arabuluculuk') {
+        normalizedFileType = 'ARABULUCULUK';
+    } else if (fileType === 'Aihm' || fileType === 'AİHM') {
+        normalizedFileType = 'AİHM';
+    } else if (fileType === 'Aym' || fileType === 'AYM') {
+        normalizedFileType = 'AYM';
+    } else {
+        // Eğer hiçbirine uymuyorsa, mevcut değer olduğu gibi kalsın
+        console.warn('DEBUG: Unknown file type for mapping:', fileType);
+    }
+    
+    console.log('DEBUG: Normalized fileType for select:', normalizedFileType);
+    
     // Form alanlarını doldur
-    document.getElementById('editFileType').value = fileType.toLowerCase();
+    document.getElementById('editFileType').value = normalizedFileType;
     document.getElementById('editYear').value = year;
     document.getElementById('editCaseNumber').value = caseNumber;
     document.getElementById('editStatus').value = status;
@@ -7155,6 +7255,7 @@ function cancelFileInfoEdit() {
 function saveFileInfo() {
     // Form verilerini al
     const fileType = document.getElementById('editFileType').value;
+    console.log('DEBUG: Saving fileType:', fileType);
     const year = document.getElementById('editYear').value;
     const caseNumber = document.getElementById('editCaseNumber').value;
     const openDate = document.getElementById('editOpenDate').value;
@@ -7194,6 +7295,7 @@ function saveFileInfo() {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('DEBUG: Server response for file update:', data);
         if (data.success) {
             // Görüntüleme alanlarını güncelle
             updateFileInfoDisplay({
@@ -7224,7 +7326,7 @@ function saveFileInfo() {
 
 function updateFileInfoDisplay(data) {
     // Görüntüleme alanlarını güncelle
-    document.getElementById('detailFileType').textContent = data.file_type.charAt(0).toUpperCase() + data.file_type.slice(1);
+    document.getElementById('detailFileType').textContent = capitalizeFileType(data.file_type);
     document.getElementById('detailYear').textContent = data.year;
     document.getElementById('detailCaseNumber').textContent = data.case_number;
     document.getElementById('detailStatus').textContent = data.status;

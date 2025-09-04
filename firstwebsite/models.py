@@ -120,7 +120,8 @@ class User(UserMixin, db.Model):
                 'yargi_kararlari_arama': True,
                 'ornek_dilekceler': True,
                 'ornek_sozlesmeler': True,
-                'ucret_tarifeleri': True
+                'ucret_tarifeleri': True,
+                'anasayfa_son_islemler': True
             },
             'Avukat': {
                 'panel_goruntule': True,
@@ -151,7 +152,8 @@ class User(UserMixin, db.Model):
                 'yargi_kararlari_arama': True,
                 'ornek_dilekceler': True,
                 'ornek_sozlesmeler': True,
-                'ucret_tarifeleri': True
+                'ucret_tarifeleri': True,
+                'anasayfa_son_islemler': True
             },
             'Stajyer Avukat': {
                 'panel_goruntule': True,
@@ -173,7 +175,8 @@ class User(UserMixin, db.Model):
                 'yargi_kararlari_arama': True,
                 'ornek_dilekceler': True,
                 'ornek_sozlesmeler': True,
-                'ucret_tarifeleri': True
+                'ucret_tarifeleri': True,
+                'anasayfa_son_islemler': True
             },
             'Sekreter': {
                 'panel_goruntule': True,
@@ -197,7 +200,8 @@ class User(UserMixin, db.Model):
                 'yargi_kararlari_arama': True,
                 'ornek_dilekceler': True,
                 'ornek_sozlesmeler': True,
-                'ucret_tarifeleri': True
+                'ucret_tarifeleri': True,
+                'anasayfa_son_islemler': True
             },
             'Takip Elemanı': {
                 'panel_goruntule': True,
@@ -215,7 +219,8 @@ class User(UserMixin, db.Model):
                 'ai_avukat': True,
                 'yargi_kararlari_arama': True,
                 'ornek_dilekceler': True,
-                'ucret_tarifeleri': True
+                'ucret_tarifeleri': True,
+                'anasayfa_son_islemler': False
             }
         }
 

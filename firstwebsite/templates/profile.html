@@ -476,8 +476,10 @@
 let isSubmitting = false;
 
 function previewImage(input) {
+    console.log('DEBUG: previewImage called, files:', input.files);
     if (input.files && input.files[0]) {
         const file = input.files[0];
+        console.log('DEBUG: Selected file:', file.name, 'Size:', file.size, 'Type:', file.type);
         const maxSize = 5 * 1024 * 1024; // 5MB
 
         if (file.size > maxSize) {
@@ -520,6 +522,12 @@ document.getElementById('profile-form').addEventListener('submit', function(e) {
     
     const formData = new FormData(this);
     
+    // Debug: Form verilerini logla
+    console.log('DEBUG: Form data contents:');
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + (pair[1] instanceof File ? `File: ${pair[1].name}, Size: ${pair[1].size}` : pair[1]));
+    }
+    
     fetch(this.action, {
         method: 'POST',
         body: formData
@@ -531,9 +539,12 @@ document.getElementById('profile-form').addEventListener('submit', function(e) {
         return response.json();
     })
     .then(data => {
+        console.log('DEBUG: Server response:', data);
         if (data.success) {
             if (data.profile_image) {
-                const newImagePath = "{{ url_for('static', filename='') }}" + data.profile_image;
+                console.log('DEBUG: New profile image path:', data.profile_image);
+                const newImagePath = "/static/" + data.profile_image;
+                console.log('DEBUG: Full image URL:', newImagePath);
                 const timestamp = new Date().getTime();
                 
                 // Profil sayfasındaki büyük fotoğrafı güncelle
@@ -544,8 +555,16 @@ document.getElementById('profile-form').addEventListener('submit', function(e) {
                 if (headerProfileImage) {
                     headerProfileImage.src = `${newImagePath}?t=${timestamp}`;
                 }
+            } else {
+                console.log('DEBUG: No profile_image in response');
             }
             showGlobalNotification('Profil başarıyla güncellendi.', 'success');
+            
+            // Test: Sayfa yenilenerek resim kontrol edilsin
+            setTimeout(() => {
+                console.log('DEBUG: Reloading page to verify image update');
+                location.reload();
+            }, 2000);
         } else {
             throw new Error(data.message || 'Profil güncellenirken bir hata oluştu');
         }

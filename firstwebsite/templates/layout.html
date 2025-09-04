@@ -1008,10 +1008,10 @@
                     <div class="header-right">
                         {% if current_user.is_authenticated and current_user.has_permission('ai_avukat') %}
                         <div class="ai-avukat-btn">
-                            <a href="{{ url_for('ai_avukat') }}" class="ai-btn" title="AI Avukat ile Sohbet Et">
+                            <button onclick="showAiAvukatNotification()" class="ai-btn" title="AI Avukat - Yakında Geliyor">
                                 <i class="material-icons">smart_toy</i>
                                 <span>AI Avukat</span>
-                            </a>
+                            </button>
                         </div>
                         {% endif %}
                         <div class="datetime-container">
@@ -1393,6 +1393,116 @@
     
     window.showFlashMessage = function(mesaj, tip = 'info') {
         window.showGlobalNotification(mesaj, tip);
+    };
+
+    // AI Avukat Uyarı Popupı
+    window.showAiAvukatNotification = function() {
+        // Mevcut popupları kaldır
+        const existingPopup = document.querySelector('.ai-avukat-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+
+        // Popup HTML'i oluştur
+        const popupHTML = `
+            <div class="ai-avukat-popup" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            ">
+                <div class="popup-content" style="
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    padding: 40px;
+                    border-radius: 20px;
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                    text-align: center;
+                    max-width: 450px;
+                    color: white;
+                    transform: scale(0.8);
+                    transition: transform 0.3s ease;
+                ">
+                    <div style="margin-bottom: 25px;">
+                        <i class="material-icons" style="
+                            font-size: 60px;
+                            color: rgba(255, 255, 255, 0.9);
+                            animation: pulse 2s infinite;
+                        ">smart_toy</i>
+                    </div>
+                    <h3 style="
+                        margin-bottom: 20px;
+                        font-size: 1.5rem;
+                        font-weight: 600;
+                        color: white;
+                    ">AI Avukat</h3>
+                    <p style="
+                        margin-bottom: 30px;
+                        line-height: 1.6;
+                        color: rgba(255, 255, 255, 0.9);
+                        font-size: 1rem;
+                    ">Bu özellik yakında kullanıma sunulacaktır. Gelecek sürümlerde AI destekli hukuki danışmanlık hizmetimizden yararlanabileceksiniz.</p>
+                    <button onclick="closeAiAvukatPopup()" style="
+                        background: rgba(255, 255, 255, 0.2);
+                        border: 2px solid rgba(255, 255, 255, 0.3);
+                        color: white;
+                        padding: 12px 30px;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-size: 1rem;
+                        font-weight: 500;
+                        transition: all 0.3s ease;
+                        backdrop-filter: blur(10px);
+                    " onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'; this.style.transform='translateY(-2px)'" 
+                       onmouseout="this.style.background='rgba(255, 255, 255, 0.2)'; this.style.transform='translateY(0)'">
+                        Anladım
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Popup'ı DOM'a ekle
+        document.body.insertAdjacentHTML('beforeend', popupHTML);
+        const popup = document.querySelector('.ai-avukat-popup');
+        
+        // Animasyonu başlat
+        setTimeout(() => {
+            popup.style.opacity = '1';
+            popup.querySelector('.popup-content').style.transform = 'scale(1)';
+        }, 50);
+
+        // ESC tuşu ile kapatma
+        document.addEventListener('keydown', function escHandler(e) {
+            if (e.key === 'Escape') {
+                closeAiAvukatPopup();
+                document.removeEventListener('keydown', escHandler);
+            }
+        });
+
+        // Arka plan tıklaması ile kapatma
+        popup.addEventListener('click', function(e) {
+            if (e.target === popup) {
+                closeAiAvukatPopup();
+            }
+        });
+    };
+
+    window.closeAiAvukatPopup = function() {
+        const popup = document.querySelector('.ai-avukat-popup');
+        if (popup) {
+            popup.style.opacity = '0';
+            popup.querySelector('.popup-content').style.transform = 'scale(0.8)';
+            setTimeout(() => {
+                popup.remove();
+            }, 300);
+        }
     };
 
     // GLOBAL THEME INITIALIZATION - Sayfa yüklendiğinde temayı uygula

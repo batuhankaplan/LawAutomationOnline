@@ -5082,8 +5082,11 @@ def edit_case(case_id):
             return jsonify(success=False, message="Müvekkil adı boş olamaz"), 400
             
         # Dosya bilgilerini güncelle
+        print(f"DEBUG: edit_case - received file_type: {data.get('file_type')}")
+        print(f"DEBUG: edit_case - current case file_type: {case_file.file_type}")
         if 'file_type' in data and data['file_type']:
             case_file.file_type = data['file_type']
+            print(f"DEBUG: edit_case - updated file_type to: {case_file.file_type}")
         if 'courthouse' in data and data['courthouse']:
             case_file.courthouse = data['courthouse']
         if 'client_name' in data and data['client_name']:
@@ -11209,6 +11212,7 @@ def update_case_basic_info():
                 pass
         
         # Dosya bilgilerini güncelle
+        print(f"DEBUG: Updating file_type from {case.file_type} to {file_type}")
         case.file_type = file_type
         case.year = int(year)
         case.case_number = case_number

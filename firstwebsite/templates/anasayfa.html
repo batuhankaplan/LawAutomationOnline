@@ -28,6 +28,7 @@
         </div>
 
         <!-- Son İşlemler -->
+        {% if current_user.has_permission('anasayfa_son_islemler') %}
         <div class="dashboard-card recent-activities">
             <div class="card-header">
                 <h3><i class="material-icons">history</i>Son İşlemler</h3>
@@ -90,6 +91,7 @@
             </div>
             {% endif %}
         </div>
+        {% endif %}
     </div>
 
     <!-- Sağ Sütun -->

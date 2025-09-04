@@ -977,11 +977,11 @@ function createPermissionsHTML(userPermissions) {
             { key: 'isci_gorusme_duzenle', label: 'İşçi Görüşme Düzenleme', desc: 'Mevcut işçi görüşme kayıtlarını düzenleyebilir' },
             { key: 'isci_gorusme_sil', label: 'İşçi Görüşme Silme', desc: 'İşçi görüşme kayıtlarını silebilir' }
         ],
-        'Müşteri Yönetimi': [
-            { key: 'musteri_goruntule', label: 'Müşteri Görüntüleme', desc: 'Müşteri yönetimi sayfasını görüntüleyebilir' },
-            { key: 'musteri_ekle', label: 'Müşteri Ekleme', desc: 'Yeni müşteri ekleyebilir' },
-            { key: 'musteri_duzenle', label: 'Müşteri Düzenleme', desc: 'Mevcut müşteri bilgilerini düzenleyebilir' },
-            { key: 'musteri_sil', label: 'Müşteri Silme', desc: 'Müşteri kayıtlarını silebilir' }
+        'Müvekkil Ödeme Yönetimi': [
+            { key: 'odeme_goruntule', label: 'Müvekkil Ödeme Görüntüleme', desc: 'Müvekkil ödeme yönetimi sayfasını görüntüleyebilir' },
+            { key: 'odeme_ekle', label: 'Müvekkil Ödeme Ekleme', desc: 'Yeni müvekkil ödemesi ekleyebilir' },
+            { key: 'odeme_duzenle', label: 'Müvekkil Ödeme Düzenleme', desc: 'Mevcut müvekkil ödeme bilgilerini düzenleyebilir' },
+            { key: 'odeme_sil', label: 'Müvekkil Ödeme Silme', desc: 'Müvekkil ödeme kayıtlarını silebilir' }
         ],
         'Raporlar ve İstatistikler': [
             { key: 'rapor_goruntule', label: 'Rapor Görüntüleme', desc: 'Raporlar sayfasını görüntüleyebilir' },
@@ -992,7 +992,8 @@ function createPermissionsHTML(userPermissions) {
         'Sistem Yönetimi': [
             { key: 'veritabani_yonetimi', label: 'Veritabanı Yönetimi', desc: 'Veritabanı yönetimi işlemlerini yapabilir' },
             { key: 'admin_panel', label: 'Admin Panel', desc: 'Admin paneline erişebilir' },
-            { key: 'kullanici_onaylama', label: 'Kullanıcı Onaylama', desc: 'Kullanıcı onaylama işlemleri yapabilir' }
+            { key: 'kullanici_onaylama', label: 'Kullanıcı Onaylama', desc: 'Kullanıcı onaylama işlemleri yapabilir' },
+            { key: 'anasayfa_son_islemler', label: 'Anasayfa Son İşlemler', desc: 'Anasayfada son işlemleri görüntüleyebilir' }
         ]
     };
 
@@ -1091,7 +1092,7 @@ function getCategoryIcon(categoryName) {
         'Hesaplamalar': '🧮',
         'Araçlar ve Kaynaklar': '🛠️',
         'İnsan Kaynakları': '👥',
-        'Müşteri Yönetimi': '👤',
+        'Müvekkil Ödeme Yönetimi': '💰',
         'Raporlar ve İstatistikler': '📊',
         'Sistem Yönetimi': '⚙️'
     };
