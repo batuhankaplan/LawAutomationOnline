@@ -150,9 +150,9 @@
             <div class="card-header">
                 <h3><i class="material-icons">gavel</i>Yaklaşan Duruşmalar</h3>
             </div>
-            <div class="hearings-list">
+            <div class="hearings-list" id="hearingsList">
                 {% for hearing in upcoming_hearings %}
-                <div class="hearing-item">
+                <div class="hearing-item" data-dt="{{ hearing.date.strftime('%Y-%m-%d') }} {{ hearing.time.strftime('%H:%M') }}">
                     <div class="hearing-date-time">
                         <div class="date-time-inner">
                             <div class="hearing-date">
@@ -198,6 +198,18 @@
                 <div class="no-data">Yaklaşan duruşma bulunmuyor.</div>
                 {% endfor %}
             </div>
+            <div class="view-all-hearings" id="hearingsLoadMore" style="display: none;">
+                <button class="view-all-btn" type="button">
+                    <span>Daha Fazla Göster</span>
+                    <i class="material-icons">expand_more</i>
+                </button>
+            </div>
+            <div class="view-all-hearings" id="hearingsLoadLess" style="display: none;">
+                <button class="view-all-btn" type="button">
+                    <span>Daha Az Göster</span>
+                    <i class="material-icons">expand_less</i>
+                </button>
+            </div>
             {% if total_hearings > 4 %}
             <div class="view-all-hearings">
                 <a href="{{ url_for('takvim') }}" class="view-all-btn">
@@ -213,9 +225,9 @@
             <div class="card-header">
                 <h3><i class="material-icons">location_city</i>Adliye İstatistikleri</h3>
             </div>
-            <div class="courthouse-grid">
+            <div class="courthouse-grid" id="courthouseGrid">
                 {% for stat in courthouse_stats %}
-                <div class="courthouse-item">
+                <div class="courthouse-item" data-count="{{ stat.total_cases }}">
                     <div class="courthouse-icon">
                         <i class="material-icons">business</i>
                     </div>
@@ -227,6 +239,18 @@
                 {% else %}
                 <div class="no-data">Henüz adliye verisi bulunmuyor.</div>
                 {% endfor %}
+            </div>
+            <div class="view-all-hearings" id="courthouseLoadMore" style="display: none;">
+                <button class="view-all-btn" type="button">
+                    <span>Daha Fazla Göster</span>
+                    <i class="material-icons">expand_more</i>
+                </button>
+            </div>
+            <div class="view-all-hearings" id="courthouseLoadLess" style="display: none;">
+                <button class="view-all-btn" type="button">
+                    <span>Daha Az Göster</span>
+                    <i class="material-icons">expand_less</i>
+                </button>
             </div>
         </div>
 
@@ -267,6 +291,39 @@
                     <div class="link-content">
                         <h4>Adliye Rehberi</h4>
                         <p>İstanbul Barosu Adliye Rehberi</p>
+                    </div>
+                    <i class="material-icons link-arrow">open_in_new</i>
+                </a>
+
+                <a href="https://www.barobirlik.org.tr/AvukatArama" target="_blank" class="quick-link">
+                    <div class="link-icon">
+                        <i class="material-icons">search</i>
+                    </div>
+                    <div class="link-content">
+                        <h4>TBB Baro Levhası</h4>
+                        <p>Türkiye Barolar Birliği Avukat Arama</p>
+                    </div>
+                    <i class="material-icons link-arrow">open_in_new</i>
+                </a>
+
+                <a href="https://www.istanbulbarosu.org.tr/barolevhasi.aspx" target="_blank" class="quick-link">
+                    <div class="link-icon">
+                        <i class="material-icons">person_search</i>
+                    </div>
+                    <div class="link-content">
+                        <h4>İstanbul 1 No'lu Barosu Levha</h4>
+                        <p>İstanbul Barosu Baro Levhası</p>
+                    </div>
+                    <i class="material-icons link-arrow">open_in_new</i>
+                </a>
+
+                <a href="https://www.istanbul2nolubarosu.org.tr/baroLevhasi.aspx" target="_blank" class="quick-link">
+                    <div class="link-icon">
+                        <i class="material-icons">person_search</i>
+                    </div>
+                    <div class="link-content">
+                        <h4>İstanbul 2 No'lu Barosu Levha</h4>
+                        <p>İstanbul 2 No'lu Barosu Baro Levhası</p>
                     </div>
                     <i class="material-icons link-arrow">open_in_new</i>
                 </a>
@@ -851,13 +908,15 @@
 
 .links-container {
     padding: 15px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
 }
 
 .quick-link {
     display: flex;
     align-items: center;
     padding: 15px;
-    margin-bottom: 10px;
     background: #f8f9fa;
     border-radius: 8px;
     text-decoration: none;
@@ -865,9 +924,7 @@
     transition: all 0.3s ease;
 }
 
-.quick-link:last-child {
-    margin-bottom: 0;
-}
+/* grid kullanıldığı için ekstra alt boşluk gerekmiyor */
 
 .quick-link:hover {
     background: rgba(33, 150, 243, 0.1);
@@ -920,6 +977,9 @@
 
 /* Responsive tasarım için */
 @media (max-width: 768px) {
+    .links-container {
+        grid-template-columns: 1fr;
+    }
     .quick-link {
         padding: 12px;
     }
@@ -935,6 +995,12 @@
 
     .link-content p {
         font-size: 0.8rem;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+    .links-container {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
@@ -1186,6 +1252,94 @@ document.addEventListener('DOMContentLoaded', function() {
             return 'person';
         } else {
             return 'info';
+        }
+    }
+
+    // Adliye İstatistikleri: azalan sırala ve kademeli göster
+    const grid = document.getElementById('courthouseGrid');
+    const loadMoreCourthouse = document.getElementById('courthouseLoadMore');
+    const loadLessCourthouse = document.getElementById('courthouseLoadLess');
+    if (grid) {
+        // Öğeleri topla ve sayıya göre azalan sırala
+        const items = Array.from(grid.querySelectorAll('.courthouse-item'))
+            .sort((a, b) => parseInt(b.dataset.count || '0') - parseInt(a.dataset.count || '0'));
+        // Grid'i temizle ve sıralı ekle
+        grid.innerHTML = '';
+        items.forEach(el => grid.appendChild(el));
+
+        const columns = 2; // CSS'te 2 sütun
+        const rowsPerPage = 3; // her seferinde 3 satır
+        let visibleRows = 3; // başlangıçta 3 satır
+
+        function updateVisible() {
+            const visibleCount = visibleRows * columns;
+            items.forEach((el, idx) => {
+                el.style.display = idx < visibleCount ? 'flex' : 'none';
+            });
+            // Daha fazla var mı?
+            const hasMore = items.length > visibleCount;
+            if (loadMoreCourthouse) loadMoreCourthouse.style.display = hasMore ? 'block' : 'none';
+            if (loadLessCourthouse) loadLessCourthouse.style.display = visibleRows > 3 ? 'block' : 'none';
+        }
+
+        updateVisible();
+
+        if (loadMoreCourthouse) {
+            loadMoreCourthouse.querySelector('button').addEventListener('click', function() {
+                visibleRows += rowsPerPage;
+                updateVisible();
+            });
+        }
+        if (loadLessCourthouse) {
+            loadLessCourthouse.querySelector('button').addEventListener('click', function() {
+                visibleRows = 3; // başlangıç görünümü
+                updateVisible();
+                // üst kısma kaydırmak istersek:
+                // grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    }
+
+    // Yaklaşan Duruşmalar: yakından uzağa sırala ve 4'erli göster
+    const hearingsContainer = document.getElementById('hearingsList');
+    const hearingsMore = document.getElementById('hearingsLoadMore');
+    const hearingsLess = document.getElementById('hearingsLoadLess');
+    if (hearingsContainer) {
+        const items = Array.from(hearingsContainer.querySelectorAll('.hearing-item'))
+            .sort((a, b) => {
+                const aDt = new Date(a.dataset.dt.replace(' ', 'T'));
+                const bDt = new Date(b.dataset.dt.replace(' ', 'T'));
+                return aDt - bDt; // en yakın önce
+            });
+        hearingsContainer.innerHTML = '';
+        items.forEach(el => hearingsContainer.appendChild(el));
+
+        const pageSize = 4;
+        let visibleCount = 4;
+
+        function updateHearingsVisible() {
+            items.forEach((el, idx) => {
+                el.style.display = idx < visibleCount ? 'flex' : 'none';
+            });
+            const hasMore = items.length > visibleCount;
+            if (hearingsMore) hearingsMore.style.display = hasMore ? 'block' : 'none';
+            if (hearingsLess) hearingsLess.style.display = visibleCount > pageSize ? 'block' : 'none';
+        }
+
+        updateHearingsVisible();
+
+        if (hearingsMore) {
+            hearingsMore.querySelector('button').addEventListener('click', function() {
+                visibleCount += pageSize;
+                updateHearingsVisible();
+            });
+        }
+        if (hearingsLess) {
+            hearingsLess.querySelector('button').addEventListener('click', function() {
+                visibleCount = pageSize;
+                updateHearingsVisible();
+                // hearingsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
         }
     }
 });

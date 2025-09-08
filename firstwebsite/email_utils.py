@@ -140,8 +140,11 @@ Size yeni bir etkinlik atanmıştır:
 📅 Etkinlik: {event_title}
 📋 Türü: {event_type_display}
 📅 Tarih: {event_date}
-⏰ Saat: {event_time}
-👤 Atayan: {assigned_by_name}"""
+⏰ Saat: {event_time}"""
+
+    # Duruşma/E-Duruşma dışındaki türlerde atayan bilgisini göster
+    if event_type not in ['durusma', 'e-durusma'] and assigned_by_name:
+        body += f"\n👤 Atayan: {assigned_by_name}"
     
     # Duruşma ve E-duruşma için adliye ve mahkeme bilgilerini ekle
     if event_type in ['durusma', 'e-durusma']:

@@ -35,8 +35,143 @@
         </div>
     </div>
 
-    <!-- Sağ taraf - İletişim Formu -->
+    <!-- Sağ taraf - Avukat Rehberi ve İletişim Formu -->
     <div class="contact-form-section">
+        <!-- Avukat Rehberi -->
+        <div class="lawyers-directory">
+            <h2>Ofis Rehberimiz</h2>
+            <div class="lawyers-grid">
+                <div class="lawyer-card">
+                    <div class="lawyer-avatar">
+                        <i class="material-icons">account_circle</i>
+                    </div>
+                    <div class="lawyer-info">
+                        <h3>Av. Mustafa KAPLAN</h3>
+                        <p class="lawyer-phone">
+                            <i class="material-icons">phone</i>
+                            <span>05422360969</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="lawyer-card">
+                    <div class="lawyer-avatar">
+                        <i class="material-icons">account_circle</i>
+                    </div>
+                    <div class="lawyer-info">
+                        <h3>Av. Perize KAPLAN</h3>
+                        <p class="lawyer-phone">
+                            <i class="material-icons">phone</i>
+                            <span>05422652626</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="lawyer-card">
+                    <div class="lawyer-avatar">
+                        <i class="material-icons">account_circle</i>
+                    </div>
+                    <div class="lawyer-info">
+                        <h3>Av. Batuhan KAPLAN</h3>
+                        <p class="lawyer-phone">
+                            <i class="material-icons">phone</i>
+                            <span>05415181226</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="lawyer-card">
+                    <div class="lawyer-avatar">
+                        <i class="material-icons">account_circle</i>
+                    </div>
+                    <div class="lawyer-info">
+                        <h3>Av. Selvi DERTLİ</h3>
+                        <p class="lawyer-phone">
+                            <i class="material-icons">phone</i>
+                            <span>05077961148</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="lawyer-card">
+                    <div class="lawyer-avatar">
+                        <i class="material-icons">person</i>
+                    </div>
+                    <div class="lawyer-info">
+                        <h3>Zelal Hanım</h3>
+                        <p class="lawyer-phone">
+                            <i class="material-icons">phone</i>
+                            <span>05422940316</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- İban Bilgileri -->
+        <div class="iban-directory">
+            <h2>İban Bilgileri</h2>
+            <div class="iban-cards">
+                <div class="iban-card">
+                    <div class="iban-header">
+                        <div class="iban-icon">
+                            <i class="material-icons">account_balance</i>
+                        </div>
+                        <div class="iban-owner">
+                            <h3>Av. Perize KAPLAN</h3>
+                        </div>
+                    </div>
+                    <div class="iban-details">
+                        <div class="iban-info-row">
+                            <span class="iban-label">Banka:</span>
+                            <span class="iban-value">Vakıfbank</span>
+                        </div>
+                        <div class="iban-info-row">
+                            <span class="iban-label">Şube:</span>
+                            <span class="iban-value">Güneşli Çarşı Şubesi</span>
+                        </div>
+                        <div class="iban-info-row">
+                            <span class="iban-label">Şube Kodu:</span>
+                            <span class="iban-value">629</span>
+                        </div>
+                        <div class="iban-info-row iban-number">
+                            <span class="iban-label">İban:</span>
+                            <span class="iban-value copyable-iban" onclick="copyToClipboard('TR50000150015800730059542')">TR 50 0001 5001 5800 7300 5954 02</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="iban-card">
+                    <div class="iban-header">
+                        <div class="iban-icon">
+                            <i class="material-icons">account_balance</i>
+                        </div>
+                        <div class="iban-owner">
+                            <h3>Av. Mustafa KAPLAN</h3>
+                        </div>
+                    </div>
+                    <div class="iban-details">
+                        <div class="iban-info-row">
+                            <span class="iban-label">Banka:</span>
+                            <span class="iban-value">Vakıfbank</span>
+                        </div>
+                        <div class="iban-info-row">
+                            <span class="iban-label">Şube:</span>
+                            <span class="iban-value">Güneşli Çarşı</span>
+                        </div>
+                        <div class="iban-info-row">
+                            <span class="iban-label">Şube Kodu:</span>
+                            <span class="iban-value">629</span>
+                        </div>
+                        <div class="iban-info-row iban-number">
+                            <span class="iban-label">İban:</span>
+                            <span class="iban-value copyable-iban" onclick="copyToClipboard('TR69000150015800730388403')">TR 69 0001 5001 5800 7303 8840 39</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="form-card">
             <h2>Bize Ulaşın</h2>
             <p>Sorularınız ve önerileriniz için formu doldurun, size en kısa sürede dönüş yapalım.</p>
@@ -69,11 +204,12 @@
 <style>
 .contact-page {
     display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 30px;
-    padding: 40px;
-    max-width: 1400px;
-    margin: 0 auto;
+    grid-template-columns: 0.6fr 2.4fr;
+    gap: 25px;
+    padding: 40px 10px;
+    width: 100%;
+    max-width: none;
+    margin: 0;
 }
 
 .contact-info, .contact-form-section {
@@ -312,6 +448,357 @@
     background: white;
 }
 
+/* Ofis Rehberi Stilleri */
+.lawyers-directory {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+.lawyers-directory h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.lawyers-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+}
+
+.lawyer-card {
+    background: linear-gradient(135deg, #2d313b 0%, #3a3f50 100%);
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 75px;
+}
+
+.lawyer-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.lawyer-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+.lawyer-avatar i {
+    color: white;
+    font-size: 24px;
+}
+
+.lawyer-info {
+    flex: 1;
+}
+
+.lawyer-info h3 {
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    margin-top: 0;
+}
+
+.lawyer-phone {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.lawyer-phone i {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 18px;
+}
+
+.lawyer-phone span {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Responsive düzenlemeler */
+@media (max-width: 1200px) {
+    .lawyers-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+}
+
+@media (max-width: 900px) {
+    .lawyers-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .contact-page {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .lawyers-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .lawyer-card {
+        padding: 15px;
+    }
+    
+    .lawyer-avatar {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .lawyer-avatar i {
+        font-size: 20px;
+    }
+    
+    .lawyer-info h3 {
+        font-size: 0.95rem;
+    }
+    
+    .lawyer-phone span {
+        font-size: 0.85rem;
+    }
+}
+
+/* Dark theme desteği */
+[data-theme="dark"] .lawyers-directory {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .lawyers-directory h2 {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .lawyer-card {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-color: var(--border-color);
+}
+
+/* İban Bilgileri Stilleri */
+.iban-directory {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+.iban-directory h2 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.iban-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.iban-card {
+    background: linear-gradient(135deg, #2d313b 0%, #3a3f50 100%);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.iban-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.iban-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.iban-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+}
+
+.iban-icon i {
+    color: white;
+    font-size: 26px;
+}
+
+.iban-owner h3 {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.iban-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.iban-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.iban-info-row:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.iban-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    font-size: 0.9rem;
+    min-width: 80px;
+}
+
+.iban-value {
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: right;
+}
+
+.iban-number .iban-value {
+    font-family: monospace;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.copyable-iban {
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.copyable-iban:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: scale(1.02);
+}
+
+.copyable-iban::after {
+    content: 'Kopyalamak için tıklayın';
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.copyable-iban:hover::after {
+    opacity: 1;
+}
+
+/* Responsive tasarım */
+@media (max-width: 1000px) {
+    .iban-cards {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .iban-card {
+        padding: 20px;
+    }
+    
+    .iban-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .iban-icon {
+        width: 45px;
+        height: 45px;
+    }
+    
+    .iban-icon i {
+        font-size: 22px;
+    }
+    
+    .iban-info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .iban-value {
+        text-align: left;
+    }
+}
+
+/* Dark theme desteği */
+[data-theme="dark"] .iban-directory {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .iban-directory h2 {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .iban-card {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-color: var(--border-color);
+}
+
 /* Gönder butonu için renk uyumu */
 .submit-btn {
     background: rgb(45, 48, 61);
@@ -366,6 +853,41 @@ function submitForm(event) {
     });
 
     return false;
+}
+
+// İban kopyalama fonksiyonu
+function copyToClipboard(text) {
+    // Geçici bir textarea oluştur
+    const tempTextArea = document.createElement('textarea');
+    tempTextArea.value = text;
+    document.body.appendChild(tempTextArea);
+    
+    // Metni seç ve kopyala
+    tempTextArea.select();
+    tempTextArea.setSelectionRange(0, 99999); // Mobil için
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showGlobalNotification('İban numarası kopyalandı!', 'success');
+        } else {
+            showGlobalNotification('Kopyalama başarısız!', 'error');
+        }
+    } catch (err) {
+        // Modern API'yi dene
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                showGlobalNotification('İban numarası kopyalandı!', 'success');
+            }).catch(() => {
+                showGlobalNotification('Kopyalama başarısız!', 'error');
+            });
+        } else {
+            showGlobalNotification('Kopyalama desteklenmiyor!', 'error');
+        }
+    } finally {
+        // Geçici textarea'yı kaldır
+        document.body.removeChild(tempTextArea);
+    }
 }
 </script>
 {% endblock %} 

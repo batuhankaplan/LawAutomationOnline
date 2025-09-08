@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'tahliye': 'Tahliye',
         'is': 'Yapılacak İş',
         'randevu': 'Randevu',
+        'gunluk-kayit': 'Günlük Kayıt',
         'diger': 'Diğer'
     };
 
@@ -166,9 +167,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function toggleFormFields() {
         const eventType = eventTypeSelect.value;
         const isHearing = eventType === 'durusma' || eventType === 'e-durusma';
+        const isGunlukKayit = eventType === 'gunluk-kayit';
         const citySelectGroup = document.getElementById('citySelectGroup');
+        const gunlukKayitDetailsSection = document.getElementById('gunlukKayitDetailsSection');
+
+        console.log('toggleFormFields called with eventType:', eventType, 'isGunlukKayit:', isGunlukKayit);
 
         hearingDetailsSection.style.display = isHearing ? 'block' : 'none';
+        if (gunlukKayitDetailsSection) {
+            gunlukKayitDetailsSection.style.display = isGunlukKayit ? 'block' : 'none';
+        }
         if (citySelectGroup) {
             citySelectGroup.style.display = isHearing ? 'block' : 'none';
         }
@@ -177,6 +185,52 @@ document.addEventListener('DOMContentLoaded', function() {
         // citySelect ve courthouseSelect şehir seçimine göre required olacak
         courthouseSelect.required = isHearing; // Şimdilik true, şehir seçimi bunu etkileyebilir
         departmentSelect.required = isHearing;
+
+        // Günlük Kayıt için gereksiz alanları gizle/göster
+        const titleGroup = document.getElementById('eventTitle').closest('.form-group');
+        const timeGroup = document.getElementById('eventTime').closest('.form-group');
+        const assignedToGroup = document.getElementById('assignedToGroup');
+        const isCompletedGroup = document.getElementById('isCompletedGroup');
+        
+        console.log('DOM elements found - assignedToGroup:', !!assignedToGroup, 'isCompletedGroup:', !!isCompletedGroup);
+        
+        if (isGunlukKayit) {
+            console.log('Hiding fields for Günlük Kayıt');
+            // Günlük Kayıt seçildiğinde bu alanları gizle
+            if (titleGroup) {
+                titleGroup.style.setProperty('display', 'none', 'important');
+                console.log('Title group hidden');
+            }
+            if (timeGroup) {
+                timeGroup.style.setProperty('display', 'none', 'important');
+                console.log('Time group hidden');
+            }
+            if (assignedToGroup) {
+                assignedToGroup.style.setProperty('display', 'none', 'important');
+                console.log('AssignedTo group hidden');
+            }
+            if (isCompletedGroup) {
+                isCompletedGroup.style.setProperty('display', 'none', 'important');
+                console.log('IsCompleted group hidden');
+            }
+            
+            // Required alanları kaldır
+            document.getElementById('eventTitle').required = false;
+            document.getElementById('eventTime').required = false;
+            document.getElementById('assignedTo').required = false;
+        } else {
+            console.log('Showing fields for other event types');
+            // Diğer etkinlik türlerinde bu alanları göster
+            if (titleGroup) titleGroup.style.setProperty('display', 'block', 'important');
+            if (timeGroup) timeGroup.style.setProperty('display', 'block', 'important');
+            if (assignedToGroup) assignedToGroup.style.setProperty('display', 'block', 'important');
+            if (isCompletedGroup) isCompletedGroup.style.setProperty('display', 'block', 'important');
+            
+            // Required alanları geri koy
+            document.getElementById('eventTitle').required = true;
+            document.getElementById('eventTime').required = true;
+            document.getElementById('assignedTo').required = true;
+        }
 
         // Arabuluculuk, AİHM, AYM kontrolü
         const fileType = fileTypeSelect.value.toLowerCase();
@@ -212,8 +266,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
 
-        assignedToGroup.style.display = 'block'; // Her zaman gösterilsin
-        isCompletedGroup.style.display = 'block'; // Her zaman gösterilsin
+        // Atanan Kişi ve Tamamlandı alanlarını yalnızca Günlük Kayıt değilse göster
+        assignedToGroup.style.display = isGunlukKayit ? 'none' : 'block';
+        isCompletedGroup.style.display = isGunlukKayit ? 'none' : 'block';
     }
 
 
@@ -345,6 +400,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const titleInput = document.getElementById('eventTitle');
         if (eventTypeSelect.value === 'durusma' || eventTypeSelect.value === 'e-durusma') {
             titleInput.placeholder = 'Müvekkil (Esas Numarası)';
+        } else if (eventTypeSelect.value === 'gunluk-kayit') {
+            titleInput.placeholder = 'Günlük kayıt başlığı';
         } else {
             titleInput.placeholder = 'Etkinlik başlığı';
         }
@@ -472,11 +529,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const timeAndType = document.createElement('div');
                 timeAndType.className = 'time-and-type';
-                timeAndType.textContent = `${event.time || ''} / ${eventTypes[event.event_type] || 'Bilinmeyen'}`;
+                if (event.event_type === 'gunluk-kayit') {
+                    timeAndType.textContent = `${eventTypes[event.event_type] || 'Bilinmeyen'}`;
+                } else {
+                    timeAndType.textContent = `${event.time || ''} / ${eventTypes[event.event_type] || 'Bilinmeyen'}`;
+                }
 
                 const assignedToDiv = document.createElement('div');
                 assignedToDiv.className = 'assigned-to';
-                assignedToDiv.textContent = event.assigned_to || '';
+                if (event.event_type === 'gunluk-kayit') {
+                    assignedToDiv.textContent = ''; // Günlük Kayıt için atanan kişi gösterme
+                } else {
+                    assignedToDiv.textContent = event.assigned_to || '';
+                }
                 
                 eventContent.appendChild(timeAndType);
                 eventContent.appendChild(assignedToDiv);
@@ -587,18 +652,42 @@ document.addEventListener('DOMContentLoaded', function() {
                      departmentSelect.value = ''; // Birim yoksa temizle
                  }
              }
+            
+            // Günlük Kayıt bilgileri (eğer varsa)
+            if (eventToEdit.event_type === 'gunluk-kayit') {
+                if (document.getElementById('muvekkilIsim')) {
+                    document.getElementById('muvekkilIsim').value = eventToEdit.muvekkil_isim || '';
+                }
+                if (document.getElementById('muvekkilTelefon')) {
+                    document.getElementById('muvekkilTelefon').value = eventToEdit.muvekkil_telefon || '';
+                }
+            }
+            
+            // Düzenleme modunda etkinlik türüne göre form alanlarını güncelle
+            toggleFormFields();
         } else {
-            // Yeni etkinlik modu
-             document.getElementById('assignedTo').value = '{{ approved_users[0].full_name if approved_users else "" }}';
-             document.getElementById('isCompleted').checked = false;
-             // Yeni etkinlik eklerken şehir/adliye/birim dropdownlarını sıfırla/ayarla
-             const cityElement = document.getElementById('city');
-             if(cityElement) cityElement.value = '';
-             courthouseSelect.innerHTML = '<option value="">Önce Şehir Seçiniz</option>';
-             departmentSelect.innerHTML = '<option value="">Önce Adliye Seçiniz</option>';
+            // Yeni etkinlik modu - tüm değerleri sıfırla
+            document.getElementById('eventType').value = 'diger'; // Default event type
+            document.getElementById('assignedTo').value = '{{ approved_users[0].full_name if approved_users else "" }}';
+            document.getElementById('isCompleted').checked = false;
+            // Yeni etkinlik eklerken şehir/adliye/birim dropdownlarını sıfırla/ayarla
+            const cityElement = document.getElementById('city');
+            if(cityElement) cityElement.value = '';
+            courthouseSelect.innerHTML = '<option value="">Önce Şehir Seçiniz</option>';
+            departmentSelect.innerHTML = '<option value="">Önce Adliye Seçiniz</option>';
+            // Günlük kayıt alanlarını temizle
+            if (document.getElementById('muvekkilIsim')) {
+                document.getElementById('muvekkilIsim').value = '';
+            }
+            if (document.getElementById('muvekkilTelefon')) {
+                document.getElementById('muvekkilTelefon').value = '';
+            }
         }
 
-        toggleFormFields(); // Form alanlarının görünürlüğünü ayarla
+        // DOM güncellenmesi için kısa bir gecikme ekle, sonra form alanlarını ayarla
+        setTimeout(() => {
+            toggleFormFields(); // Form alanlarının görünürlüğünü ayarla
+        }, 10);
         
         // Set title placeholder based on event type
         const titleInput = document.getElementById('eventTitle');
@@ -632,9 +721,23 @@ document.addEventListener('DOMContentLoaded', function() {
         eventTypeBadge.className = `event-type-badge ${event.event_type}`; // CSS sınıfı için
 
         document.getElementById('detailDate').textContent = new Date(event.date + 'T00:00:00').toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        document.getElementById('detailTime').textContent = event.time || '-';
-        document.getElementById('detailAssignedTo').textContent = event.assigned_to || '-';
-        document.getElementById('detailStatus').textContent = event.is_completed ? 'Tamamlandı' : 'Bekliyor';
+        document.getElementById('detailTime').textContent = event.event_type === 'gunluk-kayit' ? '-' : (event.time || '-');
+        document.getElementById('detailAssignedTo').textContent = event.event_type === 'gunluk-kayit' ? '-' : (event.assigned_to || '-');
+        document.getElementById('detailStatus').textContent = event.event_type === 'gunluk-kayit' ? '-' : (event.is_completed ? 'Tamamlandı' : 'Bekliyor');
+
+        // Günlük kayıt için Saat/Atanan Kişi/Durum bloklarını gizle
+        const timeItem = document.getElementById('detailTimeItem');
+        const assignedItem = document.getElementById('detailAssignedToItem');
+        const statusItem = document.getElementById('detailStatusItem');
+        if (event.event_type === 'gunluk-kayit') {
+            if (timeItem) timeItem.style.display = 'none';
+            if (assignedItem) assignedItem.style.display = 'none';
+            if (statusItem) statusItem.style.display = 'none';
+        } else {
+            if (timeItem) timeItem.style.display = 'flex';
+            if (assignedItem) assignedItem.style.display = 'flex';
+            if (statusItem) statusItem.style.display = 'flex';
+        }
         document.getElementById('detailDescription').textContent = event.description || 'Açıklama yok.';
 
          // Adliye ve Mahkeme/Birim bilgilerini göster/gizle
@@ -665,6 +768,31 @@ document.addEventListener('DOMContentLoaded', function() {
          } else if (courthouseItem && departmentItem) {
              courthouseItem.style.display = 'none';
              departmentItem.style.display = 'none';
+         }
+
+         // Günlük Kayıt bilgilerini göster/gizle
+         const muvekkilItem = document.getElementById('detailMuvekkilItem');
+         const telefonItem = document.getElementById('detailTelefonItem');
+         const muvekkilSpan = document.getElementById('detailMuvekkil');
+         const telefonSpan = document.getElementById('detailTelefon');
+
+         if (event.event_type === 'gunluk-kayit' && muvekkilItem && telefonItem) {
+             if (event.muvekkil_isim) {
+                 muvekkilSpan.textContent = event.muvekkil_isim;
+                 muvekkilItem.style.display = 'flex';
+             } else {
+                 muvekkilItem.style.display = 'none';
+             }
+             
+             if (event.muvekkil_telefon) {
+                 telefonSpan.textContent = event.muvekkil_telefon;
+                 telefonItem.style.display = 'flex';
+             } else {
+                 telefonItem.style.display = 'none';
+             }
+         } else if (muvekkilItem && telefonItem) {
+             muvekkilItem.style.display = 'none';
+             telefonItem.style.display = 'none';
          }
 
 
@@ -706,12 +834,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 itemDiv.className = `event-list-item ${event.event_type}`;
                 if (event.is_completed) itemDiv.classList.add('completed');
 
+                const timeText = event.event_type === 'gunluk-kayit' ? '' : (event.time || '');
+                const assignedToText = event.event_type === 'gunluk-kayit' ? '' : event.assigned_to;
+                
                 itemDiv.innerHTML = `
                     <div class="time-and-type" style="color: var(--${event.event_type}-color, #6c757d); border-left-color: var(--${event.event_type}-color, #6c757d);">
-                       ${event.time || ''} - ${eventTypes[event.event_type] || 'Bilinmeyen'}
+                       ${timeText ? `${timeText} - ` : ''}${eventTypes[event.event_type] || 'Bilinmeyen'}
             </div>
                     <div class="event-title">${event.title}</div>
-                    ${event.assigned_to ? `<div class="assigned-to">${event.assigned_to}</div>` : ''}
+                    ${assignedToText ? `<div class="assigned-to">${assignedToText}</div>` : ''}
                     ${(() => {
                         // Dosya türüne göre konum bilgisi göster
                         if (event.event_type === 'durusma' || event.event_type === 'e-durusma') {
@@ -767,19 +898,29 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Günlük Kayıt için başlık oluştur
+        let eventTitle = document.getElementById('eventTitle').value;
+        if (eventTypeSelect.value === 'gunluk-kayit') {
+            const muvekkilIsim = document.getElementById('muvekkilIsim').value;
+            eventTitle = muvekkilIsim ? `Günlük Kayıt: ${muvekkilIsim}` : 'Günlük Kayıt';
+        }
+        
         const formData = {
             id: isEditing ? parseInt(eventId) : undefined,
-            title: document.getElementById('eventTitle').value,
+            title: eventTitle,
             date: selectedDateInput.value,
-            time: document.getElementById('eventTime').value,
+            time: (eventTypeSelect.value === 'gunluk-kayit') ? '00:00' : document.getElementById('eventTime').value,
             event_type: eventTypeSelect.value,
             description: document.getElementById('eventDescription').value,
-            assigned_to: document.getElementById('assignedTo').value,
-            is_completed: document.getElementById('isCompleted').checked,
+            assigned_to: (eventTypeSelect.value === 'gunluk-kayit') ? '' : document.getElementById('assignedTo').value,
+            is_completed: (eventTypeSelect.value === 'gunluk-kayit') ? false : document.getElementById('isCompleted').checked,
             // Duruşma bilgileri (sadece duruşma/e-duruşma ise gönder)
              file_type: (eventTypeSelect.value === 'durusma' || eventTypeSelect.value === 'e-durusma') ? fileTypeSelect.value : null,
              courthouse: (eventTypeSelect.value === 'durusma' || eventTypeSelect.value === 'e-durusma') ? courthouseSelect.value : null,
              department: (eventTypeSelect.value === 'durusma' || eventTypeSelect.value === 'e-durusma') ? departmentSelect.value : null,
+            // Günlük Kayıt bilgileri (sadece günlük-kayit ise gönder)
+            muvekkil_isim: (eventTypeSelect.value === 'gunluk-kayit') ? document.getElementById('muvekkilIsim').value : null,
+            muvekkil_telefon: (eventTypeSelect.value === 'gunluk-kayit') ? document.getElementById('muvekkilTelefon').value : null,
             // Şehir bilgisi frontend'de kullanıldı, backend'e göndermeye gerek yok (şimdilik)
         };
 
@@ -1569,6 +1710,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .event-type-badge.is { background: #ffc107; color: #000; }
 .event-type-badge.randevu { background: #9b59b6; }
 .event-type-badge.diger { background: #6c757d; }
+.event-type-badge.gunluk-kayit { background: #fd7e14; color: #fff; }
 
 .event-list {
     flex: 1;
@@ -1616,6 +1758,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .calendar-event[data-type="tahliye"] { color: #198754; }
 .calendar-event[data-type="is"] { color: #ffc107; }
 .calendar-event[data-type="randevu"] { color: #9b59b6; }
+.calendar-event[data-type="gunluk-kayit"] { color: #fd7e14; }
 .calendar-event[data-type="diger"] { color: #6c757d; }
 
 .calendar-day.empty {
@@ -1925,6 +2068,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                             <option value="tahliye">Tahliye</option>
                             <option value="is">Yapılacak İş</option>
                             <option value="randevu">Randevu</option>
+                            <option value="gunluk-kayit">Günlük Kayıt</option>
                             <option value="diger">Diğer</option>
                         </select>
                     </div>
@@ -1969,6 +2113,24 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                                 <option value="">Seçiniz</option>
                                 <!-- Birimler dinamik olarak JavaScript ile doldurulacak -->
                             </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Günlük Kayıt için özel alanlar -->
+                <div id="gunlukKayitDetailsSection" style="display: none;">
+                    <div class="form-group full-width">
+                        <label>Müvekkil İsim Soyisim</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="muvekkilIsim" name="muvekkil_isim" placeholder="Müvekkil adı soyadı">
+                            <i class="material-icons">person</i>
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Telefon Numarası <span style="color: #666; font-size: 0.9em;">(isteğe bağlı)</span></label>
+                        <div class="input-wrapper">
+                            <input type="tel" id="muvekkilTelefon" name="muvekkil_telefon" placeholder="Telefon numarası">
+                            <i class="material-icons">phone</i>
                         </div>
                     </div>
                 </div>
@@ -2046,7 +2208,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                             <span class="meta-value" id="detailDate"></span>
                         </div>
                     </div>
-                    <div class="meta-item">
+                    <div class="meta-item" id="detailTimeItem">
                         <i class="material-icons">schedule</i>
                         <div>
                             <span class="meta-label">Saat</span>
@@ -2068,15 +2230,30 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                              <span class="meta-value" id="detailDepartment"></span>
                          </div>
                      </div>
+                    <!-- Günlük Kayıt bilgileri -->
+                    <div class="meta-item" id="detailMuvekkilItem" style="display: none;">
+                        <i class="material-icons">person_outline</i>
+                        <div>
+                            <span class="meta-label">Müvekkil</span>
+                            <span class="meta-value" id="detailMuvekkil"></span>
+                        </div>
+                    </div>
+                    <div class="meta-item" id="detailTelefonItem" style="display: none;">
+                        <i class="material-icons">phone</i>
+                        <div>
+                            <span class="meta-label">Telefon</span>
+                            <span class="meta-value" id="detailTelefon"></span>
+                        </div>
+                    </div>
                     <!-- Mevcut Atanan Kişi ve Durum -->
-                    <div class="meta-item">
+                    <div class="meta-item" id="detailAssignedToItem">
                         <i class="material-icons">person</i>
                         <div>
                             <span class="meta-label">Atanan Kişi</span>
                             <span class="meta-value" id="detailAssignedTo"></span>
                         </div>
                     </div>
-                    <div class="meta-item">
+                    <div class="meta-item" id="detailStatusItem">
                         <i class="material-icons">check_circle</i>
                         <div>
                             <span class="meta-label">Durum</span>

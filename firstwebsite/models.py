@@ -421,7 +421,7 @@ class CalendarEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     date = db.Column(db.Date, nullable=False)
-    time = db.Column(db.Time, nullable=False)
+    time = db.Column(db.Time, nullable=True)
     event_type = db.Column(db.String(50), nullable=False)
     description = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -433,6 +433,9 @@ class CalendarEvent(db.Model):
     file_type = db.Column(db.String(50))  # Dosya türü (Hukuk, Ceza, İcra)
     courthouse = db.Column(db.String(100))  # Adliye 
     department = db.Column(db.String(100))  # Mahkeme/Birim
+    # Günlük Kayıt bilgileri için ek alanlar
+    muvekkil_isim = db.Column(db.String(200))  # Müvekkil İsim Soyisim
+    muvekkil_telefon = db.Column(db.String(20))  # Telefon Numarası (isteğe bağlı)
 
 class WorkerInterview(db.Model):
     id = db.Column(db.Integer, primary_key=True)

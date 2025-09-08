@@ -755,7 +755,7 @@ def takvim():
             'id': event.id,
             'title': event.title,
             'date': event.date.strftime('%Y-%m-%d'),
-            'time': event.time.strftime('%H:%M'),
+            'time': event.time.strftime('%H:%M') if event.time else None,
             'event_type': event.event_type,
             'description': event.description,
             'assigned_to': event.assigned_to,
@@ -763,7 +763,9 @@ def takvim():
             'courthouse': event.courthouse,
             'department': event.department,
             'deadline_date': event.deadline_date.strftime('%Y-%m-%d') if event.deadline_date else None,
-            'is_completed': event.is_completed
+            'is_completed': event.is_completed,
+            'muvekkil_isim': event.muvekkil_isim,
+            'muvekkil_telefon': event.muvekkil_telefon
         }
         events_data.append(event_data)
     
@@ -1880,7 +1882,7 @@ def takvim():
             'id': event.id,
             'title': event.title,
             'date': event.date.strftime('%Y-%m-%d'),
-            'time': event.time.strftime('%H:%M'),
+            'time': event.time.strftime('%H:%M') if event.time else None,
             'event_type': event.event_type,
             'description': event.description,
             'assigned_to': event.assigned_to,
@@ -1888,7 +1890,9 @@ def takvim():
             'courthouse': event.courthouse,
             'department': event.department,
             'deadline_date': event.deadline_date.strftime('%Y-%m-%d') if event.deadline_date else None,
-            'is_completed': event.is_completed
+            'is_completed': event.is_completed,
+            'muvekkil_isim': event.muvekkil_isim,
+            'muvekkil_telefon': event.muvekkil_telefon
         }
         events_data.append(event_data)
     
@@ -3278,7 +3282,7 @@ def takvim():
             'id': event.id,
             'title': event.title,
             'date': event.date.strftime('%Y-%m-%d'),
-            'time': event.time.strftime('%H:%M'),
+            'time': event.time.strftime('%H:%M') if event.time else None,
             'event_type': event.event_type,
             'description': event.description,
             'assigned_to': event.assigned_to,
@@ -3286,7 +3290,9 @@ def takvim():
             'courthouse': event.courthouse,
             'department': event.department,
             'deadline_date': event.deadline_date.strftime('%Y-%m-%d') if event.deadline_date else None,
-            'is_completed': event.is_completed
+            'is_completed': event.is_completed,
+            'muvekkil_isim': event.muvekkil_isim,
+            'muvekkil_telefon': event.muvekkil_telefon
         }
         events_data.append(event_data)
     
@@ -4463,7 +4469,7 @@ def takvim():
             'id': event.id,
             'title': event.title,
             'date': event.date.strftime('%Y-%m-%d'),
-            'time': event.time.strftime('%H:%M'),
+            'time': event.time.strftime('%H:%M') if event.time else None,
             'event_type': event.event_type,
             'description': event.description,
             'assigned_to': event.assigned_to,
@@ -4471,7 +4477,9 @@ def takvim():
             'courthouse': event.courthouse,
             'department': event.department,
             'deadline_date': event.deadline_date.strftime('%Y-%m-%d') if event.deadline_date else None,
-            'is_completed': event.is_completed
+            'is_completed': event.is_completed,
+            'muvekkil_isim': event.muvekkil_isim,
+            'muvekkil_telefon': event.muvekkil_telefon
         }
         events_data.append(event_data)
     
@@ -5293,7 +5301,12 @@ def add_event():
         
         # Tarihleri doğrudan string'den date objesine çevir
         event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        event_time = datetime.strptime(time_str, '%H:%M').time()
+        
+        # Günlük Kayıt için saati 00:00 olarak kaydet
+        if data['event_type'] == 'gunluk-kayit':
+            event_time = datetime.strptime('00:00', '%H:%M').time()
+        else:
+            event_time = datetime.strptime(time_str, '%H:%M').time()
         
         # deadline_date kontrolü - eğer varsa çevir, yoksa None olarak bırak
         deadline_date = None
@@ -5324,6 +5337,12 @@ def add_event():
         else:
             description = data.get('description', '')
         
+        # Günlük Kayıt için atanan kişi null, diğerleri için normal
+        if data['event_type'] == 'gunluk-kayit':
+            assigned_to = None  # Günlük Kayıt için atanan kişi kaydedilmez
+        else:
+            assigned_to = data.get('assigned_to', '')
+        
         event = CalendarEvent(
             title=data['title'],
             date=event_date,
@@ -5331,12 +5350,14 @@ def add_event():
             event_type=data['event_type'],
             description=description,
             user_id=current_user.id,
-            assigned_to=data.get('assigned_to', ''),
+            assigned_to=assigned_to,
             deadline_date=deadline_date,
-            is_completed=data.get('is_completed', False),
+            is_completed=False if data['event_type'] == 'gunluk-kayit' else data.get('is_completed', False),
             file_type=file_type,
             courthouse=courthouse,
-            department=department
+            department=department,
+            muvekkil_isim=data.get('muvekkil_isim'),
+            muvekkil_telefon=data.get('muvekkil_telefon')
         )
         
         db.session.add(event)
@@ -5382,7 +5403,9 @@ def add_event():
                 is_completed=event.is_completed,
                 file_type=file_type,
                 courthouse=courthouse,
-                department=department
+                department=department,
+                muvekkil_isim=event.muvekkil_isim,
+                muvekkil_telefon=event.muvekkil_telefon
             )
             db.session.add(deadline_event)
         
@@ -5496,7 +5519,11 @@ def update_event():
             # Yeni format: ayrı date ve time alanları
             try:
                 event_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
-                event_time = datetime.strptime(data['time'], '%H:%M').time()
+                # Günlük Kayıt için saati 00:00 kabul et
+                if data.get('event_type') == 'gunluk-kayit':
+                    event_time = datetime.strptime('00:00', '%H:%M').time()
+                else:
+                    event_time = datetime.strptime(data['time'], '%H:%M').time()
                 
                 event.date = event_date
                 event.time = event_time
@@ -5575,6 +5602,23 @@ def update_event():
             event.file_type = None
             event.courthouse = None
             event.department = None
+        
+        # Günlük Kayıt bilgilerini güncelle
+        if event.event_type == 'gunluk-kayit':
+            if 'muvekkil_isim' in data:
+                event.muvekkil_isim = data['muvekkil_isim']
+                
+            if 'muvekkil_telefon' in data:
+                event.muvekkil_telefon = data['muvekkil_telefon']
+                
+            # Günlük Kayıt için gereksiz alanları null yap
+            event.time = None
+            event.assigned_to = None
+            event.is_completed = False
+        else:
+            # Günlük Kayıt değilse bu alanları temizle
+            event.muvekkil_isim = None
+            event.muvekkil_telefon = None
         
         # Değişiklikleri kaydet
         db.session.commit()
@@ -11389,6 +11433,10 @@ def login():
     
     print("DEBUG - Rendering auth.html")
     return render_template('auth.html')
+
+@app.route('/vekaletname')
+def vekaletname():
+    return render_template('vekaletname.html')
 
 @app.route('/test_route')
 def test_route():
