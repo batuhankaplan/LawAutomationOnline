@@ -362,6 +362,12 @@
         margin: 0.3cm;
     }
     
+    /* Boş sayfa oluşmasını engelle */
+    body {
+        height: auto !important;
+        min-height: auto !important;
+    }
+    
     body * {
         visibility: hidden;
     }
@@ -536,6 +542,12 @@
         gap: 0.1cm;
     }
     
+    /* Radio button durumlarını koru */
+    input[type="radio"]:checked {
+        appearance: auto !important;
+        -webkit-appearance: auto !important;
+    }
+    
     .radio-group label {
         margin-right: 0.02cm;
         font-size: 5pt;
@@ -621,17 +633,17 @@
 .pdf-mode {
     width: 210mm !important;
     height: auto !important;
-    min-height: 297mm !important;
+    min-height: auto !important; /* Minimum yüksekliği kaldır */
     margin: 0 auto !important;
-    padding: 5mm 10mm 10mm 10mm !important;
+    padding: 5mm 10mm 5mm 10mm !important; /* Alt padding'i azalt */
     background-color: white !important;
     box-shadow: none !important;
     font-family: Arial, sans-serif !important;
     font-size: 8pt !important;
     position: relative !important;
     box-sizing: border-box !important;
-    overflow: visible !important; /* İçeriğin görünebilmesi için visible */
-    page-break-after: avoid !important;
+    overflow: visible !important;
+    page-break-after: auto !important; /* Auto'ya değiştir */
 }
 
 .pdf-mode .form-header {
@@ -942,15 +954,15 @@ input[type="text"][name$="Date"] {
                 <div class="input-grid" style="grid-template-columns: repeat(2, 1fr);">
                     <div class="input-item">
                         <label for="insuranceStatus">Şirket İsmi</label>
-                        <input type="text" id="insuranceStatus" name="insuranceStatus">
+                        <textarea id="insuranceStatus" name="insuranceStatus" class="auto-resize"></textarea>
                     </div>
                     <div class="input-item">
                         <label for="salary">İşyeri Faaliyeti/Konusu</label>
-                        <input type="text" id="salary" name="salary">
+                        <textarea id="salary" name="salary" class="auto-resize"></textarea>
                     </div>
                     <div class="input-item">
                         <label for="insuranceNo">Mersis/Vergi/Ticaret Sicil No</label>
-                        <input type="text" id="insuranceNo" name="insuranceNo">
+                        <textarea id="insuranceNo" name="insuranceNo" class="auto-resize"></textarea>
                     </div>
                     <div class="input-item">
                         <label for="insuranceDate">Şirket Adresi-Telefonu</label>
@@ -964,19 +976,19 @@ input[type="text"][name$="Date"] {
                 <div class="input-grid" style="grid-template-columns: repeat(2, 1fr);">
                     <div class="input-item">
                         <label for="workingHours">Çalışma Saatleri</label>
-                        <input type="text" id="workingHours" name="workingHours">
+                        <textarea id="workingHours" name="workingHours" class="auto-resize"></textarea>
                     </div>
                     <div class="input-item">
                         <label for="overtime">Fazla Mesai</label>
-                        <input type="text" id="overtime" name="overtime">
+                        <textarea id="overtime" name="overtime" class="auto-resize"></textarea>
                     </div>
                     <div class="input-item">
                         <label for="weeklyHoliday">Haftalık İzin Günü</label>
-                        <input type="text" id="weeklyHoliday" name="weeklyHoliday">
+                        <textarea id="weeklyHoliday" name="weeklyHoliday" class="auto-resize"></textarea>
                     </div>
                     <div class="input-item">
                         <label for="annualLeave">Yıllık İzin Kullanımı</label>
-                        <input type="text" id="annualLeave" name="annualLeave">
+                        <textarea id="annualLeave" name="annualLeave" class="auto-resize"></textarea>
                     </div>
                 </div>
             </div>
@@ -1695,7 +1707,12 @@ input[type="text"][name$="Date"] {
                 
                 // Alacak bilgilerini wrapper'a taşı
                 const alacakDiv = document.createElement('div');
-                alacakDiv.innerHTML = alacakGroup.innerHTML;
+                // innerHTML yerine cloneNode kullanarak radio button durumlarını koru
+                const alacakClone = alacakGroup.cloneNode(true);
+                // Sadece içeriği al, wrapper div'i değil
+                while (alacakClone.firstChild) {
+                    alacakDiv.appendChild(alacakClone.firstChild);
+                }
                 
                 // Tanık bilgilerini wrapper'a ekle
                 const witnessDiv = document.createElement('div');
@@ -1723,7 +1740,12 @@ input[type="text"][name$="Date"] {
                 
                 // Alacak bilgilerini wrapper'a taşı
                 const alacakDiv = document.createElement('div');
-                alacakDiv.innerHTML = alacakGroup.innerHTML;
+                // innerHTML yerine cloneNode kullanarak radio button durumlarını koru
+                const alacakClone = alacakGroup.cloneNode(true);
+                // Sadece içeriği al, wrapper div'i değil
+                while (alacakClone.firstChild) {
+                    alacakDiv.appendChild(alacakClone.firstChild);
+                }
                 
                 // Tanık durumu için basit div
                 const witnessDiv = document.createElement('div');
@@ -1780,20 +1802,41 @@ input[type="text"][name$="Date"] {
 
     // Form yazdırma fonksiyonu
     function printForm() {
+        // Radio button durumlarını sakla
+        const radioStates = {};
+        document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+            radioStates[radio.name] = radio.value;
+        });
+        
         // PDF için tanık layout'ını hazırla
         preparePDFWitnessLayout();
         
         // Yazdır
         window.print();
         
-        // Yazdırma sonrası layout'ı temizle
+        // Yazdırma sonrası layout'ı temizle ve radio button durumlarını geri yükle
         setTimeout(() => {
             cleanupPDFWitnessLayout();
+            
+            // Radio button durumlarını geri yükle
+            Object.keys(radioStates).forEach(radioName => {
+                const radioValue = radioStates[radioName];
+                const radioElement = document.querySelector(`input[type="radio"][name="${radioName}"][value="${radioValue}"]`);
+                if (radioElement) {
+                    radioElement.checked = true;
+                }
+            });
         }, 1000);
     }
 
     // PDF indirme fonksiyonu
     function downloadPDF() {
+        // Radio button durumlarını sakla
+        const radioStates = {};
+        document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+            radioStates[radio.name] = radio.value;
+        });
+        
         // Yükleme göstergesini göster
         const loadingOverlay = document.getElementById('loadingOverlay');
         loadingOverlay.style.display = 'flex';
@@ -1920,7 +1963,7 @@ input[type="text"][name$="Date"] {
                     scrollX: 0,
                     scrollY: 0,
                     width: 210 * 3.78, // A4 genişliği mm to px
-                    height: 297 * 3.78, // A4 yüksekliği mm to px
+                    height: null, // Yüksekliği otomatik belirle
                     windowWidth: 1280,
                     windowHeight: 1024
                 },
@@ -1928,17 +1971,30 @@ input[type="text"][name$="Date"] {
                     unit: 'mm', 
                     format: 'a4', 
                     orientation: 'portrait',
-                    compress: true
+                    compress: true,
+                    putOnlyUsedFonts: true // Sadece kullanılan fontları ekle
                 },
-                pagebreak: { mode: ['css'] }
+                pagebreak: { mode: ['avoid-all'], avoid: '.form-group' } // Form gruplarını bölme
             };
             
             // PDF oluştur ve indir
             html2pdf().from(element).set(opt).toPdf().get('pdf').then((pdf) => {
-                // İkinci boş sayfayı kontrol et ve kaldır
-                if (pdf.internal.getNumberOfPages() > 1) {
-                    // Artık ikinci sayfayı silmiyoruz, tüm sayfaları koruyoruz
-                    console.log(`PDF ${pdf.internal.getNumberOfPages()} sayfa içeriyor.`);
+                // Boş sayfaları kontrol et ve kaldır
+                const pageCount = pdf.internal.getNumberOfPages();
+                console.log(`PDF ${pageCount} sayfa içeriyor.`);
+                
+                // Eğer birden fazla sayfa varsa, boş sayfaları kontrol et
+                if (pageCount > 1) {
+                    // Son sayfanın içeriğini kontrol et
+                    for (let i = pageCount; i > 1; i--) {
+                        pdf.setPage(i);
+                        const pageText = pdf.internal.getPageText(i);
+                        // Eğer sayfa boş veya sadece boşluk karakterleri içeriyorsa sil
+                        if (!pageText || pageText.trim().length === 0) {
+                            pdf.deletePage(i);
+                            console.log(`Boş sayfa ${i} silindi.`);
+                        }
+                    }
                 }
                 
                 // PDF'i indir
@@ -1981,6 +2037,15 @@ input[type="text"][name$="Date"] {
                     terminationReasonTextarea.style.display = '';
                 }
                 
+                // Radio button durumlarını geri yükle
+                Object.keys(radioStates).forEach(radioName => {
+                    const radioValue = radioStates[radioName];
+                    const radioElement = document.querySelector(`input[type="radio"][name="${radioName}"][value="${radioValue}"]`);
+                    if (radioElement) {
+                        radioElement.checked = true;
+                    }
+                });
+                
                 // Yükleme göstergesini gizle
                 loadingOverlay.style.display = 'none';
             });
@@ -1988,6 +2053,16 @@ input[type="text"][name$="Date"] {
         } catch (error) {
             console.error('PDF oluşturma hatası:', error);
             alert('PDF oluşturulurken bir hata oluştu: ' + error.message);
+            
+            // Hata durumunda da radio button durumlarını geri yükle
+            Object.keys(radioStates).forEach(radioName => {
+                const radioValue = radioStates[radioName];
+                const radioElement = document.querySelector(`input[type="radio"][name="${radioName}"][value="${radioValue}"]`);
+                if (radioElement) {
+                    radioElement.checked = true;
+                }
+            });
+            
             loadingOverlay.style.display = 'none';
             
             // Hata durumunda da div'leri kaldır ve textarea'ları geri göster
@@ -2302,7 +2377,7 @@ input[type="text"][name$="Date"] {
                 setTimeout(() => {
                     // PDF oluşturma seçenekleri - daha yüksek kalite ve daha iyi ölçekleme
                     const opt = {
-                        margin: [10, 10, 10, 10],
+                        margin: [10, 10, 5, 10], // Alt margin'i azalt
                         filename: `isci_gorusme_${formId}.pdf`,
                         image: { type: 'jpeg', quality: 1.0 },
                         html2canvas: { 
@@ -2313,15 +2388,16 @@ input[type="text"][name$="Date"] {
                             logging: true,
                             backgroundColor: '#FFFFFF',
                             width: 210 * 3.78, // 210mm'yi piksel olarak belirt (1mm = 3.78px)
-                            height: 297 * 3.78 // 297mm'yi piksel olarak belirt
+                            height: null // Yüksekliği otomatik belirle
                         },
                         jsPDF: { 
                             unit: 'mm', 
                             format: 'a4', 
                             orientation: 'portrait',
-                            compress: true
+                            compress: true,
+                            putOnlyUsedFonts: true
                         },
-                        pagebreak: { mode: ['css', 'legacy'] } // avoid-all yerine daha güvenli seçenekler
+                        pagebreak: { mode: ['avoid-all'], avoid: '.form-group' } // Form gruplarını bölme
                     };
                     
                     // PDF oluştur - önce HTML2PDF'i doğru şekilde yükleyelim
