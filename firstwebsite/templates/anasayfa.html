@@ -35,7 +35,7 @@
             </div>
             <div class="activities-list" id="activitiesList">
                 {% for activity in activities %}
-                <div class="activity-item">
+                <div class="activity-item" data-activity-id="{{ activity.id }}">
                     <div class="activity-icon">
                         <img src="{{ url_for('static', filename='images/pp.png') }}" alt="Profil">
                     </div>
@@ -69,6 +69,11 @@
                                 <i class="material-icons">access_time</i>
                                 <span>{{ activity.timestamp.strftime('%d.%m.%Y %H:%M') }}</span>
                             </div>
+                            {% if is_admin %}
+                            <button class="btn small delete-activity-btn" title="Sil" onclick="deleteActivity({{ activity.id }})">
+                                <i class="material-icons">delete</i>
+                            </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -473,6 +478,16 @@
     font-size: 0.9rem;
     color: #2c3e50;
     line-height: 1.4;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.activity-text p {
+    margin: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .activity-details {
@@ -1112,6 +1127,22 @@ document.addEventListener('DOMContentLoaded', function() {
         return detailsHtml;
     }
 
+    // Admin silme: tek bir kayıt sil
+    window.deleteActivity = function(activityId) {
+        if (!confirm('Bu işlem kaydını silmek istiyor musunuz?')) return;
+        fetch(`/activities/${activityId}`, { method: 'DELETE', headers: { 'X-CSRFToken': (window.CSRF_TOKEN || '') } })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    const el = document.querySelector(`.activity-item[data-activity-id="${activityId}"]`);
+                    if (el) el.remove();
+                } else {
+                    alert(res.message || 'Silme işlemi başarısız.');
+                }
+            })
+            .catch(() => alert('Silme sırasında bir hata oluştu.'));
+    }
+
     if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', function() {
             if (isLoading) return;
@@ -1135,7 +1166,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                             
                             const activityHtml = `
-                                <div class="activity-item">
+                                <div class="activity-item" data-activity-id="${activity.id}">
                                     <div class="activity-icon ${activity.type.split('_')[0]}">
                                         <i class="material-icons">${getActivityIcon(activity.type)}</i>
                                     </div>
@@ -1153,6 +1184,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 <i class="material-icons">access_time</i>
                                                 <span>${activity.timestamp}</span>
                                             </div>
+                                            ${activity.can_delete ? `<button class="btn small delete-activity-btn" title="Sil" onclick="deleteActivity(${activity.id})"><i class="material-icons">delete</i></button>` : ''}
                                         </div>
                                     </div>
                                 </div>

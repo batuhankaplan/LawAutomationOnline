@@ -107,20 +107,24 @@
                 <h2>Görünüm</h2>
             </div>
                 
-                <div class="setting-item">
+                <div class="setting-item disabled-setting">
                     <div class="setting-info">
                         <h3>Tema</h3>
                         <p>Aydınlık veya karanlık tema seçin</p>
+                        <div class="feature-notice">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Bu özellik şuan kullanım dışıdır. Yakın zamanda kullanıma açılacaktır.</span>
+                        </div>
                     </div>
-                    <div class="theme-selector">
-                        <div class="theme-option active" data-theme="light" onclick="changeTheme('light')">
+                    <div class="theme-selector disabled">
+                        <div class="theme-option active disabled" data-theme="light">
                             <div class="theme-preview light-theme">
                                 <div class="preview-bar"></div>
                                 <div class="preview-content"></div>
                             </div>
                             <span>Aydınlık</span>
                         </div>
-                        <div class="theme-option" data-theme="dark" onclick="changeTheme('dark')">
+                        <div class="theme-option disabled" data-theme="dark">
                             <div class="theme-preview dark-theme">
                                 <div class="preview-bar"></div>
                                 <div class="preview-content"></div>
@@ -632,6 +636,71 @@
 .theme-option span {
     font-size: 0.75rem;
     color: var(--text-secondary);
+}
+
+/* Disabled Setting Styles */
+.disabled-setting {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.disabled-setting::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    z-index: 1;
+}
+
+[data-theme="dark"] .disabled-setting::after {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.feature-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    border-radius: 8px;
+    border-left: 4px solid #2196f3;
+    font-size: 0.85rem;
+    color: #1976d2;
+}
+
+[data-theme="dark"] .feature-notice {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(156, 39, 176, 0.1) 100%);
+    color: #64b5f6;
+}
+
+.feature-notice i {
+    font-size: 1rem;
+    color: #2196f3;
+}
+
+[data-theme="dark"] .feature-notice i {
+    color: #64b5f6;
+}
+
+.theme-selector.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.theme-option.disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.theme-option.disabled:hover {
+    background-color: transparent;
+    border-color: var(--border-color);
 }
 
 /* Font Size Selector */

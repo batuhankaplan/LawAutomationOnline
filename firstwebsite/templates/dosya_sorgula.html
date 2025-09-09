@@ -1668,7 +1668,7 @@
 .expense-item {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     padding: 15px;
     background: #f8f9fa;
     border: 1px solid #e9ecef;
@@ -1677,9 +1677,9 @@
 
 .expense-info {
     display: grid;
-    grid-template-columns: repeat(4, auto);
+    grid-template-columns: auto auto auto 1fr;
     gap: 20px;
-    align-items: center;
+    align-items: start;
 }
 
 .expense-type {
@@ -1700,6 +1700,10 @@
 .expense-description {
     color: #495057;
     font-size: 0.9rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.4;
 }
 
 /* Belge listesi stilleri */
@@ -1731,13 +1735,15 @@
 .document-main {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .document-info {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 15px;
+    min-width: 0;
+    flex: 1;
 }
 
 .document-info i {
@@ -1745,9 +1751,21 @@
     font-size: 24px;
 }
 
-.document-name {
+.document-details { 
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.document-name,
+.document-original-name {
     font-weight: 500;
     color: #2c3e50;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.4;
 }
 
 .document-date {
@@ -2284,6 +2302,27 @@
     width: 95vw;
     height: 95vh;
     max-width: none;
+}
+
+.preview-modal-content .modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.preview-modal-content .modal-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: calc(100% - 56px);
+}
+
+.preview-modal-content .modal-header .close-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    z-index: 1;
 }
 
 .preview-modal-body {
@@ -6716,7 +6755,8 @@ function saveDescription() {
     fetch(`/update_description/${currentCaseId}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
         },
         body: JSON.stringify({
             description: newDescription

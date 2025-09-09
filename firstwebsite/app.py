@@ -714,7 +714,8 @@ def anasayfa():
                            hukuk_count=hukuk_count, # Eklendi
                            ceza_count=ceza_count,   # Eklendi
                            icra_count=icra_count,   # Eklendi
-                           courthouse_stats=courthouse_stats # Eklendi
+                           courthouse_stats=courthouse_stats, # Eklendi
+                           is_admin=current_user.is_authenticated and current_user.is_admin
                            )
 
 # Daha fazla aktivite yüklemek için yeni endpoint
@@ -726,16 +727,35 @@ def load_more_activities(offset):
     for activity in activities:
         user = User.query.get(activity.user_id)
         activity_data = {
+            'id': activity.id,
             'type': activity.activity_type,
             'description': activity.description,
             'timestamp': activity.timestamp.strftime('%d.%m.%Y %H:%M'),
             'user': user.get_full_name() if user else 'Bilinmeyen Kullanıcı',
             'details': activity.details,
-            'profile_image': url_for('static', filename=user.profile_image) if user and user.profile_image else url_for('static', filename='images/pp.png')
+            'profile_image': url_for('static', filename=user.profile_image) if user and user.profile_image else url_for('static', filename='images/pp.png'),
+            'can_delete': current_user.is_authenticated and current_user.is_admin
         }
         activities_data.append(activity_data)
     
     return jsonify(activities=activities_data)
+
+# Son işlemler kaydını silme (sadece admin)
+@app.route('/activities/<int:activity_id>', methods=['DELETE'])
+@login_required
+def delete_activity(activity_id):
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Yetkiniz yok'}), 403
+    activity = ActivityLog.query.get(activity_id)
+    if not activity:
+        return jsonify({'success': False, 'message': 'Kayıt bulunamadı'}), 404
+    try:
+        db.session.delete(activity)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as ex:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(ex)}), 500
 
 @app.route('/takvim')
 @login_required
