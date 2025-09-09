@@ -651,6 +651,9 @@
 
     .nav-links i {
         margin-right: 10px;
+        width: 24px; /* ikonlar için sabit genişlik - hizalama tutarlılığı */
+        display: inline-block;
+        text-align: center;
     }
 
     /* Dosyalarım menüsü için özel stiller */
@@ -889,9 +892,25 @@
         }
     }
     </style>
+    {% block head_extra %}{% endblock %}
 </head>
 
 <body>
+    <style>
+    /* Global saydam arkaplan - tüm sayfalarda görünür, içerik altında kalır */
+    body { position: relative; }
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: url('{{ url_for('static', filename='images/arkaplan.png') }}') center center / cover no-repeat;
+        opacity: 0.12; /* saydamlık */
+        pointer-events: none; /* tıklamaları engelleme */
+        z-index: 0; /* içerik altında, body arka planının üstünde */
+    }
+
+    .app-container, .main-wrapper, .content { position: relative; z-index: 1; background: transparent !important; }
+    </style>
     
     <div class="app-container">
         <nav class="sidebar">

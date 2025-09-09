@@ -214,7 +214,13 @@ KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ START
         },
         {
           "ekNot": "",
-          "ekstralar": [],
+          "ekstralar": [
+            {
+              "id": "ekstra_1757420100722_2zemukmzh",
+              "aciklama": "Ek dilekçe istenirse dilekçe başına",
+              "tutar": "750"
+            }
+          ],
           "hizmetAdi": "Dilekçe Ücreti",
           "id": "hizmet_1748265330583_mt1hy",
           "sira": 2,
@@ -262,8 +268,8 @@ KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ START
           "ekNot": "",
           "ekstralar": [
             {
-              "id": "ekstra_1748335115660_sya6dhdza",
               "aciklama": "ekstar hizmet",
+              "id": "ekstra_1748335115660_sya6dhdza",
               "tutar": "1500"
             }
           ],

@@ -288,25 +288,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     tbody.appendChild(satirTr);
 
-                    // Ekstraları göster (varsa)
+                    // Ekstraları, aynı satırda - HİZMET ADI hücresinin altında (alt konu gibi) göster
                     if (hizmet.ekstralar && hizmet.ekstralar.length > 0) {
-                        const ekstralarSatirTr = document.createElement('tr');
-                        ekstralarSatirTr.className = 'kaplan-hukuk-ekstralar-satiri'; // Stil için sınıf
-                        const ekstralarTd = document.createElement('td');
-                        ekstralarTd.colSpan = 2; // Tüm genişliği kaplasın
-                        ekstralarTd.style.paddingLeft = '30px'; // Girinti için
-                        ekstralarTd.style.borderTop = 'none'; // Üstteki çizgiyle birleşmesin
-
-                        const ekstralarListesi = document.createElement('ul');
-                        ekstralarListesi.className = 'list-unstyled mb-0 small text-muted';
+                        const ekstraWrapper = document.createElement('div');
+                        ekstraWrapper.className = 'kaplan-ekstralar-container-compact ekstra-inline-under-name';
+                        const ekstraList = document.createElement('ul');
+                        ekstraList.className = 'list-unstyled mb-0 small text-muted';
                         hizmet.ekstralar.forEach(ekstra => {
                             const li = document.createElement('li');
                             li.innerHTML = `<strong>${ekstra.aciklama || 'Ekstra'}:</strong> ${ekstra.tutar ? formatCurrency(ekstra.tutar) : 'N/A'}`;
-                            ekstralarListesi.appendChild(li);
+                            ekstraList.appendChild(li);
                         });
-                        ekstralarTd.appendChild(ekstralarListesi);
-                        ekstralarSatirTr.appendChild(ekstralarTd);
-                        tbody.appendChild(ekstralarSatirTr);
+                        ekstraWrapper.appendChild(ekstraList);
+                        // Hizmet adı hücresinin altına ekle (aynı satırda alt konu gibi)
+                        hizmetAdiTd.appendChild(ekstraWrapper);
                     }
                 });
             } else {
@@ -622,7 +617,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': (typeof CSRF_TOKEN !== 'undefined' ? CSRF_TOKEN : '')
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify(kaplanDanismanlikTarifeData)
             });
 

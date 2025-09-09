@@ -6,20 +6,21 @@
     --tarife-text-color: #212529; /* Koyu metin */
     --tarife-title-color: var(--primary-color, #1a1a2e); 
     --tarife-ekstra-bg: #f1f3f5; /* Ekstralar için çok açık gri */
-    --tarife-hover-bg: #e9ecef; /* Hover için biraz daha koyu gri */
+    --tarife-hover-bg: #eef2f6; /* Hover için biraz daha koyu gri */
     --tarife-active-tab-bg: #ffffff;
     --tarife-active-tab-text: var(--tarife-title-color);
     --tarife-inactive-tab-text: #495057; /* Biraz daha soluk metin */
 }
 
+/* SAYFA KAPSAYICI İLE ÖZGÜLLEŞTİRME */
 .tarifeler-page-content {
     padding: 30px; /* Genel padding artırıldı */
-    background-color: var(--tarife-secondary-bg); /* Sayfa arkaplanı */
+    background-color: transparent; /* Arkaplan görselini göstermeye izin ver */
 }
 
 /* Sekme Navigasyonu Stil Güncellemesi */
 .tarifeler-page-content .nav-tabs {
-    border-bottom: 1px solid var(--tarife-border-color); /* Alt çizgiyi incelt */
+    border-bottom: 1px solid var(--tarife-border-color) !important; /* Alt çizgiyi incelt */
     margin-bottom: 35px;
 }
 
@@ -44,11 +45,11 @@
 }
 
 .tarifeler-page-content .nav-tabs .nav-link.active {
-    color: var(--tarife-active-tab-text);
-    background-color: var(--tarife-active-tab-bg);
-    border-color: var(--tarife-border-color) var(--tarife-border-color) var(--tarife-active-tab-bg) var(--tarife-border-color); /* Alt border'ı arkaplanla aynı yap */
+    color: var(--tarife-active-tab-text) !important;
+    background-color: var(--tarife-active-tab-bg) !important;
+    border-color: var(--tarife-border-color) var(--tarife-border-color) var(--tarife-active-tab-bg) var(--tarife-border-color) !important; /* Alt border'ı arkaplanla aynı yap */
     font-weight: 600; /* Aktif sekme daha kalın */
-    box-shadow: 0 -3px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 -3px 12px rgba(0,0,0,0.06);
 }
 
 .tarifeler-page-loader {
@@ -59,18 +60,19 @@
 }
 
 /* Tarife Tablosu */
-.tarife-tablosu {
+.tarifeler-page-content .tarife-tablosu {
     margin-bottom: 0;
     font-size: 0.9rem;
     width: 100%;
-    border: 1px solid var(--tarife-border-color);
+    border: 1px solid var(--tarife-border-color) !important;
     border-radius: 10px; /* Köşe yuvarlama artırıldı */
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
     overflow: hidden;
     background-color: var(--tarife-primary-bg); /* Tablo arkaplanı */
+    backdrop-filter: saturate(120%) blur(1px);
 }
 
-.tarife-tablosu thead th {
+.tarifeler-page-content .tarife-tablosu thead th {
     background-color: var(--tarife-secondary-bg) !important; 
     color: var(--tarife-title-color) !important; /* Başlık yazısı daha koyu */
     font-weight: 600;
@@ -79,49 +81,58 @@
     vertical-align: middle;
     text-align: left;
     white-space: nowrap; /* Başlıkların tek satırda kalması için */
+    position: sticky;
+    top: 0; /* Başlık kaydırmada sabit kalsın */
+    z-index: 2;
 }
-.tarife-tablosu thead th:first-child { border-top-left-radius: 9px; } 
-.tarife-tablosu thead th:last-child { border-top-right-radius: 9px; }
+.tarifeler-page-content .tarife-tablosu thead th:nth-child(1){ width:70%; text-align:left; }
+.tarifeler-page-content .tarife-tablosu thead th:nth-child(2){ width:30%; text-align:right; }
+.tarifeler-page-content .tarife-tablosu thead th:first-child { border-top-left-radius: 9px; } 
+.tarifeler-page-content .tarife-tablosu thead th:last-child { border-top-right-radius: 9px; }
 
 /* Kategori Başlık Satırı */
-.tarife-kategori-baslik-satiri td {
-    background-color: #f5f7fa !important; /* Kategori başlığı için daha açık ve yumuşak bir arkaplan */
-    padding: 14px 18px !important;
-    font-weight: 600;
-    color: var(--tarife-title-color);
-    border-top: 1px solid var(--tarife-border-color) !important;
-    border-bottom: 1px solid var(--tarife-border-color) !important;
+.tarifeler-page-content .tarife-kategori-baslik-satiri td {
+    background: linear-gradient(180deg, #f0f4f9 0%, #e9eff6 100%) !important; /* kategori şeridi */
+    padding: 16px 18px !important;
+    font-weight: 700;
+    color: #2b3a4a !important;
+    border-top: 1px solid #d5e0ea !important;
+    border-bottom: 1px solid #d5e0ea !important;
+    position: sticky;
+    top: 46px; /* thead yüksekliği kadar boşluk */
+    z-index: 1;
 }
 
-.tarife-kategori-baslik-satiri h3 {
-    font-size: 1.2rem; /* Biraz büyütüldü */
+.tarifeler-page-content .tarife-kategori-baslik-satiri h3 {
+    font-size: 1.1rem; /* Biraz büyütüldü */
     margin: 0;
-    font-weight: 600;
-    color: var(--tarife-title-color); /* Ana başlık rengiyle aynı */
+    font-weight: 700;
+    color: #2b3a4a !important; /* Ana başlık rengiyle aynı */
 }
 
-.tarife-tablosu tbody tr:not(.tarife-kategori-baslik-satiri):hover {
+.tarifeler-page-content .tarife-tablosu tbody tr:not(.tarife-kategori-baslik-satiri):hover {
     background-color: var(--tarife-hover-bg) !important;
 }
 
-.tarife-tablosu td {
-    padding: 14px 18px; /* Hücre padding'i artırıldı */
+.tarifeler-page-content .tarife-tablosu td {
+    padding: 14px 18px !important; /* Hücre padding'i artırıldı */
     vertical-align: top;
     color: #333; /* Metin rengi biraz daha koyu */
     border-top: 1px solid #f0f0f0 !important; /* Hücreler arası çizgiler daha ince */
     line-height: 1.55;
+    background-color: rgba(255,255,255,0.92);
 }
 
 /* Sütun Bazlı Hizalama ve Stiller */
-.tarife-tablosu td:nth-child(1) { /* Hizmet Adı Sütunu */
+.tarifeler-page-content .tarife-tablosu td:nth-child(1) { /* Hizmet Adı Sütunu */
     font-weight: 500;
     font-size: 0.98rem; 
-    color: var(--tarife-text-color);
+    color: var(--tarife-text-color) !important;
     min-width: 280px;
     text-align: left;
 }
 
-.tarife-tablosu td:nth-child(2) { /* Temel Ücret Sütunu */
+.tarifeler-page-content .tarife-tablosu td:nth-child(2) { /* Temel Ücret Sütunu */
     text-align: right;
     min-width: 160px; /* Genişlik artırıldı */
     font-weight: 500;
@@ -138,7 +149,7 @@
     font-weight: 500;
 }
 
-.tarife-tablosu .text-muted {
+.tarifeler-page-content .tarife-tablosu .text-muted {
     font-size: 0.82em;
     font-style: italic;
     display: block;
@@ -186,14 +197,27 @@
     font-weight: 600;
 }
 
+/* Ekstralar satırı için daha modern görünüm */
+.kaplan-hukuk-ekstralar-satiri td {
+    background: #fbfcfd !important;
+}
+
+/* Hizmet adının altında – alt konu gibi görünmesi için girinti ve ince çizgi */
+.ekstra-inline-under-name {
+    margin-top: 6px;
+    padding-left: 18px; /* sağa girinti */
+    border-left: 2px solid #e9ecef; /* ince ayraç çizgi */
+}
+.ekstra-inline-under-name li { margin-bottom: 2px; }
+
 .alert {
     margin-top: 20px;
 }
 
 /* Responsive ayarlar */
 @media (max-width: 992px) {
-    .tarife-tablosu td:nth-child(1) { font-size: 0.92rem; min-width: 200px; }
-    .tarife-tablosu td:nth-child(2) { min-width: 140px; }
+    .tarifeler-page-content .tarife-tablosu td:nth-child(1) { font-size: 0.92rem; min-width: 200px; }
+    .tarifeler-page-content .tarife-tablosu td:nth-child(2) { min-width: 140px; }
     #kaplan-content .tarife-tablosu td:nth-child(3) { min-width: 200px; }
     #kaplan-content .tarife-tablosu td:nth-child(4) { min-width: 140px; }
     .tarife-kategori-baslik-satiri h3 { font-size: 1.1rem; }
@@ -207,19 +231,19 @@
         padding: 10px 12px;
         margin-right: 5px;
     }
-    .tarife-tablosu {
+    .tarifeler-page-content .tarife-tablosu {
         font-size: 0.82rem;
         border-radius: 8px;
     }
-    .tarife-tablosu thead th {
+    .tarifeler-page-content .tarife-tablosu thead th {
         padding: 12px 14px;
         font-size: 0.85rem; 
     }
-    .tarife-tablosu td {
-        padding: 12px 14px;
+    .tarifeler-page-content .tarife-tablosu td {
+        padding: 12px 14px !important;
         line-height: 1.45;
     }
-    .tarife-tablosu td:nth-child(1) { font-size: 0.88rem; min-width: 160px; }
+    .tarifeler-page-content .tarife-tablosu td:nth-child(1) { font-size: 0.88rem; min-width: 160px; }
     .tarife-kategori-baslik-satiri h3 { font-size: 1.02rem; }
     .tarife-kategori-baslik-satiri td { padding: 12px 14px !important; }
     .ekstra-item-compact .form-check-label { font-size: 0.8rem; }
@@ -233,18 +257,18 @@
         font-size: 0.82rem;
         margin-right: 4px;
     }
-    .tarife-tablosu {
+    .tarifeler-page-content .tarife-tablosu {
         font-size: 0.78rem;
     }
-    .tarife-tablosu thead th {
+    .tarifeler-page-content .tarife-tablosu thead th {
         font-size: 0.8rem;
         padding: 10px 10px;
     }
-    .tarife-tablosu td {
-        padding: 10px 10px;
+    .tarifeler-page-content .tarife-tablosu td {
+        padding: 10px 10px !important;
     }
-    .tarife-tablosu td:nth-child(1) { font-size: 0.82rem; min-width: 120px; word-break: break-word; }
-    .tarife-tablosu td:nth-child(2),
+    .tarifeler-page-content .tarife-tablosu td:nth-child(1) { font-size: 0.82rem; min-width: 120px; word-break: break-word; }
+    .tarifeler-page-content .tarife-tablosu td:nth-child(2),
     #kaplan-content .tarife-tablosu td:nth-child(4) { min-width: 80px; }
     #kaplan-content .tarife-tablosu td:nth-child(3) { min-width: 130px; }
     .tarife-kategori-baslik-satiri h3 { font-size: 0.95rem; }

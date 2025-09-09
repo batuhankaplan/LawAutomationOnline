@@ -6,7 +6,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file, make_response, current_app, Response
+from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file, make_response, current_app, Response, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime, timedelta, date, time
@@ -1153,7 +1153,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file, make_response, current_app, Response
+from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file, make_response, current_app, Response, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime, timedelta, date, time
@@ -2553,7 +2553,7 @@ def delete_case(case_id):
     import os
     sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file, make_response, current_app, Response
+from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file, make_response, current_app, Response, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime, timedelta, date, time
@@ -3680,7 +3680,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file, make_response, current_app, Response
+from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file, make_response, current_app, Response, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime, timedelta, date, time
@@ -6578,8 +6578,25 @@ def get_current_rates():
 
 @app.route('/hesaplamalar/<type>')
 @login_required  
-@permission_required('panel_goruntule')
 def hesaplamalar(type):
+    # Her hesaplama türü için spesifik yetki kontrolleri
+    permission_map = {
+        'faiz': 'faiz_hesaplama',
+        'harc': 'harc_hesaplama', 
+        'isci': 'isci_hesaplama',
+        'vekalet': 'vekalet_hesaplama',
+        'ceza_infaz': 'ceza_infaz_hesaplama'
+    }
+    
+    required_permission = permission_map.get(type)
+    if not required_permission:
+        abort(404)
+    
+    # Yetki kontrolü
+    if not current_user.has_permission(required_permission):
+        flash(f'Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz. {required_permission} yetkisi gereklidir.', 'error')
+        return redirect(url_for('anasayfa'))
+    
     if type == 'faiz':
         current_rates = get_current_rates()
         return render_template('faiz_hesaplama.html', rates=current_rates)
