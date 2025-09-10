@@ -304,7 +304,10 @@
                     <div class="form-group">
                         <label for="phone">Telefon Numarası</label>
                         <input type="tel" id="phone" name="phone" pattern="[0-9]{10}" class="form-control" 
-                               placeholder="Başında 0 olmadan 10 haneli olarak giriniz" required>
+                               placeholder="5123456789 (0 olmadan 10 rakam)" required>
+                        <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                            Örnek: 5123456789 - Başında sıfır (0) olmadan yazınız
+                        </small>
                     </div>
                     <div class="form-group">
                         <label for="register-role">Meslek</label>
@@ -585,6 +588,56 @@
             }
         });
         {% endif %}
+
+        // Telefon numarası format kontrolü
+        document.addEventListener('DOMContentLoaded', function() {
+            const phoneInput = document.getElementById('phone');
+            const phoneHelperText = phoneInput.nextElementSibling;
+            
+            // Telefon numarası input kontrolü
+            phoneInput.addEventListener('input', function(e) {
+                // Sadece rakam girilmesini sağla
+                let value = this.value.replace(/[^0-9]/g, '');
+                
+                // 0 ile başlıyorsa kaldır
+                if (value.startsWith('0')) {
+                    value = value.substring(1);
+                }
+                
+                // Maksimum 10 rakam
+                if (value.length > 10) {
+                    value = value.substring(0, 10);
+                }
+                
+                this.value = value;
+                
+                // Renk ve mesaj güncellemesi
+                if (value.length === 0) {
+                    phoneHelperText.style.color = '#666';
+                    phoneHelperText.textContent = 'Örnek: 5123456789 - Başında sıfır (0) olmadan yazınız';
+                    this.style.borderColor = '#ddd';
+                } else if (value.length === 10 && value.startsWith('5')) {
+                    phoneHelperText.style.color = '#28a745';
+                    phoneHelperText.textContent = '✓ Geçerli telefon numarası formatı';
+                    this.style.borderColor = '#28a745';
+                } else {
+                    phoneHelperText.style.color = '#dc3545';
+                    if (value.length < 10) {
+                        phoneHelperText.textContent = `⚠ ${10 - value.length} rakam daha gerekli (5 ile başlamalı)`;
+                    } else if (!value.startsWith('5')) {
+                        phoneHelperText.textContent = '⚠ Telefon numarası 5 ile başlamalıdır';
+                    }
+                    this.style.borderColor = '#dc3545';
+                }
+            });
+            
+            // Paste olayında da kontrol et
+            phoneInput.addEventListener('paste', function(e) {
+                setTimeout(() => {
+                    phoneInput.dispatchEvent(new Event('input'));
+                }, 10);
+            });
+        });
 
         // Auth sayfası flash mesajları
         document.addEventListener('DOMContentLoaded', function() {

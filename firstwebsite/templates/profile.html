@@ -53,7 +53,10 @@
                 <div class="form-row">
                     <div class="profile-form-group">
                         <label for="phone">Telefon Numarası</label>
-                        <input type="tel" class="profile-form-control" id="phone" name="phone" value="{{ current_user.phone }}" pattern="[0-9]{10}" title="Lütfen 10 haneli telefon numaranızı başında 0 olmadan giriniz" required>
+                        <input type="tel" class="profile-form-control" id="phone" name="phone" value="{{ current_user.phone }}" pattern="[0-9]{10}" placeholder="5123456789 (0 olmadan 10 rakam)" required>
+                        <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                            Örnek: 5123456789 - Başında sıfır (0) olmadan yazınız
+                        </small>
                     </div>
 
                     <div class="profile-form-group">

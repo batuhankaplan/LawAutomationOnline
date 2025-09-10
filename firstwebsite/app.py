@@ -403,6 +403,25 @@ def register():
             gender = None
         phone = request.form.get('phone')
         
+        # Telefon numarası validasyonu
+        if phone:
+            # Sadece rakam karakterleri bırak
+            phone_digits = ''.join(filter(str.isdigit, phone))
+            
+            # 0 ile başlıyorsa kaldır
+            if phone_digits.startswith('0'):
+                phone_digits = phone_digits[1:]
+            
+            # Türk telefon numarası kontrolü (10 haneli, 5 ile başlamalı)
+            if len(phone_digits) != 10 or not phone_digits.startswith('5'):
+                flash('Telefon numarası 5 ile başlamalı ve 10 haneli olmalıdır. Örnek: 5123456789', 'error')
+                return render_template('auth.html', show_register=True)
+            
+            phone = phone_digits
+        else:
+            flash('Telefon numarası zorunludur.', 'error')
+            return render_template('auth.html', show_register=True)
+        
         try:
             birth_day = int(request.form.get('birth_day'))
             birth_month = int(request.form.get('birth_month'))
@@ -509,7 +528,23 @@ def update_profile():
             user.first_name = request.form.get('first_name')
             user.last_name = request.form.get('last_name')
             user.email = request.form.get('email')
-            user.phone = request.form.get('phone')
+            # Telefon numarası validasyonu ve temizleme
+            phone_input = request.form.get('phone')
+            if phone_input:
+                # Sadece rakam karakterleri bırak
+                phone_digits = ''.join(filter(str.isdigit, phone_input))
+                
+                # 0 ile başlıyorsa kaldır
+                if phone_digits.startswith('0'):
+                    phone_digits = phone_digits[1:]
+                
+                # Türk telefon numarası kontrolü (10 haneli, 5 ile başlamalı)
+                if len(phone_digits) != 10 or not phone_digits.startswith('5'):
+                    return jsonify(success=False, message="Telefon numarası 5 ile başlamalı ve 10 haneli olmalıdır. Örnek: 5123456789")
+                
+                user.phone = phone_digits
+            else:
+                return jsonify(success=False, message="Telefon numarası zorunludur.")
             user.role = request.form.get('meslek')
             user.gender = request.form.get('gender')
             
