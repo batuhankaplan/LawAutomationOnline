@@ -1,20 +1,48 @@
-Flask==2.3.3
-Flask-SQLAlchemy==3.0.5
-Flask-Migrate==4.0.5
-Flask-Login==0.6.2
-Flask-Mail==0.9.1
-Flask-WTF==1.1.1
-Werkzeug==2.3.7
-SQLAlchemy==2.0.19
-python-dotenv==1.0.0
-Pillow==10.0.0
-requests==2.31.0
-beautifulsoup4==4.12.2
-pyotp==2.9.0
-qrcode[pil]==7.4.2
-mammoth==1.6.0
-xhtml2pdf==0.2.11
-reportlab==4.0.4
-fpdf2==2.7.5
-pdfkit==1.0.0
-google-generativeai==0.3.0
+# Core Flask Dependencies
+Flask>=2.3.0
+Flask-SQLAlchemy>=3.0.0
+Flask-Migrate>=4.0.0
+Flask-Login>=0.6.0
+Flask-Mail>=0.9.0
+Flask-WTF>=1.1.0
+Werkzeug>=2.3.0
+
+# Database
+SQLAlchemy>=2.0.0
+
+# Configuration
+python-dotenv>=1.0.0
+
+# Image Processing (Python 3.13 uyumlu)
+Pillow
+
+# HTTP and Web
+requests>=2.31.0
+httpx>=0.24.0
+aiohttp>=3.8.0
+beautifulsoup4>=4.12.0
+
+# Web Automation (Yargi entegrasyonu için)
+playwright>=1.35.0
+
+# Security
+pyotp>=2.9.0
+qrcode[pil]
+
+# Document Processing
+mammoth>=1.6.0
+reportlab>=4.0.0
+fpdf2>=2.7.0
+
+# AI Integration
+google-generativeai>=0.3.0
+
+# Optional PDF Tools (Yükleme sorunu yaşarsan # ile kapatabilirsin)
+# xhtml2pdf>=0.2.0
+
+# Production Server
+gunicorn>=21.2.0
+
+# Database Drivers (uncomment the one you need)
+# psycopg2-binary>=2.9.0  # For PostgreSQL
+# pymysql>=1.1.0  # For MySQL/MariaDB

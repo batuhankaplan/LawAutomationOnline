@@ -200,17 +200,9 @@ def permission_required(permission):
 
 app = Flask(__name__, static_url_path='/static')
 basedir = os.path.abspath(os.path.dirname(__file__))
-
-# Load configuration from config.py if it exists, otherwise use defaults
-try:
-    from config import config
-    config_name = os.getenv('FLASK_ENV', 'development')
-    app.config.from_object(config[config_name])
-except ImportError:
-    # Fallback to original configuration if config.py doesn't exist
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback-secret-key-change-this')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'instance', 'database.db')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback-secret-key-change-this')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'database.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['ORNEK_DILEKCE_UPLOAD_FOLDER'] = os.path.join(app.config['UPLOAD_FOLDER'], 'ornek_dilekceler') # Yeni eklendi
 # CSRF için WTF_CSRF_ENABLED=True (varsayılan olarak True'dur ama açıkça belirtmek iyi olabilir)
@@ -724,24 +716,6 @@ def log_activity(activity_type, description, user_id, case_id=None, related_anno
         )
         db.session.add(activity)
         db.session.commit()
-
-@app.route('/health')
-def health_check():
-    """Health check endpoint for monitoring"""
-    try:
-        # Check database connection
-        db.session.execute('SELECT 1')
-        return jsonify({
-            'status': 'healthy',
-            'timestamp': datetime.now().isoformat(),
-            'service': 'LawAutomation'
-        }), 200
-    except Exception as e:
-        return jsonify({
-            'status': 'unhealthy',
-            'error': str(e),
-            'timestamp': datetime.now().isoformat()
-        }), 503
 
 @app.route('/')
 def anasayfa():

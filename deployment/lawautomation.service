@@ -1,0 +1,27 @@
+[Unit]
+Description=LawAutomation Flask Application
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/lawautomation
+Environment="PATH=/var/www/lawautomation/venv/bin"
+Environment="FLASK_ENV=production"
+EnvironmentFile=/var/www/lawautomation/.env
+ExecStart=/var/www/lawautomation/venv/bin/gunicorn \
+    --config /var/www/lawautomation/gunicorn_config.py \
+    --log-level info \
+    firstwebsite.app:app
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGQUIT
+Restart=on-failure
+RestartSec=5s
+StandardOutput=append:/var/log/lawautomation/app.log
+StandardError=append:/var/log/lawautomation/app_error.log
+
+[Install]
+WantedBy=multi-user.target
