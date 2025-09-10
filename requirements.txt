@@ -12,6 +12,7 @@ SQLAlchemy>=2.0.0
 
 # Configuration
 python-dotenv>=1.0.0
+pytz>=2023.3
 
 # Image Processing (Python 3.13 uyumlu)
 Pillow

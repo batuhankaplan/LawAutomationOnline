@@ -695,13 +695,31 @@ except locale.Error:
 @app.context_processor
 def inject_datetime():
     try:
-        now = datetime.now()
+        # Türkiye timezone'ını kullan
+        import pytz
+        turkey_tz = pytz.timezone('Europe/Istanbul')
+        now = datetime.now(turkey_tz)
+        
+        # Türkçe gün adları için manuel çeviri
+        turkce_gunler = {
+            'Monday': 'Pazartesi',
+            'Tuesday': 'Salı', 
+            'Wednesday': 'Çarşamba',
+            'Thursday': 'Perşembe',
+            'Friday': 'Cuma',
+            'Saturday': 'Cumartesi',
+            'Sunday': 'Pazar'
+        }
+        
+        gun_adi = turkce_gunler.get(now.strftime('%A'), now.strftime('%A'))
+        
         current_time = {
-            'weekday': now.strftime('%A'),  # Gün adı
+            'weekday': gun_adi,  # Türkçe gün adı
             'time': now.strftime('%H:%M'),  # Saat
             'date': now.strftime('%d.%m.%Y')  # Tarih
         }
-    except Exception:
+    except Exception as e:
+        print(f"Tarih inject hatası: {e}")
         current_time = {
             'weekday': '',
             'time': '',
@@ -5332,7 +5350,18 @@ def direct_view_udf_dilekce(dilekce_id):
         return f"UDF dosyası görüntülenirken hata oluştu: {str(e)}", 500
 
 def parse_tarifeler():
-    filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tarifeler.txt')
+    # Dosya yolunu güvenli şekilde ayarla - önce firstwebsite klasörü içinde dene
+    firstwebsite_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tarifeler.txt')
+    parent_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tarifeler.txt')
+    
+    # Önce firstwebsite klasöründe dosya var mı kontrol et
+    if os.path.exists(firstwebsite_filepath):
+        filepath = firstwebsite_filepath
+    elif os.path.exists(parent_filepath):
+        filepath = parent_filepath  
+    else:
+        # Dosya hiç yoksa varsayılan parent yolunu kullan
+        filepath = parent_filepath
     
     # Varsayılan olarak boş ve geçerli bir yapı
     tarifeler = {
@@ -5450,7 +5479,18 @@ def kaydet_kaplan_danismanlik_tarife():
             logging.error(f"Geçersiz Kaplan Danışmanlık tarife verisi alındı: {new_kaplan_data}")
             return jsonify({"success": False, "error": "Geçersiz veri formatı. 'kategoriler' listesi içeren bir JSON objesi bekleniyor."}), 400
 
-        filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tarifeler.txt')
+        # Dosya yolunu güvenli şekilde ayarla - önce firstwebsite klasörü içinde dene
+        firstwebsite_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tarifeler.txt')
+        parent_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tarifeler.txt')
+        
+        # Önce firstwebsite klasöründe dosya var mı kontrol et
+        if os.path.exists(firstwebsite_filepath):
+            filepath = firstwebsite_filepath
+        elif os.path.exists(parent_filepath):
+            filepath = parent_filepath
+        else:
+            # Dosya hiç yoksa firstwebsite içinde oluştur (yazma yetkisi daha muhtemel)
+            filepath = firstwebsite_filepath
         
         raw_lines = []
         if os.path.exists(filepath):
@@ -5504,8 +5544,32 @@ def kaydet_kaplan_danismanlik_tarife():
             output_lines.append(new_json_content_str + '\n')
             output_lines.append(end_marker + '\n')
 
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.writelines(output_lines)
+        # Dosya yazma yetkisi kontrolü
+        dir_path = os.path.dirname(filepath)
+        if not os.path.exists(dir_path):
+            try:
+                os.makedirs(dir_path)
+                logging.info(f"Dizin oluşturuldu: {dir_path}")
+            except Exception as dir_error:
+                logging.error(f"Dizin oluşturulamadı: {dir_path}, Hata: {dir_error}")
+                return jsonify({"success": False, "error": f"Dizin oluşturulamadı: {str(dir_error)}"}), 500
+        
+        # Yazma yetkisi kontrolü
+        if not os.access(dir_path, os.W_OK):
+            logging.error(f"Dizin yazma yetkisi yok: {dir_path}")
+            return jsonify({"success": False, "error": f"Dizin yazma yetkisi yok: {dir_path}"}), 403
+            
+        # Dosya yazma işlemi
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.writelines(output_lines)
+            logging.info(f"Tarife dosyası başarıyla kaydedildi: {filepath}")
+        except PermissionError as perm_error:
+            logging.error(f"Dosya yazma yetkisi hatası: {filepath}, Hata: {perm_error}")
+            return jsonify({"success": False, "error": f"Dosya yazma yetkisi yok: {str(perm_error)}"}), 403
+        except Exception as write_error:
+            logging.error(f"Dosya yazma hatası: {filepath}, Hata: {write_error}")
+            return jsonify({"success": False, "error": f"Dosya yazma hatası: {str(write_error)}"}), 500
 
         log_activity("Tarife Güncelleme", f"Kaplan Hukuk Danışmanlık Ücret Tarifesi güncellendi.", current_user.id)
         return jsonify({"success": True, "message": "Kaplan Hukuk Danışmanlık Tarifesi başarıyla güncellendi."})

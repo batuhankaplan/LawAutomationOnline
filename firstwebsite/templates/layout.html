@@ -1541,8 +1541,43 @@
             document.body.setAttribute('data-theme', newTheme);
         });
         
+        // Tarih/saat otomatik güncelleyici
+        updateDateTime();
+        setInterval(updateDateTime, 60000); // Her dakika güncelle
+        
         console.log('Global tema uygulandı:', savedTheme);
     });
+
+    // Tarih/saat güncelleme fonksiyonu
+    function updateDateTime() {
+        const now = new Date();
+        const turkiyeTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Istanbul"}));
+        
+        const turkceGunler = {
+            0: 'Pazar',
+            1: 'Pazartesi', 
+            2: 'Salı',
+            3: 'Çarşamba',
+            4: 'Perşembe',
+            5: 'Cuma',
+            6: 'Cumartesi'
+        };
+        
+        const gunAdi = turkceGunler[turkiyeTime.getDay()];
+        const saat = turkiyeTime.getHours().toString().padStart(2, '0');
+        const dakika = turkiyeTime.getMinutes().toString().padStart(2, '0');
+        const gun = turkiyeTime.getDate().toString().padStart(2, '0');
+        const ay = (turkiyeTime.getMonth() + 1).toString().padStart(2, '0');
+        const yil = turkiyeTime.getFullYear();
+        
+        // DOM elementlerini güncelle
+        const weekdayElements = document.querySelectorAll('.datetime-text');
+        if (weekdayElements.length >= 3) {
+            weekdayElements[0].textContent = gunAdi;
+            weekdayElements[1].textContent = `${saat}:${dakika}`;
+            weekdayElements[2].textContent = `${gun}.${ay}.${yil}`;
+        }
+    }
     </script>
     {% block scripts %}{% endblock %}
 </body>
