@@ -885,28 +885,32 @@ def takvim():
     print(f"Kullanıcı yetkileri: {current_user.permissions}")
     print(f"Takvim görüntüleme yetkisi: {current_user.has_permission('takvim_goruntule')}")
     
-    # Tüm etkinlikleri getir
-    events = CalendarEvent.query.all()
-    events_data = []
-    
-    for event in events:
-        event_data = {
-            'id': event.id,
-            'title': event.title,
-            'date': event.date.strftime('%Y-%m-%d'),
-            'time': event.time.strftime('%H:%M') if event.time else None,
-            'event_type': event.event_type,
-            'description': event.description,
-            'assigned_to': event.assigned_to,
-            'file_type': event.file_type,
-            'courthouse': event.courthouse,
-            'department': event.department,
-            'deadline_date': event.deadline_date.strftime('%Y-%m-%d') if event.deadline_date else None,
-            'is_completed': event.is_completed,
-            'muvekkil_isim': event.muvekkil_isim,
-            'muvekkil_telefon': event.muvekkil_telefon
-        }
-        events_data.append(event_data)
+    # Etkinlik görüntüleme yetki kontrolü
+    if not current_user.has_permission('etkinlik_goruntule'):
+        events_data = []  # Yetki yoksa boş liste döndür
+    else:
+        # Tüm etkinlikleri getir
+        events = CalendarEvent.query.all()
+        events_data = []
+        
+        for event in events:
+            event_data = {
+                'id': event.id,
+                'title': event.title,
+                'date': event.date.strftime('%Y-%m-%d'),
+                'time': event.time.strftime('%H:%M') if event.time else None,
+                'event_type': event.event_type,
+                'description': event.description,
+                'assigned_to': event.assigned_to,
+                'file_type': event.file_type,
+                'courthouse': event.courthouse,
+                'department': event.department,
+                'deadline_date': event.deadline_date.strftime('%Y-%m-%d') if event.deadline_date else None,
+                'is_completed': event.is_completed,
+                'muvekkil_isim': event.muvekkil_isim,
+                'muvekkil_telefon': event.muvekkil_telefon
+            }
+            events_data.append(event_data)
     
     # Debug için dosya türü, adliye ve departman verilerini kontrol et
     for event_data in events_data:
@@ -1922,10 +1926,11 @@ def update_event():
             app.logger.error(f"Etkinlik güncelleme hatası: Etkinlik bulunamadı (ID: {event_id})")
             return jsonify({"error": "Etkinlik bulunamadı."}), 404
             
-        # Eğer başkası eklemiş ve kullanıcı süper admin değilse düzenleme yapılamaz
-        if event.user_id != current_user.id and not current_user.is_admin:
-            app.logger.warning(f"Yetkisiz güncelleme denemesi: Kullanıcı {current_user.email} başkasının etkinliğini (ID: {event_id}) düzenlemeye çalıştı.")
-            return jsonify({"error": "Başkasının eklediği etkinliği düzenleyemezsiniz."}), 403
+        # Etkinlik düzenleme yetki kontrolü:
+        # - Etkinlik düzenleme yetkisi varsa hem kendi hem başkasının etkinliğini düzenleyebilir
+        # - Yetkisi yoksa hiç kimsenin etkinliğini düzenleyemez (zaten üstte kontrol ediliyor)
+        # Bu kontrol zaten yukarıda has_permission('etkinlik_duzenle') ile yapılıyor, 
+        # yani bu satıra gelmiş olan kullanıcının yetkisi var demektir.
             
         # Önceki değerleri kaydet (log için)
         old_values = {
@@ -1950,7 +1955,11 @@ def update_event():
                 if data.get('event_type') == 'gunluk-kayit':
                     event_time = datetime.strptime('00:00', '%H:%M').time()
                 else:
-                    event_time = datetime.strptime(data['time'], '%H:%M').time()
+                    # Eğer time boş veya None ise varsayılan değer ata
+                    time_str = data.get('time') or '00:00'
+                    if not time_str.strip():
+                        time_str = '00:00'
+                    event_time = datetime.strptime(time_str, '%H:%M').time()
                 
                 event.date = event_date
                 event.time = event_time
@@ -1978,17 +1987,13 @@ def update_event():
             event.event_type = data['event_type']
             
         if 'description' in data:
-            event.description = data['description']
+            event.description = data['description'] or ''  # Boş string yerine None olmayacak
             
         if 'assigned_to' in data:
             event.assigned_to = data['assigned_to'] or None
             
         if 'is_completed' in data:
             event.is_completed = data.get('is_completed', False)
-        
-        # Açıklamayı SADECE istekte varsa güncelle
-        if 'description' in data:
-            event.description = data['description']
         
         # Duruşma bilgilerini güncelle
         if event.event_type in ['durusma', 'e-durusma']:
