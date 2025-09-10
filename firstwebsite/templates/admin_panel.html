@@ -926,36 +926,31 @@ function createAdvancedModal(user, userPermissions = {}) {
 function createPermissionsHTML(userPermissions) {
     const permissionCategories = {
         'Temel Erişim': [
-            { key: 'panel_goruntule', label: 'Panel Görüntüleme', desc: 'Ana panel sayfasını görüntüleyebilir' },
-            { key: 'takvim_goruntule', label: 'Takvim Görüntüleme', desc: 'Takvim sayfasını görüntüleyebilir' },
-            { key: 'duyuru_goruntule', label: 'Duyuru Görüntüleme', desc: 'Duyurular sayfasını görüntüleyebilir' },
-            { key: 'odeme_goruntule', label: 'Ödeme Görüntüleme', desc: 'Ödemeler sayfasını görüntüleyebilir' },
             { key: 'ayarlar', label: 'Ayarlar', desc: 'Kullanıcı ayarları sayfasına erişebilir' },
-            { key: 'iletisim', label: 'İletişim', desc: 'İletişim sayfasına erişebilir' }
+            { key: 'iletisim', label: 'İletişim', desc: 'İletişim sayfasına erişebilir' },
+            { key: 'veritabani_yonetimi', label: 'Veritabanı Yönetimi', desc: 'Veritabanı yönetimi işlemlerini yapabilir' },
+            { key: 'admin_panel', label: 'Admin Panel', desc: 'Admin paneline erişebilir' },
+            { key: 'kullanici_yonetimi', label: 'Kullanıcı Yönetimi', desc: 'Kullanıcıları onaylayabilir ve yönetebilir' },
+            { key: 'anasayfa_son_islemler', label: 'Son İşlemler', desc: 'Anasayfa son işlemler yönetimi' }
         ],
         'Dosya Yönetimi': [
             { key: 'dosya_sorgula', label: 'Dosya Sorgulama', desc: 'Dosyaları arayabilir ve görüntüleyebilir' },
             { key: 'dosya_ekle', label: 'Dosya Ekleme', desc: 'Yeni dosya ekleyebilir' },
             { key: 'dosya_duzenle', label: 'Dosya Düzenleme', desc: 'Mevcut dosyaları düzenleyebilir' },
-            { key: 'dosya_sil', label: 'Dosya Silme', desc: 'Dosyaları silebilir' },
-            { key: 'dosyalarim', label: 'Dosyalarım', desc: 'Kendi dosyalarını görüntüleyebilir' }
+            { key: 'dosya_sil', label: 'Dosya Silme', desc: 'Dosyaları silebilir' }
         ],
-        'Etkinlik Yönetimi': [
+        'Takvim ve Etkinlik Yönetimi': [
+            { key: 'takvim_goruntule', label: 'Takvim Görüntüleme', desc: 'Takvim sayfasını görüntüleyebilir' },
             { key: 'etkinlik_goruntule', label: 'Etkinlik Görüntüleme', desc: 'Takvim etkinliklerini görüntüleyebilir' },
             { key: 'etkinlik_ekle', label: 'Etkinlik Ekleme', desc: 'Takvime yeni etkinlik ekleyebilir' },
             { key: 'etkinlik_duzenle', label: 'Etkinlik Düzenleme', desc: 'Mevcut etkinlikleri düzenleyebilir' },
             { key: 'etkinlik_sil', label: 'Etkinlik Silme', desc: 'Etkinlikleri silebilir' }
         ],
-        'İçerik Yönetimi': [
+        'Duyuru Yönetimi': [
+            { key: 'duyuru_goruntule', label: 'Duyuru Görüntüleme', desc: 'Anasayfada duyuruları görüntüleyebilir' },
             { key: 'duyuru_ekle', label: 'Duyuru Ekleme', desc: 'Yeni duyuru ekleyebilir' },
             { key: 'duyuru_duzenle', label: 'Duyuru Düzenleme', desc: 'Mevcut duyuruları düzenleyebilir' },
             { key: 'duyuru_sil', label: 'Duyuru Silme', desc: 'Duyuruları silebilir' }
-        ],
-        'Finansal İşlemler': [
-            { key: 'odeme_ekle', label: 'Ödeme Ekleme', desc: 'Yeni ödeme kaydı ekleyebilir' },
-            { key: 'odeme_duzenle', label: 'Ödeme Düzenleme', desc: 'Mevcut ödeme kayıtlarını düzenleyebilir' },
-            { key: 'odeme_sil', label: 'Ödeme Silme', desc: 'Ödeme kayıtlarını silebilir' },
-            { key: 'odeme_istatistik_goruntule', label: 'Ödeme İstatistikleri', desc: 'Ödeme istatistiklerini görüntüleyebilir' }
         ],
         'Hesaplamalar': [
             { key: 'faiz_hesaplama', label: 'Faiz Hesaplama', desc: 'Faiz hesaplaması yapabilir' },
@@ -964,36 +959,23 @@ function createPermissionsHTML(userPermissions) {
             { key: 'vekalet_hesaplama', label: 'Vekalet Ücreti Hesaplama', desc: 'Vekalet ücreti hesaplaması yapabilir' },
             { key: 'ceza_infaz_hesaplama', label: 'Ceza İnfaz Hesaplama', desc: 'Ceza infaz hesaplaması yapabilir' }
         ],
-        'Araçlar ve Kaynaklar': [
-            { key: 'ornek_dilekceler', label: 'Örnek Dilekçeler', desc: 'Örnek dilekçelere erişebilir ve yönetebilir' },
-            { key: 'ornek_sozlesmeler', label: 'Örnek Sözleşmeler', desc: 'Örnek sözleşmelere erişebilir ve yönetebilir' },
-            { key: 'yargi_kararlari_arama', label: 'Yargı Kararları Arama', desc: 'Yargı kararlarında arama yapabilir' },
-            { key: 'ucret_tarifeleri', label: 'Ücret Tarifeleri', desc: 'Ücret tarifelerine erişebilir' },
-            { key: 'ai_avukat', label: 'AI Avukat', desc: 'AI Avukat sistemini kullanabilir' }
+        'Formlar/Dilekçeler': [
+            { key: 'ornek_dilekceler', label: 'Dilekçe Şablonları', desc: 'Dilekçe şablonlarına erişebilir ve yönetebilir' },
+            { key: 'isci_gorusme_goruntule', label: 'İşçi Görüşme Formu', desc: 'İşçi görüşme formlarına erişebilir ve yönetebilir' },
+            { key: 'ornek_sozlesmeler', label: 'Avukatlık Sözleşmesi', desc: 'Avukatlık sözleşmelerine erişebilir ve yönetebilir' },
+            { key: 'vekaletname', label: 'Vekaletname', desc: 'Vekaletname örneğine erişebilir ve yönetebilir' }
         ],
-        'İnsan Kaynakları': [
-            { key: 'isci_gorusme_goruntule', label: 'İşçi Görüşme Görüntüleme', desc: 'İşçi görüşme kayıtlarını görüntüleyebilir' },
-            { key: 'isci_gorusme_ekle', label: 'İşçi Görüşme Ekleme', desc: 'Yeni işçi görüşme kaydı ekleyebilir' },
-            { key: 'isci_gorusme_duzenle', label: 'İşçi Görüşme Düzenleme', desc: 'Mevcut işçi görüşme kayıtlarını düzenleyebilir' },
-            { key: 'isci_gorusme_sil', label: 'İşçi Görüşme Silme', desc: 'İşçi görüşme kayıtlarını silebilir' }
+        'Sistem Araçları': [
+            { key: 'ai_avukat', label: 'AI Avukat', desc: 'AI Avukat sistemini kullanabilir' },
+            { key: 'yargi_kararlari_arama', label: 'Yargı Kararları Arama', desc: 'Yargı kararlarında arama yapabilir' },
+            { key: 'ucret_tarifeleri', label: 'Ücret Tarifelerine Erişim', desc: 'Ücret tarifelerine erişebilir' }
         ],
         'Müvekkil Ödeme Yönetimi': [
-            { key: 'odeme_goruntule', label: 'Müvekkil Ödeme Görüntüleme', desc: 'Müvekkil ödeme yönetimi sayfasını görüntüleyebilir' },
+            { key: 'odeme_goruntule', label: 'Müvekkil Ödeme Görüntüleme', desc: 'Ödemeler sayfasını görüntüleyebilir, işçi görüşme formlarına erişebilir, ödeme detayları görebilir, müvekkil arama yapabilir' },
             { key: 'odeme_ekle', label: 'Müvekkil Ödeme Ekleme', desc: 'Yeni müvekkil ödemesi ekleyebilir' },
-            { key: 'odeme_duzenle', label: 'Müvekkil Ödeme Düzenleme', desc: 'Mevcut müvekkil ödeme bilgilerini düzenleyebilir' },
-            { key: 'odeme_sil', label: 'Müvekkil Ödeme Silme', desc: 'Müvekkil ödeme kayıtlarını silebilir' }
-        ],
-        'Raporlar ve İstatistikler': [
-            { key: 'rapor_goruntule', label: 'Rapor Görüntüleme', desc: 'Raporlar sayfasını görüntüleyebilir' },
-            { key: 'rapor_olustur', label: 'Rapor Oluşturma', desc: 'Yeni rapor oluşturabilir' },
-            { key: 'kullanici_yonetimi', label: 'Kullanıcı Yönetimi', desc: 'Kullanıcı yönetimi sayfasını görüntüleyebilir' },
-            { key: 'bildirimler', label: 'Bildirimler', desc: 'Bildirimleri görüntüleyebilir' }
-        ],
-        'Sistem Yönetimi': [
-            { key: 'veritabani_yonetimi', label: 'Veritabanı Yönetimi', desc: 'Veritabanı yönetimi işlemlerini yapabilir' },
-            { key: 'admin_panel', label: 'Admin Panel', desc: 'Admin paneline erişebilir' },
-            { key: 'kullanici_onaylama', label: 'Kullanıcı Onaylama', desc: 'Kullanıcı onaylama işlemleri yapabilir' },
-            { key: 'anasayfa_son_islemler', label: 'Anasayfa Son İşlemler', desc: 'Anasayfada son işlemleri görüntüleyebilir' }
+            { key: 'odeme_duzenle', label: 'Müvekkil Ödeme Düzenleme', desc: 'Mevcut müvekkil ödeme kayıtlarını düzenleyebilir' },
+            { key: 'odeme_sil', label: 'Müvekkil Ödeme Silme', desc: 'Müvekkil ödeme kayıtlarını silebilir' },
+            { key: 'odeme_istatistik_goruntule', label: 'Müvekkil Ödeme İstatistikleri', desc: 'Ödeme istatistiklerini görüntüleyebilir' }
         ]
     };
 
@@ -1086,15 +1068,12 @@ function getCategoryIcon(categoryName) {
     const icons = {
         'Temel Erişim': '🏠',
         'Dosya Yönetimi': '📁',
-        'Etkinlik Yönetimi': '📅',
-        'İçerik Yönetimi': '✍️',
-        'Finansal İşlemler': '💰',
+        'Takvim ve Etkinlik Yönetimi': '📅',
+        'Duyuru Yönetimi': '📢',
         'Hesaplamalar': '🧮',
-        'Araçlar ve Kaynaklar': '🛠️',
-        'İnsan Kaynakları': '👥',
-        'Müvekkil Ödeme Yönetimi': '💰',
-        'Raporlar ve İstatistikler': '📊',
-        'Sistem Yönetimi': '⚙️'
+        'Formlar/Dilekçeler': '📝',
+        'Sistem Araçları': '🛠️',
+        'Müvekkil Ödeme Yönetimi': '💰'
     };
     return icons[categoryName] || '📋';
 }
