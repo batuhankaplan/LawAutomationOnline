@@ -6717,24 +6717,44 @@ def get_user_settings():
 @login_required
 @permission_required('veritabani_yonetimi')
 def veritabani_yonetimi():
-    """Veritabanı yönetimi sayfası"""
-    # Veritabanı istatistikleri
+    """Veritabanı yönetimi sayfası - Tüm sistem tablolarını yönet"""
+    # Veritabanı istatistikleri - Tüm tabloların kayıt sayıları
     stats = {
+        # Temel istatistikler
         'kullanici_sayisi': User.query.count(),
         'onaysiz_kullanici_sayisi': User.query.filter_by(is_approved=False).count(),
         'dosya_sayisi': CaseFile.query.count(),
         'aktif_dosya_sayisi': CaseFile.query.filter_by(status='Aktif').count(),
         'etkinlik_sayisi': CalendarEvent.query.count(),
         'duyuru_sayisi': Announcement.query.count(),
-        'odeme_sayisi': Client.query.count(),
+        
+        # Detaylı tablo istatistikleri
+        'odeme_sayisi': Client.query.count(),  # Müşteri ödemeler tablosu
         'belge_sayisi': Document.query.count(),
-        'log_sayisi': ActivityLog.query.count()
+        'masraf_sayisi': Expense.query.count(),
+        'bildirim_sayisi': Notification.query.count(),
+        'aktivite_sayisi': ActivityLog.query.count(),
+        
+        # İşçi ve işgören tabloları
+        'isci_gorusme_sayisi': IsciGorusmeTutanagi.query.count(),
+        'worker_interview_sayisi': WorkerInterview.query.count(),
+        
+        # Dilekçe ve sözleşme tabloları
+        'ornek_dilekce_sayisi': OrnekDilekce.query.count(),
+        'ornek_sozlesme_sayisi': OrnekSozlesme.query.count(),
+        'dilekce_kategori_sayisi': DilekceKategori.query.count(),
+        
+        # Ödeme tablosu (Client tablosu müşteriler için kullanılıyor)
+        'musteri_sayisi': Client.query.count(),
+        'payment_sayisi': Payment.query.count() if hasattr(globals(), 'Payment') else 0,
     }
     
     # Son aktiviteler
     recent_activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(10).all()
     
-    return render_template('veritabani_yonetimi.html', stats=stats, recent_activities=recent_activities)
+    return render_template('veritabani_yonetimi.html', 
+                         stats=stats, 
+                         recent_activities=recent_activities)
 
 @app.route('/api/veritabani/temizle', methods=['POST'])
 @login_required
@@ -6772,6 +6792,34 @@ def api_veritabani_temizle():
             log_activity('Veritabanı Temizlik', f'{deleted_count} eski etkinlik silindi', current_user.id)
             return jsonify({'success': True, 'message': f'{deleted_count} eski etkinlik silindi'})
             
+        elif temizlik_turu == 'tam_sifirla':
+            # TÜM VERİTABANINI SIL (kullanıcılar hariç - sadece admin kullanıcı kalacak)
+            from models import (ActivityLog, Client, Payment, Document, Notification, 
+                               Expense, CaseFile, Announcement, CalendarEvent, 
+                               WorkerInterview, IsciGorusmeTutanagi, DilekceKategori, 
+                               OrnekDilekce, OrnekSozlesme, AISohbetGecmisi, User)
+            
+            # Her tabloyu sil (admin hariç kullanıcılar da silinecek)
+            tables_to_clear = [
+                ActivityLog, Client, Payment, Document, Notification,
+                Expense, CaseFile, Announcement, CalendarEvent,
+                WorkerInterview, IsciGorusmeTutanagi, DilekceKategori,
+                OrnekDilekce, OrnekSozlesme, AISohbetGecmisi
+            ]
+            
+            total_deleted = 0
+            for table in tables_to_clear:
+                deleted_count = table.query.delete()
+                total_deleted += deleted_count
+                
+            # Admin olmayan tüm kullanıcıları sil (admin kullanıcıyı koru)
+            deleted_users = User.query.filter(User.is_admin == False).delete()
+            total_deleted += deleted_users
+            
+            db.session.commit()
+            log_activity('Veritabanı Tam Sıfırlama', f'Toplam {total_deleted} kayıt silindi - Veritabanı sıfırlandı', current_user.id)
+            return jsonify({'success': True, 'message': f'Veritabanı başarıyla sıfırlandı! Toplam {total_deleted} kayıt silindi.'})
+            
         else:
             return jsonify({'success': False, 'message': 'Geçersiz temizlik türü'})
             
@@ -6783,29 +6831,116 @@ def api_veritabani_temizle():
 @login_required
 @permission_required('veritabani_yonetimi')
 def api_veritabani_yedekle():
-    """Veritabanı yedekleme"""
+    """Veritabanı yedekleme ve indirme"""
     try:
         import shutil
+        import tempfile
         from datetime import datetime
+        from flask import send_file
         
-        # Yedek dosya adı
-        backup_filename = f"database_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
-        backup_path = os.path.join('instance', backup_filename)
+        # Geçici yedek dosyası oluştur
+        backup_filename = f"veritabani_yedek_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.db"
         
-        # Mevcut veritabanını kopyala
-        db_path = os.path.join('instance', 'database.db')
-        shutil.copy2(db_path, backup_path)
+        # Mevcut veritabanının yolunu al
+        db_path = os.path.join(current_app.instance_path, 'database.db')
         
-        log_activity('Veritabanı Yedek', f'Veritabanı yedeği oluşturuldu: {backup_filename}', current_user.id)
+        # Geçici dosya oluştur
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
         
-        return jsonify({
-            'success': True, 
-            'message': 'Veritabanı yedeği başarıyla oluşturuldu',
-            'backup_file': backup_filename
-        })
+        # Veritabanını geçici dosyaya kopyala
+        shutil.copy2(db_path, temp_file.name)
+        temp_file.close()
+        
+        log_activity('Veritabanı Yedek', f'Veritabanı yedeği oluşturuldu ve indirildi: {backup_filename}', current_user.id)
+        
+        # Dosyayı indirme olarak gönder
+        return send_file(
+            temp_file.name,
+            as_attachment=True,
+            download_name=backup_filename,
+            mimetype='application/octet-stream'
+        )
         
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/veritabani/geri_yukle', methods=['POST'])
+@login_required
+@permission_required('veritabani_yonetimi')
+def api_veritabani_geri_yukle():
+    """Veritabanı geri yükleme"""
+    try:
+        # Dosya yükleme kontrolü
+        if 'backup_file' not in request.files:
+            return jsonify({'success': False, 'message': 'Yedek dosyası seçilmedi'})
+        
+        file = request.files['backup_file']
+        
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'Dosya seçilmedi'})
+        
+        # Dosya uzantısı kontrolü
+        if not file.filename.lower().endswith('.db'):
+            return jsonify({'success': False, 'message': 'Sadece .db dosyaları kabul edilir'})
+        
+        # Dosya boyutu kontrolü (max 100MB)
+        file.seek(0, 2)  # Dosya sonuna git
+        file_size = file.tell()
+        file.seek(0)  # Başa dön
+        
+        if file_size > 100 * 1024 * 1024:  # 100MB
+            return jsonify({'success': False, 'message': 'Dosya çok büyük (max 100MB)'})
+        
+        import shutil
+        import tempfile
+        from datetime import datetime
+        
+        # Önce mevcut veritabanının yedeğini al
+        current_db_path = os.path.join(current_app.instance_path, 'database.db')
+        backup_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        emergency_backup_path = os.path.join(current_app.instance_path, f'emergency_backup_{backup_timestamp}.db')
+        
+        if os.path.exists(current_db_path):
+            shutil.copy2(current_db_path, emergency_backup_path)
+        
+        # Geçici dosya oluştur
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+        file.save(temp_file.name)
+        temp_file.close()
+        
+        # Basit SQLite dosyası kontrolü (magic number kontrolü)
+        with open(temp_file.name, 'rb') as f:
+            header = f.read(16)
+            if not header.startswith(b'SQLite format 3\x00'):
+                os.unlink(temp_file.name)
+                return jsonify({'success': False, 'message': 'Geçersiz SQLite dosyası'})
+        
+        # Veritabanı bağlantısını kapat
+        db.engine.dispose()
+        
+        # Yedek dosyayı ana konuma taşı
+        shutil.move(temp_file.name, current_db_path)
+        
+        # Veritabanı bağlantısını yeniden başlat
+        db.create_all()
+        
+        log_activity('Veritabanı Geri Yükleme', f'Veritabanı geri yüklendi. Acil durum yedeği: {emergency_backup_path}', current_user.id)
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Veritabanı başarıyla geri yüklendi!',
+            'emergency_backup': f'emergency_backup_{backup_timestamp}.db'
+        })
+        
+    except Exception as e:
+        # Hata durumunda acil durum yedeğini geri yükle
+        if 'emergency_backup_path' in locals() and os.path.exists(emergency_backup_path):
+            try:
+                shutil.copy2(emergency_backup_path, current_db_path)
+            except:
+                pass
+        
+        return jsonify({'success': False, 'message': f'Geri yükleme hatası: {str(e)}'})
 
 @app.route('/api/veritabani/istatistikler')
 @login_required
@@ -6813,20 +6948,239 @@ def api_veritabani_yedekle():
 def api_veritabani_istatistikler():
     """Veritabanı istatistiklerini JSON olarak döndür"""
     try:
+        # Aynı istatistikleri ana fonksiyonla senkronize et
         stats = {
+            # Temel istatistikler
             'kullanici_sayisi': User.query.count(),
             'onaysiz_kullanici_sayisi': User.query.filter_by(is_approved=False).count(),
             'dosya_sayisi': CaseFile.query.count(),
             'aktif_dosya_sayisi': CaseFile.query.filter_by(status='Aktif').count(),
             'etkinlik_sayisi': CalendarEvent.query.count(),
             'duyuru_sayisi': Announcement.query.count(),
-            'odeme_sayisi': Client.query.count(),
-            'belge_sayisi': CaseFile.query.count(),  # Document yerine CaseFile count'u kullanıyoruz
-            'log_sayisi': ActivityLog.query.count()
+            
+            # Detaylı tablo istatistikleri
+            'odeme_sayisi': Client.query.count(),  # Müşteri/ödeme ilişkili kayıtlar
+            'belge_sayisi': Document.query.count(),
+            'masraf_sayisi': Expense.query.count(),
+            'bildirim_sayisi': Notification.query.count(),
+            'aktivite_sayisi': ActivityLog.query.count(),
+            
+            # İşçi ve işgören tabloları
+            'isci_gorusme_sayisi': IsciGorusmeTutanagi.query.count(),
+            
+            # Dilekçe ve sözleşme tabloları
+            'ornek_dilekce_sayisi': OrnekDilekce.query.count(),
+            'ornek_sozlesme_sayisi': OrnekSozlesme.query.count(),
+            'dilekce_kategori_sayisi': DilekceKategori.query.count(),
+            
+            # Ödeme tablosu (Client tablosu müşteriler için kullanılıyor)
+            'musteri_sayisi': Client.query.count(),
         }
-        return jsonify({'success': True, 'stats': stats})
+        
+        # Detaylı sistem bilgileri
+        import os
+        database_path = os.path.join(current_app.instance_path, 'database.db')
+        database_size = 'N/A'
+        if os.path.exists(database_path):
+            size_bytes = os.path.getsize(database_path)
+            if size_bytes >= 1024*1024:
+                database_size = f"{size_bytes / (1024*1024):.1f} MB"
+            elif size_bytes >= 1024:
+                database_size = f"{size_bytes / 1024:.1f} KB"
+            else:
+                database_size = f"{size_bytes} bytes"
+        
+        # Tablo istatistikleri - Türkçe, okunur etiketlerle
+        pretty_labels = {
+            'kullanici_sayisi': 'Kullanıcı',
+            'onaysiz_kullanici_sayisi': 'Onaysız Kullanıcı',
+            'dosya_sayisi': 'Dosya',
+            'aktif_dosya_sayisi': 'Aktif Dosya',
+            'etkinlik_sayisi': 'Etkinlik',
+            'duyuru_sayisi': 'Duyuru',
+            'odeme_sayisi': 'Ödeme Kaydı',
+            'belge_sayisi': 'Belge',
+            'masraf_sayisi': 'Masraf',
+            'bildirim_sayisi': 'Bildirim',
+            'aktivite_sayisi': 'Aktivite',
+            'isci_gorusme_sayisi': 'İşçi Görüşmesi',
+            'ornek_dilekce_sayisi': 'Örnek Dilekçe',
+            'ornek_sozlesme_sayisi': 'Örnek Sözleşme',
+            'dilekce_kategori_sayisi': 'Dilekçe Kategorisi',
+            'musteri_sayisi': 'Müşteri'
+        }
+        # Kaldırılan anahtarları ve 0 olanları filtrele (tercihen)
+        hide_keys = set(['payment_sayisi', 'worker_interview_sayisi'])
+        table_stats = {}
+        for key, value in stats.items():
+            if key in hide_keys:
+                continue
+            if key.endswith('_sayisi') and key in pretty_labels:
+                table_stats[pretty_labels[key]] = value
+        
+        return jsonify({
+            'success': True, 
+            'stats': stats,
+            'database_size': database_size,
+            'last_update': datetime.now().strftime('%d.%m.%Y %H:%M'),
+            'active_connections': 1,
+            'table_stats': table_stats
+        })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/veritabani/export/<table_name>')
+@login_required
+@permission_required('veritabani_yonetimi')
+def api_veritabani_export(table_name):
+    """Belirtilen tablo için CSV export"""
+    try:
+        import csv
+        import io
+        from flask import make_response
+        
+        # Tablo adına göre model ve alanlar (mevcut modellere göre güncellendi)
+        table_mapping = {
+            'kullanicilar': (User, ['id', 'username', 'email', 'first_name', 'last_name', 'phone', 'role', 'is_approved', 'created_at']),
+            'dosyalar': (CaseFile, ['id', 'file_type', 'courthouse', 'department', 'year', 'case_number', 'client_name', 'phone_number', 'status', 'open_date', 'next_hearing', 'hearing_time', 'hearing_type', 'description', 'user_id']),
+            'musteriler': (Client, ['id', 'name', 'surname', 'tc', 'amount', 'currency', 'installments', 'registration_date', 'due_date', 'status', 'description']),
+            'odemeler': (Payment, ['id', 'amount', 'date', 'client_id', 'user_id']) if hasattr(globals(), 'Payment') else None,
+            'etkinlikler': (CalendarEvent, ['id', 'title', 'date', 'time', 'event_type', 'description', 'user_id', 'case_id', 'assigned_to', 'deadline_date', 'is_completed']),
+            'belgeler': (Document, ['id', 'case_id', 'document_type', 'filename', 'upload_date', 'user_id', 'pdf_version']),
+            'duyurular': (Announcement, ['id', 'title', 'content', 'user_id', 'created_at']),
+            'masraflar': (Expense, ['id', 'case_id', 'expense_type', 'amount', 'date', 'is_paid', 'description']),
+            'bildirimler': (Notification, ['id', 'message', 'user_id', 'read']),
+            'aktivite_loglari': (ActivityLog, ['id', 'activity_type', 'description', 'user_id', 'timestamp']),
+            'isci_gorusmeleri': (IsciGorusmeTutanagi, ['id', 'name', 'tcNo', 'phone', 'startDate', 'endDate', 'position', 'insuranceStatus', 'salary', 'workingHours', 'overtime', 'weeklyHoliday', 'annualLeave', 'terminationReason', 'severancePay', 'noticePay', 'unpaidWages', 'overtimePay', 'annualLeavePay', 'created_at']),
+            'is_gorusmeleri': (WorkerInterview, ['id', 'fullName', 'tcNo', 'phone', 'address', 'startDate', 'insuranceDate', 'endDate', 'endReason', 'companyName', 'position', 'salary', 'created_at', 'user_id']),
+            'ornek_dilekceler': (OrnekDilekce, ['id', 'ad', 'kategori_id', 'yuklenme_tarihi', 'user_id', 'dosya_yolu']),
+            'ornek_sozlesmeler': (OrnekSozlesme, ['id', 'sozlesme_adi', 'muvekkil_adi', 'sozlesme_tarihi', 'olusturulma_tarihi', 'user_id']),
+            'dilekce_kategorileri': (DilekceKategori, ['id', 'ad'])
+        }
+        
+        if table_name not in table_mapping or table_mapping[table_name] is None:
+            return jsonify({'success': False, 'message': 'Geçersiz tablo adı'}), 400
+        
+        model_class, columns = table_mapping[table_name]
+        
+        # Verileri çek
+        records = model_class.query.all()
+        
+        # CSV dosyasını oluştur
+        output = io.StringIO()
+        writer = csv.writer(output, delimiter=';', quotechar='"', quoting=csv.QUOTE_ALL)
+        
+        # Türkçe header isimleri
+        turkish_headers = {
+            'id': 'ID',
+            'username': 'Kullanıcı Adı',
+            'email': 'E-posta',
+            'first_name': 'Ad',
+            'last_name': 'Soyad',
+            'phone': 'Telefon',
+            'role': 'Rol',
+            'is_approved': 'Onaylandı',
+            'created_at': 'Oluşturma Tarihi',
+            'title': 'Başlık',
+            'description': 'Açıklama',
+            'status': 'Durum',
+            'case_number': 'Dosya Numarası',
+            'file_type': 'Dosya Türü',
+            'courthouse': 'Adliye',
+            'department': 'Birim',
+            'year': 'Yıl',
+            'client_name': 'Müvekkil',
+            'phone_number': 'Telefon',
+            'open_date': 'Açılış Tarihi',
+            'next_hearing': 'Sonraki Duruşma',
+            'hearing_time': 'Duruşma Saati',
+            'hearing_type': 'Duruşma Türü',
+            'name': 'Ad',
+            'surname': 'Soyad',
+            'tc': 'TC',
+            'amount': 'Tutar',
+            'date': 'Tarih',
+            'currency': 'Para Birimi',
+            'installments': 'Taksit',
+            'registration_date': 'Kayıt Tarihi',
+            'due_date': 'Vade',
+            'address': 'Adres',
+            'client_id': 'Müşteri ID',
+            'user_id': 'Kullanıcı ID',
+            'start_date': 'Başlangıç Tarihi',
+            'end_date': 'Bitiş Tarihi',
+            'content': 'İçerik',
+            'document_type': 'Belge Türü',
+            'filename': 'Dosya Adı',
+            'upload_date': 'Yüklenme Tarihi',
+            'priority': 'Öncelik',
+            'category': 'Kategori',
+            'message': 'Mesaj',
+            'read': 'Okundu',
+            'activity_type': 'İşlem',
+            'timestamp': 'Zaman',
+            'insuranceStatus': 'Sigorta Durumu',
+            'workingHours': 'Çalışma Saatleri',
+            'terminationReason': 'Ayrılma Nedeni',
+            'severancePay': 'Kıdem',
+            'noticePay': 'İhbar',
+            'unpaidWages': 'Ödenmeyen Ücret',
+            'overtimePay': 'Fazla Mesai',
+            'annualLeavePay': 'Yıllık İzin Ücreti',
+            'fullName': 'Ad Soyad',
+            'companyName': 'Şirket',
+            'insuranceDate': 'Sigorta Başlangıç',
+            'sozlesme_adi': 'Sözleşme Adı',
+            'muvekkil_adi': 'Müvekkil',
+            'sozlesme_tarihi': 'Sözleşme Tarihi',
+            'olusturulma_tarihi': 'Oluşturma Tarihi',
+            'ad': 'Ad',
+        }
+        
+        # Header'ları yaz
+        headers = [turkish_headers.get(col, col.replace('_', ' ').title()) for col in columns]
+        writer.writerow(headers)
+        
+        # Verileri yaz
+        for record in records:
+            row = []
+            for col in columns:
+                try:
+                    value = getattr(record, col, '')
+                    # Özel türetmeler
+                    if table_name == 'kullanicilar' and col in ('first_name','last_name'):
+                        # düz geç
+                        pass
+                    if value is None:
+                        value = ''
+                    elif hasattr(value, 'strftime'):
+                        # Tarih/saat formatı
+                        fmt = '%d.%m.%Y %H:%M' if 'Time' in type(value).__name__ or 'DateTime' in type(value).__name__ else '%d.%m.%Y'
+                        try:
+                            value = value.strftime(fmt)
+                        except:
+                            value = str(value)
+                    elif isinstance(value, bool):
+                        value = 'Evet' if value else 'Hayır'
+                    elif isinstance(value, (int, float)) and col != 'id':
+                        value = str(value).replace('.', ',')
+                except Exception:
+                    value = ''
+                row.append(str(value))
+            writer.writerow(row)
+        
+        # Response oluştur
+        output.seek(0)
+        csv_content = output.getvalue()
+        
+        response = make_response(csv_content.encode('utf-8-sig'))  # BOM ekle
+        response.headers['Content-Type'] = 'text/csv; charset=utf-8-sig'
+        response.headers['Content-Disposition'] = f'attachment; filename="{table_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+        
+        return response
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'CSV export hatası: {str(e)}'}), 500
 
 @app.route('/admin_panel')
 @login_required

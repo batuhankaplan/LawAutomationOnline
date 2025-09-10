@@ -3,563 +3,1373 @@
 {% block title %}Veritabanı Yönetimi{% endblock %}
 
 {% block content %}
-<div class="database-container">
-    <div class="database-header">
-        <h1><i class="material-icons">storage</i>Veritabanı Yönetimi</h1>
-        <p>Sistem verilerini yönetin ve veritabanı işlemleri gerçekleştirin</p>
+<div class="db-management-page">
+    <!-- Header -->
+    <div class="db-header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">
+                    <i class="material-icons">storage</i>
+                </div>
+                <div class="header-text">
+                    <h1>Veritabanı Yönetimi</h1>
+                    <p>Sistem verilerini yönetin, istatistikleri görüntüleyin ve veritabanı işlemleri gerçekleştirin</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn-refresh" onclick="refreshStats()" title="İstatistikleri Yenile">
+                    <i class="material-icons">refresh</i>
+                </button>
+                <button class="btn-backup" onclick="showBackupModal()" title="Yedekleme">
+                    <i class="material-icons">backup</i>
+                    Yedekle
+                </button>
+            </div>
+        </div>
     </div>
 
-    <div class="database-content">
-        <!-- İstatistikler -->
-        <div class="stats-section">
-            <h2><i class="material-icons">analytics</i>Veritabanı İstatistikleri</h2>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="material-icons">people</i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">{{ stats.kullanici_sayisi }}</div>
-                        <div class="stat-label">Toplam Kullanıcı</div>
+    <!-- Dashboard Stats -->
+    <div class="db-dashboard">
+        <div class="dashboard-grid">
+            <div class="stat-card primary">
+                <div class="stat-header">
+                    <i class="material-icons">people</i>
+                    <span>Kullanıcı Yönetimi</span>
+                </div>
+                <div class="stat-numbers">
+                    <div class="main-number">{{ stats.kullanici_sayisi }}</div>
+                    <div class="sub-stats">
+                        <span class="sub-stat warning">{{ stats.onaysiz_kullanici_sayisi }} onaysız</span>
                     </div>
                 </div>
-                
-                <div class="stat-card warning">
-                    <div class="stat-icon">
-                        <i class="material-icons">person_add_disabled</i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">{{ stats.onaysiz_kullanici_sayisi }}</div>
-                        <div class="stat-label">Onaysız Kullanıcı</div>
-                    </div>
+                <div class="stat-actions">
+                    <a href="{{ url_for('admin_panel') }}" class="action-link">
+                        <i class="material-icons">manage_accounts</i>
+                        Yönet
+                    </a>
                 </div>
+            </div>
 
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="material-icons">folder</i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">{{ stats.dosya_sayisi }}</div>
-                        <div class="stat-label">Toplam Dosya</div>
+            <div class="stat-card success">
+                <div class="stat-header">
+                    <i class="material-icons">folder</i>
+                    <span>Dosya Sistemi</span>
+                </div>
+                <div class="stat-numbers">
+                    <div class="main-number">{{ stats.dosya_sayisi }}</div>
+                    <div class="sub-stats">
+                        <span class="sub-stat success">{{ stats.aktif_dosya_sayisi }} aktif</span>
                     </div>
                 </div>
+                <div class="stat-actions">
+                    <a href="{{ url_for('dosya_sorgula') }}" class="action-link">
+                        <i class="material-icons">search</i>
+                        Görüntüle
+                    </a>
+                </div>
+            </div>
 
-                <div class="stat-card success">
-                    <div class="stat-icon">
-                        <i class="material-icons">folder_open</i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">{{ stats.aktif_dosya_sayisi }}</div>
-                        <div class="stat-label">Aktif Dosya</div>
+            <div class="stat-card info">
+                <div class="stat-header">
+                    <i class="material-icons">event</i>
+                    <span>Etkinlikler</span>
+                </div>
+                <div class="stat-numbers">
+                    <div class="main-number">{{ stats.etkinlik_sayisi }}</div>
+                    <div class="sub-stats">
+                        <span class="sub-stat info">takvim verisi</span>
                     </div>
                 </div>
+                <div class="stat-actions">
+                    <a href="{{ url_for('takvim') }}" class="action-link">
+                        <i class="material-icons">calendar_month</i>
+                        Takvim
+                    </a>
+                </div>
+            </div>
 
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="material-icons">event</i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">{{ stats.etkinlik_sayisi }}</div>
-                        <div class="stat-label">Etkinlik</div>
+            <div class="stat-card warning">
+                <div class="stat-header">
+                    <i class="material-icons">announcement</i>
+                    <span>Duyurular</span>
+                </div>
+                <div class="stat-numbers">
+                    <div class="main-number">{{ stats.duyuru_sayisi }}</div>
+                    <div class="sub-stats">
+                        <span class="sub-stat warning">sistem bildirimleri</span>
                     </div>
                 </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
+                <div class="stat-actions">
+                    <a href="{{ url_for('duyurular') }}" class="action-link">
                         <i class="material-icons">campaign</i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">{{ stats.duyuru_sayisi }}</div>
-                        <div class="stat-label">Duyuru</div>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="material-icons">payments</i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">{{ stats.odeme_sayisi }}</div>
-                        <div class="stat-label">Ödeme Kaydı</div>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="material-icons">description</i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">{{ stats.belge_sayisi }}</div>
-                        <div class="stat-label">Belge</div>
-                    </div>
-                </div>
-
-                <div class="stat-card info">
-                    <div class="stat-icon">
-                        <i class="material-icons">history</i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">{{ stats.log_sayisi }}</div>
-                        <div class="stat-label">Log Kaydı</div>
-                    </div>
+                        Yönet
+                    </a>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- İşlemler -->
-        <div class="operations-section">
-            <h2><i class="material-icons">build</i>Veritabanı İşlemleri</h2>
-            <div class="operations-grid">
-                <div class="operation-card">
-                    <div class="operation-header">
-                        <i class="material-icons">backup</i>
-                        <h3>Yedekleme</h3>
-                    </div>
-                    <p>Veritabanının tam yedeğini alın</p>
-                    <button class="operation-btn primary" onclick="veritabaniYedekle()">
-                        <i class="material-icons">cloud_download</i>
-                        Yedek Al
-                    </button>
-                </div>
-
-                <div class="operation-card">
-                    <div class="operation-header">
-                        <i class="material-icons">cleaning_services</i>
-                        <h3>Eski Logları Temizle</h3>
-                    </div>
-                    <p>30 günden eski aktivite loglarını silin</p>
-                    <button class="operation-btn warning" onclick="veritabaniTemizle('eski_loglar')">
-                        <i class="material-icons">delete_sweep</i>
-                        Logları Temizle
-                    </button>
-                </div>
-
-                <div class="operation-card">
-                    <div class="operation-header">
-                        <i class="material-icons">person_remove</i>
-                        <h3>Onaysız Kullanıcıları Temizle</h3>
-                    </div>
-                    <p>7 günden eski onaysız kullanıcıları silin</p>
-                    <button class="operation-btn danger" onclick="veritabaniTemizle('onaysiz_kullanicilar')">
-                        <i class="material-icons">person_off</i>
-                        Kullanıcıları Sil
-                    </button>
-                </div>
-
-                <div class="operation-card">
-                    <div class="operation-header">
-                        <i class="material-icons">event_busy</i>
-                        <h3>Eski Etkinlikleri Temizle</h3>
-                    </div>
-                    <p>1 yıldan eski etkinlikleri silin</p>
-                    <button class="operation-btn warning" onclick="veritabaniTemizle('gecmis_etkinlikler')">
-                        <i class="material-icons">clear_all</i>
-                        Etkinlikleri Sil
-                    </button>
-                </div>
-
-                <div class="operation-card">
-                    <div class="operation-header">
+    <!-- Main Content Areas -->
+    <div class="db-content">
+        <!-- Database Tables Management -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2>
+                    <i class="material-icons">table_view</i>
+                    Veritabanı Tabloları
+                </h2>
+                <div class="section-actions">
+                    <button class="btn-secondary" onclick="refreshTableStats()">
                         <i class="material-icons">refresh</i>
-                        <h3>İstatistikleri Yenile</h3>
-                    </div>
-                    <p>Veritabanı istatistiklerini güncelleyin</p>
-                    <button class="operation-btn info" onclick="istatistikleriYenile()">
-                        <i class="material-icons">sync</i>
                         Yenile
                     </button>
                 </div>
             </div>
+
+            <div class="tables-grid">
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">people</i>
+                        <h3>Kullanıcılar</h3>
+                        <span class="table-count">{{ stats.kullanici_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="{{ url_for('admin_panel') }}" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Yönet
+                        </a>
+                        <button class="table-action" onclick="exportTableData('kullanicilar')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">folder</i>
+                        <h3>Dosyalar</h3>
+                        <span class="table-count">{{ stats.dosya_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/casefile/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('dosyalar')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">people_alt</i>
+                        <h3>Müşteriler</h3>
+                        <span class="table-count">{{ stats.odeme_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/client/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('musteriler')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">payment</i>
+                        <h3>Ödemeler</h3>
+                        <span class="table-count">{{ stats.odeme_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/payment/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('odemeler')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">event</i>
+                        <h3>Etkinlikler</h3>
+                        <span class="table-count">{{ stats.etkinlik_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/calendarevent/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('etkinlikler')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">description</i>
+                        <h3>Belgeler</h3>
+                        <span class="table-count">{{ stats.belge_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/document/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('belgeler')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">announcement</i>
+                        <h3>Duyurular</h3>
+                        <span class="table-count">{{ stats.duyuru_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/announcement/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('duyurular')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">receipt</i>
+                        <h3>Masraflar</h3>
+                        <span class="table-count">{{ stats.masraf_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/expense/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('masraflar')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">notifications</i>
+                        <h3>Bildirimler</h3>
+                        <span class="table-count">{{ stats.bildirim_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/notification/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('bildirimler')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">assignment</i>
+                        <h3>İşçi Görüşmeleri</h3>
+                        <span class="table-count">{{ stats.isci_gorusme_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/iscigorusmetutanagi/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('isci_gorusmeleri')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">work</i>
+                        <h3>İş Görüşmeleri</h3>
+                        <span class="table-count">{{ stats.worker_interview_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/workerinterview/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('is_gorusmeleri')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">article</i>
+                        <h3>Örnek Dilekçeler</h3>
+                        <span class="table-count">{{ stats.ornek_dilekce_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/ornekdilekce/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('ornek_dilekceler')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">description</i>
+                        <h3>Örnek Sözleşmeler</h3>
+                        <span class="table-count">{{ stats.ornek_sozlesme_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/orneksozlesme/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('ornek_sozlesmeler')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">category</i>
+                        <h3>Dilekçe Kategorileri</h3>
+                        <span class="table-count">{{ stats.dilekce_kategori_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/dilekcekategori/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('dilekce_kategorileri')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-card">
+                    <div class="table-header">
+                        <i class="material-icons">history</i>
+                        <h3>Aktivite Logları</h3>
+                        <span class="table-count">{{ stats.aktivite_sayisi }}</span>
+                    </div>
+                    <div class="table-actions">
+                        <a href="/admin/activitylog/" class="table-action">
+                            <i class="material-icons">edit</i>
+                            Düzenle
+                        </a>
+                        <button class="table-action" onclick="exportTableData('aktivite_loglari')" title="CSV olarak indir">
+                            <i class="material-icons">download</i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Son Aktiviteler -->
-        <div class="activities-section">
-            <h2><i class="material-icons">timeline</i>Son Aktiviteler</h2>
-            <div class="activities-list">
-                {% for activity in recent_activities %}
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <i class="material-icons">
-                            {% if 'Yedek' in activity.activity_type %}backup
-                            {% elif 'Temizlik' in activity.activity_type %}cleaning_services
-                            {% elif 'Silindi' in activity.activity_type %}delete
-                            {% elif 'Eklendi' in activity.activity_type %}add_circle
-                            {% elif 'Güncellendi' in activity.activity_type %}edit
-                            {% else %}info
-                            {% endif %}
-                        </i>
+        <!-- System Operations -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2>
+                    <i class="material-icons">settings</i>
+                    Sistem İşlemleri
+                </h2>
+            </div>
+
+            <div class="operations-grid">
+                <div class="operation-card danger">
+                    <div class="operation-icon">
+                        <i class="material-icons">delete_sweep</i>
                     </div>
-                    <div class="activity-content">
-                        <div class="activity-title">{{ activity.activity_type }}</div>
-                        <div class="activity-description">{{ activity.description }}</div>
-                        <div class="activity-meta">
-                            <span class="activity-user">{{ activity.user.get_full_name() if activity.user else 'Sistem' }}</span>
-                            <span class="activity-time">{{ activity.timestamp.strftime('%d.%m.%Y %H:%M') }}</span>
-                        </div>
+                    <div class="operation-content">
+                        <h3>Veritabanı Temizle</h3>
+                        <p>Test verilerini ve gereksiz kayıtları temizler</p>
+                        <button class="btn-danger" onclick="showCleanupModal()">
+                            <i class="material-icons">cleaning_services</i>
+                            Temizle
+                        </button>
                     </div>
                 </div>
-                {% else %}
-                <div class="no-activities">
-                    <i class="material-icons">inbox</i>
-                    <p>Henüz aktivite bulunmuyor</p>
+
+                <div class="operation-card success">
+                    <div class="operation-icon">
+                        <i class="material-icons">backup</i>
+                    </div>
+                    <div class="operation-content">
+                        <h3>Veri Yedekleme</h3>
+                        <p>Tüm veritabanını yedekler ve indirir</p>
+                        <button class="btn-success" onclick="createBackup()">
+                            <i class="material-icons">download</i>
+                            Yedekle
+                        </button>
+                    </div>
                 </div>
-                {% endfor %}
+
+                <div class="operation-card info">
+                    <div class="operation-icon">
+                        <i class="material-icons">analytics</i>
+                    </div>
+                    <div class="operation-content">
+                        <h3>Detaylı İstatistikler</h3>
+                        <p>Sistem performansı ve kullanım istatistikleri</p>
+                        <button class="btn-info" onclick="showDetailedStats()">
+                            <i class="material-icons">assessment</i>
+                            Görüntüle
+                        </button>
+                    </div>
+                </div>
+
+                <div class="operation-card warning">
+                    <div class="operation-icon">
+                        <i class="material-icons">restore</i>
+                    </div>
+                    <div class="operation-content">
+                        <h3>Veritabanı Geri Yükleme</h3>
+                        <p>Daha önce alınmış yedek dosyasını sisteme yükler</p>
+                        <button class="btn-warning" onclick="showRestoreModal()">
+                            <i class="material-icons">restore</i>
+                            Geri Yükle
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Access -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2>
+                    <i class="material-icons">speed</i>
+                    Hızlı Erişim
+                </h2>
+            </div>
+
+            <div class="quick-access-grid">
+                <a href="{{ url_for('admin_panel') }}" class="quick-link">
+                    <i class="material-icons">admin_panel_settings</i>
+                    <span>Kullanıcı Yönetimi</span>
+                </a>
+
+                <a href="{{ url_for('dosya_sorgula') }}" class="quick-link">
+                    <i class="material-icons">search</i>
+                    <span>Dosya Sorgula</span>
+                </a>
+
+                <a href="{{ url_for('takvim') }}" class="quick-link">
+                    <i class="material-icons">calendar_month</i>
+                    <span>Takvim</span>
+                </a>
+
+                <a href="{{ url_for('duyurular') }}" class="quick-link">
+                    <i class="material-icons">campaign</i>
+                    <span>Duyurular</span>
+                </a>
+
+                <a href="{{ url_for('odemeler') }}" class="quick-link">
+                    <i class="material-icons">payment</i>
+                    <span>Ödemeler</span>
+                </a>
+
+                <a href="{{ url_for('dosya_sorgula') }}" class="quick-link">
+                    <i class="material-icons">folder</i>
+                    <span>Dosyalarım</span>
+                </a>
+
+                <a href="{{ url_for('ornek_dilekceler') }}" class="quick-link">
+                    <i class="material-icons">description</i>
+                    <span>Örnek Dilekçeler</span>
+                </a>
+
+                <a href="{{ url_for('settings') }}" class="quick-link">
+                    <i class="material-icons">settings</i>
+                    <span>Ayarlar</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p id="loadingText">İşlem gerçekleştiriliyor...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div id="backupModal" class="modal-overlay" style="display: none;">
+    <div class="custom-modal">
+        <div class="modal-header">
+            <h3><i class="material-icons">backup</i> Veritabanı Yedekleme</h3>
+            <button class="close-btn" onclick="closeModal('backupModal')">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>Veritabanının tam yedeğini oluşturmak istediğinizden emin misiniz?</p>
+            <div class="modal-info">
+                <i class="material-icons">info</i>
+                <span>Bu işlem birkaç dakika sürebilir.</span>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('backupModal')">İptal</button>
+            <button class="btn-primary" onclick="performBackup()">
+                <i class="material-icons">download</i>
+                Yedekle
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="cleanupModal" class="modal-overlay" style="display: none;">
+    <div class="custom-modal">
+        <div class="modal-header">
+            <h3><i class="material-icons">warning</i> Veritabanı Temizle</h3>
+            <button class="close-btn" onclick="closeModal('cleanupModal')">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-message">
+                <i class="material-icons">warning</i>
+                <div>
+                    <h4>Dikkat!</h4>
+                    <p>Bu işlem TÜM VERİTABANINI sıfırlayacak ve tüm verileri kalıcı olarak silecektir!</p>
+                    <p>Sadece admin kullanıcı hesabı korunacak, diğer tüm veriler silinecektir.</p>
+                    <p>Bu işlem geri alınamaz! Mutlaka yedekleme alın!</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('cleanupModal')">İptal</button>
+            <button class="btn-danger" onclick="performCleanup()">
+                <i class="material-icons">delete_forever</i>
+                Veritabanını Sıfırla
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="statsModal" class="modal-overlay" style="display: none;">
+    <div class="custom-modal stats-modal">
+        <div class="modal-header">
+            <h3><i class="material-icons">analytics</i> Detaylı İstatistikler</h3>
+            <button class="close-btn" onclick="closeModal('statsModal')">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="detailedStatsContent">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>İstatistikler yükleniyor...</p>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Loading Modal -->
-<div id="loadingModal" class="loading-modal" style="display: none;">
-    <div class="loading-backdrop"></div>
-    <div class="loading-modal-content">
-        <div class="loading-content">
-            <div class="spinner"></div>
-            <h3>İşlem Gerçekleştiriliyor...</h3>
-            <p>Lütfen bekleyin, bu işlem birkaç dakika sürebilir</p>
+<div id="restoreModal" class="modal-overlay" style="display: none;">
+    <div class="custom-modal">
+        <div class="modal-header">
+            <h3><i class="material-icons">restore</i> Veritabanı Geri Yükleme</h3>
+            <button class="close-btn" onclick="closeModal('restoreModal')">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="warning-message">
+                <i class="material-icons">warning</i>
+                <div>
+                    <h4>Çok Dikkatli Olun!</h4>
+                    <p>Bu işlem mevcut tüm verileri kalıcı olarak değiştirecektir.</p>
+                    <p>İşlem öncesinde otomatik acil durum yedeği alınacaktır.</p>
+                </div>
+            </div>
+            
+            <div class="file-upload-area" id="fileUploadArea">
+                <div class="upload-icon">
+                    <i class="material-icons">cloud_upload</i>
+                </div>
+                <p><strong>Yedek dosyasını seçin</strong></p>
+                <p class="upload-hint">Sadece .db uzantılı dosyalar kabul edilir (Max: 100MB)</p>
+                <input type="file" id="backupFileInput" accept=".db" style="display: none;">
+                <button class="btn-secondary" onclick="document.getElementById('backupFileInput').click()">
+                    <i class="material-icons">folder_open</i>
+                    Dosya Seç
+                </button>
+            </div>
+            
+            <div id="selectedFileInfo" style="display: none;">
+                <div class="selected-file">
+                    <i class="material-icons">insert_drive_file</i>
+                    <span id="selectedFileName"></span>
+                    <span id="selectedFileSize"></span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeModal('restoreModal')">İptal</button>
+            <button class="btn-danger" id="performRestoreBtn" onclick="performRestore()" disabled>
+                <i class="material-icons">restore</i>
+                Geri Yükle
+            </button>
         </div>
     </div>
 </div>
 
 <style>
-.database-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
+.db-management-page {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    padding: 20px;
 }
 
-.database-header {
-    text-align: center;
-    margin-bottom: 2rem;
-    padding: 2rem;
-    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-    border-radius: 15px;
-    color: white;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+.db-header {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
 }
 
-.database-header h1 {
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
 }
 
-.database-header p {
+.header-icon i {
+    font-size: 40px;
+    color: white;
+}
+
+.header-text h1 {
+    margin: 0 0 8px 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header-text p {
+    margin: 0;
+    color: #718096;
     font-size: 1.1rem;
-    opacity: 0.9;
+    line-height: 1.5;
 }
 
-.database-content {
+.header-actions {
     display: flex;
-    flex-direction: column;
-    gap: 2rem;
+    gap: 15px;
 }
 
-.stats-section h2,
-.operations-section h2,
-.activities-section h2 {
+.btn-refresh, .btn-backup {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 1.4rem;
-    color: #2c3e50;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #ecf0f1;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
 }
 
-.stats-grid {
+.btn-refresh {
+    background: #f7fafc;
+    color: #4a5568;
+    border: 2px solid #e2e8f0;
+}
+
+.btn-refresh:hover {
+    background: #edf2f7;
+    transform: translateY(-2px);
+}
+
+.btn-backup {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+}
+
+.btn-backup:hover {
+    background: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(66, 153, 225, 0.4);
+}
+
+.db-dashboard {
+    margin-bottom: 30px;
+}
+
+.dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
 }
 
 .stat-card {
     background: white;
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    border: 1px solid #ecf0f1;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.stat-card.primary::before { background: linear-gradient(90deg, #667eea, #764ba2); }
+.stat-card.success::before { background: linear-gradient(90deg, #48bb78, #38a169); }
+.stat-card.info::before { background: linear-gradient(90deg, #4299e1, #3182ce); }
+.stat-card.warning::before { background: linear-gradient(90deg, #ed8936, #dd6b20); }
 
 .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
 }
 
-.stat-card.success {
-    border-left: 4px solid #27ae60;
-}
-
-.stat-card.warning {
-    border-left: 4px solid #f39c12;
-}
-
-.stat-card.danger {
-    border-left: 4px solid #e74c3c;
-}
-
-.stat-card.info {
-    border-left: 4px solid #3498db;
-}
-
-.stat-icon {
-    background: #ecf0f1;
-    padding: 15px;
-    border-radius: 50%;
+.stat-header {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 12px;
+    margin-bottom: 15px;
 }
 
-.stat-icon i {
+.stat-header i {
     font-size: 24px;
-    color: #2c3e50;
+    color: #4a5568;
 }
 
-.stat-info {
+.stat-header span {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.main-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #2d3748;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.sub-stats {
+    margin-bottom: 15px;
+}
+
+.sub-stat {
+    font-size: 0.9rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.sub-stat.success { background: #c6f6d5; color: #276749; }
+.sub-stat.warning { background: #fed7c3; color: #c05621; }
+.sub-stat.info { background: #bee3f8; color: #2c5aa0; }
+
+.action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    color: #4a5568;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.action-link:hover {
+    background: #edf2f7;
+    color: #2d3748;
+    transform: translateY(-1px);
+}
+
+.content-section {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f7fafc;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-header h2 i {
+    color: #667eea;
+}
+
+.btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    color: #4a5568;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #edf2f7;
+    transform: translateY(-1px);
+}
+
+.tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.table-card {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.table-card:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+    transform: translateY(-2px);
+}
+
+.table-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.table-header i {
+    font-size: 20px;
+    color: #667eea;
+}
+
+.table-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
     flex: 1;
 }
 
-.stat-number {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #2c3e50;
+.table-count {
+    background: #667eea;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
 }
 
-.stat-label {
-    font-size: 0.9rem;
-    color: #7f8c8d;
-    margin-top: 5px;
+.table-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.table-action {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #4a5568;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.table-action:hover {
+    background: #f7fafc;
+    color: #2d3748;
+    border-color: #cbd5e0;
 }
 
 .operations-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
 }
 
 .operation-card {
-    background: white;
-    padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    border: 1px solid #ecf0f1;
+    padding: 25px;
     text-align: center;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.operation-card.danger {
+    background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+    border: 2px solid #fc8181;
+}
+
+.operation-card.success {
+    background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+    border: 2px solid #68d391;
+}
+
+.operation-card.info {
+    background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%);
+    border: 2px solid #63b3ed;
+}
+
+.operation-card.warning {
+    background: linear-gradient(135deg, #fef5e7 0%, #fed7aa 100%);
+    border: 2px solid #f6ad55;
 }
 
 .operation-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-.operation-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 1rem;
-}
-
-.operation-header i {
-    font-size: 2.5rem;
-    color: #3498db;
-}
-
-.operation-header h3 {
-    font-size: 1.2rem;
-    color: #2c3e50;
-    margin: 0;
-}
-
-.operation-card p {
-    color: #7f8c8d;
-    margin-bottom: 1.5rem;
-    line-height: 1.5;
-}
-
-.operation-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    color: white;
-}
-
-.operation-btn.primary {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-}
-
-.operation-btn.warning {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
-}
-
-.operation-btn.danger {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-}
-
-.operation-btn.info {
-    background: linear-gradient(135deg, #1abc9c, #16a085);
-}
-
-.operation-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-}
-
-.activities-list {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    border: 1px solid #ecf0f1;
-    overflow: hidden;
-}
-
-.activity-item {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1.5rem;
-    border-bottom: 1px solid #ecf0f1;
-    transition: background-color 0.2s ease;
-}
-
-.activity-item:last-child {
-    border-bottom: none;
-}
-
-.activity-item:hover {
-    background-color: #f8f9fa;
-}
-
-.activity-icon {
-    background: #ecf0f1;
-    padding: 12px;
+.operation-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 15px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.activity-icon i {
-    font-size: 20px;
-    color: #3498db;
+.operation-card.danger .operation-icon {
+    background: #e53e3e;
 }
 
-.activity-content {
-    flex: 1;
+.operation-card.success .operation-icon {
+    background: #38a169;
 }
 
-.activity-title {
+.operation-card.info .operation-icon {
+    background: #3182ce;
+}
+
+.operation-card.warning .operation-icon {
+    background: #ed8936;
+}
+
+.operation-icon i {
+    font-size: 24px;
+    color: white;
+}
+
+.operation-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.3rem;
     font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 5px;
+    color: #2d3748;
 }
 
-.activity-description {
-    color: #7f8c8d;
-    font-size: 0.9rem;
-    margin-bottom: 8px;
+.operation-content p {
+    margin: 0 0 20px 0;
+    color: #4a5568;
+    line-height: 1.5;
 }
 
-.activity-meta {
-    display: flex;
-    gap: 15px;
-    font-size: 0.8rem;
-    color: #95a5a6;
+.btn-danger, .btn-success, .btn-info, .btn-warning {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.no-activities {
+.btn-danger {
+    background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #c53030 0%, #9c2929 100%);
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #2f855a 0%, #276749 100%);
+    transform: translateY(-2px);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #3182ce 0%, #2c5aa0 100%);
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #2c5aa0 0%, #2a4e8c 100%);
+    transform: translateY(-2px);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #dd6b20 0%, #c05621 100%);
+    transform: translateY(-2px);
+}
+
+/* File Upload Styles */
+.file-upload-area {
+    border: 2px dashed #cbd5e0;
+    border-radius: 12px;
+    padding: 30px;
     text-align: center;
-    padding: 3rem;
-    color: #95a5a6;
+    margin: 20px 0;
+    transition: all 0.3s ease;
+    background: #f8fafc;
 }
 
-.no-activities i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+.file-upload-area:hover {
+    border-color: #a0aec0;
+    background: #edf2f7;
 }
 
-.loading-modal {
+.upload-icon i {
+    font-size: 48px;
+    color: #a0aec0;
+    margin-bottom: 15px;
+}
+
+.file-upload-area p {
+    margin: 8px 0;
+    color: #4a5568;
+}
+
+.upload-hint {
+    font-size: 0.85rem;
+    color: #718096;
+}
+
+.selected-file {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #e6fffa;
+    border: 1px solid #38b2ac;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+.selected-file i {
+    color: #38b2ac;
+    font-size: 20px;
+}
+
+.selected-file span:first-of-type {
+    flex: 1;
+    font-weight: 500;
+    color: #2d3748;
+}
+
+.selected-file span:last-of-type {
+    font-size: 0.85rem;
+    color: #718096;
+}
+
+.quick-access-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.quick-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    color: #4a5568;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.quick-link:hover {
+    background: #edf2f7;
+    color: #2d3748;
+    border-color: #cbd5e0;
+    transform: translateY(-2px);
+}
+
+.quick-link i {
+    color: #667eea;
+    font-size: 20px;
+}
+
+/* Modal Styles */
+.modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 9999;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(5px);
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 99999 !important;
+    pointer-events: all !important;
 }
 
-.loading-backdrop {
-    position: absolute;
+.custom-modal {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+    z-index: 99999 !important;
+    position: relative;
+}
+
+.custom-modal.stats-modal {
+    max-width: 800px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 30px;
+    border-bottom: 2px solid #f7fafc;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2d3748;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #a0aec0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+    color: #2d3748;
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.modal-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    padding: 15px;
+    background: #e6fffa;
+    border-left: 4px solid #38b2ac;
+    border-radius: 8px;
+}
+
+.modal-info i {
+    color: #38b2ac;
+}
+
+.warning-message {
+    display: flex;
+    gap: 15px;
+    padding: 20px;
+    background: #fed7d7;
+    border-left: 4px solid #e53e3e;
+    border-radius: 8px;
+}
+
+.warning-message i {
+    color: #e53e3e;
+    font-size: 24px;
+}
+
+.warning-message h4 {
+    margin: 0 0 8px 0;
+    color: #742a2a;
+}
+
+.warning-message p {
+    margin: 0 0 8px 0;
+    color: #742a2a;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    padding: 25px 30px;
+    background: #f7fafc;
+    border-top: 2px solid #edf2f7;
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-2px);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(44, 62, 80, 0.8);
-    backdrop-filter: blur(4px);
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
 }
 
-.loading-modal-content {
-    position: relative;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 15px 50px rgba(0,0,0,0.3);
-    z-index: 1;
-    transform: scale(0.8);
-    animation: modalPop 0.3s ease forwards;
-}
-
-@keyframes modalPop {
-    to {
-        transform: scale(1);
-    }
-}
-
-.loading-content {
+.loading-spinner {
     text-align: center;
-    padding: 3rem 2rem;
-}
-
-.loading-content h3 {
-    color: #2c3e50;
-    margin-bottom: 1rem;
-    font-size: 1.4rem;
-}
-
-.loading-content p {
-    color: #7f8c8d;
-    margin: 0;
-    font-size: 1rem;
+    color: white;
 }
 
 .spinner {
-    border: 4px solid #ecf0f1;
-    border-top: 4px solid #3498db;
-    border-radius: 50%;
     width: 50px;
     height: 50px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
     animation: spin 1s linear infinite;
-    margin: 0 auto 2rem;
+    margin: 0 auto 15px;
 }
 
 @keyframes spin {
@@ -567,284 +1377,540 @@
     100% { transform: rotate(360deg); }
 }
 
-/* Progress Bar */
-.progress-container {
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    border: 1px solid #ecf0f1;
-    margin-bottom: 2rem;
+/* Detailed Stats Modal Styles */
+.detailed-stats h4 {
+    margin: 0 0 15px 0;
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-bottom: 2px solid #f7fafc;
+    padding-bottom: 8px;
 }
 
-.progress-bar {
-    width: 100%;
-    height: 6px;
-    background: #ecf0f1;
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 1rem;
+.stats-table {
+    margin-bottom: 25px;
 }
 
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #3498db, #2980b9);
-    border-radius: 3px;
-    transition: width 0.3s ease;
-    animation: progressShimmer 2s infinite;
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f3f4;
 }
 
-@keyframes progressShimmer {
-    0% { background-position: -200px 0; }
-    100% { background-position: calc(200px + 100%) 0; }
+.stat-row:last-child {
+    border-bottom: none;
 }
 
-/* Responsive Tasarım */
+.stat-key {
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.table-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.table-stats.compact {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.table-stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+.table-stat-item.pill {
+    background: #f7f6ff;
+    border: 1px solid #ded8ff;
+    border-radius: 9999px;
+    padding: 8px 14px;
+}
+
+.table-name {
+    font-weight: 500;
+    color: #4a5568;
+    font-size: 0.9rem;
+}
+
+.table-count {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 0.9rem;
+}
+
+.error {
+    color: #e53e3e;
+    text-align: center;
+    font-style: italic;
+    padding: 20px;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-    .database-container {
-        padding: 1rem;
+    .db-management-page {
+        padding: 10px;
     }
     
-    .database-header {
-        padding: 1.5rem;
-    }
-    
-    .database-header h1 {
-        font-size: 1.5rem;
+    .header-content {
         flex-direction: column;
-        gap: 5px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 1rem;
-    }
-    
-    .stat-card {
-        padding: 1rem;
-        flex-direction: column;
+        gap: 20px;
         text-align: center;
-        gap: 0.5rem;
     }
     
-    .stat-number {
-        font-size: 1.5rem;
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tables-grid {
+        grid-template-columns: 1fr;
     }
     
     .operations-grid {
         grid-template-columns: 1fr;
-        gap: 1rem;
     }
     
-    .operation-card {
-        padding: 1.5rem;
+    .quick-access-grid {
+        grid-template-columns: 1fr;
     }
     
-    .activity-item {
-        flex-direction: column;
-        text-align: center;
-        gap: 1rem;
-        padding: 1rem;
-    }
-    
-    .activity-meta {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    
-    .loading-modal-content {
-        margin: 1rem;
-        max-width: calc(100vw - 2rem);
-    }
-    
-    .loading-content {
-        padding: 2rem 1.5rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .stat-card {
-        min-height: 100px;
-    }
-    
-    .operation-btn {
-        padding: 10px 16px;
-        font-size: 0.9rem;
+    .modal {
+        width: 95%;
+        margin: 20px;
     }
 }
 </style>
 
 <script>
-function veritabaniYedekle() {
-    showLoading();
+function refreshStats() {
+    console.log('refreshStats çağrıldı');
+    showLoading('İstatistikler yenileniyor...');
+    
+    fetch('/api/veritabani/istatistikler', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            showError('İstatistikler yenilenirken hata oluştu: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Hata:', error);
+        showError('İstatistikler yenilenirken hata oluştu');
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
+function refreshTableStats() {
+    console.log('refreshTableStats çağrıldı');
+    refreshStats();
+}
+
+function showBackupModal() {
+    console.log('showBackupModal çağrıldı');
+    const modal = document.getElementById('backupModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        console.log('Backup modal açıldı');
+    } else {
+        console.error('backupModal elementi bulunamadı');
+    }
+}
+
+function showCleanupModal() {
+    console.log('showCleanupModal çağrıldı');
+    const modal = document.getElementById('cleanupModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        console.log('Cleanup modal açıldı');
+    } else {
+        console.error('cleanupModal elementi bulunamadı');
+    }
+}
+
+function showDetailedStats() {
+    console.log('showDetailedStats çağrıldı');
+    const modal = document.getElementById('statsModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        loadDetailedStats();
+        console.log('Stats modal açıldı');
+    } else {
+        console.error('statsModal elementi bulunamadı');
+    }
+}
+
+function closeModal(modalId) {
+    console.log('closeModal çağrıldı:', modalId);
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        console.log(modalId + ' modal kapatıldı');
+    } else {
+        console.error(modalId + ' elementi bulunamadı');
+    }
+}
+
+function createBackup() {
+    showBackupModal();
+}
+
+function performBackup() {
+    closeModal('backupModal');
+    showLoading('Veritabanı yedekleniyor...');
+    
+    // FormData kullanarak CSRF token gönder
+    const formData = new FormData();
+    formData.append('_token', getCSRFToken());
     
     fetch('/api/veritabani/yedekle', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: formData
+    })
+    .then(response => {
+        if (response.ok && response.headers.get('content-type')?.includes('application/octet-stream')) {
+            // Başarılı dosya yanıtı
+            return response.blob();
+        } else {
+            // JSON hata yanıtı
+            return response.json().then(data => {
+                throw new Error(data.message || 'Yedekleme sırasında hata oluştu');
+            });
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        hideLoading();
-        if (data.success) {
-            showNotification('success', data.message);
-            // İstatistikleri yenile
-            setTimeout(istatistikleriYenile, 1000);
-        } else {
-            showNotification('error', data.message);
-        }
+    .then(blob => {
+        // Dosyayı indir
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `veritabani_yedek_${new Date().toISOString().slice(0,16).replace('T', '_').replace(/:/g, '-')}.db`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        showSuccess('Veritabanı başarıyla yedeklendi ve indirildi!');
     })
     .catch(error => {
+        console.error('Hata:', error);
+        showError('Yedekleme sırasında hata oluştu: ' + error.message);
+    })
+    .finally(() => {
         hideLoading();
-        showNotification('error', 'İşlem sırasında bir hata oluştu: ' + error.message);
     });
 }
 
-function veritabaniTemizle(temizlikTuru) {
-    let confirmMessage = '';
-    
-    switch(temizlikTuru) {
-        case 'eski_loglar':
-            confirmMessage = '30 günden eski log kayıtları silinecek. Emin misiniz?';
-            break;
-        case 'onaysiz_kullanicilar':
-            confirmMessage = '7 günden eski onaysız kullanıcılar silinecek. Emin misiniz?';
-            break;
-        case 'gecmis_etkinlikler':
-            confirmMessage = '1 yıldan eski etkinlikler silinecek. Emin misiniz?';
-            break;
-    }
-    
-    if (!confirm(confirmMessage)) {
-        return;
-    }
-    
-    showLoading();
+function performCleanup() {
+    closeModal('cleanupModal');
+    showLoading('Veritabanı temizleniyor...');
     
     fetch('/api/veritabani/temizle', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            temizlik_turu: temizlikTuru
+            'temizlik_turu': 'tam_sifirla'  // Tam veritabanı sıfırlaması
         })
     })
     .then(response => response.json())
     .then(data => {
-        hideLoading();
         if (data.success) {
-            showNotification('success', data.message);
-            // İstatistikleri yenile
-            setTimeout(istatistikleriYenile, 1000);
+            showSuccess('Veritabanı başarıyla temizlendi!');
+            setTimeout(() => location.reload(), 2000);
         } else {
-            showNotification('error', data.message);
+            showError('Temizleme sırasında hata oluştu: ' + data.message);
         }
     })
     .catch(error => {
+        console.error('Hata:', error);
+        showError('Temizleme sırasında hata oluştu');
+    })
+    .finally(() => {
         hideLoading();
-        showNotification('error', 'İşlem sırasında bir hata oluştu: ' + error.message);
     });
 }
 
-function istatistikleriYenile() {
-    fetch('/api/veritabani/istatistikler')
+function loadDetailedStats() {
+    const content = document.getElementById('detailedStatsContent');
+    content.innerHTML = `
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>İstatistikler yükleniyor...</p>
+        </div>
+    `;
+    
+    fetch('/api/veritabani/istatistikler', {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // İstatistikleri güncelle
-            updateStatistics(data.stats);
-            showNotification('success', 'İstatistikler güncellendi');
+            content.innerHTML = `
+                <div class="detailed-stats">
+                    <h4>Sistem Bilgileri</h4>
+                    <div class="stats-table">
+                        <div class="stat-row">
+                            <span class="stat-key">Veritabanı Boyutu</span>
+                            <span class="stat-value">${data.database_size || 'N/A'}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-key">Son Güncelleme</span>
+                            <span class="stat-value">${data.last_update || 'N/A'}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-key">Aktif Bağlantılar</span>
+                            <span class="stat-value">${data.active_connections || '1'}</span>
+                        </div>
+                    </div>
+                    
+                    <h4>Tablo İstatistikleri</h4>
+                    <div class="table-stats compact">
+                        ${Object.entries(data.table_stats || {}).map(([label, count]) => `
+                            <div class="table-stat-item pill">
+                                <span class="table-name">${label}</span>
+                                <span class="table-count">${count} kayıt</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
         } else {
-            showNotification('error', data.message);
+            content.innerHTML = '<p class="error">İstatistikler yüklenemedi.</p>';
         }
     })
     .catch(error => {
-        showNotification('error', 'İstatistikler yenilenemedi: ' + error.message);
+        console.error('Hata:', error);
+        content.innerHTML = '<p class="error">İstatistikler yüklenirken hata oluştu.</p>';
     });
 }
 
-function updateStatistics(stats) {
-    // İstatistik kartlarındaki sayıları güncelle
-    const statCards = document.querySelectorAll('.stat-number');
-    const statLabels = [
-        'kullanici_sayisi', 'onaysiz_kullanici_sayisi', 'dosya_sayisi', 
-        'aktif_dosya_sayisi', 'etkinlik_sayisi', 'duyuru_sayisi', 
-        'odeme_sayisi', 'belge_sayisi', 'log_sayisi'
-    ];
-    
-    statCards.forEach((card, index) => {
-        if (statLabels[index] && stats[statLabels[index]] !== undefined) {
-            card.textContent = stats[statLabels[index]];
-        }
-    });
-}
-
-function showLoading() {
-    document.getElementById('loadingModal').style.display = 'flex';
+function showLoading(text = 'İşlem gerçekleştiriliyor...') {
+    document.getElementById('loadingText').textContent = text;
+    document.getElementById('loadingOverlay').style.display = 'flex';
 }
 
 function hideLoading() {
-    document.getElementById('loadingModal').style.display = 'none';
+    document.getElementById('loadingOverlay').style.display = 'none';
 }
 
-function showNotification(type, message) {
-    // Basit notification sistemi
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.innerHTML = `
-        <i class="material-icons">${type === 'success' ? 'check_circle' : 'error'}</i>
-        <span>${message}</span>
-    `;
-    
-    // Notification stilini ekle
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 20px;
-        border-radius: 8px;
-        color: white;
-        background: ${type === 'success' ? '#27ae60' : '#e74c3c'};
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        animation: slideInRight 0.3s ease;
-    `;
-    
-    document.body.appendChild(notification);
-    
-    // 5 saniye sonra kaldır
-    setTimeout(() => {
-        notification.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }, 5000);
+function showSuccess(message) {
+    // Layout.html'deki showGlobalNotification fonksiyonunu kullan
+    if (typeof showGlobalNotification === 'function') {
+        showGlobalNotification(message, 'success');
+    } else {
+        alert(message);
+    }
 }
 
-// CSS animasyonları
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideInRight {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+function showError(message) {
+    // Layout.html'deki showGlobalNotification fonksiyonunu kullan
+    if (typeof showGlobalNotification === 'function') {
+        showGlobalNotification(message, 'error');
+    } else {
+        alert(message);
+    }
+}
+
+function getCSRFToken() {
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    return metaTag ? metaTag.getAttribute('content') : '';
+}
+
+// Modal dışına tıklayınca kapat
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+        e.target.style.display = 'none';
+    }
+});
+
+// ESC tuşu ile modal kapat
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.style.display = 'none';
+        });
+    }
+});
+
+// Dosya yükleme işlemleri
+function showRestoreModal() {
+    console.log('showRestoreModal çağrıldı');
+    const modal = document.getElementById('restoreModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        resetFileUpload();
+        console.log('Restore modal açıldı');
+    } else {
+        console.error('restoreModal elementi bulunamadı');
+    }
+}
+
+function resetFileUpload() {
+    document.getElementById('backupFileInput').value = '';
+    document.getElementById('selectedFileInfo').style.display = 'none';
+    document.getElementById('performRestoreBtn').disabled = true;
+}
+
+// Dosya seçim eventi
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('backupFileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileSelect);
+    }
+});
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    const fileInfo = document.getElementById('selectedFileInfo');
+    const performBtn = document.getElementById('performRestoreBtn');
+    
+    if (file) {
+        // Dosya uzantısı kontrolü
+        if (!file.name.toLowerCase().endsWith('.db')) {
+            showError('Sadece .db uzantılı dosyalar kabul edilir!');
+            event.target.value = '';
+            return;
+        }
+        
+        // Dosya boyutu kontrolü (100MB)
+        if (file.size > 100 * 1024 * 1024) {
+            showError('Dosya çok büyük! Maksimum 100MB yüklenebilir.');
+            event.target.value = '';
+            return;
+        }
+        
+        // Dosya bilgilerini göster
+        document.getElementById('selectedFileName').textContent = file.name;
+        document.getElementById('selectedFileSize').textContent = formatFileSize(file.size);
+        fileInfo.style.display = 'block';
+        performBtn.disabled = false;
+    } else {
+        fileInfo.style.display = 'none';
+        performBtn.disabled = true;
+    }
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function performRestore() {
+    const fileInput = document.getElementById('backupFileInput');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showError('Lütfen önce bir yedek dosyası seçin!');
+        return;
     }
     
-    @keyframes slideOutRight {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
+    if (!confirm('Bu işlem mevcut tüm verileri değiştirecektir.\n\nDevam etmek istediğinizden emin misiniz?')) {
+        return;
     }
-`;
-document.head.appendChild(style);
+    
+    closeModal('restoreModal');
+    showLoading('Veritabanı geri yükleniyor...');
+    
+    const formData = new FormData();
+    formData.append('backup_file', file);
+    formData.append('_token', getCSRFToken());
+    
+    fetch('/api/veritabani/geri_yukle', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Veritabanı başarıyla geri yüklendi! Sayfa yenileniyor...');
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showError('Geri yükleme hatası: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Hata:', error);
+        showError('Geri yükleme sırasında hata oluştu: ' + error.message);
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
+function exportTableData(tableName) {
+    console.log('exportTableData çağrıldı:', tableName);
+    
+    showLoading('CSV dosyası hazırlanıyor...');
+    
+    fetch(`/api/veritabani/export/${tableName}`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('CSV export hatası: ' + response.statusText);
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${tableName}_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        showSuccess('CSV dosyası başarıyla indirildi!');
+    })
+    .catch(error => {
+        console.error('CSV export hatası:', error);
+        showError('CSV export hatası: ' + error.message);
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
 </script>
-{% endblock %} 
+
+{% endblock %}
