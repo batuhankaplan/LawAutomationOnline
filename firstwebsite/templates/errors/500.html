@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block title %}Sunucu Hatası{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="material-icons">error</i>
+        </div>
+        <h1>500</h1>
+        <h2>Sunucu Hatası</h2>
+        <p>Üzgünüz, bir sistem hatası oluştu. Lütfen daha sonra tekrar deneyiniz.</p>
+        <div class="error-actions">
+            <a href="{{ url_for('anasayfa') }}" class="btn btn-primary">
+                <i class="material-icons">home</i>
+                Ana Sayfaya Dön
+            </a>
+            <button onclick="window.location.reload()" class="btn btn-secondary">
+                <i class="material-icons">refresh</i>
+                Yenile
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-page {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+}
+
+.error-container {
+    max-width: 500px;
+}
+
+.error-icon i {
+    font-size: 80px;
+    color: #e53e3e;
+    margin-bottom: 1rem;
+}
+
+.error-container h1 {
+    font-size: 4rem;
+    font-weight: bold;
+    color: #2d3748;
+    margin: 0;
+}
+
+.error-container h2 {
+    font-size: 1.5rem;
+    color: #4a5568;
+    margin: 1rem 0;
+}
+
+.error-container p {
+    color: #718096;
+    margin-bottom: 2rem;
+}
+
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.error-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background-color: #718096;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #4a5568;
+}
+</style>
+{% endblock %}

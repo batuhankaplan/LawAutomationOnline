@@ -30,4 +30,13 @@ if __name__ == "__main__":
     # Flask uygulamasını import et ve başlat
     from app import app
     
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    # Production için debug ve host ayarlarını environment'dan al
+    debug_mode = os.getenv('DEBUG', 'False').lower() == 'true'
+    host = os.getenv('HOST', '0.0.0.0')  # Production'da 0.0.0.0 önemli
+    port = int(os.getenv('PORT', 5000))
+    
+    print(f"Debug mode: {debug_mode}")
+    print(f"Host: {host}")
+    print(f"Port: {port}")
+    
+    app.run(debug=debug_mode, host=host, port=port)

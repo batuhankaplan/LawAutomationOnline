@@ -200,7 +200,7 @@ def permission_required(permission):
 
 app = Flask(__name__, static_url_path='/static')
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback-secret-key-change-this')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads/'
@@ -220,7 +220,7 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_ASCII_ATTACHMENTS'] = False  # Türkçe karakter desteği için
 app.config['MAIL_DEFAULT_CHARSET'] = 'utf-8'  # UTF-8 charset ayarla
 app.config['MAIL_SUPPRESS_SEND'] = False
-app.config['MAIL_DEBUG'] = True  # Debug modunu aç
+app.config['MAIL_DEBUG'] = os.getenv('DEBUG', 'False').lower() == 'true'
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -1347,7 +1347,7 @@ def permission_required(permission):
 
 app = Flask(__name__, static_url_path='/static')
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback-secret-key-change-this')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads/'
@@ -1367,7 +1367,7 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_ASCII_ATTACHMENTS'] = False  # Türkçe karakter desteği için
 app.config['MAIL_DEFAULT_CHARSET'] = 'utf-8'  # UTF-8 charset ayarla
 app.config['MAIL_SUPPRESS_SEND'] = False
-app.config['MAIL_DEBUG'] = True  # Debug modunu aç
+app.config['MAIL_DEBUG'] = os.getenv('DEBUG', 'False').lower() == 'true'
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -2747,7 +2747,7 @@ def permission_required(permission):
 
 app = Flask(__name__, static_url_path='/static')
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback-secret-key-change-this')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads/'
@@ -2767,7 +2767,7 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_ASCII_ATTACHMENTS'] = False  # Türkçe karakter desteği için
 app.config['MAIL_DEFAULT_CHARSET'] = 'utf-8'  # UTF-8 charset ayarla
 app.config['MAIL_SUPPRESS_SEND'] = False
-app.config['MAIL_DEBUG'] = True  # Debug modunu aç
+app.config['MAIL_DEBUG'] = os.getenv('DEBUG', 'False').lower() == 'true'
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -3874,7 +3874,7 @@ def permission_required(permission):
 
 app = Flask(__name__, static_url_path='/static')
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SECRET_KEY'] = 'your_secret_key'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback-secret-key-change-this')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads/'
@@ -3894,7 +3894,7 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_ASCII_ATTACHMENTS'] = False  # Türkçe karakter desteği için
 app.config['MAIL_DEFAULT_CHARSET'] = 'utf-8'  # UTF-8 charset ayarla
 app.config['MAIL_SUPPRESS_SEND'] = False
-app.config['MAIL_DEBUG'] = True  # Debug modunu aç
+app.config['MAIL_DEBUG'] = os.getenv('DEBUG', 'False').lower() == 'true'
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -5110,11 +5110,13 @@ def edit_case(case_id):
             return jsonify(success=False, message="Müvekkil adı boş olamaz"), 400
             
         # Dosya bilgilerini güncelle
-        print(f"DEBUG: edit_case - received file_type: {data.get('file_type')}")
-        print(f"DEBUG: edit_case - current case file_type: {case_file.file_type}")
+        if os.getenv('DEBUG', 'False').lower() == 'true':
+            print(f"DEBUG: edit_case - received file_type: {data.get('file_type')}")
+            print(f"DEBUG: edit_case - current case file_type: {case_file.file_type}")
         if 'file_type' in data and data['file_type']:
             case_file.file_type = data['file_type']
-            print(f"DEBUG: edit_case - updated file_type to: {case_file.file_type}")
+            if os.getenv('DEBUG', 'False').lower() == 'true':
+                print(f"DEBUG: edit_case - updated file_type to: {case_file.file_type}")
         if 'courthouse' in data and data['courthouse']:
             case_file.courthouse = data['courthouse']
         if 'client_name' in data and data['client_name']:
@@ -9705,8 +9707,9 @@ def api_ornek_dilekce_onizle(dilekce_id):
         file_ext = dilekce.dosya_yolu.rsplit('.', 1)[1].lower() if '.' in dilekce.dosya_yolu else ''
         
         print(f"Önizleme istenen dilekçe - ID: {dilekce_id}, Ad: {dilekce.ad}, Uzantı: {file_ext}")
-        print(f"DEBUG: DOCX/DOC dosya yolu: {filepath}")
-        print(f"DEBUG: Dosya mevcut mu? {os.path.exists(filepath)}")
+        if os.getenv('DEBUG', 'False').lower() == 'true':
+            print(f"DEBUG: DOCX/DOC dosya yolu: {filepath}")
+            print(f"DEBUG: Dosya mevcut mu? {os.path.exists(filepath)}")
         
         # UDF dosyası ise UDF viewer endpoint'ine yönlendir
         if file_ext == 'udf':
@@ -11647,7 +11650,8 @@ def update_case_basic_info():
                 pass
         
         # Dosya bilgilerini güncelle
-        print(f"DEBUG: Updating file_type from {case.file_type} to {file_type}")
+        if os.getenv('DEBUG', 'False').lower() == 'true':
+            print(f"DEBUG: Updating file_type from {case.file_type} to {file_type}")
         case.file_type = file_type
         case.year = int(year)
         case.case_number = case_number
