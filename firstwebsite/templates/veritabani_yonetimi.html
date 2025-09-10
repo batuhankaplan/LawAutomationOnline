@@ -521,7 +521,7 @@
     </div>
 
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div id="loadingOverlay" class="loading-overlay hidden-overlay">
         <div class="loading-spinner">
             <div class="spinner"></div>
             <p id="loadingText">İşlem gerçekleştiriliyor...</p>
@@ -530,7 +530,7 @@
 </div>
 
 <!-- Modals -->
-<div id="backupModal" class="modal-overlay" style="display: none;">
+<div id="backupModal" class="modal-overlay hidden-overlay">
     <div class="custom-modal">
         <div class="modal-header">
             <h3><i class="material-icons">backup</i> Veritabanı Yedekleme</h3>
@@ -555,7 +555,7 @@
     </div>
 </div>
 
-<div id="cleanupModal" class="modal-overlay" style="display: none;">
+<div id="cleanupModal" class="modal-overlay hidden-overlay">
     <div class="custom-modal">
         <div class="modal-header">
             <h3><i class="material-icons">warning</i> Veritabanı Temizle</h3>
@@ -584,7 +584,7 @@
     </div>
 </div>
 
-<div id="statsModal" class="modal-overlay" style="display: none;">
+<div id="statsModal" class="modal-overlay hidden-overlay">
     <div class="custom-modal stats-modal">
         <div class="modal-header">
             <h3><i class="material-icons">analytics</i> Detaylı İstatistikler</h3>
@@ -603,7 +603,7 @@
     </div>
 </div>
 
-<div id="restoreModal" class="modal-overlay" style="display: none;">
+<div id="restoreModal" class="modal-overlay hidden-overlay">
     <div class="custom-modal">
         <div class="modal-header">
             <h3><i class="material-icons">restore</i> Veritabanı Geri Yükleme</h3>
@@ -627,14 +627,14 @@
                 </div>
                 <p><strong>Yedek dosyasını seçin</strong></p>
                 <p class="upload-hint">Sadece .db uzantılı dosyalar kabul edilir (Max: 100MB)</p>
-                <input type="file" id="backupFileInput" accept=".db" style="display: none;">
+                <input type="file" id="backupFileInput" accept=".db" class="hidden-input">
                 <button class="btn-secondary" onclick="document.getElementById('backupFileInput').click()">
                     <i class="material-icons">folder_open</i>
                     Dosya Seç
                 </button>
             </div>
             
-            <div id="selectedFileInfo" style="display: none;">
+            <div id="selectedFileInfo" class="hidden-overlay">
                 <div class="selected-file">
                     <i class="material-icons">insert_drive_file</i>
                     <span id="selectedFileName"></span>
@@ -653,6 +653,15 @@
 </div>
 
 <style>
+/* Inline CSS'ler için sınıflar */
+.hidden-overlay {
+    display: none;
+}
+
+.hidden-input {
+    display: none;
+}
+
 .db-management-page {
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
@@ -666,6 +675,7 @@
     margin-bottom: 30px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     border: 1px solid rgba(255,255,255,0.2);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 
@@ -769,6 +779,7 @@
     padding: 25px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     border: 1px solid rgba(255,255,255,0.2);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     transition: all 0.3s ease;
     position: relative;
@@ -863,6 +874,7 @@
     margin-bottom: 30px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     border: 1px solid rgba(255,255,255,0.2);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 
@@ -1215,12 +1227,17 @@
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.5);
+    -webkit-backdrop-filter: blur(5px);
     backdrop-filter: blur(5px);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 99999 !important;
     pointer-events: all !important;
+}
+
+.modal-overlay.show {
+    display: flex;
 }
 
 .custom-modal {
@@ -1350,11 +1367,16 @@
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.7);
+    -webkit-backdrop-filter: blur(5px);
     backdrop-filter: blur(5px);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 20000;
+}
+
+.loading-overlay.show {
+    display: flex;
 }
 
 .loading-spinner {
@@ -1532,7 +1554,7 @@ function showBackupModal() {
     console.log('showBackupModal çağrıldı');
     const modal = document.getElementById('backupModal');
     if (modal) {
-        modal.style.display = 'flex';
+        modal.classList.add('show');
         console.log('Backup modal açıldı');
     } else {
         console.error('backupModal elementi bulunamadı');
@@ -1543,7 +1565,7 @@ function showCleanupModal() {
     console.log('showCleanupModal çağrıldı');
     const modal = document.getElementById('cleanupModal');
     if (modal) {
-        modal.style.display = 'flex';
+        modal.classList.add('show');
         console.log('Cleanup modal açıldı');
     } else {
         console.error('cleanupModal elementi bulunamadı');
@@ -1554,7 +1576,7 @@ function showDetailedStats() {
     console.log('showDetailedStats çağrıldı');
     const modal = document.getElementById('statsModal');
     if (modal) {
-        modal.style.display = 'flex';
+        modal.classList.add('show');
         loadDetailedStats();
         console.log('Stats modal açıldı');
     } else {
@@ -1566,7 +1588,7 @@ function closeModal(modalId) {
     console.log('closeModal çağrıldı:', modalId);
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.style.display = 'none';
+        modal.classList.remove('show');
         console.log(modalId + ' modal kapatıldı');
     } else {
         console.error(modalId + ' elementi bulunamadı');
@@ -1599,7 +1621,12 @@ function performBackup() {
         } else {
             // JSON hata yanıtı
             return response.json().then(data => {
-                throw new Error(data.message || 'Yedekleme sırasında hata oluştu');
+                let errorMessage = data.message || 'Yedekleme sırasında hata oluştu';
+                if (data.detail) {
+                    console.error('Detaylı hata:', data.detail);
+                    errorMessage += '\n\nDetay: ' + data.detail;
+                }
+                throw new Error(errorMessage);
             });
         }
     })
@@ -1715,11 +1742,11 @@ function loadDetailedStats() {
 
 function showLoading(text = 'İşlem gerçekleştiriliyor...') {
     document.getElementById('loadingText').textContent = text;
-    document.getElementById('loadingOverlay').style.display = 'flex';
+    document.getElementById('loadingOverlay').classList.add('show');
 }
 
 function hideLoading() {
-    document.getElementById('loadingOverlay').style.display = 'none';
+    document.getElementById('loadingOverlay').classList.remove('show');
 }
 
 function showSuccess(message) {
@@ -1748,7 +1775,7 @@ function getCSRFToken() {
 // Modal dışına tıklayınca kapat
 document.addEventListener('click', function(e) {
     if (e.target.classList.contains('modal-overlay')) {
-        e.target.style.display = 'none';
+        e.target.classList.remove('show');
     }
 });
 
@@ -1756,7 +1783,7 @@ document.addEventListener('click', function(e) {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         document.querySelectorAll('.modal-overlay').forEach(modal => {
-            modal.style.display = 'none';
+            modal.classList.remove('show');
         });
     }
 });
@@ -1766,7 +1793,7 @@ function showRestoreModal() {
     console.log('showRestoreModal çağrıldı');
     const modal = document.getElementById('restoreModal');
     if (modal) {
-        modal.style.display = 'flex';
+        modal.classList.add('show');
         resetFileUpload();
         console.log('Restore modal açıldı');
     } else {
@@ -1862,7 +1889,12 @@ function performRestore() {
                 location.reload();
             }, 2000);
         } else {
-            showError('Geri yükleme hatası: ' + data.message);
+            let errorMessage = 'Geri yükleme hatası: ' + data.message;
+            if (data.detail) {
+                console.error('Detaylı hata:', data.detail);
+                errorMessage += '\n\nDetay: ' + data.detail;
+            }
+            showError(errorMessage);
         }
     })
     .catch(error => {

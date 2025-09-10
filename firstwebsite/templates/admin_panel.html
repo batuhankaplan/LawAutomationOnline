@@ -34,7 +34,7 @@
                 <i class="material-icons">search</i>
                 <input type="text" id="userSearch" placeholder="Kullanıcı ara...">
             </div>
-            <select id="roleFilter" class="filter-select">
+            <select id="roleFilter" class="filter-select" title="Rol filtresi seçiniz">
                 <option value="all">Tüm Roller</option>
                 <option value="Yönetici Avukat">Yönetici Avukat</option>
                 <option value="Avukat">Avukat</option>
@@ -61,7 +61,7 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th width="50"><input type="checkbox" id="selectAllActive"></th>
+                        <th width="50"><input type="checkbox" id="selectAllActive" title="Tüm aktif kullanıcıları seç/seçme"></th>
                         <th>Kullanıcı</th>
                         <th>İletişim</th>
                         <th>Rol</th>
@@ -72,10 +72,10 @@
                 <tbody>
                     {% for user in active_users %}
                     <tr data-role="{{ user.role }}">
-                        <td><input type="checkbox" name="selectedUsers" value="{{ user.id }}"></td>
+                        <td><input type="checkbox" name="selectedUsers" value="{{ user.id }}" title="Kullanıcıyı seç"></td>
                         <td>
                             <div class="user-cell">
-                                <img src="{{ url_for('static', filename='images/pp.png') }}" class="user-avatar">
+                                <img src="{{ url_for('static', filename='images/pp.png') }}" class="user-avatar" alt="Kullanıcı profil resmi">
                                 <div>
                                     <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
                                     <div class="user-username">@{{ user.username }}</div>
@@ -119,7 +119,7 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th width="50"><input type="checkbox" id="selectAllPending"></th>
+                        <th width="50"><input type="checkbox" id="selectAllPending" title="Tüm bekleyen kullanıcıları seç/seçme"></th>
                         <th>Kullanıcı</th>
                         <th>İletişim</th>
                         <th>Rol</th>
@@ -130,10 +130,10 @@
                 <tbody>
                     {% for user in pending_users %}
                     <tr data-role="{{ user.role }}" class="pending-row">
-                        <td><input type="checkbox" name="selectedPendingUsers" value="{{ user.id }}"></td>
+                        <td><input type="checkbox" name="selectedPendingUsers" value="{{ user.id }}" title="Kullanıcıyı seç"></td>
                         <td>
                             <div class="user-cell">
-                                <img src="{{ url_for('static', filename='images/pp.png') }}" class="user-avatar">
+                                <img src="{{ url_for('static', filename='images/pp.png') }}" class="user-avatar" alt="Kullanıcı profil resmi">
                                 <div>
                                     <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
                                     <div class="user-username">@{{ user.username }}</div>
@@ -210,6 +210,7 @@
     padding: 1rem 1.5rem;
     border-radius: 8px;
     text-align: center;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 

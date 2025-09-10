@@ -206,6 +206,74 @@
             font-size: 28px;
             font-weight: 600;
         }
+
+        /* Inline stiller için CSS sınıfları */
+        .readonly-input {
+            background-color: #f8f9fa;
+        }
+        
+        .twofa-group {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f0f8ff;
+            border-radius: 8px;
+            border: 2px solid #007bff;
+        }
+        
+        .twofa-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .twofa-icon {
+            font-size: 24px;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        
+        .twofa-title {
+            margin: 0;
+            color: #007bff;
+        }
+        
+        .twofa-subtitle {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .totp-input {
+            text-align: center;
+            font-size: 18px;
+            letter-spacing: 3px;
+            font-family: monospace;
+        }
+        
+        .twofa-help {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .back-link {
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .back-link a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .phone-helper {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -228,22 +296,22 @@
                     <h2 class="form-title">Giriş Yap</h2>
                     <div class="form-group">
                         <label for="login-email">E-posta</label>
-                        <input type="email" id="login-email" name="email" class="form-control" 
-                               {% if require_2fa %}value="{{ user_email }}" readonly style="background-color: #f8f9fa;"{% else %}required{% endif %}>
+                        <input type="email" id="login-email" name="email" class="form-control{% if require_2fa %} readonly-input{% endif %}" 
+                               {% if require_2fa %}value="{{ user_email }}" readonly{% else %}required{% endif %}>
                     </div>
                     <div class="form-group">
                         <label for="login-password">Şifre</label>
-                        <input type="password" id="login-password" name="password" class="form-control" 
-                               {% if require_2fa %}placeholder="Doğrulandı ✓" readonly style="background-color: #f8f9fa;"{% else %}required{% endif %}>
+                        <input type="password" id="login-password" name="password" class="form-control{% if require_2fa %} readonly-input{% endif %}" 
+                               {% if require_2fa %}placeholder="Doğrulandı ✓" readonly{% else %}required{% endif %}>
                     </div>
                     
                     {% if require_2fa %}
                     <!-- 2FA Kod Alanı -->
-                    <div class="form-group" id="twofa-group" style="margin-top: 20px; padding: 20px; background-color: #f0f8ff; border-radius: 8px; border: 2px solid #007bff;">
-                        <div style="text-align: center; margin-bottom: 15px;">
-                            <i class="fas fa-shield-alt" style="font-size: 24px; color: #007bff; margin-bottom: 10px;"></i>
-                            <h4 style="margin: 0; color: #007bff;">İki Faktörlü Doğrulama</h4>
-                            <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">
+                    <div class="form-group twofa-group" id="twofa-group">
+                        <div class="twofa-header">
+                            <i class="fas fa-shield-alt twofa-icon"></i>
+                            <h4 class="twofa-title">İki Faktörlü Doğrulama</h4>
+                            <p class="twofa-subtitle">
                                 {% if user_email %}{{ user_email }} hesabı için{% endif %} 
                                 authenticator uygulamanızdaki 6 haneli kodu girin
                             </p>
@@ -252,13 +320,12 @@
                         <input type="text" 
                                id="totp_code" 
                                name="totp_code" 
-                               class="form-control" 
+                               class="form-control totp-input" 
                                placeholder="123456" 
                                maxlength="6" 
-                               style="text-align: center; font-size: 18px; letter-spacing: 3px; font-family: monospace;" 
                                required 
                                autocomplete="off">
-                        <small style="color: #666; font-size: 12px;">Google Authenticator, Authy, veya benzeri uygulamanızdan kodu alın</small>
+                        <small class="twofa-help">Google Authenticator, Authy, veya benzeri uygulamanızdan kodu alın</small>
                     </div>
                     {% endif %}
                     
@@ -267,8 +334,8 @@
                     </button>
                     
                     {% if require_2fa %}
-                    <div style="text-align: center; margin-top: 15px;">
-                        <a href="{{ url_for('login') }}" style="color: #666; text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 5px;">
+                    <div class="back-link">
+                        <a href="{{ url_for('login') }}">
                             <i class="fas fa-arrow-left"></i> Geri Dön
                         </a>
                     </div>
@@ -303,9 +370,9 @@
                     </div>
                     <div class="form-group">
                         <label for="phone">Telefon Numarası</label>
-                        <input type="tel" id="phone" name="phone" pattern="[0-9]{10}" class="form-control" 
-                               placeholder="(5xx) xxx-xxxx" required>
-                        <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
+                        <input type="tel" id="phone" name="phone" class="form-control" 
+                               inputmode="numeric" autocomplete="tel" placeholder="(5xx) xxx-xxxx" required>
+                        <small class="phone-helper">
                             Telefon numaranızı başında sıfır olmadan giriniz
                         </small>
                     </div>
@@ -333,19 +400,19 @@
                     <div class="form-group">
                         <label>Doğum Tarihi</label>
                         <div class="date-inputs">
-                            <select name="birth_day" class="form-select" required>
+                            <select name="birth_day" class="form-select" title="Doğum gününü seçiniz" required>
                                 <option value="">Gün</option>
                                 {% for day in range(1, 32) %}
                                 <option value="{{ day }}">{{ day }}</option>
                                 {% endfor %}
                             </select>
-                            <select name="birth_month" class="form-select" required>
+                            <select name="birth_month" class="form-select" title="Doğum ayını seçiniz" required>
                                 <option value="">Ay</option>
                                 {% for month in range(1, 13) %}
                                 <option value="{{ month }}">{{ month }}</option>
                                 {% endfor %}
                             </select>
-                            <select name="birth_year" class="form-select" required>
+                            <select name="birth_year" class="form-select" title="Doğum yılını seçiniz" required>
                                 <option value="">Yıl</option>
                                 {% for year in range(2024, 1949, -1) %}
                                 <option value="{{ year }}">{{ year }}</option>
@@ -537,23 +604,6 @@
             }
         }
 
-        // Form doğrulama
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
-            const password = document.getElementById('register-password').value;
-            const passwordConfirm = document.getElementById('register-password-confirm').value;
-            const phoneInput = document.getElementById('phone');
-
-            // Telefon numarasını temiz hale getir (sadece rakamlar)
-            if (phoneInput.value) {
-                const cleanPhone = phoneInput.value.replace(/[^0-9]/g, '');
-                phoneInput.value = cleanPhone;
-            }
-
-            if (password !== passwordConfirm) {
-                e.preventDefault();
-                showGlobalNotification('Şifreler eşleşmiyor!', 'warning');
-            }
-        });
 
         {% if show_register %}
             document.addEventListener('DOMContentLoaded', function() {
@@ -618,6 +668,47 @@
                     this.value = '';
                 }
             });
+            
+            // Form submit edilmeden önce telefon numarasını temizle ve doğrula
+            const registerForm = document.querySelector('form[action="{{ url_for('register') }}"]');
+            if (registerForm) {
+                registerForm.addEventListener('submit', function(e) {
+                    const phoneInput = document.getElementById('phone');
+                    const password = document.getElementById('register-password').value;
+                    const passwordConfirm = document.getElementById('register-password-confirm').value;
+                    
+                    // Şifre kontrolü
+                    if (password !== passwordConfirm) {
+                        e.preventDefault();
+                        showGlobalNotification('Şifreler eşleşmiyor!', 'warning');
+                        return;
+                    }
+                    
+                    // Telefon numarası kontrolü
+                    if (phoneInput && phoneInput.value) {
+                        // Formatlanmış telefon numarasından sadece rakamları al
+                        const cleanPhone = phoneInput.value.replace(/[^0-9]/g, '');
+                        // 0 ile başlıyorsa kaldır
+                        const finalPhone = cleanPhone.startsWith('0') ? cleanPhone.substring(1) : cleanPhone;
+                        
+                        // Final validation
+                        if (finalPhone.length !== 10 || !finalPhone.startsWith('5')) {
+                            e.preventDefault();
+                            showGlobalNotification('Telefon numarası 10 haneli olmalı ve 5 ile başlamalıdır. Örnek: 5123456789', 'error');
+                            phoneInput.focus();
+                            return;
+                        }
+                        
+                        // Temizlenmiş numarayı input'a geri yaz
+                        phoneInput.value = finalPhone;
+                    } else {
+                        e.preventDefault();
+                        showGlobalNotification('Telefon numarası zorunludur.', 'error');
+                        phoneInput.focus();
+                        return;
+                    }
+                });
+            }
             
             // Telefon numarası input kontrolü
             phoneInput.addEventListener('input', function(e) {

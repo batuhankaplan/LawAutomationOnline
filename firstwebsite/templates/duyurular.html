@@ -3,6 +3,7 @@
 {% block title %}Duyurular{% endblock %}
 
 {% block content %}
+    {% if current_user.has_permission('duyuru_ekle') %}
     <div class="form-container">
         <form method="POST" id="announcementForm">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -17,6 +18,7 @@
             <button type="submit">Ekle</button>
         </form>
     </div>
+    {% endif %}
     <div class="announcement-board">
         {% for announcement in announcements %}
             <div class="post-it">
@@ -75,6 +77,9 @@
         document.getElementById('editTitle').value = title;
         document.getElementById('editContent').value = content;
         
+        // Modal'ı göster
+        modal.style.display = 'flex';
+        
         // Form submit işleyicisi
         form.onsubmit = async function(e) {
             e.preventDefault();
@@ -88,7 +93,8 @@
                 }
                 
                 if (!csrfToken) {
-                    throw new Error('CSRF token bulunamadı');
+                    showGlobalNotification('Bu işlemi yapmaya yetkiniz yok.', 'error');
+                    return;
                 }
                 
                 const response = await fetch(`/duyuru_duzenle/${id}`, {
@@ -132,7 +138,7 @@
             }
             
             if (!csrfToken) {
-                showGlobalNotification('CSRF token bulunamadı. Sayfayı yenileyin.', 'error');
+                showGlobalNotification('Bu işlemi yapmaya yetkiniz yok.', 'error');
                 return;
             }
             
@@ -202,24 +208,17 @@
                 })
             });
             
-            if (response.ok) {
-                showGlobalNotification('Duyuru başarıyla eklendi.', 'success');
+            const result = await response.json();
+            
+            if (result.success) {
+                showGlobalNotification(result.message || 'Duyuru başarıyla eklendi.', 'success');
                 this.reset(); // Formu temizle
                 // Sayfayı yenile
                 setTimeout(() => {
                     window.location.reload();
                 }, 1500);
             } else {
-                const result = await response.text();
-                if (result.includes('error') || result.includes('Error')) {
-                    showGlobalNotification('Duyuru eklenirken bir hata oluştu.', 'error');
-                } else {
-                    showGlobalNotification('Duyuru başarıyla eklendi.', 'success');
-                    this.reset();
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-                }
+                showGlobalNotification(result.error || 'Duyuru eklenirken bir hata oluştu.', 'error');
             }
         } catch (error) {
             console.error('Duyuru ekleme hatası:', error);
@@ -280,14 +279,32 @@
     }
 
     /* Modal stillerini güncelle */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+    
     .modal-content {
         background: white;
         border-radius: 15px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         width: 90%;
         max-width: 500px;
+        min-width: 400px;
         padding: 0;
         overflow: hidden;
+        position: relative;
+        margin: auto;
+        transform: translateY(0);
     }
 
     .modal-header {

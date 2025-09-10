@@ -19,6 +19,156 @@
         // Global CSRF Token
         const CSRF_TOKEN = "{{ csrf_token() }}";
         
+        // Current user permissions
+        const USER_PERMISSIONS = {{ current_user.permissions|tojson if current_user.is_authenticated else '{}' }};
+        
+        // CSRF Token getter function
+        function getCSRFToken() {
+            return CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
+        }
+        
+        // Check user permission function
+        function hasPermission(permission) {
+            return USER_PERMISSIONS[permission] === true;
+        }
+        
+        // Global notification function
+        function showGlobalNotification(message, type = 'info') {
+            // Toast container'ı yoksa oluştur
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                `;
+                document.body.appendChild(toastContainer);
+            }
+            
+            // Toast elementi oluştur
+            const toast = document.createElement('div');
+            const colors = {
+                success: '#28a745',
+                error: '#dc3545', 
+                warning: '#ffc107',
+                info: '#17a2b8'
+            };
+            
+            toast.style.cssText = `
+                background: ${colors[type] || colors.info};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 5px;
+                margin-bottom: 10px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                max-width: 400px;
+                word-wrap: break-word;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            `;
+            
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 5000);
+        }
+        
+        // Shorthand notification functions
+        function showSuccess(message) {
+            showGlobalNotification(message, 'success');
+        }
+        
+        function showError(message) {
+            showGlobalNotification(message, 'error');
+        }
+        
+        function showWarning(message) {
+            showGlobalNotification(message, 'warning');
+        }
+        
+        function showInfo(message) {
+            showGlobalNotification(message, 'info');
+        }
+        
+        // Loading overlay functions
+        function showLoading(message = 'Yükleniyor...') {
+            let loadingOverlay = document.getElementById('loading-overlay');
+            if (!loadingOverlay) {
+                loadingOverlay = document.createElement('div');
+                loadingOverlay.id = 'loading-overlay';
+                loadingOverlay.innerHTML = `
+                    <div style="
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0,0,0,0.7);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 10000;
+                    ">
+                        <div style="
+                            background: white;
+                            padding: 30px;
+                            border-radius: 10px;
+                            text-align: center;
+                            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                        ">
+                            <div class="spinner" style="
+                                border: 3px solid #f3f3f3;
+                                border-top: 3px solid #007bff;
+                                border-radius: 50%;
+                                width: 40px;
+                                height: 40px;
+                                animation: spin 1s linear infinite;
+                                margin: 0 auto 20px;
+                            "></div>
+                            <p id="loading-message" style="margin: 0; color: #333;">${message}</p>
+                        </div>
+                    </div>
+                    <style>
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    </style>
+                `;
+                document.body.appendChild(loadingOverlay);
+            } else {
+                const messageEl = loadingOverlay.querySelector('#loading-message');
+                if (messageEl) messageEl.textContent = message;
+                loadingOverlay.style.display = 'block';
+            }
+        }
+        
+        function hideLoading() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+        
         // Global Theme Initialization - SAYFA YÜKLENMEDEN ÖNCE
         (function() {
             const savedTheme = localStorage.getItem('theme') || 'light';
@@ -895,7 +1045,7 @@
     {% block head_extra %}{% endblock %}
 </head>
 
-<body>
+<body data-has-file-delete-permission="{{ 'true' if current_user.has_permission('dosya_sil') else 'false' }}" data-has-file-edit-permission="{{ 'true' if current_user.has_permission('dosya_duzenle') else 'false' }}">
     <style>
     /* Global saydam arkaplan - tüm sayfalarda görünür, içerik altında kalır */
     body { position: relative; }
@@ -910,6 +1060,39 @@
     }
 
     .app-container, .main-wrapper, .content { position: relative; z-index: 1; background: transparent !important; }
+    
+    /* User info container styles */
+    .user-info-container {
+        display: flex;
+        flex-direction: column;
+        margin-right: 5px;
+    }
+    
+    .user-name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        line-height: 1.2;
+    }
+    
+    .user-role {
+        font-size: 0.8rem;
+        color: #666;
+        line-height: 1.2;
+    }
+    
+    /* Navigation permission styles */
+    .nav-item-hidden {
+        display: none;
+    }
+    
+    .nav-item-visible {
+        display: block;
+    }
+    
+    /* Hidden section style for anasayfa.html */
+    .hidden-section {
+        display: none;
+    }
     </style>
     
     <div class="app-container">
@@ -919,14 +1102,8 @@
             </div>
             <ul class="nav-links">
                 <li><a href="{{ url_for('anasayfa') }}"><i class="material-icons">home</i>Ana Sayfa</a></li>
-                
-                {% if current_user.has_permission('takvim_goruntule') %}
-                <li><a href="{{ url_for('takvim') }}"><i class="material-icons">calendar_today</i>Takvim</a></li>
-                {% endif %}
-                
-                <!-- Dosyalarım menüsü ve Formlar/Dilekçeler menüsünün yerini değiştireceğiz -->
-                {% if current_user.has_permission('dosya_sorgula') or current_user.has_permission('dosya_ekle') %}
-                <li class="has-submenu">
+                <li class="{% if current_user.has_permission('takvim_goruntule') %}nav-item-visible{% else %}nav-item-hidden{% endif %}"><a href="{{ url_for('takvim') }}"><i class="material-icons">calendar_today</i>Takvim</a></li>
+                <li class="has-submenu {% if current_user.has_permission('dosya_sorgula') or current_user.has_permission('dosya_ekle') %}nav-item-visible{% else %}nav-item-hidden{% endif %}">
                     <a href="#" class="menu-trigger">
                         <div class="menu-left">
                             <i class="material-icons">folder</i>
@@ -935,17 +1112,10 @@
                         <i class="material-icons menu-arrow">chevron_right</i>
                     </a>
                     <ul class="submenu">
-                        {% if current_user.has_permission('dosya_sorgula') %}
-                        <li><a href="{{ url_for('dosya_sorgula') }}"><i class="material-icons">search</i>Dosya Sorgula</a></li>
-                        {% endif %}
-                        {% if current_user.has_permission('dosya_ekle') %}
-                        <li><a href="{{ url_for('dosya_ekle') }}"><i class="material-icons">add</i>Dosya Ekle</a></li>
-                        {% endif %}
+                        <li class="{% if current_user.has_permission('dosya_sorgula') %}nav-item-visible{% else %}nav-item-hidden{% endif %}"><a href="{{ url_for('dosya_sorgula') }}"><i class="material-icons">search</i>Dosya Sorgula</a></li>
+                        <li class="{% if current_user.has_permission('dosya_ekle') %}nav-item-visible{% else %}nav-item-hidden{% endif %}"><a href="{{ url_for('dosya_ekle') }}"><i class="material-icons">add</i>Dosya Ekle</a></li>
                     </ul>
                 </li>
-                {% endif %}
-                
-                <!-- Formlar/Dilekçeler menüsü -->
                 <li class="has-submenu">
                     <a href="#" class="menu-trigger">
                         <div class="menu-left">
@@ -962,12 +1132,7 @@
                         {# <li><a href="{{ url_for('kayitli_ornek_sozlesmeler_sayfasi') }}"><i class="material-icons">save</i>Kayıtlı Sözleşmeler</a></li> #}
                     </ul>
                 </li>
-                
-                <!-- Hesaplamalar menüsü -->
-                {% if current_user.has_permission('faiz_hesaplama') or current_user.has_permission('harc_hesaplama') or 
-                   current_user.has_permission('isci_hesaplama') or current_user.has_permission('vekalet_hesaplama') or 
-                   current_user.has_permission('ceza_infaz_hesaplama') %}
-                <li class="has-submenu">
+                <li class="has-submenu {% if current_user.has_permission('faiz_hesaplama') or current_user.has_permission('harc_hesaplama') or current_user.has_permission('isci_hesaplama') or current_user.has_permission('vekalet_hesaplama') or current_user.has_permission('ceza_infaz_hesaplama') %}nav-item-visible{% else %}nav-item-hidden{% endif %}">
                     <a href="#" class="menu-trigger">
                         <div class="menu-left">
                             <i class="material-icons">calculate</i>
@@ -976,40 +1141,21 @@
                         <i class="material-icons menu-arrow">chevron_right</i>
                     </a>
                     <ul class="submenu">
-                        {% if current_user.has_permission('faiz_hesaplama') %}
-                        <li><a href="{{ url_for('hesaplamalar', type='faiz') }}"><i class="material-icons">trending_up</i>Faiz Hesaplama</a></li>
-                        {% endif %}
-                        {% if current_user.has_permission('harc_hesaplama') %}
-                        <li><a href="{{ url_for('hesaplamalar', type='harc') }}"><i class="material-icons">account_balance</i>Harç Hesaplama</a></li>
-                        {% endif %}
-                        {% if current_user.has_permission('isci_hesaplama') %}
-                        <li><a href="{{ url_for('hesaplamalar', type='isci') }}"><i class="material-icons">work</i>İşçi Alacağı Hesaplama</a></li>
-                        {% endif %}
-                        {% if current_user.has_permission('vekalet_hesaplama') %}
-                        <li><a href="{{ url_for('hesaplamalar', type='vekalet') }}"><i class="material-icons">payments</i>Vekalet Ücreti Hesaplama</a></li>
-                        {% endif %}
-                        {% if current_user.has_permission('ceza_infaz_hesaplama') %}
-                        <li><a href="{{ url_for('hesaplamalar', type='ceza_infaz') }}"><i class="material-icons">gavel</i>Ceza İnfaz Hesaplama</a></li>
-                        {% endif %}
+                        <li class="{% if current_user.has_permission('faiz_hesaplama') %}nav-item-visible{% else %}nav-item-hidden{% endif %}"><a href="{{ url_for('hesaplamalar', type='faiz') }}"><i class="material-icons">trending_up</i>Faiz Hesaplama</a></li>
+                        <li class="{% if current_user.has_permission('harc_hesaplama') %}nav-item-visible{% else %}nav-item-hidden{% endif %}"><a href="{{ url_for('hesaplamalar', type='harc') }}"><i class="material-icons">account_balance</i>Harç Hesaplama</a></li>
+                        <li class="{% if current_user.has_permission('isci_hesaplama') %}nav-item-visible{% else %}nav-item-hidden{% endif %}"><a href="{{ url_for('hesaplamalar', type='isci') }}"><i class="material-icons">work</i>İşçi Alacağı Hesaplama</a></li>
+                        <li class="{% if current_user.has_permission('vekalet_hesaplama') %}nav-item-visible{% else %}nav-item-hidden{% endif %}"><a href="{{ url_for('hesaplamalar', type='vekalet') }}"><i class="material-icons">payments</i>Vekalet Ücreti Hesaplama</a></li>
+                        <li class="{% if current_user.has_permission('ceza_infaz_hesaplama') %}nav-item-visible{% else %}nav-item-hidden{% endif %}"><a href="{{ url_for('hesaplamalar', type='ceza_infaz') }}"><i class="material-icons">gavel</i>Ceza İnfaz Hesaplama</a></li>
                     </ul>
                 </li>
-                {% endif %}
-                
                 <li>
                     <a href="{{ url_for('ucret_tarifeleri_page') }}" {% if request.endpoint == 'ucret_tarifeleri_page' %}class="active"{% endif %}><i class="fas fa-file-invoice-dollar"></i>Ücret Tarifeleri</a>
                 </li>
-                
                 <li>
                     <a href="{{ url_for('yargi_kararlari_arama') }}" {% if request.endpoint == 'yargi_kararlari_arama' %}class="active"{% endif %}><i class="material-icons">gavel</i>Yargı Kararları Arama</a>
                 </li>
-                
-                {% if current_user.has_permission('odeme_goruntule') %}
-                <li><a href="{{ url_for('odemeler') }}"><i class="material-icons">payment</i>Ödemeler</a></li>
-                {% endif %}
-                {% if current_user.has_permission('duyuru_goruntule') %}
-                <li><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
-                {% endif %}
-                
+                <li class="{% if current_user.has_permission('odeme_goruntule') %}nav-item-visible{% else %}nav-item-hidden{% endif %}"><a href="{{ url_for('odemeler') }}"><i class="material-icons">payment</i>Ödemeler</a></li>
+                <li class="{% if current_user.has_permission('duyuru_goruntule') %}nav-item-visible{% else %}nav-item-hidden{% endif %}"><a href="{{ url_for('duyurular') }}"><i class="material-icons">notifications</i>Duyurular</a></li>
                 <li><a href="{{ url_for('iletisim') }}"><i class="material-icons">contact_mail</i>İletişim</a></li>
             </ul>
         </nav>
@@ -1055,9 +1201,9 @@
                                 {% elif current_user.role == 'Stajyer Avukat' %}
                                     {% set unvan = 'Stj. Av.' %}
                                 {% endif %}
-                                <div style="display: flex; flex-direction: column; margin-right: 5px;">
-                                    <span style="font-weight: 600; font-size: 0.9rem; line-height: 1.2;">{{ unvan }} {{ current_user.first_name }} {{ current_user.last_name }}</span>
-                                    <span style="font-size: 0.8rem; color: #666; line-height: 1.2;">{{ current_user.role }}</span>
+                                <div class="user-info-container">
+                                    <span class="user-name">{{ unvan }} {{ current_user.first_name }} {{ current_user.last_name }}</span>
+                                    <span class="user-role">{{ current_user.role }}</span>
                                 </div>
                                 <i class="material-icons">arrow_drop_down</i>
                             </div>
@@ -1113,9 +1259,9 @@
                 <div class="footer-content">
                     <span> 2024 Kaplan Hukuk</span>
                     <div class="social-links">
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" title="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" title="Facebook"><i class="fab fa-facebook-f"></i></a>
                     </div>
                 </div>
             </footer>
