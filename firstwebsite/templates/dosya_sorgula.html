@@ -158,10 +158,12 @@
                 <button class="action-btn view-btn" onclick="showDetails('{{ case_file.id }}')" title="Dosya Detayları">
                     <i class="material-icons">visibility</i>
                 </button>
+                {% if current_user.has_permission('dosya_sil') %}
                 <span style="color: #dee2e6; margin: 0 8px;">|</span>
                 <button class="action-btn delete-btn" onclick="deleteCase('{{ case_file.id }}')" title="Dosyayı Sil">
                     <i class="material-icons">delete</i>
                 </button>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
@@ -185,9 +187,11 @@
                 <div class="detail-section basic-info">
                     <div class="section-header">
                         <h3><i class="material-icons">folder</i> Dosya Bilgileri</h3>
+                        {% if current_user.has_permission('dosya_duzenle') %}
                         <button class="btn edit-btn" onclick="toggleFileInfoEdit()" title="Dosya Bilgilerini Düzenle">
                             <i class="material-icons">edit</i>
                         </button>
+                        {% endif %}
                     </div>
                     <!-- Görüntüleme modu -->
                     <div id="fileInfoDisplay">
@@ -437,9 +441,11 @@
             <div class="detail-section description-section">
                 <div class="section-header">
                     <h3>Dosya Açıklaması</h3>
+                    {% if current_user.has_permission('dosya_duzenle') %}
                     <button class="btn edit-btn" onclick="editDescription()" title="Açıklama Düzenle">
                         <i class="material-icons">edit</i>
                     </button>
+                    {% endif %}
                 </div>
                 <div class="description-container">
                     <div id="descriptionDisplay">
