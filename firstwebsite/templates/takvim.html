@@ -93,6 +93,24 @@ document.addEventListener('DOMContentLoaded', function() {
         '2025-07-15': 'Demokrasi ve Milli Birlik Günü',
         '2025-08-30': 'Zafer Bayramı',
         '2025-10-29': 'Cumhuriyet Bayramı',
+        // 2026 yılı resmi tatilleri
+        '2026-01-01': 'Yılbaşı Tatili',
+        '2026-03-19': 'Ramazan Bayramı Arifesi (Yarım Gün)',
+        '2026-03-20': 'Ramazan Bayramı 1. Gün',
+        '2026-03-21': 'Ramazan Bayramı 2. Gün',
+        '2026-03-22': 'Ramazan Bayramı 3. Gün',
+        '2026-04-23': 'Ulusal Egemenlik ve Çocuk Bayramı',
+        '2026-05-01': 'Emek ve Dayanışma Günü',
+        '2026-05-19': 'Atatürkü Anma, Gençlik ve Spor Bayramı',
+        '2026-05-26': 'Kurban Bayramı Arifesi (Yarım Gün)',
+        '2026-05-27': 'Kurban Bayramı 1. Gün',
+        '2026-05-28': 'Kurban Bayramı 2. Gün',
+        '2026-05-29': 'Kurban Bayramı 3. Gün',
+        '2026-05-30': 'Kurban Bayramı 4. Gün',
+        '2026-07-15': 'Demokrasi ve Milli Birlik Günü',
+        '2026-08-30': 'Zafer Bayramı',
+        '2026-10-28': 'Cumhuriyet Bayramı Arifesi',
+        '2026-10-29': 'Cumhuriyet Bayramı',
         // Diğer yıllar için de eklenebilir
     };
 
@@ -140,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 .join('');
 
         const citySelectHtml = `
-            <div class="form-group full-width" id="citySelectGroup" style="display: none;"> <!-- Başlangıçta gizli -->
+            <div class="form-group full-width hidden-section" id="citySelectGroup"> <!-- Başlangıçta gizli -->
                 <label for="city">Şehir</label>
                 <div class="select-wrapper">
                     <select id="city" name="city">
@@ -217,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Required alanları kaldır
             document.getElementById('eventTitle').required = false;
             document.getElementById('eventTime').required = false;
-            document.getElementById('assignedTo').required = false;
+            // AssignedTo artık hiçbir zaman required değil
         } else {
             console.log('Showing fields for other event types');
             // Diğer etkinlik türlerinde bu alanları göster
@@ -229,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Required alanları geri koy
             document.getElementById('eventTitle').required = true;
             document.getElementById('eventTime').required = true;
-            document.getElementById('assignedTo').required = true;
+            // AssignedTo artık hiçbir zaman required değil
         }
 
         // Arabuluculuk, AİHM, AYM kontrolü
@@ -479,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
         div.appendChild(viewEventsBtn);
         
         // Ekle Butonu (Artı ikonu) - Sadece yetkisi varsa
-        if (userPermissions.can_add) {
+        if (hasPermission('etkinlik_ekle')) {
         const addEventBtn = document.createElement('button');
         addEventBtn.className = 'add-day-event-btn';
         addEventBtn.innerHTML = '<i class="material-icons">add</i>';
@@ -548,7 +566,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 eventDiv.appendChild(eventContent);
                 
                 // Detayları göstermek için tıklama olayı - Sadece görüntüleme yetkisi varsa
-                if(userPermissions.can_view) {
+                if(hasPermission('etkinlik_goruntule')) {
                     eventDiv.onclick = (e) => { e.stopPropagation(); showEventDetail(event); };
                 } else {
                     eventDiv.style.cursor = 'default'; // Tıklanamaz göster
@@ -561,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Güne tıklayınca modal açma (ekleme yetkisi varsa)
-        if (userPermissions.can_add) {
+        if (hasPermission('etkinlik_ekle')) {
             div.onclick = () => showModal(date, false);
         }
 
@@ -592,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('eventType').value = eventToEdit.event_type;
             document.getElementById('eventTitle').value = eventToEdit.title;
             document.getElementById('eventDescription').value = eventToEdit.description || '';
-            document.getElementById('assignedTo').value = eventToEdit.assigned_to || '{{ approved_users[0].full_name if approved_users else "" }}'; // Varsayılan atanana döndür
+            document.getElementById('assignedTo').value = eventToEdit.assigned_to || ''; // Varsayılan olarak atanmamış
             document.getElementById('isCompleted').checked = eventToEdit.is_completed;
 
             // Duruşma bilgileri (eğer varsa)
@@ -668,7 +686,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // Yeni etkinlik modu - tüm değerleri sıfırla
             document.getElementById('eventType').value = 'diger'; // Default event type
-            document.getElementById('assignedTo').value = '{{ approved_users[0].full_name if approved_users else "" }}';
+            document.getElementById('assignedTo').value = ''; // Varsayılan olarak atanmamış
             document.getElementById('isCompleted').checked = false;
             // Yeni etkinlik eklerken şehir/adliye/birim dropdownlarını sıfırla/ayarla
             const cityElement = document.getElementById('city');
@@ -713,7 +731,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showEventDetail(event) {
-        if (!userPermissions.can_view) return; // Görüntüleme yetkisi yoksa gösterme
+        if (!hasPermission('etkinlik_goruntule')) {
+            showGlobalNotification('Etkinlik görüntüleme yetkiniz bulunmamaktadır.', 'error');
+            return;
+        }
 
         document.getElementById('detailTitle').textContent = event.title;
         const eventTypeBadge = document.getElementById('detailEventType');
@@ -800,21 +821,31 @@ document.addEventListener('DOMContentLoaded', function() {
          const editBtn = document.getElementById('editDetailBtn');
          const deleteBtn = document.getElementById('deleteDetailBtn');
 
-         editBtn.style.display = userPermissions.can_edit ? 'inline-flex' : 'none';
-         deleteBtn.style.display = userPermissions.can_delete ? 'inline-flex' : 'none';
+         editBtn.style.display = hasPermission('etkinlik_duzenle') ? 'inline-flex' : 'none';
+         deleteBtn.style.display = hasPermission('etkinlik_sil') ? 'inline-flex' : 'none';
 
          editBtn.onclick = () => {
-             closeModal(eventDetailModal);
-             showModal(new Date(event.date + 'T00:00:00'), true, event); // Düzenleme modunda aç
+             if (hasPermission('etkinlik_duzenle')) {
+                 closeModal(eventDetailModal);
+                 showModal(new Date(event.date + 'T00:00:00'), true, event); // Düzenleme modunda aç
+             } else {
+                 showGlobalNotification('Etkinlik düzenleme yetkiniz bulunmamaktadır.', 'error');
+             }
          };
-         deleteBtn.onclick = () => deleteEvent(event.id, event.title);
+         deleteBtn.onclick = () => {
+             if (hasPermission('etkinlik_sil')) {
+                 deleteEvent(event.id, event.title);
+             } else {
+                 showGlobalNotification('Etkinlik silme yetkiniz bulunmamaktadır.', 'error');
+             }
+         };
 
 
         eventDetailModal.style.display = 'flex';
     }
 
     function showEventList(date) {
-        if (!userPermissions.can_view) return; // Görüntüleme yetkisi yoksa gösterme
+        if (!hasPermission('etkinlik_goruntule')) return; // Görüntüleme yetkisi yoksa gösterme
 
         const dateStr = formatDateForAPI(date);
         const dayEvents = events.filter(e => e.date === dateStr)
@@ -838,7 +869,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const assignedToText = event.event_type === 'gunluk-kayit' ? '' : event.assigned_to;
                 
                 itemDiv.innerHTML = `
-                    <div class="time-and-type" style="color: var(--${event.event_type}-color, #6c757d); border-left-color: var(--${event.event_type}-color, #6c757d);">
+                    <div class="time-and-type event-type-${event.event_type}">
                        ${timeText ? `${timeText} - ` : ''}${eventTypes[event.event_type] || 'Bilinmeyen'}
             </div>
                     <div class="event-title">${event.title}</div>
@@ -889,11 +920,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const isEditing = !!eventId;
 
         // Yetki kontrolü
-         if (isEditing && !userPermissions.can_edit) {
+         if (isEditing && !hasPermission('etkinlik_duzenle')) {
              showGlobalNotification('Etkinlik düzenleme yetkiniz yok.', 'warning');
              return;
          }
-         if (!isEditing && !userPermissions.can_add) {
+         if (!isEditing && !hasPermission('etkinlik_ekle')) {
              showGlobalNotification('Etkinlik ekleme yetkiniz yok.', 'warning');
             return;
         }
@@ -902,7 +933,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let eventTitle = document.getElementById('eventTitle').value;
         if (eventTypeSelect.value === 'gunluk-kayit') {
             const muvekkilIsim = document.getElementById('muvekkilIsim').value;
-            eventTitle = muvekkilIsim ? `Günlük Kayıt: ${muvekkilIsim}` : 'Günlük Kayıt';
+            eventTitle = muvekkilIsim || 'Günlük Kayıt';
         }
         
         const formData = {
@@ -966,7 +997,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function deleteEvent(eventId, eventTitle) {
-                  if (!userPermissions.can_delete) {
+                  if (!hasPermission('etkinlik_sil')) {
               showGlobalNotification('Etkinlik silme yetkiniz yok.', 'warning');
               return;
           }
@@ -1023,7 +1054,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Ana "Yeni Etkinlik" butonu (Yetki kontrolü ile)
     const addEventHeaderBtn = document.getElementById('addEventBtn');
-    if (userPermissions.can_add) {
+    if (hasPermission('etkinlik_ekle')) {
         addEventHeaderBtn.onclick = () => showModal(new Date(), true); // Tarih seçici görünsün
     } else {
         addEventHeaderBtn.style.display = 'none'; // Ekleme yetkisi yoksa butonu gizle
@@ -1045,9 +1076,64 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
+/* Inline stiller için CSS sınıfları */
+.hidden-section {
+    display: none;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+.modal-header {
+    padding: 1.5rem 2rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-body {
+    padding: 1.5rem 2rem;
+}
+
+.modal-footer {
+    padding: 1rem 2rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+/* Event type renkleri */
+.event-type-durusma {
+    color: var(--durusma-color, #6c757d);
+    border-left-color: var(--durusma-color, #6c757d);
+}
+
+.event-type-e-durusma {
+    color: var(--e-durusma-color, #6c757d);
+    border-left-color: var(--e-durusma-color, #6c757d);
+}
+
+.event-type-gunluk-kayit {
+    color: var(--gunluk-kayit-color, #6c757d);
+    border-left-color: var(--gunluk-kayit-color, #6c757d);
+}
+
+.optional-text {
+    color: #666;
+    font-size: 0.9em;
+}
+
 .page-container {
     padding: 1rem;
-    min-height: auto;
+    min-height: 0;
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -2075,7 +2161,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                 </div>
                 
                 <!-- Duruşma ve E-Duruşma için dosya bilgileri -->
-                <div id="hearingDetailsSection" style="display: none;">
+                <div id="hearingDetailsSection" class="hidden-section">
                     <div class="form-group full-width">
                         <label>Dosya Türü</label>
                         <div class="select-wrapper">
@@ -2118,7 +2204,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                 </div>
                 
                 <!-- Günlük Kayıt için özel alanlar -->
-                <div id="gunlukKayitDetailsSection" style="display: none;">
+                <div id="gunlukKayitDetailsSection" class="hidden-section">
                     <div class="form-group full-width">
                         <label>Müvekkil İsim Soyisim</label>
                         <div class="input-wrapper">
@@ -2127,7 +2213,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                         </div>
                     </div>
                     <div class="form-group full-width">
-                        <label>Telefon Numarası <span style="color: #666; font-size: 0.9em;">(isteğe bağlı)</span></label>
+                        <label>Telefon Numarası <span class="optional-text">(isteğe bağlı)</span></label>
                         <div class="input-wrapper">
                             <input type="tel" id="muvekkilTelefon" name="muvekkil_telefon" placeholder="Telefon numarası">
                             <i class="material-icons">phone</i>
@@ -2166,7 +2252,8 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                 <div class="form-group full-width" id="assignedToGroup">
                     <label>Atanan Kişi</label>
                     <div class="select-wrapper">
-                        <select id="assignedTo" name="assigned_to" required>
+                        <select id="assignedTo" name="assigned_to">
+                            <option value="">Atanmamış</option>
                             {% for user in approved_users %}
                             <option value="{{ user.full_name }}">{{ user.full_name }}</option>
                             {% endfor %}
@@ -2216,14 +2303,14 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                         </div>
                     </div>
                     <!-- Yeni Adliye ve Mahkeme Kutucukları -->
-                    <div class="meta-item" id="detailCourthouseItem" style="display: none;">
+                    <div class="meta-item hidden-section" id="detailCourthouseItem">
                          <i class="material-icons">account_balance</i>
                          <div>
                              <span class="meta-label">Adliye</span>
                              <span class="meta-value" id="detailCourthouse"></span>
                          </div>
                      </div>
-                     <div class="meta-item" id="detailDepartmentItem" style="display: none;">
+                     <div class="meta-item hidden-section" id="detailDepartmentItem">
                          <i class="material-icons">gavel</i>
                          <div>
                              <span class="meta-label">Mahkeme/Birim</span>
@@ -2231,14 +2318,14 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                          </div>
                      </div>
                     <!-- Günlük Kayıt bilgileri -->
-                    <div class="meta-item" id="detailMuvekkilItem" style="display: none;">
+                    <div class="meta-item hidden-section" id="detailMuvekkilItem">
                         <i class="material-icons">person_outline</i>
                         <div>
                             <span class="meta-label">Müvekkil</span>
                             <span class="meta-value" id="detailMuvekkil"></span>
                         </div>
                     </div>
-                    <div class="meta-item" id="detailTelefonItem" style="display: none;">
+                    <div class="meta-item hidden-section" id="detailTelefonItem">
                         <i class="material-icons">phone</i>
                         <div>
                             <span class="meta-label">Telefon</span>

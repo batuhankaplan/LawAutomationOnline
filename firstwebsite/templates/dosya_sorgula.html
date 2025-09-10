@@ -159,7 +159,7 @@
                     <i class="material-icons">visibility</i>
                 </button>
                 {% if current_user.has_permission('dosya_sil') %}
-                <span style="color: #dee2e6; margin: 0 8px;">|</span>
+                <span class="separator-line">|</span>
                 <button class="action-btn delete-btn" onclick="deleteCase('{{ case_file.id }}')" title="Dosyayı Sil">
                     <i class="material-icons">delete</i>
                 </button>
@@ -187,11 +187,6 @@
                 <div class="detail-section basic-info">
                     <div class="section-header">
                         <h3><i class="material-icons">folder</i> Dosya Bilgileri</h3>
-                        {% if current_user.has_permission('dosya_duzenle') %}
-                        <button class="btn edit-btn" onclick="toggleFileInfoEdit()" title="Dosya Bilgilerini Düzenle">
-                            <i class="material-icons">edit</i>
-                        </button>
-                        {% endif %}
                     </div>
                     <!-- Görüntüleme modu -->
                     <div id="fileInfoDisplay">
@@ -250,7 +245,7 @@
                     </div>
                     
                     <!-- Düzenleme modu -->
-                    <div id="fileInfoEdit" style="display: none;">
+                    <div id="fileInfoEdit" class="hidden-edit-mode">
                         <div class="info-row">
                             <div class="info-group">
                                 <label>DOSYA TÜRÜ</label>
@@ -330,7 +325,9 @@
                         </div>
                         <div class="file-info-actions">
                             <button class="btn secondary" onclick="cancelFileInfoEdit()">İptal</button>
+                            {% if current_user.has_permission('dosya_duzenle') %}
                             <button class="btn primary" onclick="saveFileInfo()">Kaydet</button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -441,21 +438,18 @@
             <div class="detail-section description-section">
                 <div class="section-header">
                     <h3>Dosya Açıklaması</h3>
-                    {% if current_user.has_permission('dosya_duzenle') %}
-                    <button class="btn edit-btn" onclick="editDescription()" title="Açıklama Düzenle">
-                        <i class="material-icons">edit</i>
-                    </button>
-                    {% endif %}
                 </div>
                 <div class="description-container">
                     <div id="descriptionDisplay">
                         <p id="detailDescription">Açıklama bulunmuyor.</p>
                     </div>
-                    <div id="descriptionEdit" style="display: none;">
+                    <div id="descriptionEdit" class="hidden-edit-mode">
                         <textarea id="editDescriptionText" rows="4" class="description-textarea"></textarea>
                         <div class="description-actions">
                             <button class="btn secondary" onclick="cancelEditDescription()">İptal</button>
+                            {% if current_user.has_permission('dosya_duzenle') %}
                             <button class="btn primary" onclick="saveDescription()">Kaydet</button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -489,12 +483,24 @@
 
         <div class="modal-footer">
             <button class="btn secondary" onclick="closeDetailModal()">Kapat</button>
+            {% if current_user.has_permission('dosya_duzenle') %}
             <button class="btn primary" onclick="editCase(currentCaseId)">Düzenle</button>
+            {% endif %}
         </div>
     </div>
 </div>
 
 <style>
+/* Inline stiller için CSS sınıfları */
+.separator-line {
+    color: #dee2e6;
+    margin: 0 8px;
+}
+
+.hidden-edit-mode {
+    display: none;
+}
+
 /* Modal ana stilleri */
 .file-detail-modal {
     display: none;
@@ -514,10 +520,12 @@
 @keyframes modalFadeIn {
     from {
         opacity: 0;
+        -webkit-backdrop-filter: blur(0px);
         backdrop-filter: blur(0px);
     }
     to {
         opacity: 1;
+        -webkit-backdrop-filter: blur(8px);
         backdrop-filter: blur(8px);
     }
 }
@@ -681,6 +689,7 @@
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
 }
 
@@ -1822,6 +1831,7 @@
 
 .modern-table th.sortable {
     cursor: pointer;
+    -webkit-user-select: none;
     user-select: none;
     transition: background-color 0.2s ease;
 }
@@ -2419,6 +2429,7 @@
     border-radius: 16px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
 }
@@ -2640,30 +2651,30 @@
 }
 
 /* Duruşma türü için ek stil */
-+.btn-outline-primary {
-+    color: #1a237e;
-+    border-color: #1a237e;
-+}
-+.btn-outline-primary:hover {
-+    background-color: #1a237e;
-+    color: white;
-+}
-+.btn-outline-danger {
-+    color: #dc3545;
-+    border-color: #dc3545;
-+}
-+.btn-outline-danger:hover {
-+    background-color: #dc3545;
-+    color: white;
-+}
-+.btn-sm {
-+    padding: 5px 10px;
-+    font-size: 0.8rem;
-+}
-+.btn-sm i {
-+    font-size: 16px; /* İkon boyutunu küçült */
-+    margin-right: 4px;
-+}
+.btn-outline-primary {
+    color: #1a237e;
+    border-color: #1a237e;
+}
+.btn-outline-primary:hover {
+    background-color: #1a237e;
+    color: white;
+}
+.btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+.btn-outline-danger:hover {
+    background-color: #dc3545;
+    color: white;
+}
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+}
+.btn-sm i {
+    font-size: 16px; /* İkon boyutunu küçült */
+    margin-right: 4px;
+}
 
 /* Duruşma türü seçim stili - E-duruşma tek satır düzeltmesi */
 .hearing-type-inline {
@@ -2721,6 +2732,10 @@
 <script>
 // CSRF Token
 const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+// Kullanıcı yetkileri
+const hasFileDeletePermission = document.body.dataset.hasFileDeletePermission === 'true';
+const hasFileEditPermission = document.body.dataset.hasFileEditPermission === 'true';
 
 // Örnek Masraf Türleri (Bunları kendi türlerinizle değiştirin)
 const expenseTypes = [
@@ -2806,14 +2821,6 @@ function showError(message) {
     });
 }
 
-// docx-preview kütüphanesinin varlığını kontrol etme fonksiyonu kaldırıldı/yorumlandı.
-{# function checkDocxPreviewAvailability() {
-    if (typeof window.docx === 'undefined') {
-        console.error('docx-preview kütüphanesi bulunamadı');
-        return false;
-    }
-    return true;
-} #}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Sayfa yüklendiğinde başlangıç durumunu ayarla
@@ -3448,9 +3455,11 @@ function showDetails(caseId) {
                                         <button class="btn small" onclick="downloadDocument(${doc.id})" title="İndir">
                                             <i class="material-icons">download</i>
                                         </button>
+                                        ${hasFileDeletePermission ? `
                                         <button class="btn danger small" onclick="deleteDocument(${doc.id})" title="Sil">
                                             <i class="material-icons">delete</i>
                                         </button>
+                                        ` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -3945,7 +3954,7 @@ function editCase(caseId) {
                     </div>
                     <div class="modal-footer">
                         <button class="btn secondary" onclick="closeEditModal()">İptal</button>
-                        <button class="btn primary" onclick="saveChanges(${caseId})">Kaydet</button>
+                        ${hasPermission('dosya_duzenle') ? `<button class="btn primary" onclick="saveChanges(${caseId})">Kaydet</button>` : ''}
                     </div>
                 </div>
             `;

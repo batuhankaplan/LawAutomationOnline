@@ -474,6 +474,7 @@ def profile():
 
 @app.route('/settings')
 @login_required
+@permission_required('ayarlar')
 def settings():
     return render_template('settings.html')
 
@@ -813,8 +814,23 @@ def anasayfa():
     ).order_by(CalendarEvent.date.asc(), CalendarEvent.time.asc()).limit(5).all()
     total_hearings = CalendarEvent.query.filter(CalendarEvent.event_type.in_(['durusma', 'e-durusma'])).count() # Tüm duruşmaların sayısını al
     
-    # Duyuruları al (örneğin son 5 duyuru)
-    announcements = Announcement.query.order_by(Announcement.created_at.desc()).limit(5).all()
+    # Duyuruları al (yetki kontrolü ile)
+    if current_user.has_permission('duyuru_goruntule'):
+        announcements_raw = Announcement.query.order_by(Announcement.created_at.desc()).limit(5).all()
+        
+        # Türkçe tarih formatı için ay isimleri
+        turkish_months = [
+            'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+            'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+        ]
+        
+        # Duyurulara Türkçe tarih ekle
+        announcements = []
+        for ann in announcements_raw:
+            ann.turkish_date = f"{ann.created_at.day} {turkish_months[ann.created_at.month - 1]} {ann.created_at.year}, {ann.created_at.strftime('%H:%M')}"
+            announcements.append(ann)
+    else:
+        announcements = []  # Yetki yoksa boş liste
 
     user_cases = CaseFile.query.all() # Kullanıcı filtresi kaldırıldı
     total_cases = len(user_cases)
@@ -988,8 +1004,12 @@ def dosyalarim():
 def duyurular():
     if request.method == 'POST':
         if not current_user.has_permission('duyuru_ekle'):
-            flash('Duyuru ekleme yetkiniz yok.', 'error')
-            return redirect(url_for('duyurular'))
+            # AJAX isteği kontrolü
+            if request.headers.get('Content-Type') == 'application/x-www-form-urlencoded':
+                return jsonify({'success': False, 'error': 'Duyuru ekleme yetkiniz yok.'}), 403
+            else:
+                flash('Duyuru ekleme yetkiniz yok.', 'error')
+                return redirect(url_for('duyurular'))
             
         title = request.form['title']
         content = request.form['content']
@@ -1010,8 +1030,12 @@ def duyurular():
         db.session.add(log)
         db.session.commit()
         
-        flash('Duyuru başarıyla eklendi.', 'success')
-        return redirect(url_for('duyurular'))
+        # AJAX isteği kontrolü
+        if request.headers.get('Content-Type') == 'application/x-www-form-urlencoded':
+            return jsonify({'success': True, 'message': 'Duyuru başarıyla eklendi.'}), 200
+        else:
+            flash('Duyuru başarıyla eklendi.', 'success')
+            return redirect(url_for('duyurular'))
     
     # Açık SQL hatası: Announcement.created_at sütunu eklenmiş ama 
     # models.py'da tanımlandığını gördük; bu sorgu tüm nesneleri çekiyor
@@ -1036,8 +1060,12 @@ def odemeler():
 
     if request.method == 'POST':
         if not current_user.has_permission('odeme_ekle'):
-            flash('Ödeme ekleme yetkiniz bulunmamaktadır.', 'error')
-            return redirect(url_for('odemeler'))
+            # AJAX isteği kontrolü
+            if request.headers.get('Content-Type') == 'application/x-www-form-urlencoded':
+                return jsonify({'success': False, 'error': 'Ödeme ekleme yetkiniz bulunmamaktadır.'}), 403
+            else:
+                flash('Ödeme ekleme yetkiniz bulunmamaktadır.', 'error')
+                return redirect(url_for('odemeler'))
             
         name = request.form['name']
         surname = request.form['surname']
@@ -1114,7 +1142,7 @@ def odemeler():
 @login_required
 def update_client(client_id):
     if not current_user.has_permission('odeme_duzenle'):
-        return jsonify({'success': False, 'error': 'Ödeme düzenleme yetkiniz bulunmamaktadır.'})
+        return jsonify({'success': False, 'error': 'Ödeme düzenleme yetkiniz bulunmamaktadır.'}), 403
         
     try:
         data = request.get_json()
@@ -1385,7 +1413,15 @@ def dosya_ekle():
                          all_courthouses=json.dumps(cities_courthouses, ensure_ascii=False)) # Pass all data as JSON
 
 @app.route('/case_details/<int:case_id>')
+@login_required
 def case_details(case_id):
+    # Yetki kontrolü - JSON endpoint için
+    if not current_user.has_permission('dosya_goruntule'):
+        return jsonify({
+            'success': False, 
+            'message': 'Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz.'
+        }), 403
+        
     try:
         case_file = CaseFile.query.get_or_404(case_id)
         
@@ -1947,21 +1983,22 @@ def update_event():
         }
         
         # Tarihi ve zamanı güncelle - farklı formatları kontrol et
-        if 'date' in data and 'time' in data:
+        if 'date' in data:
             # Yeni format: ayrı date ve time alanları
             try:
                 event_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
-                # Günlük Kayıt için saati 00:00 kabul et
+                event.date = event_date
+                
+                # Time field'ını işle - her zaman bir değer ata
                 if data.get('event_type') == 'gunluk-kayit':
                     event_time = datetime.strptime('00:00', '%H:%M').time()
                 else:
-                    # Eğer time boş veya None ise varsayılan değer ata
-                    time_str = data.get('time') or '00:00'
-                    if not time_str.strip():
+                    # Eğer time boş, None veya boş string ise varsayılan değer ata
+                    time_str = data.get('time', '00:00')
+                    if not time_str or not str(time_str).strip() or time_str == 'None':
                         time_str = '00:00'
-                    event_time = datetime.strptime(time_str, '%H:%M').time()
+                    event_time = datetime.strptime(str(time_str), '%H:%M').time()
                 
-                event.date = event_date
                 event.time = event_time
             except ValueError as e:
                 app.logger.error(f"Tarih/zaman ayrıştırma hatası: {e}")
@@ -1994,6 +2031,23 @@ def update_event():
             
         if 'is_completed' in data:
             event.is_completed = data.get('is_completed', False)
+        
+        # Time field'ını ayrı olarak güncelle (eğer date ile birlikte gelmemişse)
+        if 'time' in data and 'date' not in data:
+            try:
+                if data.get('event_type') == 'gunluk-kayit':
+                    event_time = datetime.strptime('00:00', '%H:%M').time()
+                else:
+                    # Eğer time boş, None veya boş string ise varsayılan değer ata
+                    time_str = data.get('time', '00:00')
+                    if not time_str or not str(time_str).strip() or time_str == 'None':
+                        time_str = '00:00'
+                    event_time = datetime.strptime(str(time_str), '%H:%M').time()
+                
+                event.time = event_time
+            except ValueError as e:
+                app.logger.error(f"Time field ayrıştırma hatası: {e}")
+                return jsonify({"error": f"Time field formatı hatalı: {e}"}), 400
         
         # Duruşma bilgilerini güncelle
         if event.event_type in ['durusma', 'e-durusma']:
@@ -2043,8 +2097,8 @@ def update_event():
             if 'muvekkil_telefon' in data:
                 event.muvekkil_telefon = data['muvekkil_telefon']
                 
-            # Günlük Kayıt için gereksiz alanları null yap
-            event.time = None
+            # Günlük Kayıt için time'ı 00:00 yap (NULL yerine)
+            event.time = datetime.strptime('00:00', '%H:%M').time()
             event.assigned_to = None
             event.is_completed = False
         else:
@@ -2054,6 +2108,39 @@ def update_event():
         
         # Değişiklikleri kaydet
         db.session.commit()
+        
+        # Duruşma/E-Duruşma güncellendiğinde dosyaya geri senkronizasyon
+        if event.event_type in ['durusma', 'e-durusma'] and event.case_id:
+            try:
+                case_file = CaseFile.query.get(event.case_id)
+                if case_file:
+                    # Dosyadaki duruşma tarih ve saatini güncelle
+                    case_file.next_hearing = event.date
+                    case_file.hearing_time = event.time.strftime('%H:%M') if event.time else None
+                    case_file.hearing_type = event.event_type
+                    
+                    # Dosya bilgilerini de güncelle (eğer takvimde değişmişse)
+                    if event.file_type:
+                        case_file.file_type = event.file_type
+                    if event.courthouse:
+                        case_file.courthouse = event.courthouse
+                    if event.department:
+                        case_file.department = event.department
+                    
+                    db.session.commit()
+                    
+                    # Log kaydı
+                    log_activity(
+                        activity_type='durusma_takvimden_dosyaya_senkronizasyon',
+                        description=f"Takvimdeki duruşma güncellemesi dosyaya yansıtıldı: {case_file.client_name} - {event.date.strftime('%d.%m.%Y')} {event.time.strftime('%H:%M') if event.time else ''}",
+                        user_id=current_user.id,
+                        case_id=event.case_id,
+                        related_event_id=event.id
+                    )
+                    
+                    app.logger.info(f"Duruşma dosyaya senkronize edildi: Case ID {event.case_id}")
+            except Exception as e:
+                app.logger.error(f"Dosya senkronizasyon hatası: {str(e)}")
         
         # E-posta bildirimi gönder (atanan kişi değiştiğinde)
         if 'assigned_to' in data and data['assigned_to'] != old_values.get('assigned_to'):
@@ -2894,6 +2981,8 @@ def update_expense(expense_id):
         return jsonify(success=False, message=str(e))
 
 @app.route('/iletisim')
+@login_required
+@permission_required('iletisim')
 def iletisim():
     return render_template('iletisim.html')
 
@@ -3249,32 +3338,76 @@ def api_veritabani_yedekle():
         import tempfile
         from datetime import datetime
         from flask import send_file
+        import io
         
         # Geçici yedek dosyası oluştur
         backup_filename = f"veritabani_yedek_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.db"
         
-        # Mevcut veritabanının yolunu al
-        db_path = os.path.join(current_app.instance_path, 'database.db')
+        # Mevcut veritabanının yolunu bul
+        possible_db_paths = [
+            os.path.join(current_app.instance_path, 'database.db'),  # Instance path
+            os.path.join(current_app.root_path, 'database.db'),     # Root path
+            os.path.join(current_app.root_path, 'instance', 'database.db'),  # Instance klasörü
+            'database.db',  # Mevcut dizin
+            os.path.join(os.path.dirname(__file__), 'database.db'),  # Uygulama dizini
+            os.path.join(os.path.dirname(__file__), 'instance', 'database.db')  # Instance alt klasörü
+        ]
         
-        # Geçici dosya oluştur
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+        db_path = None
+        for path in possible_db_paths:
+            if os.path.exists(path):
+                db_path = path
+                break
         
-        # Veritabanını geçici dosyaya kopyala
-        shutil.copy2(db_path, temp_file.name)
-        temp_file.close()
+        if not db_path:
+            return jsonify({'success': False, 'message': 'Veritabanı dosyası bulunamadı. Mevcut dizinler kontrol edildi.'})
         
-        log_activity('Veritabanı Yedek', f'Veritabanı yedeği oluşturuldu ve indirildi: {backup_filename}', current_user.id)
-        
-        # Dosyayı indirme olarak gönder
-        return send_file(
-            temp_file.name,
-            as_attachment=True,
-            download_name=backup_filename,
-            mimetype='application/octet-stream'
-        )
+        try:
+            # Memory'de dosya oluştur (disk yazma izni gerekmez)
+            memory_file = io.BytesIO()
+            
+            # Veritabanını memory'e oku
+            with open(db_path, 'rb') as db_file:
+                memory_file.write(db_file.read())
+            
+            memory_file.seek(0)
+            
+            log_activity('Veritabanı Yedek', f'Veritabanı yedeği oluşturuldu ve indirildi: {backup_filename}', current_user.id)
+            
+            # Memory'den dosyayı indirme olarak gönder
+            return send_file(
+                memory_file,
+                as_attachment=True,
+                download_name=backup_filename,
+                mimetype='application/octet-stream'
+            )
+        except Exception as memory_error:
+            # Memory yöntemi başarısızsa, geçici dosya yöntemini dene
+            try:
+                # Geçici dosya oluştur
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+                
+                # Veritabanını geçici dosyaya kopyala
+                shutil.copy2(db_path, temp_file.name)
+                temp_file.close()
+                
+                log_activity('Veritabanı Yedek', f'Veritabanı yedeği oluşturuldu ve indirildi: {backup_filename}', current_user.id)
+                
+                # Dosyayı indirme olarak gönder
+                return send_file(
+                    temp_file.name,
+                    as_attachment=True,
+                    download_name=backup_filename,
+                    mimetype='application/octet-stream'
+                )
+            except Exception as temp_error:
+                # Her iki yöntem de başarısızsa, orijinal hata ile detaylı hata ver
+                raise Exception(f'Memory hatası: {str(memory_error)} | Temp file hatası: {str(temp_error)}')
         
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
+        import traceback
+        error_detail = traceback.format_exc()
+        return jsonify({'success': False, 'message': f'Yedekleme hatası: {str(e)}', 'detail': error_detail})
 
 @app.route('/api/veritabani/geri_yukle', methods=['POST'])
 @login_required
@@ -3307,10 +3440,29 @@ def api_veritabani_geri_yukle():
         import tempfile
         from datetime import datetime
         
-        # Önce mevcut veritabanının yedeğini al
-        current_db_path = os.path.join(current_app.instance_path, 'database.db')
+        # Mevcut veritabanının yolunu bul
+        possible_db_paths = [
+            os.path.join(current_app.instance_path, 'database.db'),
+            os.path.join(current_app.root_path, 'database.db'),
+            os.path.join(current_app.root_path, 'instance', 'database.db'),
+            'database.db',
+            os.path.join(os.path.dirname(__file__), 'database.db'),
+            os.path.join(os.path.dirname(__file__), 'instance', 'database.db')
+        ]
+        
+        current_db_path = None
+        for path in possible_db_paths:
+            if os.path.exists(path):
+                current_db_path = path
+                break
+        
+        if not current_db_path:
+            return jsonify({'success': False, 'message': 'Mevcut veritabanı dosyası bulunamadı'})
+        
+        # Acil durum yedeği için güvenli yol
         backup_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        emergency_backup_path = os.path.join(current_app.instance_path, f'emergency_backup_{backup_timestamp}.db')
+        db_dir = os.path.dirname(current_db_path)
+        emergency_backup_path = os.path.join(db_dir, f'emergency_backup_{backup_timestamp}.db')
         
         if os.path.exists(current_db_path):
             shutil.copy2(current_db_path, emergency_backup_path)
@@ -3346,13 +3498,15 @@ def api_veritabani_geri_yukle():
         
     except Exception as e:
         # Hata durumunda acil durum yedeğini geri yükle
-        if 'emergency_backup_path' in locals() and os.path.exists(emergency_backup_path):
+        if 'emergency_backup_path' in locals() and 'current_db_path' in locals() and os.path.exists(emergency_backup_path):
             try:
                 shutil.copy2(emergency_backup_path, current_db_path)
             except:
                 pass
         
-        return jsonify({'success': False, 'message': f'Geri yükleme hatası: {str(e)}'})
+        import traceback
+        error_detail = traceback.format_exc()
+        return jsonify({'success': False, 'message': f'Geri yükleme hatası: {str(e)}', 'detail': error_detail})
 
 @app.route('/api/veritabani/istatistikler')
 @login_required
@@ -4776,12 +4930,17 @@ def get_permission_dependencies():
 
 # Müşteri silme route'u ekleyelim
 @app.route('/delete_client/<int:client_id>', methods=['DELETE'])
-@login_required
 def delete_client(client_id):
-    if not current_user.has_permission('odeme_sil'):
-        return jsonify({'success': False, 'error': 'Ödeme silme yetkiniz bulunmamaktadır.'})
+    # Login kontrolü - JSON endpoint için
+    if not current_user.is_authenticated:
+        return jsonify({'success': False, 'error': 'Oturum açmanız gereklidir.'}), 401
         
-    client = Client.query.get_or_404(client_id)
+    if not current_user.has_permission('odeme_sil'):
+        return jsonify({'success': False, 'error': 'Ödeme silme yetkiniz bulunmamaktadır.'}), 403
+        
+    client = Client.query.get(client_id)
+    if not client:
+        return jsonify({'success': False, 'error': 'Ödeme kaydı bulunamadı.'}), 404
     
     # Log kaydı
     log = ActivityLog(
@@ -4796,13 +4955,23 @@ def delete_client(client_id):
     )
     
     try:
+        # İlişkili payment kayıtlarını önce sil
+        deleted_payments = Payment.query.filter_by(client_id=client_id).delete()
+        logger.info(f"Silinen payment kayıt sayısı: {deleted_payments}")
+        
+        # Log kaydını ekle
         db.session.add(log)
+        
+        # Client'ı sil
         db.session.delete(client)
         db.session.commit()
-        return jsonify({'success': True})
+        
+        logger.info(f"Client başarıyla silindi: {client_id}")
+        return jsonify({'success': True, 'message': 'Ödeme başarıyla silindi'})
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)})
+        logger.error(f"Client silme hatası: {str(e)}")
+        return jsonify({'success': False, 'error': f'Silme işlemi başarısız: {str(e)}'}), 500
 
 @app.route('/preview_udf/<int:document_id>')
 def preview_udf(document_id):
@@ -8099,11 +8268,12 @@ def update_case_basic_info():
                 pass
         
         next_hearing_obj = None
-        if next_hearing:
+        if next_hearing and next_hearing.strip():
             try:
-                next_hearing_obj = datetime.strptime(next_hearing, '%Y-%m-%d').date()
-            except ValueError:
-                pass
+                next_hearing_obj = datetime.strptime(next_hearing.strip(), '%Y-%m-%d').date()
+            except ValueError as e:
+                logger.warning(f"Duruşma tarihi parse hatası: {next_hearing} - {e}")
+                next_hearing_obj = None
         
         # Dosya bilgilerini güncelle
         if os.getenv('DEBUG', 'False').lower() == 'true':
@@ -8114,7 +8284,7 @@ def update_case_basic_info():
         case.open_date = open_date_obj
         case.status = status
         case.next_hearing = next_hearing_obj
-        case.hearing_time = hearing_time if hearing_time else None
+        case.hearing_time = hearing_time if hearing_time and hearing_time.strip() else None
         case.hearing_type = hearing_type if hearing_type else 'durusma'
         
         # Şehir bilgisini courthouse string'inden çıkar ve güncelle

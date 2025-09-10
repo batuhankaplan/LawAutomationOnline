@@ -10,6 +10,7 @@
         <h1>Ödemeler</h1>
     </div>
 
+    {% if current_user.has_permission('odeme_ekle') %}
     <div class="form-container">
         <form method="POST" id="paymentForm">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -27,9 +28,9 @@
             </div>
             <div class="input-group">
                 <label for="amount">Tutar</label>
-                <div style="display: flex; gap: 5px;">
-                    <input type="text" id="amount" name="amount" required style="flex: 3; min-width: 150px;" placeholder="Örn: 1000.50">
-                    <select id="currency" name="currency" required style="flex: 1; max-width: 80px;">
+                <div class="amount-container">
+                    <input type="text" id="amount" name="amount" required class="amount-input" placeholder="Örn: 1000.50">
+                    <select id="currency" name="currency" required class="currency-select" title="Para birimi seçiniz">
                         <option value="TL">TL</option>
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
@@ -55,6 +56,7 @@
             <button type="button" onclick="savePayment(event)">Kaydet</button>
         </form>
     </div>
+    {% endif %}
 
     <div class="table-container">
         <div class="table-header">
@@ -155,9 +157,11 @@
                                     data-payment-id="{{ client.id }}">
                                 <i class="material-icons">visibility</i>
                             </button>
+                            {% if current_user.has_permission('odeme_sil') %}
                             <button class="delete-btn" onclick="deletePayment(this)">
                                 <i class="material-icons">delete</i>
                             </button>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
@@ -398,7 +402,7 @@
                             <h4>Yıllara Göre Beklenen Ödemeler (Ödenmemiş)</h4>
                             <div id="expectedPaymentsByYearTableContainer">
                                 <!-- Tablo JavaScript ile eklenecek -->
-                                <canvas id="expectedPaymentsByYearChart" style="height: 300px; min-height: 250px;"></canvas>
+                                <canvas id="expectedPaymentsByYearChart" class="chart-canvas"></canvas>
                             </div>
                         </div>
                     </div>
@@ -683,6 +687,33 @@
     </div>
 
     <style>
+        /* Inline stiller için CSS sınıfları */
+        .amount-container {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .amount-input {
+            flex: 3;
+            min-width: 150px;
+        }
+        
+        .currency-select {
+            flex: 1;
+            max-width: 80px;
+        }
+        
+        .stats-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-canvas {
+            height: 300px;
+            min-height: 250px;
+        }
+        
         .status-container {
             display: flex;
             align-items: center;
@@ -1245,6 +1276,7 @@
 
         th {
             cursor: pointer;
+            -webkit-user-select: none;
             user-select: none;
         }
 
@@ -1826,6 +1858,10 @@
     </style>
 
     <script>
+        // Yetki kontrolü değişkenleri
+        const hasEditPermission = {{ 'true' if current_user.has_permission('odeme_duzenle') else 'false' }};
+        const hasDeletePermission = {{ 'true' if current_user.has_permission('odeme_sil') else 'false' }};
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Diğer özel modalları başlangıçta gizle (önlem olarak)
             const editModalElement = document.getElementById('editModal');
@@ -2055,14 +2091,30 @@
         });
 
         function deletePayment(button) {
+            // Yetki kontrolü
+            if (!hasDeletePermission) {
+                showGlobalNotification('Ödeme silme yetkiniz bulunmamaktadır.', 'error');
+                return;
+            }
+            
             if (confirm('Bu ödemeyi silmek istediğinizden emin misiniz?')) {
                 const row = button.closest('tr');
                 const clientId = row.getAttribute('data-client-id');
                 
+                // CSRF token'ı al
+                const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || 
+                                document.querySelector('meta[name="csrf-token"]')?.content;
+                
+                if (!csrfToken) {
+                    showGlobalNotification('Güvenlik token\'ı bulunamadı. Sayfayı yenileyin.', 'error');
+                    return;
+                }
+                
                 fetch(`/delete_client/${clientId}`, {
                     method: 'DELETE',  
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
                     }
                 }).then(response => response.json())
                   .then(data => {
@@ -2070,11 +2122,11 @@
                           showGlobalNotification('Ödeme başarıyla silindi!', 'success');
                           row.remove();
                       } else {
-                          alert('Silme işlemi başarısız: ' + (data.error || 'Bilinmeyen bir hata oluştu'));
+                          showGlobalNotification('Silme işlemi başarısız: ' + (data.error || 'Bilinmeyen bir hata oluştu'), 'error');
                       }
                   })
                   .catch(error => {
-                      alert('Silme işlemi sırasında bir hata oluştu: ' + error.message);
+                      showGlobalNotification('Silme işlemi sırasında bir hata oluştu: ' + error.message, 'error');
                   });
             }
         }
@@ -4567,7 +4619,7 @@
                                 <i class="material-icons">close</i>
                                 <span>Kapat</span>
                             </button>
-                            <button type="button" class="btn btn-primary modern-edit-btn" onclick="editPayment('${paymentId}')">
+                            <button type="button" class="btn btn-primary modern-edit-btn" onclick="editPayment('${paymentId}')" style="display: ${hasEditPermission ? 'inline-flex' : 'none'};">
                                 <i class="material-icons">edit</i>
                                 <span>Düzenle</span>
                             </button>
@@ -4586,6 +4638,12 @@
         }
 
         function editPayment(paymentId) {
+            // Yetki kontrolü
+            if (!hasEditPermission) {
+                showGlobalNotification('Ödeme düzenleme yetkiniz bulunmamaktadır.', 'error');
+                return;
+            }
+            
             const modal = bootstrap.Modal.getInstance(document.getElementById('paymentDetailModal'));
             if (modal) modal.hide();
 
@@ -4770,6 +4828,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
         }
 
