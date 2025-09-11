@@ -359,65 +359,80 @@
 @media print {
     @page {
         size: A4;
-        margin: 0.3cm;
+        margin: 0 !important;
     }
     
-    /* Boş sayfa oluşmasını engelle */
+    body * {
+        visibility: hidden !important;
+    }
+    
+    .datetime-display, .datetime-container, .datetime-text, .separator, .user-info, nav, header, footer, .navbar, .top-bar {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
     body {
+        margin: 0 !important;
+        padding: 0 !important;
         height: auto !important;
         min-height: auto !important;
     }
     
-    body * {
-        visibility: hidden;
-    }
-    
-    #formSection, #formSection * {
-        visibility: visible;
-    }
-    
     #formSection {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        padding: 0 !important;
+        visibility: visible !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
         margin: 0 !important;
+        padding: 5mm !important;
         background: white !important;
-        box-shadow: none !important;
-        font-family: Arial, sans-serif;
-        transform: scale(0.9);
-        transform-origin: top left;
+        font-family: Arial, sans-serif !important;
+        font-size: 9pt !important;
+        line-height: 1.2 !important;
     }
     
-    .form-header h1 {
-        font-size: 10pt;
-        margin-bottom: 0.1cm;
-        text-align: center;
-        border-bottom: 1pt solid #000;
-        padding-bottom: 0.05cm;
-        font-weight: bold;
+    #formSection * {
+        visibility: visible !important;
+    }
+    
+    /* İmza bölümündeki tarih görünür olsun */
+    .signature-text #currentDate {
+        display: inline !important;
+        visibility: visible !important;
+    }
+    
+    .signature-text p:nth-child(2) {
+        display: block !important;
+        visibility: visible !important;
     }
     
     .form-header {
-        margin-bottom: 0.1cm;
-        border-bottom: none;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .form-header h1 {
+        font-size: 12pt !important;
+        margin: 0 !important;
+        padding: 2mm 0 !important;
+        text-align: center;
+        border-bottom: 1pt solid #000;
+        font-weight: bold;
     }
     
     .form-group {
-        margin-bottom: 0.02cm;
-        padding: 0.05cm;
-        background: none;
+        margin-bottom: 1mm !important;
+        padding: 2mm !important;
         border: 0.5pt solid #333;
-        border-radius: 1pt;
         page-break-inside: avoid;
-        font-size: 5pt;
+        font-size: 9pt !important;
     }
     
     .form-group h3 {
-        font-size: 6pt;
-        margin-bottom: 0.02cm;
-        padding-bottom: 0.02cm;
+        font-size: 10pt !important;
+        margin: 0 !important;
+        padding-bottom: 1mm !important;
         border-bottom: 0.5pt solid #333;
         font-weight: bold;
     }
@@ -525,7 +540,7 @@
         margin-bottom: 0.02cm;
         padding: 0.05cm;
         page-break-before: avoid !important;
-        page-break-inside: avoid !important;
+        page-break-inside: auto !important;
     }
     
     /* Tanık alanlarını optimize et */
@@ -631,50 +646,48 @@
 
 /* PDF için özel stil sınıfı */
 .pdf-mode {
-    width: 210mm !important;
+    width: 190mm !important;
     height: auto !important;
-    min-height: auto !important; /* Minimum yüksekliği kaldır */
+    min-height: auto !important;
     margin: 0 auto !important;
-    padding: 5mm 10mm 5mm 10mm !important; /* Alt padding'i azalt */
+    padding: 0 !important; /* Tüm padding'ler sıfır - margin sıfır için */
     background-color: white !important;
     box-shadow: none !important;
     font-family: Arial, sans-serif !important;
-    font-size: 8pt !important;
+    font-size: 9pt !important;
+    line-height: 1.1 !important;
     position: relative !important;
     box-sizing: border-box !important;
     overflow: visible !important;
-    page-break-after: auto !important; /* Auto'ya değiştir */
 }
 
 .pdf-mode .form-header {
-    margin-top: 3mm !important;
-    margin-bottom: 1pt !important;
-    padding-bottom: 0pt !important;
-    border-bottom: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
 }
 
 .pdf-mode .form-header h1 {
     font-size: 12pt !important;
     text-align: center !important;
-    margin-bottom: 1pt !important;
-    padding-bottom: 1pt !important;
+    margin: 0 !important;
+    padding: 5px 0 !important;
     border-bottom: 1pt solid #000 !important;
     font-weight: bold !important;
-    padding-top: 2mm !important;
 }
 
 .pdf-mode .form-group {
-    margin-bottom: 1pt !important;
-    padding: 2pt !important;
+    margin-bottom: 1mm !important;
+    padding: 2mm !important;
     border: 1pt solid #333 !important;
-    page-break-inside: avoid !important;
+    page-break-inside: auto !important;
     background-color: white !important;
     height: auto !important;
     min-height: auto !important;
-    width: auto !important; /* Genişlik kontrolü ekle */
-    max-width: 100% !important; /* Maksimum genişlik sınırlaması */
-    box-sizing: border-box !important; /* Box modelini değiştir */
-    overflow: visible !important; /* İçeriğin görünebilmesi için visible */
+    width: auto !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
 }
 
 .pdf-mode .form-group h3 {
@@ -730,9 +743,11 @@
 }
 
 .pdf-mode .signature-section {
-    margin-top: 5pt !important;
+    margin-top: 3mm !important;
+    margin-bottom: 0 !important;
     text-align: center !important;
-    page-break-inside: avoid !important;
+    page-break-inside: auto !important;
+    padding: 1mm !important;
 }
 
 .pdf-mode .signature-text p {
@@ -2249,109 +2264,134 @@ input[type="text"][name$="Date"] {
         fetch(`/get_isci_gorusme_form/${formId}`)
         .then(response => response.json())
         .then(data => {
+            console.log('PDF Önizleme - Form verisi:', data);
             if (data.success) {
                 // Form verisini geçici bir div içine yerleştir
                 const tempForm = document.createElement('div');
                 tempForm.id = 'tempFormPreview';
                 tempForm.className = 'form-section pdf-mode';
-                tempForm.style.position = 'fixed';  // fixed pozisyon
+                tempForm.style.position = 'fixed';
                 tempForm.style.top = '0';
                 tempForm.style.left = '0';
-                tempForm.style.width = '210mm';
-                tempForm.style.margin = '0 auto';
-                tempForm.style.maxWidth = '100%';  // Maksimum genişlik ekle
+                tempForm.style.width = '190mm'; // Daha küçük, sayfa içinde kalır
+                tempForm.style.margin = '0 auto'; // Ortalanmış
+                tempForm.style.maxWidth = '100%';
                 tempForm.style.boxSizing = 'border-box';
-                tempForm.style.overflow = 'hidden';
-                tempForm.style.zIndex = '-9999'; // Görünmez ama DOM'da mevcut
+                tempForm.style.overflow = 'visible';
+                tempForm.style.height = 'auto';
+                tempForm.style.minHeight = '297mm'; // A4 yüksekliği
+                tempForm.style.zIndex = '-9999';
                 tempForm.style.background = 'white';
                 
-                // Form içeriğini oluştur - basitleştirilmiş ve sadece gerekli verileri içeren HTML
-                tempForm.innerHTML = `
-                    <div class="form-header">
-                        <h1>İŞÇİ GÖRÜŞME TUTANAĞI</h1>
-                    </div>
+                // Form içeriğini güvenli şekilde oluştur
+                const escapeHtml = (str) => {
+                    if (!str) return '';
+                    return String(str).replace(/[&<>"']/g, function (s) {
+                        return {
+                            '&': '&amp;',
+                            '<': '&lt;',
+                            '>': '&gt;',
+                            '"': '&quot;',
+                            "'": '&#39;'
+                        }[s];
+                    });
+                };
+
+                tempForm.innerHTML = [
+                    '<div class="form-header">',
+                        '<h1>İŞÇİ GÖRÜŞME TUTANAĞI</h1>',
+                    '</div>',
                     
-                    <div class="form-group">
-                        <h3>İşçi Bilgileri</h3>
-                        <div>
-                            <div><strong>Adı Soyadı:</strong> ${data.form.name || ''}</div>
-                            <div><strong>T.C. Kimlik No:</strong> ${data.form.tcNo || ''}</div>
-                            <div><strong>Telefon:</strong> ${data.form.phone || ''}</div>
-                            <div><strong>Adres:</strong> ${data.form.address || ''}</div>
-                        </div>
-                    </div>
+                    '<div class="form-group">',
+                        '<h3>İşçi Bilgileri</h3>',
+                        '<div>',
+                            '<div><strong>Adı Soyadı:</strong> ' + escapeHtml(data.form.name) + '</div>',
+                            '<div><strong>TC Kimlik No:</strong> ' + escapeHtml(data.form.tcNo) + '</div>',
+                            '<div><strong>Telefon:</strong> ' + escapeHtml(data.form.phone) + '</div>',
+                            '<div><strong>Adres:</strong> ' + escapeHtml(data.form.address) + '</div>',
+                        '</div>',
+                    '</div>',
                     
-                    <div class="form-group">
-                        <h3>İş Bilgileri</h3>
-                        <div>
-                            <div><strong>İşe Başlama Tarihi:</strong> ${data.form.startDate || ''}</div>
-                            <div><strong>İşten Ayrılma Tarihi:</strong> ${data.form.endDate || ''}</div>
-                            <div><strong>Pozisyon:</strong> ${data.form.position || ''}</div>
-                            <div><strong>Ücret:</strong> ${data.form.department || ''}</div>
-                        </div>
-                    </div>
+                    '<div class="form-group">',
+                        '<h3>İş Bilgileri</h3>',
+                        '<div>',
+                            '<div><strong>İşe Başlama Tarihi / SGK Giriş Tarihi:</strong> ' + escapeHtml(data.form.startDate) + '</div>',
+                            '<div><strong>İşten Ayrılma Tarihi / SGK Çıkış Tarihi:</strong> ' + escapeHtml(data.form.endDate) + '</div>',
+                            '<div><strong>Pozisyon:</strong> ' + escapeHtml(data.form.position) + '</div>',
+                            '<div><strong>Ücret:</strong> ' + escapeHtml(data.form.department) + '</div>',
+                        '</div>',
+                    '</div>',
                     
-                    <div class="form-group">
-                        <h3>Şirket Bilgileri</h3>
-                        <div>
-                            <div><strong>Şirket İsmi:</strong> ${data.form.insuranceStatus || ''}</div>
-                            <div><strong>İşyeri Faaliyeti/Konusu:</strong> ${data.form.salary || ''}</div>
-                            <div><strong>Mersis/Vergi/Ticaret Sicil No:</strong> ${data.form.insuranceNo || ''}</div>
-                            <div><strong>Şirket Adresi:</strong> ${data.form.insuranceDate || ''}</div>
-                        </div>
-                    </div>
+                    '<div class="form-group">',
+                        '<h3>Şirket Bilgileri</h3>',
+                        '<div>',
+                            '<div><strong>Şirket İsmi:</strong> ' + escapeHtml(data.form.insuranceStatus) + '</div>',
+                            '<div><strong>İşyeri Faaliyeti/Konusu:</strong> ' + escapeHtml(data.form.salary) + '</div>',
+                            '<div><strong>Mersis/Vergi/Ticaret Sicil No:</strong> ' + escapeHtml(data.form.insuranceNo) + '</div>',
+                            '<div><strong>Şirket Adresi-Telefonu:</strong> ' + escapeHtml(data.form.insuranceDate) + '</div>',
+                        '</div>',
+                    '</div>',
                     
-                    <div class="form-group">
-                        <h3>Çalışma Koşulları</h3>
-                        <div>
-                            <div><strong>Çalışma Saatleri:</strong> ${data.form.workingHours || ''}</div>
-                            <div><strong>Fazla Mesai:</strong> ${data.form.overtime || ''}</div>
-                            <div><strong>Haftalık İzin Günü:</strong> ${data.form.weeklyHoliday || ''}</div>
-                            <div><strong>Yıllık İzin Kullanımı:</strong> ${data.form.annualLeave || ''}</div>
-                        </div>
-                    </div>
+                    '<div class="form-group">',
+                        '<h3>Çalışma Koşulları</h3>',
+                        '<div>',
+                            '<div><strong>Çalışma Saatleri:</strong> ' + escapeHtml(data.form.workingHours) + '</div>',
+                            '<div><strong>Fazla Mesai:</strong> ' + escapeHtml(data.form.overtime) + '</div>',
+                            '<div><strong>Haftalık İzin Günü:</strong> ' + escapeHtml(data.form.weeklyHoliday) + '</div>',
+                            '<div><strong>Yıllık İzin Kullanımı:</strong> ' + escapeHtml(data.form.annualLeave) + '</div>',
+                        '</div>',
+                    '</div>',
                     
-                    <div class="form-group">
-                        <h3>İşten Ayrılma Nedeni/Şekli</h3>
-                        <div>
-                            <p style="white-space: pre-wrap;">${data.form.terminationReason || ''}</p>
-                        </div>
-                    </div>
+                    '<div class="form-group">',
+                        '<h3>İşten Ayrılma Nedeni/Şekli</h3>',
+                        '<div>',
+                            '<p style="white-space: pre-wrap;">' + escapeHtml(data.form.terminationReason) + '</p>',
+                        '</div>',
+                    '</div>',
                     
-                    <div class="form-group">
-                        <h3>Alacak Bilgileri</h3>
-                        <div>
-                            <div><strong>Kıdem Tazminatı:</strong> ${data.form.severancePayOption === 'yes' ? 'Var' : 'Yok'}</div>
-                            <div><strong>İhbar Tazminatı:</strong> ${data.form.noticePayOption === 'yes' ? 'Var' : 'Yok'}</div>
-                            <div><strong>Ödenmemiş Ücretler:</strong> ${data.form.unpaidWagesOption === 'yes' ? 'Var' : 'Yok'}</div>
-                            <div><strong>Fazla Mesai Ücreti:</strong> ${data.form.overtimePayOption === 'yes' ? 'Var' : 'Yok'}</div>
-                            <div><strong>Yıllık İzin Ücreti:</strong> ${data.form.annualLeavePayOption === 'yes' ? 'Var' : 'Yok'}</div>
-                            <div><strong>UBGT Ücreti:</strong> ${data.form.ubgtPayOption === 'yes' ? 'Var' : 'Yok'}</div>
-                        </div>
-                    </div>
-                `;
+                    '<div class="form-group">',
+                        '<h3>Alacak Bilgileri</h3>',
+                        '<div>',
+                            '<div><strong>Kıdem Tazminatı:</strong> ' + (data.form.severancePayOption === 'yes' ? 'Var' : 'Yok') + '</div>',
+                            '<div><strong>İhbar Tazminatı:</strong> ' + (data.form.noticePayOption === 'yes' ? 'Var' : 'Yok') + '</div>',
+                            '<div><strong>Ödenmemiş Ücretler:</strong> ' + (data.form.unpaidWagesOption === 'yes' ? 'Var' : 'Yok') + '</div>',
+                            '<div><strong>Fazla Mesai Ücreti:</strong> ' + (data.form.overtimePayOption === 'yes' ? 'Var' : 'Yok') + '</div>',
+                            '<div><strong>Yıllık İzin Ücreti:</strong> ' + (data.form.annualLeavePayOption === 'yes' ? 'Var' : 'Yok') + '</div>',
+                            '<div><strong>UBGT Ücreti:</strong> ' + (data.form.ubgtPayOption === 'yes' ? 'Var' : 'Yok') + '</div>',
+                        '</div>',
+                    '</div>'
+                ].join('');
                 
                 // Tanık bilgilerini ekle
+                console.log('Tanık kontrolü - witnessOption:', data.form.witnessOption, 'witnesses:', data.form.witnesses);
                 if (data.form.witnessOption === 'yes' && data.form.witnesses) {
                     let witnesses;
                     try {
                         witnesses = typeof data.form.witnesses === 'string' ? JSON.parse(data.form.witnesses) : data.form.witnesses;
+                        console.log('Tanık verisi parse edildi:', witnesses);
                         
                         if (witnesses && witnesses.witnesses && witnesses.witnesses.length > 0) {
-                            const witnessesHtml = `
-                                <div class="form-group">
-                                    <h3>Tanıklar</h3>
-                                    <div>
-                                        ${witnesses.witnesses.map((witness, index) => `
-                                            <div style="margin-bottom: 10px;">
-                                                <div><strong>Tanık ${index + 1} Adı Soyadı:</strong> ${witness.name || ''}</div>
-                                                <div><strong>Tanık ${index + 1} Bilgileri:</strong> ${witness.info || ''}</div>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            `;
-                            tempForm.innerHTML += witnessesHtml;
+                            let witnessesHtml = [
+                                '<div class="form-group">',
+                                    '<h3>Tanıklar</h3>',
+                                    '<div>'
+                            ];
+                            
+                            witnesses.witnesses.forEach((witness, index) => {
+                                witnessesHtml.push(
+                                    '<div style="margin-bottom: 10px;">',
+                                        '<div><strong>Tanık ' + (index + 1) + ' Adı Soyadı:</strong> ' + escapeHtml(witness.name) + '</div>',
+                                        '<div><strong>Tanık ' + (index + 1) + ' Bilgileri:</strong> ' + escapeHtml(witness.info) + '</div>',
+                                    '</div>'
+                                );
+                            });
+                            
+                            witnessesHtml.push(
+                                    '</div>',
+                                '</div>'
+                            );
+                            
+                            tempForm.innerHTML += witnessesHtml.join('');
                         }
                     } catch (error) {
                         console.error('Tanık bilgileri işlenirken hata:', error);
@@ -2359,45 +2399,48 @@ input[type="text"][name$="Date"] {
                 }
                 
                 // İmza bölümünü ekle
-                tempForm.innerHTML += `
-                    <div class="form-group signature-section">
-                        <div class="signature-text">
-                            <p>İşbu tutanak beyanlarım doğrultusunda hazırlanmıştır.</p>
-                            <p>Tarih: ${data.form.date || new Date().toLocaleDateString('tr-TR')}</p>
-                            <div class="signature-line"></div>
-                            <p>İmza</p>
-                        </div>
-                    </div>
-                `;
+                const currentDate = data.form.date || new Date().toLocaleDateString('tr-TR');
+                tempForm.innerHTML += [
+                    '<div class="form-group signature-section">',
+                        '<div class="signature-text">',
+                            '<p>İşbu tutanak beyanlarım doğrultusunda hazırlanmıştır.</p>',
+                            '<p>Tarih: ' + escapeHtml(currentDate) + '</p>',
+                            '<div class="signature-line"></div>',
+                            '<p>İmza</p>',
+                        '</div>',
+                    '</div>'
+                ].join('');
                 
                 // Geçici formu belgeye ekle
                 document.body.appendChild(tempForm);
+                console.log('Temp form oluşturuldu:', tempForm);
+                console.log('Temp form içeriği:', tempForm.innerHTML);
                 
                 // Geçmiş hatalara karşı önlem olarak az bekleyelim
                 setTimeout(() => {
-                    // PDF oluşturma seçenekleri - daha yüksek kalite ve daha iyi ölçekleme
+                    // PDF oluşturma seçenekleri - basitleştirilmiş ve güvenilir
                     const opt = {
-                        margin: [10, 10, 5, 10], // Alt margin'i azalt
+                        margin: 0,
                         filename: `isci_gorusme_${formId}.pdf`,
-                        image: { type: 'jpeg', quality: 1.0 },
+                        image: { 
+                            type: 'jpeg', 
+                            quality: 0.98 
+                        },
                         html2canvas: { 
-                            scale: 2, 
+                            scale: 1.5, // Scale azaltıldı daha fazla içerik için
                             useCORS: true,
-                            letterRendering: true,
-                            allowTaint: true,
-                            logging: true,
-                            backgroundColor: '#FFFFFF',
-                            width: 210 * 3.78, // 210mm'yi piksel olarak belirt (1mm = 3.78px)
-                            height: null // Yüksekliği otomatik belirle
+                            allowTaint: false,
+                            backgroundColor: '#ffffff',
+                            logging: false,
+                            height: 1400, // Yükseklik artırıldı daha fazla içerik için
+                            scrollY: 0,
+                            scrollX: 0
                         },
                         jsPDF: { 
-                            unit: 'mm', 
+                            unit: 'in', 
                             format: 'a4', 
-                            orientation: 'portrait',
-                            compress: true,
-                            putOnlyUsedFonts: true
-                        },
-                        pagebreak: { mode: ['avoid-all'], avoid: '.form-group' } // Form gruplarını bölme
+                            orientation: 'portrait' 
+                        }
                     };
                     
                     // PDF oluştur - önce HTML2PDF'i doğru şekilde yükleyelim
@@ -2409,9 +2452,12 @@ input[type="text"][name$="Date"] {
                     }
                     
                     try {
+                        console.log('PDF oluşturma başlıyor...');
                         html2pdf().from(tempForm).set(opt).toPdf().get('pdf').then((pdf) => {
+                            console.log('PDF başarıyla oluşturuldu:', pdf);
                             // PDF'i base64 formatına çevir
                             const pdfData = pdf.output('datauristring');
+                            console.log('PDF data oluşturuldu, boyut:', pdfData.length);
                             
                             // Geçici formu kaldır
                             tempForm.remove();
@@ -2479,6 +2525,7 @@ input[type="text"][name$="Date"] {
                     }
                 }, 200); // 200ms bekleyerek DOM'un güncellendiğinden emin oluyoruz
             } else {
+                console.error('Backend hatası:', data);
                 alert('Form bulunamadı veya yüklenemedi: ' + (data.error || 'Bilinmeyen hata'));
                 loadingOverlay.style.display = 'none';
             }
