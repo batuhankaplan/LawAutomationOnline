@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 import json
@@ -20,7 +20,7 @@ class User(UserMixin, db.Model):
     profile_image = db.Column(db.String(200), default='images/pp.png')
     theme_preference = db.Column(db.String(10), default='light')
     font_size = db.Column(db.String(10), default='medium')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
     is_admin = db.Column(db.Boolean, default=False)
     is_approved = db.Column(db.Boolean, default=False)
     approval_date = db.Column(db.DateTime)
@@ -415,7 +415,7 @@ class Announcement(db.Model):
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
 
 class CalendarEvent(db.Model):
     id = db.Column(db.Integer, primary_key=True)

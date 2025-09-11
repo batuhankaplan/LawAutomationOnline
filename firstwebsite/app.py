@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from flask import Flask, render_template, request, url_for, flash, redirect, jsonify, session, send_from_directory, send_file, make_response, current_app, Response, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from datetime import datetime, timedelta, date, time
+from datetime import datetime, timedelta, date, time, timezone
 import json
 import os
 from werkzeug.utils import secure_filename
@@ -824,10 +824,19 @@ def anasayfa():
             'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
         ]
         
-        # Duyurulara Türkçe tarih ekle
+        # Duyurulara Türkçe tarih ekle (UTC'den Türkiye saatine çevir)
         announcements = []
+        turkey_tz = timezone(timedelta(hours=3))  # Türkiye UTC+3
         for ann in announcements_raw:
-            ann.turkish_date = f"{ann.created_at.day} {turkish_months[ann.created_at.month - 1]} {ann.created_at.year}, {ann.created_at.strftime('%H:%M')}"
+            # UTC saati varsa Türkiye saatine çevir
+            if ann.created_at.tzinfo is None:
+                # UTC olarak kabul et ve Türkiye saatine çevir
+                utc_time = ann.created_at.replace(tzinfo=timezone.utc)
+                turkey_time = utc_time.astimezone(turkey_tz)
+            else:
+                turkey_time = ann.created_at.astimezone(turkey_tz)
+            
+            ann.turkish_date = f"{turkey_time.day} {turkish_months[turkey_time.month - 1]} {turkey_time.year}, {turkey_time.strftime('%H:%M')}"
             announcements.append(ann)
     else:
         announcements = []  # Yetki yoksa boş liste
@@ -4771,10 +4780,6 @@ def get_isci_gorusme_form(form_id):
             return jsonify({'success': False, 'error': 'Bu forma erişim izniniz yok'})
         
         form_data = form.to_dict()
-        
-        # Tanıkları ekle
-        for i, witness in enumerate(form.witnesses, 1):
-            form_data[f'witness{i}'] = witness
         
         return jsonify({'success': True, 'form': form_data})
     except Exception as e:
