@@ -4993,7 +4993,7 @@ function uploadDocument() {
         formData.append('document_name', documentName.value);
     }
 
-    fetch(`/upload_document/${currentCaseId}`, {
+    fetch(`/upload_document/${parseInt(currentCaseId)}`, {
         method: 'POST',
         body: formData
     })
