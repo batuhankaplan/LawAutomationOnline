@@ -2524,6 +2524,14 @@ def get_documents(case_id):
 def download_document(document_id):
     document = Document.query.get_or_404(document_id)
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+    
+    # Backward compatibility: Eski format kontrol et
+    if not os.path.exists(filepath):
+        # Eski format: documents klasöründe sadece filename
+        old_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.filepath)
+        if os.path.exists(old_filepath):
+            filepath = old_filepath
+    
     return send_file(filepath, as_attachment=True, download_name=document.filename)
 
 @app.route('/delete_document/<int:document_id>', methods=['POST'])
@@ -2534,6 +2542,13 @@ def delete_document(document_id):
     try:
         document = Document.query.get_or_404(document_id)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+        
+        # Backward compatibility: Eski format kontrol et
+        if not os.path.exists(file_path):
+            # Eski format: documents klasöründe sadece filename
+            old_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.filepath)
+            if os.path.exists(old_filepath):
+                file_path = old_filepath
         
         # Dosyayı sil
         if os.path.exists(file_path):
@@ -2652,8 +2667,15 @@ def preview_document(document_id):
     
     # PDF sürümü yoksa, normal işleme devam et
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+    
+    # Backward compatibility: Eski format kontrol et
     if not os.path.exists(filepath):
-        return "Dosya bulunamadı", 404
+        # Eski format: documents klasöründe sadece filename
+        old_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.filepath)
+        if os.path.exists(old_filepath):
+            filepath = old_filepath
+        else:
+            return "Dosya bulunamadı", 404
 
     _, extension = os.path.splitext(document.filepath)
     extension = extension.lower()
