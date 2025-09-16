@@ -254,7 +254,7 @@ class ActivityLog(db.Model):
     activity_type = db.Column(db.String(50), nullable=False)  # 'dosya_ekleme', 'duyuru_ekleme', 'etkinlik_ekleme', vs.
     description = db.Column(db.String(250), nullable=False)
     details = db.Column(db.JSON, nullable=True)  # Detaylı bilgileri JSON olarak saklayacağız
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    timestamp = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone(timedelta(hours=3))))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     related_case_id = db.Column(db.Integer, db.ForeignKey('case_file.id'), nullable=True)
     related_announcement_id = db.Column(db.Integer, db.ForeignKey('announcement.id'), nullable=True)
@@ -618,7 +618,7 @@ class OrnekDilekce(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     ad = db.Column(db.String(255), nullable=False)
     dosya_yolu = db.Column(db.String(500), nullable=False) # Gerçek dosya sistemindeki adı
-    yuklenme_tarihi = db.Column(db.DateTime, default=datetime.utcnow)
+    yuklenme_tarihi = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
     kategori_id = db.Column(db.Integer, db.ForeignKey('dilekce_kategori.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
@@ -634,7 +634,7 @@ class OrnekSozlesme(db.Model):
     muvekkil_adi = db.Column(db.String(255), nullable=True) # Formdan alınacak
     sozlesme_tarihi = db.Column(db.Date, nullable=True) # Formdan alınacak
     icerik_json = db.Column(db.Text, nullable=False)  # Sözleşmenin pdfmake formatındaki JSON içeriği
-    olusturulma_tarihi = db.Column(db.DateTime, default=datetime.utcnow)
+    olusturulma_tarihi = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     user = db.relationship('User', backref=db.backref('olusturdugu_ornek_sozlesmeler', lazy=True))
@@ -646,8 +646,8 @@ class AISohbetGecmisi(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     baslik = db.Column(db.String(200), nullable=False)
     sohbet_verisi = db.Column(db.Text, nullable=False)  # JSON formatında sohbet mesajları
-    olusturulma_tarihi = db.Column(db.DateTime, default=datetime.utcnow)
-    guncelleme_tarihi = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    olusturulma_tarihi = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
+    guncelleme_tarihi = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))), onupdate=lambda: datetime.now(timezone(timedelta(hours=3))))
     mesaj_sayisi = db.Column(db.Integer, default=0)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     

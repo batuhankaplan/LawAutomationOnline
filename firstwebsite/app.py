@@ -3350,7 +3350,10 @@ def api_veritabani_yedekle():
         import io
         
         # Geçici yedek dosyası oluştur
-        backup_filename = f"veritabani_yedek_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.db"
+        # Türkiye saatiyle yedek dosyası adı oluştur
+        turkey_tz = timezone(timedelta(hours=3))
+        turkey_time = datetime.now(turkey_tz)
+        backup_filename = f"veritabani_yedek_{turkey_time.strftime('%Y-%m-%d_%H-%M-%S')}.db"
         
         # Mevcut veritabanının yolunu bul
         possible_db_paths = [
@@ -3468,8 +3471,10 @@ def api_veritabani_geri_yukle():
         if not current_db_path:
             return jsonify({'success': False, 'message': 'Mevcut veritabanı dosyası bulunamadı'})
         
-        # Acil durum yedeği için güvenli yol
-        backup_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        # Acil durum yedeği için güvenli yol (Türkiye saati)
+        turkey_tz = timezone(timedelta(hours=3))
+        turkey_time = datetime.now(turkey_tz)
+        backup_timestamp = turkey_time.strftime('%Y%m%d_%H%M%S')
         db_dir = os.path.dirname(current_db_path)
         emergency_backup_path = os.path.join(db_dir, f'emergency_backup_{backup_timestamp}.db')
         
@@ -6949,7 +6954,9 @@ def api_ai_avukat_sohbet():
                 
                 sohbet.sohbet_verisi = json.dumps(sohbet_data, ensure_ascii=False)
                 sohbet.mesaj_sayisi = len(sohbet_data)
-                sohbet.guncelleme_tarihi = datetime.utcnow()
+                # Türkiye saatiyle güncelleme tarihi
+                turkey_tz = timezone(timedelta(hours=3))
+                sohbet.guncelleme_tarihi = datetime.now(turkey_tz)
                 db.session.commit()
         
         # Sohbet logunu kaydet
