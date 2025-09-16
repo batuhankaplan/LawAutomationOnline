@@ -67,7 +67,7 @@
                             </div>
                             <div class="activity-time">
                                 <i class="material-icons">access_time</i>
-                                <span>{{ activity.timestamp.strftime('%d.%m.%Y %H:%M') }}</span>
+                                <span>{{ activity.formatted_timestamp.strftime('%d.%m.%Y %H:%M') if activity.formatted_timestamp else 'Bilinmeyen tarih' }}</span>
                             </div>
                             {% if is_admin %}
                             <button class="btn small delete-activity-btn" title="Sil" onclick="deleteActivity({{ activity.id }})">

@@ -805,7 +805,26 @@ def anasayfa():
         return render_template('landing.html', title="Anasayfa")
 
     # Giriş yapmış kullanıcı için ana sayfa içeriği
-    activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all() # Limit 10'dan 5'e düşürüldü
+    try:
+        activities_raw = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all()
+        # Activities timestamp'lerini güvenli şekilde formatla
+        activities = []
+        for activity in activities_raw:
+            # Timestamp formatlamayı güvenli hale getir
+            if activity.timestamp:
+                if hasattr(activity.timestamp, 'tzinfo') and activity.timestamp.tzinfo is not None:
+                    formatted_timestamp = activity.timestamp.replace(tzinfo=None)
+                else:
+                    formatted_timestamp = activity.timestamp
+                # Activity objesine formatted timestamp ekle
+                activity.formatted_timestamp = formatted_timestamp
+            else:
+                activity.formatted_timestamp = None
+            activities.append(activity)
+    except Exception as e:
+        app.logger.error(f"Activities yüklenirken hata: {str(e)}")
+        activities = []
+    
     total_activities = ActivityLog.query.count() # Tüm aktivitelerin sayısını al
     upcoming_hearings = CalendarEvent.query.filter(
         CalendarEvent.date >= date.today(),
@@ -884,22 +903,41 @@ def anasayfa():
 # Daha fazla aktivite yüklemek için yeni endpoint
 @app.route('/load_more_activities/<int:offset>')
 def load_more_activities(offset):
-    activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).offset(offset).limit(5).all()
-    
-    activities_data = []
-    for activity in activities:
-        user = User.query.get(activity.user_id)
-        activity_data = {
-            'type': activity.activity_type,
-            'description': activity.description,
-            'timestamp': activity.timestamp.strftime('%d.%m.%Y %H:%M'),
-            'user': user.get_full_name() if user else 'Bilinmeyen Kullanıcı',
-            'details': activity.details,
-            'profile_image': url_for('static', filename=user.profile_image) if user and user.profile_image else url_for('static', filename='images/pp.png')
-        }
-        activities_data.append(activity_data)
-    
-    return jsonify(activities=activities_data)
+    try:
+        activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).offset(offset).limit(5).all()
+        
+        activities_data = []
+        for activity in activities:
+            try:
+                user = User.query.get(activity.user_id)
+                
+                # Timestamp formatting with error handling
+                if activity.timestamp:
+                    # Timezone aware datetime'ı naive datetime'a çevir
+                    if hasattr(activity.timestamp, 'tzinfo') and activity.timestamp.tzinfo is not None:
+                        timestamp_str = activity.timestamp.replace(tzinfo=None).strftime('%d.%m.%Y %H:%M')
+                    else:
+                        timestamp_str = activity.timestamp.strftime('%d.%m.%Y %H:%M')
+                else:
+                    timestamp_str = 'Bilinmeyen tarih'
+                
+                activity_data = {
+                    'type': activity.activity_type,
+                    'description': activity.description,
+                    'timestamp': timestamp_str,
+                    'user': user.get_full_name() if user else 'Bilinmeyen Kullanıcı',
+                    'details': activity.details,
+                    'profile_image': url_for('static', filename=user.profile_image) if user and user.profile_image else url_for('static', filename='images/pp.png')
+                }
+                activities_data.append(activity_data)
+            except Exception as e:
+                app.logger.error(f"Activity işleme hatası: {str(e)}")
+                continue
+        
+        return jsonify(activities=activities_data)
+    except Exception as e:
+        app.logger.error(f"Load more activities hatası: {str(e)}")
+        return jsonify(activities=[], error=str(e))
 
 @app.route('/takvim')
 @login_required
@@ -3262,7 +3300,23 @@ def veritabani_yonetimi():
     }
     
     # Son aktiviteler
-    recent_activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(10).all()
+    try:
+        recent_activities_raw = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(10).all()
+        recent_activities = []
+        for activity in recent_activities_raw:
+            # Timestamp formatlamayı güvenli hale getir
+            if activity.timestamp:
+                if hasattr(activity.timestamp, 'tzinfo') and activity.timestamp.tzinfo is not None:
+                    formatted_timestamp = activity.timestamp.replace(tzinfo=None)
+                else:
+                    formatted_timestamp = activity.timestamp
+                activity.formatted_timestamp = formatted_timestamp
+            else:
+                activity.formatted_timestamp = None
+            recent_activities.append(activity)
+    except Exception as e:
+        app.logger.error(f"Recent activities yüklenirken hata: {str(e)}")
+        recent_activities = []
     
     return render_template('veritabani_yonetimi.html', 
                          stats=stats, 
