@@ -916,17 +916,33 @@ document.addEventListener('DOMContentLoaded', function() {
     eventForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
+        // Double submission koruması
+        const submitButton = eventForm.querySelector('button[type="submit"]');
+        if (submitButton.disabled) {
+            return; // Zaten işlem devam ediyor
+        }
+        
+        // Submit butonunu disable et
+        submitButton.disabled = true;
+        submitButton.textContent = 'Kaydediliyor...';
+
         const eventId = eventForm.getAttribute('data-event-id');
         const isEditing = !!eventId;
 
         // Yetki kontrolü
          if (isEditing && !hasPermission('etkinlik_duzenle')) {
              showGlobalNotification('Etkinlik düzenleme yetkiniz yok.', 'warning');
+             // Butonları yeniden enable et
+             submitButton.disabled = false;
+             submitButton.textContent = 'Kaydet';
              return;
          }
          if (!isEditing && !hasPermission('etkinlik_ekle')) {
              showGlobalNotification('Etkinlik ekleme yetkiniz yok.', 'warning');
-            return;
+             // Butonları yeniden enable et
+             submitButton.disabled = false;
+             submitButton.textContent = 'Kaydet';
+             return;
         }
         
         // Günlük Kayıt için başlık oluştur
@@ -988,11 +1004,19 @@ document.addEventListener('DOMContentLoaded', function() {
              }
              renderCalendar(); // Takvimi yeniden çiz
              closeModal(eventModal);
-                             showGlobalNotification(`Etkinlik başarıyla ${isEditing ? 'güncellendi' : 'kaydedildi'}.`, 'success');
+             showGlobalNotification(`Etkinlik başarıyla ${isEditing ? 'güncellendi' : 'kaydedildi'}.`, 'success');
+             
+             // Butonları yeniden enable et
+             submitButton.disabled = false;
+             submitButton.textContent = 'Kaydet';
         })
         .catch(error => {
             console.error('Etkinlik kaydetme/güncelleme hatası:', error);
-                          showGlobalNotification(`Bir hata oluştu: ${error.message}`, 'error');
+            showGlobalNotification(`Bir hata oluştu: ${error.message}`, 'error');
+            
+            // Butonları yeniden enable et
+            submitButton.disabled = false;
+            submitButton.textContent = 'Kaydet';
         });
     });
 
