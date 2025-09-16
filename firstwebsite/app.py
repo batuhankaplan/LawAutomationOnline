@@ -4855,14 +4855,19 @@ def save_isci_gorusme_form():
 @permission_required('isci_gorusme_goruntule')
 def get_isci_gorusme_forms():
     try:
-        forms = IsciGorusmeTutanagi.query.filter_by(user_id=current_user.id).order_by(IsciGorusmeTutanagi.created_at.desc()).all()
+        forms = IsciGorusmeTutanagi.query.order_by(IsciGorusmeTutanagi.created_at.desc()).all()
         forms_data = []
         
         for form in forms:
+            # Kullanıcı bilgisini al
+            user = User.query.get(form.user_id)
+            username = user.username if user else 'Bilinmeyen'
+            
             forms_data.append({
                 'id': form.id,
                 'name': form.name or 'İsimsiz Form',
-                'date': form.created_at.strftime('%d.%m.%Y')
+                'date': form.created_at.strftime('%d.%m.%Y'),
+                'created_by': username
             })
         
         return jsonify({'success': True, 'forms': forms_data})
