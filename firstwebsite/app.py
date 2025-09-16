@@ -2446,7 +2446,7 @@ def upload_document(case_id):
             unique_filename = f"{case_id}_{int(pytime.time())}_{original_filename}"
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', unique_filename)
             
-            os.makedirs(app.config['UPLOAD_FOLDER'], 'documents', exist_ok=True)
+            os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'documents'), exist_ok=True)
             file.save(file_path)
             
             # PDF path'i başlangıçta None olarak ayarla
