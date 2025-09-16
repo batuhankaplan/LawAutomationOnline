@@ -815,14 +815,17 @@ def anasayfa():
                 if activity.timestamp:
                     app.logger.info(f"Processing activity {activity.id}, timestamp: {activity.timestamp}, type: {type(activity.timestamp)}")
                     if hasattr(activity.timestamp, 'tzinfo') and activity.timestamp.tzinfo is not None:
-                        # Timezone aware datetime - timezone'u kaldır
+                        # Timezone aware datetime - timezone'u kaldır ve formatla
                         naive_timestamp = activity.timestamp.replace(tzinfo=None)
                         activity.formatted_timestamp_str = naive_timestamp.strftime('%d.%m.%Y %H:%M')
                         app.logger.info(f"Formatted timezone aware: {activity.formatted_timestamp_str}")
                     else:
-                        # Zaten naive datetime
-                        activity.formatted_timestamp_str = activity.timestamp.strftime('%d.%m.%Y %H:%M')
-                        app.logger.info(f"Formatted naive: {activity.formatted_timestamp_str}")
+                        # Naive datetime (eski UTC kayıtlar) - Türkiye saatine çevir
+                        utc_time = activity.timestamp.replace(tzinfo=timezone.utc)
+                        turkey_tz = timezone(timedelta(hours=3))
+                        turkey_time = utc_time.astimezone(turkey_tz).replace(tzinfo=None)
+                        activity.formatted_timestamp_str = turkey_time.strftime('%d.%m.%Y %H:%M')
+                        app.logger.info(f"Formatted naive (UTC->Turkey): {activity.formatted_timestamp_str}")
                 else:
                     app.logger.warning(f"Activity {activity.id} has no timestamp")
                     activity.formatted_timestamp_str = 'Tarih yok'
@@ -922,11 +925,15 @@ def load_more_activities(offset):
                 
                 # Timestamp formatting with error handling
                 if activity.timestamp:
-                    # Timezone aware datetime'ı naive datetime'a çevir
                     if hasattr(activity.timestamp, 'tzinfo') and activity.timestamp.tzinfo is not None:
+                        # Timezone aware datetime - timezone'u kaldır ve formatla
                         timestamp_str = activity.timestamp.replace(tzinfo=None).strftime('%d.%m.%Y %H:%M')
                     else:
-                        timestamp_str = activity.timestamp.strftime('%d.%m.%Y %H:%M')
+                        # Naive datetime (eski UTC kayıtlar) - Türkiye saatine çevir
+                        utc_time = activity.timestamp.replace(tzinfo=timezone.utc)
+                        turkey_tz = timezone(timedelta(hours=3))
+                        turkey_time = utc_time.astimezone(turkey_tz).replace(tzinfo=None)
+                        timestamp_str = turkey_time.strftime('%d.%m.%Y %H:%M')
                 else:
                     timestamp_str = 'Bilinmeyen tarih'
                 
@@ -3317,12 +3324,15 @@ def veritabani_yonetimi():
             if activity.timestamp:
                 try:
                     if hasattr(activity.timestamp, 'tzinfo') and activity.timestamp.tzinfo is not None:
-                        # Timezone aware datetime - timezone'u kaldır
+                        # Timezone aware datetime - timezone'u kaldır ve formatla
                         naive_timestamp = activity.timestamp.replace(tzinfo=None)
                         activity.formatted_timestamp_str = naive_timestamp.strftime('%d.%m.%Y %H:%M')
                     else:
-                        # Zaten naive datetime
-                        activity.formatted_timestamp_str = activity.timestamp.strftime('%d.%m.%Y %H:%M')
+                        # Naive datetime (eski UTC kayıtlar) - Türkiye saatine çevir
+                        utc_time = activity.timestamp.replace(tzinfo=timezone.utc)
+                        turkey_tz = timezone(timedelta(hours=3))
+                        turkey_time = utc_time.astimezone(turkey_tz).replace(tzinfo=None)
+                        activity.formatted_timestamp_str = turkey_time.strftime('%d.%m.%Y %H:%M')
                 except Exception as e:
                     app.logger.error(f"Timestamp formatlamada hata: {str(e)} - {activity.timestamp}")
                     activity.formatted_timestamp_str = 'Format hatası'
