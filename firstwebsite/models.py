@@ -12,14 +12,14 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     first_name = db.Column(db.String(50), nullable=False)  # Yeni eklenen alan
     last_name = db.Column(db.String(50), nullable=False)   # Yeni eklenen alan
-    phone = db.Column(db.String(10), nullable=False)
-    password_hash = db.Column(db.String(128))
+    phone = db.Column(db.String(15), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(50))
     gender = db.Column(db.String(20))
     birthdate = db.Column(db.Date)
     profile_image = db.Column(db.String(200), default='images/pp.png')
-    theme_preference = db.Column(db.String(10), default='light')
-    font_size = db.Column(db.String(10), default='medium')
+    theme_preference = db.Column(db.String(20), default='light')
+    font_size = db.Column(db.String(20), default='medium')
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
     is_admin = db.Column(db.Boolean, default=False)
     is_approved = db.Column(db.Boolean, default=False)

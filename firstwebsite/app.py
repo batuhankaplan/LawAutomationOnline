@@ -808,7 +808,7 @@ def anasayfa():
     activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all() # Limit 10'dan 5'e düşürüldü
     total_activities = ActivityLog.query.count() # Tüm aktivitelerin sayısını al
     upcoming_hearings = CalendarEvent.query.filter(
-        db.func.datetime(CalendarEvent.date, CalendarEvent.time) >= datetime.utcnow(),
+        CalendarEvent.date >= date.today(),
         CalendarEvent.event_type.in_(['durusma', 'e-durusma']),
         CalendarEvent.is_completed == False
     ).order_by(CalendarEvent.date.asc(), CalendarEvent.time.asc()).limit(5).all()
@@ -2388,9 +2388,9 @@ def upload_document(case_id):
             
             # Benzersiz dosya adı oluştur
             unique_filename = f"{case_id}_{int(pytime.time())}_{original_filename}"
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', unique_filename)
             
-            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+            os.makedirs(app.config['UPLOAD_FOLDER'], 'documents', exist_ok=True)
             file.save(file_path)
             
             # PDF path'i başlangıçta None olarak ayarla
@@ -2593,13 +2593,13 @@ def preview_document(document_id):
     
     # Önce belgenin PDF sürümü var mı kontrol et
     if document.pdf_version:
-        pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], document.pdf_version)
+        pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.pdf_version)
         if os.path.exists(pdf_path):
             print(f"Belge için hazır PDF sürümü kullanılıyor: {pdf_path}")
             return send_file(pdf_path, mimetype='application/pdf')
     
     # PDF sürümü yoksa, normal işleme devam et
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.filepath)
     if not os.path.exists(filepath):
         return "Dosya bulunamadı", 404
 
@@ -2632,7 +2632,7 @@ def preview_document(document_id):
                 try:
                     # PDF dosyasını saklamak için benzersiz isim oluştur
                     pdf_filename = f"{document.case_id}_{int(pytime.time())}_converted_{document.filename}.pdf"
-                    permanent_pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], pdf_filename)
+                    permanent_pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], 'documents',  pdf_filename)
                     
                     # Geçici PDF dosyasını kalıcı konuma kopyala
                     shutil.copy(pdf_path, permanent_pdf_path)
@@ -8428,7 +8428,7 @@ def login():
                     return render_template('auth.html')
                 
                 # 2FA kontrolü
-                if user.permissions and user.permissions.get('two_factor_auth', False):
+                if user.permissions and hasattr(user.permissions, 'get') and user.permissions.get('two_factor_auth', False):
                     print("DEBUG - 2FA required, setting session")
                     # 2FA etkinse, kullanıcıyı session'da sakla ve 2FA sayfasına yönlendir
                     session['temp_user_id'] = user.id

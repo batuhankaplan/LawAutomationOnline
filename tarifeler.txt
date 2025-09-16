@@ -197,91 +197,19 @@ KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ START
 {
   "kategoriler": [
     {
+      "id": "kategori_1757591890196_a5g82",
+      "kategoriAdi": "deneme",
+      "sira": 1,
       "hizmetler": [
         {
-          "ekNot": "deneme",
-          "ekstralar": [
-            {
-              "aciklama": "deneme",
-              "id": "ekstra_1748267107538_2ydaqr0ll",
-              "tutar": "500"
-            }
-          ],
-          "hizmetAdi": "Danışma Ücreti",
-          "id": "hizmet_1748265320806_uleai",
-          "sira": 1,
-          "temelUcret": "2500"
-        },
-        {
-          "ekNot": "",
-          "ekstralar": [
-            {
-              "id": "ekstra_1757420100722_2zemukmzh",
-              "aciklama": "Ek dilekçe istenirse dilekçe başına",
-              "tutar": "750"
-            }
-          ],
-          "hizmetAdi": "Dilekçe Ücreti",
-          "id": "hizmet_1748265330583_mt1hy",
-          "sira": 2,
-          "temelUcret": "2300"
-        }
-      ],
-      "id": "kategori_1748265313229_gsf0o",
-      "kategoriAdi": "Danışma",
-      "sira": 1
-    },
-    {
-      "hizmetler": [
-        {
+          "id": "hizmet_1757591895340_1k994",
+          "hizmetAdi": "teset",
+          "temelUcret": "100",
           "ekNot": "",
           "ekstralar": [],
-          "hizmetAdi": "İhtarname Ücreti",
-          "id": "hizmet_1748265699901_ft8p6",
-          "sira": 1,
-          "temelUcret": "123413"
+          "sira": 1
         }
-      ],
-      "id": "kategori_1748265696403_umtnj",
-      "kategoriAdi": "asdgasdg",
-      "sira": 2
-    },
-    {
-      "hizmetler": [
-        {
-          "ekNot": "",
-          "ekstralar": [],
-          "hizmetAdi": "deneme",
-          "id": "hizmet_1748266111868_s7u51",
-          "sira": 1,
-          "temelUcret": "1245"
-        },
-        {
-          "ekNot": "",
-          "ekstralar": [],
-          "hizmetAdi": "asdg",
-          "id": "hizmet_1748266800445_v8rlo",
-          "sira": 2,
-          "temelUcret": "1353125"
-        },
-        {
-          "ekNot": "",
-          "ekstralar": [
-            {
-              "aciklama": "ekstar hizmet",
-              "id": "ekstra_1748335115660_sya6dhdza",
-              "tutar": "1500"
-            }
-          ],
-          "hizmetAdi": "yaasss",
-          "id": "hizmet_1748267486807_49g6q",
-          "sira": 3,
-          "temelUcret": "12323124"
-        }
-      ],
-      "id": "kategori_1748266073535_slhcl",
-      "kategoriAdi": "Davalar",
-      "sira": 3
+      ]
     }
   ]
 }
