@@ -1407,7 +1407,7 @@ document.addEventListener('DOMContentLoaded', function() {
 .event-randevu { background: #9b59b6; }
 .event-diger { background: #f1c40f; }
 
-/* Modal Stilleri */
+/* Modal Stilleri - Dinamik Responsive */
 .modal {
     display: none;
     position: fixed;
@@ -1417,28 +1417,27 @@ document.addEventListener('DOMContentLoaded', function() {
     height: 100%;
     background: rgba(0,0,0,0.5);
     z-index: 1000;
-    overflow: auto; /* Allow scrolling if content is too tall */
-    padding: 20px; /* Add padding for better mobile/zoom experience */
+    justify-content: center;
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 20px;
     box-sizing: border-box;
 }
 
 .modal-content {
     background: white;
     border-radius: 10px;
-    padding: 0; /* Remove padding, let modal-header/body handle it */
     position: relative;
-    width: 90%;
+    width: 100%;
     max-width: 500px;
-    margin: 0 auto; /* Center horizontally */
-    margin-top: 5vh; /* Add top margin for better positioning */
-    margin-bottom: 5vh; /* Add bottom margin */
-    max-height: 90vh; /* Limit height to viewport */
-    overflow: hidden;
+    margin: 20px auto;
     display: flex;
     flex-direction: column;
+    min-height: fit-content;
+    max-height: none;
 }
 
-/* Modal başlık */
+/* Modal başlık - sabit */
 .modal-header {
     padding: 20px;
     background: #f8f9fa;
@@ -1446,38 +1445,39 @@ document.addEventListener('DOMContentLoaded', function() {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-shrink: 0; /* Prevent header from shrinking */
+    flex-shrink: 0;
+    border-radius: 10px 10px 0 0;
 }
 
-/* Modal body - scrollable */
+/* Modal body - içerik boyutuna göre */
 .modal-body {
-    flex: 1;
-    overflow-y: auto;
     padding: 20px;
-    max-height: calc(90vh - 120px); /* Account for header and footer */
+    flex: 1;
+    min-height: fit-content;
 }
 
-/* Modal footer */
+/* Modal footer - sabit, her zaman görünür */
 .modal-footer {
-    padding: 1rem 2rem 1.5rem;
+    padding: 15px 20px;
     border-top: 1px solid #e5e7eb;
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
-    flex-shrink: 0; /* Prevent footer from shrinking */
+    flex-shrink: 0;
+    background: #f8f9fa;
+    border-radius: 0 0 10px 10px;
 }
 
-/* Responsive modal adjustments */
+/* Responsive Modal - Mobil Optimizasyonu */
 @media (max-width: 768px) {
     .modal {
         padding: 10px;
     }
     
     .modal-content {
-        width: 95%;
-        margin-top: 2vh;
-        margin-bottom: 2vh;
-        max-height: 96vh;
+        width: calc(100% - 20px);
+        margin: 10px auto;
+        max-width: none;
     }
     
     .modal-header {
@@ -1486,24 +1486,55 @@ document.addEventListener('DOMContentLoaded', function() {
     
     .modal-body {
         padding: 15px;
-        max-height: calc(96vh - 100px);
     }
     
     .modal-footer {
-        padding: 10px 15px 15px;
+        padding: 12px 15px;
     }
 }
 
-/* High zoom/small viewport adjustments */
-@media (max-height: 600px) {
+/* Kısa Ekranlar için - Max Height Kontrolü */
+@media (max-height: 700px) {
+    .modal {
+        align-items: flex-start;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    
     .modal-content {
-        margin-top: 1vh;
-        margin-bottom: 1vh;
-        max-height: 98vh;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        max-height: calc(100vh - 20px);
+        overflow-y: auto;
     }
     
     .modal-body {
-        max-height: calc(98vh - 80px);
+        max-height: none;
+        overflow-y: visible;
+    }
+}
+
+/* Çok Kısa Ekranlar (Tablet Landscape vb.) */
+@media (max-height: 500px) {
+    .modal {
+        padding: 5px;
+    }
+    
+    .modal-content {
+        margin: 5px auto;
+        max-height: calc(100vh - 10px);
+    }
+    
+    .modal-header {
+        padding: 10px 15px;
+    }
+    
+    .modal-body {
+        padding: 10px 15px;
+    }
+    
+    .modal-footer {
+        padding: 8px 15px 10px;
     }
 }
 
