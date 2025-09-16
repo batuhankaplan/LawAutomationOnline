@@ -438,10 +438,17 @@
             <div class="detail-section description-section">
                 <div class="section-header">
                     <h3>Dosya Açıklaması</h3>
+                    {% if current_user.has_permission('dosya_duzenle') %}
+                    <button class="edit-description-btn" onclick="editDescription()" title="Açıklamayı Düzenle">
+                        <i class="material-icons">edit</i>
+                    </button>
+                    {% endif %}
                 </div>
                 <div class="description-container">
                     <div id="descriptionDisplay">
-                        <p id="detailDescription">Açıklama bulunmuyor.</p>
+                        <div class="description-content">
+                            <p id="detailDescription">Açıklama bulunmuyor.</p>
+                        </div>
                     </div>
                     <div id="descriptionEdit" class="hidden-edit-mode">
                         <textarea id="editDescriptionText" rows="4" class="description-textarea"></textarea>
@@ -1974,6 +1981,28 @@
 
 .edit-btn i {
     font-size: 20px;
+}
+
+.edit-description-btn {
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-description-btn:hover {
+    background: rgba(26, 35, 126, 0.1);
+    color: #1a237e;
+}
+
+.edit-description-btn i {
+    font-size: 18px;
 }
 
 .description-textarea {
