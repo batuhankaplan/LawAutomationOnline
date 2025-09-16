@@ -2484,7 +2484,7 @@ def upload_document(case_id):
                 case_id=case_id,
                 document_type=document_type,
                 filename=f"{display_name}.{file_ext}",  # Görünen isim
-                filepath=unique_filename,  # Gerçek dosya yolu
+                filepath=f"documents/{unique_filename}",  # Gerçek dosya yolu
                 upload_date=datetime.now(),
                 user_id=current_user.id if current_user.is_authenticated else 1,
                 pdf_version=pdf_path  # PDF versiyonu varsa kaydet
@@ -2523,12 +2523,8 @@ def get_documents(case_id):
 @app.route('/download_document/<int:document_id>')
 def download_document(document_id):
     document = Document.query.get_or_404(document_id)
-    return send_from_directory(
-        app.config['UPLOAD_FOLDER'],
-        document.filepath,
-        as_attachment=True,
-        download_name=document.filename
-    )
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+    return send_file(filepath, as_attachment=True, download_name=document.filename)
 
 @app.route('/delete_document/<int:document_id>', methods=['POST'])
 @login_required
@@ -2649,13 +2645,13 @@ def preview_document(document_id):
     
     # Önce belgenin PDF sürümü var mı kontrol et
     if document.pdf_version:
-        pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.pdf_version)
+        pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], document.pdf_version)
         if os.path.exists(pdf_path):
             print(f"Belge için hazır PDF sürümü kullanılıyor: {pdf_path}")
             return send_file(pdf_path, mimetype='application/pdf')
     
     # PDF sürümü yoksa, normal işleme devam et
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.filepath)
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
     if not os.path.exists(filepath):
         return "Dosya bulunamadı", 404
 
