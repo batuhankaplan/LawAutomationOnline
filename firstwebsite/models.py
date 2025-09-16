@@ -70,6 +70,7 @@ class User(UserMixin, db.Model):
             'etkinlik_sil': ['takvim_goruntule', 'etkinlik_goruntule'],
             'duyuru_duzenle': ['duyuru_goruntule'],
             'duyuru_sil': ['duyuru_goruntule'],
+            'dosya_goruntule': ['dosya_sorgula'],
             'dosya_duzenle': ['dosya_sorgula'],
             'dosya_sil': ['dosya_sorgula'],
             'odeme_duzenle': ['odeme_goruntule'],
