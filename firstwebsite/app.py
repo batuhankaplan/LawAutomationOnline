@@ -810,16 +810,21 @@ def anasayfa():
         # Activities timestamp'lerini güvenli şekilde formatla
         activities = []
         for activity in activities_raw:
-            # Timestamp formatlamayı güvenli hale getir
+            # Timestamp'i tamamen formatlanmış string olarak hazırla
             if activity.timestamp:
-                if hasattr(activity.timestamp, 'tzinfo') and activity.timestamp.tzinfo is not None:
-                    formatted_timestamp = activity.timestamp.replace(tzinfo=None)
-                else:
-                    formatted_timestamp = activity.timestamp
-                # Activity objesine formatted timestamp ekle
-                activity.formatted_timestamp = formatted_timestamp
+                try:
+                    if hasattr(activity.timestamp, 'tzinfo') and activity.timestamp.tzinfo is not None:
+                        # Timezone aware datetime - timezone'u kaldır
+                        naive_timestamp = activity.timestamp.replace(tzinfo=None)
+                        activity.formatted_timestamp_str = naive_timestamp.strftime('%d.%m.%Y %H:%M')
+                    else:
+                        # Zaten naive datetime
+                        activity.formatted_timestamp_str = activity.timestamp.strftime('%d.%m.%Y %H:%M')
+                except Exception as e:
+                    app.logger.error(f"Timestamp formatlamada hata: {str(e)} - {activity.timestamp}")
+                    activity.formatted_timestamp_str = 'Format hatası'
             else:
-                activity.formatted_timestamp = None
+                activity.formatted_timestamp_str = 'Tarih yok'
             activities.append(activity)
     except Exception as e:
         app.logger.error(f"Activities yüklenirken hata: {str(e)}")
@@ -3304,15 +3309,21 @@ def veritabani_yonetimi():
         recent_activities_raw = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(10).all()
         recent_activities = []
         for activity in recent_activities_raw:
-            # Timestamp formatlamayı güvenli hale getir
+            # Timestamp'i tamamen formatlanmış string olarak hazırla
             if activity.timestamp:
-                if hasattr(activity.timestamp, 'tzinfo') and activity.timestamp.tzinfo is not None:
-                    formatted_timestamp = activity.timestamp.replace(tzinfo=None)
-                else:
-                    formatted_timestamp = activity.timestamp
-                activity.formatted_timestamp = formatted_timestamp
+                try:
+                    if hasattr(activity.timestamp, 'tzinfo') and activity.timestamp.tzinfo is not None:
+                        # Timezone aware datetime - timezone'u kaldır
+                        naive_timestamp = activity.timestamp.replace(tzinfo=None)
+                        activity.formatted_timestamp_str = naive_timestamp.strftime('%d.%m.%Y %H:%M')
+                    else:
+                        # Zaten naive datetime
+                        activity.formatted_timestamp_str = activity.timestamp.strftime('%d.%m.%Y %H:%M')
+                except Exception as e:
+                    app.logger.error(f"Timestamp formatlamada hata: {str(e)} - {activity.timestamp}")
+                    activity.formatted_timestamp_str = 'Format hatası'
             else:
-                activity.formatted_timestamp = None
+                activity.formatted_timestamp_str = 'Tarih yok'
             recent_activities.append(activity)
     except Exception as e:
         app.logger.error(f"Recent activities yüklenirken hata: {str(e)}")
