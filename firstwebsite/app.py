@@ -1857,15 +1857,6 @@ def add_event():
         if deadline_str:
             log_details['son_tarih'] = deadline_str
         
-        log = ActivityLog(
-            activity_type='etkinlik_ekleme',
-            description=f'Yeni etkinlik eklendi: {data["title"]}',
-            details=log_details,
-            user_id=current_user.id,
-            related_event_id=event.id
-        )
-        db.session.add(log)
-        
         # Son gün etkinliği ekle
         if deadline_date and deadline_date != event_date:
             deadline_event = CalendarEvent(
@@ -1885,6 +1876,17 @@ def add_event():
             )
             db.session.add(deadline_event)
         
+        db.session.commit()
+        
+        # Commit sonrası log kaydı oluştur (event.id artık mevcut)
+        log = ActivityLog(
+            activity_type='etkinlik_ekleme',
+            description=f'Yeni etkinlik eklendi: {data["title"]}',
+            details=log_details,
+            user_id=current_user.id,
+            related_event_id=event.id
+        )
+        db.session.add(log)
         db.session.commit()
         app.logger.info(f"Etkinlik başarıyla eklendi: {event.id}")
         
