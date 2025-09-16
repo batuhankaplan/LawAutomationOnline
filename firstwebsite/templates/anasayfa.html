@@ -67,7 +67,7 @@
                             </div>
                             <div class="activity-time">
                                 <i class="material-icons">access_time</i>
-                                <span>{{ activity.formatted_timestamp_str }}</span>
+                                <span>{{ activity.formatted_timestamp_str if activity.formatted_timestamp_str else 'Debug: ' + activity.timestamp|string if activity.timestamp else 'Timestamp eksik' }}</span>
                             </div>
                             {% if is_admin %}
                             <button class="btn small delete-activity-btn" title="Sil" onclick="deleteActivity({{ activity.id }})">

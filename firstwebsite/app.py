@@ -811,20 +811,24 @@ def anasayfa():
         activities = []
         for activity in activities_raw:
             # Timestamp'i tamamen formatlanmış string olarak hazırla
-            if activity.timestamp:
-                try:
+            try:
+                if activity.timestamp:
+                    app.logger.info(f"Processing activity {activity.id}, timestamp: {activity.timestamp}, type: {type(activity.timestamp)}")
                     if hasattr(activity.timestamp, 'tzinfo') and activity.timestamp.tzinfo is not None:
                         # Timezone aware datetime - timezone'u kaldır
                         naive_timestamp = activity.timestamp.replace(tzinfo=None)
                         activity.formatted_timestamp_str = naive_timestamp.strftime('%d.%m.%Y %H:%M')
+                        app.logger.info(f"Formatted timezone aware: {activity.formatted_timestamp_str}")
                     else:
                         # Zaten naive datetime
                         activity.formatted_timestamp_str = activity.timestamp.strftime('%d.%m.%Y %H:%M')
-                except Exception as e:
-                    app.logger.error(f"Timestamp formatlamada hata: {str(e)} - {activity.timestamp}")
-                    activity.formatted_timestamp_str = 'Format hatası'
-            else:
-                activity.formatted_timestamp_str = 'Tarih yok'
+                        app.logger.info(f"Formatted naive: {activity.formatted_timestamp_str}")
+                else:
+                    app.logger.warning(f"Activity {activity.id} has no timestamp")
+                    activity.formatted_timestamp_str = 'Tarih yok'
+            except Exception as e:
+                app.logger.error(f"Activity {activity.id} timestamp formatlamada hata: {str(e)} - {activity.timestamp}")
+                activity.formatted_timestamp_str = f'Format hatası: {str(e)}'
             activities.append(activity)
     except Exception as e:
         app.logger.error(f"Activities yüklenirken hata: {str(e)}")
