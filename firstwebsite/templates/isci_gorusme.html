@@ -1392,16 +1392,54 @@ input[type="text"][name$="Date"] {
             document.querySelector('.loading-text').textContent = 'Form kaydediliyor, lütfen bekleyin...';
         }
         
-        // CSRF token ekle
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        if (csrfToken) {
-            formData.append('csrf_token', csrfToken);
-        }
-        
+        // Form verilerini JSON formatında hazırla
+        const jsonData = {};
+        inputs.forEach(input => {
+            let value = input.value.trim();
+
+            // Tarih alanları için özel işlem
+            if (input.id === 'startDate' || input.id === 'endDate') {
+                // Tarih formatını YYYY-MM-DD formatına çevir
+                if (value.includes('/')) {
+                    // İki tarih formatı için ilk tarihi al
+                    const firstDate = value.split('/')[0];
+                    const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
+                    const match = firstDate.match(dateRegex);
+                    if (match) {
+                        jsonData[input.name] = `${match[3]}-${match[2]}-${match[1]}`;
+                    } else {
+                        jsonData[input.name] = value;
+                    }
+                } else {
+                    // Tek tarih formatı
+                    const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
+                    const match = value.match(dateRegex);
+                    if (match) {
+                        jsonData[input.name] = `${match[3]}-${match[2]}-${match[1]}`;
+                    } else {
+                        jsonData[input.name] = value;
+                    }
+                }
+            } else {
+                jsonData[input.name] = value;
+            }
+        });
+
+        // Radio butonları için değer ekle
+        radioOptions.forEach(option => {
+            const selectedOption = document.querySelector(`input[name="${option}"]:checked`);
+            if (selectedOption) {
+                jsonData[option] = selectedOption.value;
+            }
+        });
+
         // Form verilerini sunucuya gönder
-        fetch('/save_isci_gorusme', {
+        fetch('/save_isci_gorusme_json', {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(jsonData)
         })
         .then(response => {
             if (!response.ok) {
