@@ -4667,6 +4667,7 @@ def save_isci_gorusme():
 def save_isci_gorusme_json():
     try:
         data = request.get_json()
+        print(f"DEBUG - Gelen form verisi: {data}")  # DEBUG LOG
         
         # Tarih işleme fonksiyonu - esnek format desteği
         def parse_date_flexible(date_str):
@@ -4718,55 +4719,129 @@ def save_isci_gorusme_json():
                 return default
             return str(value).strip()
 
-        # Yeni görüşme kaydı oluştur - HTML form mapping ile
-        interview = WorkerInterview(
-            # Kişisel Bilgiler
-            fullName=get_field_value('name', 'Belirtilmemiş'),  # HTML: name -> DB: fullName
-            tcNo=get_field_value('tcNo', '00000000000'),
-            phone=get_field_value('phone', '0000000000'),
-            address=get_field_value('address', 'Belirtilmemiş'),
+        # Form ID kontrolü - düzenleme mi yoksa yeni kayıt mı?
+        form_id = data.get('id')
 
-            # Tarih Bilgileri
-            startDate=start_date or datetime.now().date(),
-            insuranceDate=insurance_date or start_date or datetime.now().date(),
-            endDate=end_date or datetime.now().date(),
+        if form_id:
+            # MEVCUT FORMU GÜNCELLE
+            interview = WorkerInterview.query.get(form_id)
+            if not interview:
+                return jsonify({'success': False, 'message': 'Düzenlenecek form bulunamadı.'}), 404
 
-            # İş Bilgileri
-            endReason=get_field_value('terminationReason', 'Belirtilmemiş'),  # HTML: terminationReason
-            companyName=get_field_value('insuranceStatus', 'Belirtilmemiş'),  # HTML: insuranceStatus mapping to companyName
-            businessType=get_field_value('department', 'Belirtilmemiş'),  # HTML: department -> businessType
-            companyAddress=get_field_value('address', 'Belirtilmemiş'),  # Aynı adres kullan
-            position=get_field_value('position', 'Belirtilmemiş'),
+            # Yetki kontrolü
+            if not current_user.has_permission('isci_gorusme_goruntule') and not current_user.is_admin and interview.user_id != current_user.id:
+                return jsonify({'success': False, 'message': 'Bu formu düzenleme yetkiniz yok.'}), 403
 
-            # Çalışma Bilgileri
-            workHours=get_field_value('workingHours', 'Belirtilmemiş'),  # HTML: workingHours -> workHours
-            overtime=get_field_value('overtime', 'Belirtilmemiş'),
+            # Mevcut formun alanlarını güncelle
+            interview.fullName = get_field_value('name', 'Belirtilmemiş')
+            interview.tcNo = get_field_value('tcNo', '00000000000')
+            interview.phone = get_field_value('phone', '0000000000')
+            interview.address = get_field_value('address', 'Belirtilmemiş')
+            interview.startDate = start_date or datetime.now().date()
+            interview.insuranceDate = insurance_date or start_date or datetime.now().date()
+            interview.endDate = end_date or datetime.now().date()
+            interview.endReason = get_field_value('terminationReason', 'Belirtilmemiş')
+            interview.companyName = get_field_value('insuranceStatus', 'Belirtilmemiş')
+            interview.businessType = get_field_value('salary', 'Belirtilmemiş')  # İşyeri Faaliyeti/Konusu
+            interview.companyAddress = get_field_value('insuranceDate', 'Belirtilmemiş')
+            interview.registryNumber = get_field_value('insuranceNo', 'Belirtilmemiş')  # Mersis/Vergi/Ticaret Sicil No
+            interview.position = get_field_value('position', 'Belirtilmemiş')
+            interview.workHours = get_field_value('workingHours', 'Belirtilmemiş')
+            interview.overtime = get_field_value('overtime', 'Belirtilmemiş')
+            interview.salary = get_field_value('department', 'Belirtilmemiş')  # Ücret alanı (HTML'de department field)
+            interview.transportation = safe_float(data.get('transportation'), 0) if data.get('transportation') else None
+            interview.food = safe_float(data.get('food'), 0) if data.get('food') else None
+            interview.benefits = get_field_value('benefits', 'Belirtilmemiş')
+            interview.weeklyHoliday = get_field_value('weeklyHoliday', 'Belirtilmemiş')
+            interview.holidays = get_field_value('holidays', 'Belirtilmemiş')
+            interview.annualLeave = get_field_value('annualLeave', 'Belirtilmemiş')
+            interview.unpaidSalary = get_field_value('unpaidSalary', 'Belirtilmemiş')
+            interview.witness1 = get_field_value('witness1Name')
+            interview.witness1Info = get_field_value('witness1Info')
+            interview.witness2 = get_field_value('witness2Name')
+            interview.witness2Info = get_field_value('witness2Info')
+            interview.witness3 = get_field_value('witness3Name')
+            interview.witness3Info = get_field_value('witness3Info')
+            interview.witness4 = get_field_value('witness4Name')
+            interview.witness4Info = get_field_value('witness4Info')
 
-            # Ücret Bilgileri
-            salary=safe_float(data.get('salary'), 0),
-            transportation=safe_float(data.get('transportation'), 0) if data.get('transportation') else None,
-            food=safe_float(data.get('food'), 0) if data.get('food') else None,
-            benefits=get_field_value('benefits', 'Belirtilmemiş'),
+            # Radio button seçimlerini güncelle
+            interview.severancePayOption = get_field_value('severancePayOption', 'no')
+            interview.noticePayOption = get_field_value('noticePayOption', 'no')
+            interview.unpaidWagesOption = get_field_value('unpaidWagesOption', 'no')
+            interview.overtimePayOption = get_field_value('overtimePayOption', 'no')
+            interview.annualLeavePayOption = get_field_value('annualLeavePayOption', 'no')
+            interview.ubgtPayOption = get_field_value('ubgtPayOption', 'no')
+            interview.witnessOption = get_field_value('witnessOption', 'no')
 
-            # Tatil Bilgileri
-            weeklyHoliday=get_field_value('weeklyHoliday', 'Belirtilmemiş'),
-            holidays=get_field_value('holidays', 'Belirtilmemiş'),
-            annualLeave=get_field_value('annualLeave', 'Belirtilmemiş'),
-            unpaidSalary=get_field_value('unpaidSalary', 'Belirtilmemiş'),
+            # UPDATE için add() gerekmez, sadece commit()
+            message = 'Form başarıyla güncellendi.'
+        else:
+            # YENİ FORM OLUŞTUR
+            interview = WorkerInterview(
+                # Kişisel Bilgiler
+                fullName=get_field_value('name', 'Belirtilmemiş'),
+                tcNo=get_field_value('tcNo', '00000000000'),
+                phone=get_field_value('phone', '0000000000'),
+                address=get_field_value('address', 'Belirtilmemiş'),
 
-            # Tanıklar
-            witness1=get_field_value('witness1'),
-            witness2=get_field_value('witness2'),
-            witness3=get_field_value('witness3'),
-            witness4=get_field_value('witness4'),
+                # Tarih Bilgileri
+                startDate=start_date or datetime.now().date(),
+                insuranceDate=insurance_date or start_date or datetime.now().date(),
+                endDate=end_date or datetime.now().date(),
 
-            user_id=current_user.id
-        )
-        
-        db.session.add(interview)
+                # İş Bilgileri
+                endReason=get_field_value('terminationReason', 'Belirtilmemiş'),
+                companyName=get_field_value('insuranceStatus', 'Belirtilmemiş'),
+                businessType=get_field_value('salary', 'Belirtilmemiş'),  # İşyeri Faaliyeti/Konusu
+                companyAddress=get_field_value('insuranceDate', 'Belirtilmemiş'),
+                registryNumber=get_field_value('insuranceNo', 'Belirtilmemiş'),  # Mersis/Vergi/Ticaret Sicil No
+                position=get_field_value('position', 'Belirtilmemiş'),
+
+                # Çalışma Bilgileri
+                workHours=get_field_value('workingHours', 'Belirtilmemiş'),
+                overtime=get_field_value('overtime', 'Belirtilmemiş'),
+
+                # Ücret Bilgileri
+                salary=get_field_value('department', 'Belirtilmemiş'),  # Ücret alanı (HTML'de department field)
+                transportation=safe_float(data.get('transportation'), 0) if data.get('transportation') else None,
+                food=safe_float(data.get('food'), 0) if data.get('food') else None,
+                benefits=get_field_value('benefits', 'Belirtilmemiş'),
+
+                # Tatil Bilgileri
+                weeklyHoliday=get_field_value('weeklyHoliday', 'Belirtilmemiş'),
+                holidays=get_field_value('holidays', 'Belirtilmemiş'),
+                annualLeave=get_field_value('annualLeave', 'Belirtilmemiş'),
+                unpaidSalary=get_field_value('unpaidSalary', 'Belirtilmemiş'),
+
+                # Tanıklar
+                witness1=get_field_value('witness1Name'),
+                witness1Info=get_field_value('witness1Info'),
+                witness2=get_field_value('witness2Name'),
+                witness2Info=get_field_value('witness2Info'),
+                witness3=get_field_value('witness3Name'),
+                witness3Info=get_field_value('witness3Info'),
+                witness4=get_field_value('witness4Name'),
+                witness4Info=get_field_value('witness4Info'),
+
+                # Radio button seçimleri
+                severancePayOption=get_field_value('severancePayOption', 'no'),
+                noticePayOption=get_field_value('noticePayOption', 'no'),
+                unpaidWagesOption=get_field_value('unpaidWagesOption', 'no'),
+                overtimePayOption=get_field_value('overtimePayOption', 'no'),
+                annualLeavePayOption=get_field_value('annualLeavePayOption', 'no'),
+                ubgtPayOption=get_field_value('ubgtPayOption', 'no'),
+                witnessOption=get_field_value('witnessOption', 'no'),
+
+                user_id=current_user.id
+            )
+
+            db.session.add(interview)
+            message = 'Form başarıyla kaydedildi.'
+
         db.session.commit()
-        
-        return jsonify({'success': True, 'message': 'Form başarıyla kaydedildi.'})
+
+        return jsonify({'success': True, 'message': message})
         
     except Exception as e:
         print(f"Hata: {str(e)}")  # Hatayı konsola yazdır
@@ -4783,9 +4858,18 @@ def get_worker_interviews():
         else:
             interviews = WorkerInterview.query.filter_by(user_id=current_user.id).order_by(WorkerInterview.created_at.desc()).all()
 
+        # Frontend'e uygun format oluştur
+        forms_data = []
+        for interview in interviews:
+            forms_data.append({
+                'id': interview.id,
+                'name': interview.fullName or 'İsimsiz Form',  # HTML'de 'name' alanı bekleniyor
+                'date': interview.created_at.strftime('%d.%m.%Y') if interview.created_at else 'Tarih yok'
+            })
+
         return jsonify({
             'success': True,
-            'forms': [interview.to_dict() for interview in interviews]
+            'forms': forms_data
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -4799,9 +4883,75 @@ def get_worker_interview(interview_id):
         if not current_user.has_permission('isci_gorusme_goruntule') and not current_user.is_admin:
             return jsonify({'success': False, 'error': 'Yetkisiz erişim'}), 403
 
+        # HTML form alanlarına uygun format oluştur - doğru field mapping
+        form_data = {
+            # Kişisel Bilgiler
+            'name': interview.fullName or 'Belirtilmemiş',
+            'tcNo': interview.tcNo or 'Belirtilmemiş',
+            'phone': interview.phone or 'Belirtilmemiş',
+            'address': interview.address or 'Belirtilmemiş',
+
+            # Tarih Bilgileri - DD.MM.YYYY formatında
+            'startDate': interview.startDate.strftime('%d.%m.%Y') if interview.startDate else 'Belirtilmemiş',
+            'endDate': interview.endDate.strftime('%d.%m.%Y') if interview.endDate else 'Belirtilmemiş',
+
+            # İş Bilgileri - DOĞRU FIELD MAPPING
+            'position': interview.position or 'Belirtilmemiş',
+            'salary': interview.businessType or 'Belirtilmemiş',  # İşyeri Faaliyeti/Konusu (HTML'de salary field)
+            'insuranceStatus': interview.companyName or 'Belirtilmemiş',  # Şirket İsmi
+            'department': interview.salary or 'Belirtilmemiş',  # Ücret (HTML'de department field)
+            'insuranceNo': interview.registryNumber or 'Belirtilmemiş',  # Mersis/Vergi/Ticaret Sicil No
+            'insuranceDate': interview.companyAddress or 'Belirtilmemiş',  # Şirket Adresi-Telefonu
+
+            # Çalışma Bilgileri
+            'workingHours': interview.workHours or 'Belirtilmemiş',
+            'overtime': interview.overtime or 'Belirtilmemiş',
+            'weeklyHoliday': interview.weeklyHoliday or 'Belirtilmemiş',
+            'annualLeave': interview.annualLeave or 'Belirtilmemiş',
+
+            # İşten Ayrılma
+            'terminationReason': interview.endReason or 'Belirtilmemiş',
+
+            # Radio button seçimleri
+            'severancePayOption': interview.severancePayOption or 'no',
+            'noticePayOption': interview.noticePayOption or 'no',
+            'unpaidWagesOption': interview.unpaidWagesOption or 'no',
+            'overtimePayOption': interview.overtimePayOption or 'no',
+            'annualLeavePayOption': interview.annualLeavePayOption or 'no',
+            'ubgtPayOption': interview.ubgtPayOption or 'no',
+            'witnessOption': interview.witnessOption or 'no',
+
+            # Tanık bilgileri
+            'witness1': interview.witness1 or '',
+            'witness1Info': interview.witness1Info or '',
+            'witness2': interview.witness2 or '',
+            'witness2Info': interview.witness2Info or '',
+            'witness3': interview.witness3 or '',
+            'witness3Info': interview.witness3Info or '',
+            'witness4': interview.witness4 or '',
+            'witness4Info': interview.witness4Info or '',
+
+            # Tanık sayısını hesapla ve ekle
+            'witnessCount': sum(1 for w in [interview.witness1, interview.witness2, interview.witness3, interview.witness4] if w and w.strip()),
+
+            # Tanık bilgilerini JSON formatında da sağla
+            'witnesses': json.dumps({
+                'count': sum(1 for w in [interview.witness1, interview.witness2, interview.witness3, interview.witness4] if w and w.strip()),
+                'witnesses': [
+                    {'name': w[0], 'info': w[1] or ''} for w in [
+                        (interview.witness1, interview.witness1Info),
+                        (interview.witness2, interview.witness2Info),
+                        (interview.witness3, interview.witness3Info),
+                        (interview.witness4, interview.witness4Info)
+                    ] if w[0] and w[0].strip()
+                ]
+            }),
+        }
+
+        print(f"DEBUG - Dönen form verisi: witness1='{form_data.get('witness1')}', witness1Info='{form_data.get('witness1Info')}'")
         return jsonify({
             'success': True,
-            'form': interview.to_dict()
+            'form': form_data
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})

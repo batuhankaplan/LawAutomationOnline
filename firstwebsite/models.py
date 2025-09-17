@@ -458,6 +458,7 @@ class WorkerInterview(db.Model):
     companyName = db.Column(db.String(100), nullable=False)
     businessType = db.Column(db.String(100), nullable=False)
     companyAddress = db.Column(db.Text, nullable=False)
+    registryNumber = db.Column(db.String(100))  # Mersis/Vergi/Ticaret Sicil No
     
     # Madde 5: Görev Bilgileri
     position = db.Column(db.String(100), nullable=False)
@@ -467,7 +468,7 @@ class WorkerInterview(db.Model):
     overtime = db.Column(db.Text)
     
     # Madde 7: Ücret ve Yardımlar
-    salary = db.Column(db.Float, nullable=False)
+    salary = db.Column(db.String(100), nullable=False)  # String olarak değiştirildi
     transportation = db.Column(db.Float)
     food = db.Column(db.Float)
     benefits = db.Column(db.Text)
@@ -482,10 +483,23 @@ class WorkerInterview(db.Model):
     
     # Madde 10: Tanıklar
     witness1 = db.Column(db.String(100))
+    witness1Info = db.Column(db.Text)  # Tanık 1 bilgileri
     witness2 = db.Column(db.String(100))
+    witness2Info = db.Column(db.Text)  # Tanık 2 bilgileri
     witness3 = db.Column(db.String(100))
+    witness3Info = db.Column(db.Text)  # Tanık 3 bilgileri
     witness4 = db.Column(db.String(100))
-    
+    witness4Info = db.Column(db.Text)  # Tanık 4 bilgileri
+
+    # Alacak Bilgileri Radio Button Seçimleri
+    severancePayOption = db.Column(db.String(10), default='no')  # Kıdem Tazminatı
+    noticePayOption = db.Column(db.String(10), default='no')     # İhbar Tazminatı
+    unpaidWagesOption = db.Column(db.String(10), default='no')   # Ödenmemiş Ücretler
+    overtimePayOption = db.Column(db.String(10), default='no')   # Fazla Mesai Ücreti
+    annualLeavePayOption = db.Column(db.String(10), default='no') # Yıllık İzin Ücreti
+    ubgtPayOption = db.Column(db.String(10), default='no')       # UBGT Ücreti
+    witnessOption = db.Column(db.String(10), default='no')       # Tanık Var/Yok
+
     # Ek Bilgiler
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)

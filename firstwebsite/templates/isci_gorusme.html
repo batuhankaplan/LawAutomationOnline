@@ -24,7 +24,7 @@
 /* Sol Bölüm - Kayıtlı Formlar */
 .saved-forms-section {
     flex: 1;
-    max-width: 300px;
+    max-width: 400px;
     background: white;
     border-radius: 12px;
     padding: 1.5rem;
@@ -67,6 +67,60 @@
 
 .new-form-btn i.fas.fa-plus {
     color: white !important;
+}
+
+.search-box-container {
+    margin-bottom: 1.5rem;
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.search-box:focus-within {
+    border-color: rgb(45,49,60);
+    box-shadow: 0 0 0 2px rgba(45,49,60,0.1);
+}
+
+.search-box i.fa-search {
+    color: #6c757d;
+    margin-right: 0.5rem;
+}
+
+.search-box input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.search-box input::placeholder {
+    color: #6c757d;
+}
+
+.clear-search-btn {
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0.2rem;
+    margin-left: 0.5rem;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.clear-search-btn:hover {
+    background: #e9ecef;
+    color: #495057;
 }
 
 .forms-list {
@@ -130,22 +184,22 @@
 }
 
 .edit-btn {
-    background: #28a745;
+    background: #333;
     color: white;
 }
 
 .delete-btn {
-    background: #dc3545;
+    background: #333;
     color: white;
 }
 
 .preview-btn {
-    background: #17a2b8;
+    background: #333;
     color: white;
 }
 
 .download-btn {
-    background: #6f42c1;
+    background: #333;
     color: white;
 }
 
@@ -901,9 +955,18 @@ input[type="text"][name$="Date"] {
     <div class="saved-forms-section">
         <div class="section-header">
             <h2><i class="fas fa-file-alt"></i> Kayıtlı Formlar</h2>
-            <button class="new-form-btn" onclick="createNewForm()">
+            <button class="new-form-btn" id="newFormButton">
                 <i class="fas fa-plus"></i> Yeni
             </button>
+        </div>
+        <div class="search-box-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="formsSearchInput" placeholder="Ad soyad ile ara..." />
+                <button id="clearSearchBtn" class="clear-search-btn" style="display: none;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
         </div>
         <div class="forms-list" id="formsList">
             <!-- Kayıtlı formlar buraya yüklenecek -->
@@ -946,11 +1009,11 @@ input[type="text"][name$="Date"] {
                 <div class="input-grid" style="grid-template-columns: repeat(2, 1fr);">
                     <div class="input-item">
                         <label for="startDate">İşe Başlama Tarihi / SGK Giriş Tarihi</label>
-                        <input type="text" id="startDate" name="startDate" placeholder="GG.AA.YYYY/GG.AA.YYYY" maxlength="21" onkeypress="return isDateInputChar(event)" onblur="formatDateInput(this)">
+                        <input type="text" id="startDate" name="startDate" placeholder="GG.AA.YYYY/GG.AA.YYYY" maxlength="21">
                     </div>
                     <div class="input-item">
                         <label for="endDate">İşten Ayrılma Tarihi / SGK Çıkış Tarihi</label>
-                        <input type="text" id="endDate" name="endDate" placeholder="GG.AA.YYYY/GG.AA.YYYY" maxlength="21" onkeypress="return isDateInputChar(event)" onblur="formatDateInput(this)">
+                        <input type="text" id="endDate" name="endDate" placeholder="GG.AA.YYYY/GG.AA.YYYY" maxlength="21">
                     </div>
                     <div class="input-item">
                         <label for="position">Pozisyon</label>
@@ -1131,6 +1194,139 @@ input[type="text"][name$="Date"] {
 <script>
     // Sayfa yüklendiğinde çalışacak fonksiyonlar
     document.addEventListener('DOMContentLoaded', function() {
+
+        // Form kaydetme fonksiyonu
+        function saveForm() {
+            console.log('saveForm() çalıştı!'); // DEBUG
+            const formData = new FormData();
+            const inputs = document.querySelectorAll('input:not([type=radio]), textarea, select');
+            let hasRequiredFields = true;
+            let requiredFields = ['name', 'tcNo']; // Zorunlu alanlar
+
+            // Zorunlu alanları kontrol et
+            console.log('Zorunlu alanlar kontrol ediliyor...'); // DEBUG
+            requiredFields.forEach(fieldName => {
+                const field = document.getElementById(fieldName);
+                if (field && field.value.trim() === '') {
+                    hasRequiredFields = false;
+                    field.style.borderColor = 'red';
+                    console.log('Eksik alan:', fieldName); // DEBUG
+                } else if (field) {
+                    field.style.borderColor = '#dee2e6';
+                }
+            });
+
+            if (!hasRequiredFields) {
+                alert('Lütfen zorunlu alanları doldurun (Adı Soyadı, TC Kimlik No)');
+                console.log('Zorunlu alanlar eksik, geri döndürülüyor'); // DEBUG
+                return;
+            }
+
+            console.log('Zorunlu alanlar tamam, devam ediliyor...'); // DEBUG
+
+            // Yükleme göstergesini göster
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+                document.querySelector('.loading-text').textContent = 'Form kaydediliyor, lütfen bekleyin...';
+            }
+
+            // Form verilerini JSON formatında hazırla - basit ve esnek
+            const jsonData = {};
+            inputs.forEach(input => {
+                if (input.name) { // name attribute'u olan input'ları al
+                    jsonData[input.name] = input.value.trim();
+                    console.log(`DEBUG - Field added: ${input.name} = '${input.value.trim()}'`); // DEBUG
+                }
+            });
+
+            // Tanık bilgilerini özel olarak kontrol et
+            const witnessCount = parseInt(document.getElementById('witnessCount')?.value) || 0;
+            console.log(`DEBUG - Witness Count: ${witnessCount}`); // DEBUG
+
+            for (let i = 1; i <= 4; i++) { // Maksimum 4 tanık
+                const witnessNameField = document.getElementById(`witness${i}Name`);
+                const witnessInfoField = document.getElementById(`witness${i}Info`);
+
+                if (witnessNameField) {
+                    jsonData[`witness${i}Name`] = witnessNameField.value.trim();
+                    console.log(`DEBUG - witness${i}Name: '${witnessNameField.value.trim()}'`); // DEBUG
+                }
+
+                if (witnessInfoField) {
+                    jsonData[`witness${i}Info`] = witnessInfoField.value.trim();
+                    console.log(`DEBUG - witness${i}Info: '${witnessInfoField.value.trim()}'`); // DEBUG
+                }
+            }
+
+            // Düzenlenen form ID'sini kontrol et ve JSON'a ekle
+            const formId = document.getElementById('formId');
+            if (formId && formId.value) {
+                jsonData['id'] = formId.value;
+            }
+
+            // Radio butonları için değer ekle
+            const saveRadioOptions = [
+                'witnessOption',
+                'severancePayOption',
+                'noticePayOption',
+                'unpaidWagesOption',
+                'overtimePayOption',
+                'annualLeavePayOption',
+                'ubgtPayOption'
+            ];
+
+            saveRadioOptions.forEach(option => {
+                const selectedOption = document.querySelector(`input[name="${option}"]:checked`);
+                if (selectedOption) {
+                    jsonData[option] = selectedOption.value;
+                }
+            });
+
+            // CSRF token al
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            // DEBUG: Console'a gönderilen veriyi yazdır
+            console.log('DEBUG - Gönderilen form verisi:', jsonData);
+
+            // Form verilerini sunucuya gönder
+            fetch('/save_isci_gorusme_json', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(jsonData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Sunucu hatası: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Yükleme göstergesini gizle
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+
+                if (data.success) {
+                    showGlobalNotification('Form başarıyla kaydedildi!', 'success');
+                    loadSavedForms(); // Kaydedilen formları yeniden yükle
+                } else {
+                    alert('Form kaydedilirken bir hata oluştu: ' + (data.message || data.error || 'Bilinmeyen hata'));
+                }
+            })
+            .catch(error => {
+                // Yükleme göstergesini gizle
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+
+                alert('Form kaydedilirken bir hata oluştu: ' + error.message);
+            });
+        }
+
         // Bugünün tarihini imza bölümüne ekle
         updateCurrentDate();
         
@@ -1143,6 +1339,31 @@ input[type="text"][name$="Date"] {
         // Butonlara olay dinleyicileri ekle
         document.getElementById('saveButton').addEventListener('click', saveForm);
         document.getElementById('printButton').addEventListener('click', printForm);
+        document.getElementById('newFormButton').addEventListener('click', createNewForm);
+        
+        // Arama kutusu olay dinleyicileri
+        const searchInput = document.getElementById('formsSearchInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.trim();
+                if (searchTerm.length > 0) {
+                    clearSearchBtn.style.display = 'block';
+                } else {
+                    clearSearchBtn.style.display = 'none';
+                }
+                filterForms(searchTerm);
+            });
+        }
+        
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                this.style.display = 'none';
+                filterForms('');
+            });
+        }
         
         // Textarea'ların yüksekliğini otomatik ayarla
         autoResizeTextareas();
@@ -1153,6 +1374,24 @@ input[type="text"][name$="Date"] {
                 autoResizeTextarea(this);
             });
         });
+
+        // Tarih alanlarına olay dinleyicileri ekle
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+
+        if (startDateInput) {
+            startDateInput.addEventListener('keypress', isDateInputChar);
+            startDateInput.addEventListener('blur', function() {
+                formatDateInput(this);
+            });
+        }
+
+        if (endDateInput) {
+            endDateInput.addEventListener('keypress', isDateInputChar);
+            endDateInput.addEventListener('blur', function() {
+                formatDateInput(this);
+            });
+        }
     });
 
     // Tarih alanları için karakter kontrolü
@@ -1253,144 +1492,23 @@ input[type="text"][name$="Date"] {
         document.getElementById('currentDate').textContent = formattedDate;
     }
 
-    // Form kaydetme fonksiyonu
-    function saveForm() {
-        const formData = new FormData();
-        const inputs = document.querySelectorAll('input:not([type=radio]), textarea, select');
-        let hasRequiredFields = true;
-        let requiredFields = ['name', 'tcNo']; // Zorunlu alanlar
-        
-        // Zorunlu alanları kontrol et
-        requiredFields.forEach(fieldName => {
-            const field = document.getElementById(fieldName);
-            if (field && field.value.trim() === '') {
-                hasRequiredFields = false;
-                field.style.borderColor = 'red';
-            } else if (field) {
-                field.style.borderColor = '#dee2e6';
-            }
-        });
-        
-        if (!hasRequiredFields) {
-            alert('Lütfen zorunlu alanları doldurun (Adı Soyadı, TC Kimlik No)');
-            return;
-        }
-        
-        // Düzenlenen form ID'sini kontrol et ve ekle
-        const formId = document.getElementById('formId');
-        if (formId && formId.value) {
-            formData.append('id', formId.value);
-        }
-        
-        // Sadece zorunlu alanları kontrol et - format kontrolü yok
-        // Backend esnek format desteği ile tüm formatları kabul eder
-        
-        // Bu bölüm artık yukarıda JSON formatında yapılıyor - temizlendi
-        
-        // Yükleme göstergesini göster
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (loadingOverlay) {
-            loadingOverlay.style.display = 'flex';
-            document.querySelector('.loading-text').textContent = 'Form kaydediliyor, lütfen bekleyin...';
-        }
-        
-        // Form verilerini JSON formatında hazırla - basit ve esnek
-        const jsonData = {};
-        inputs.forEach(input => {
-            jsonData[input.name] = input.value.trim();
-        });
 
-        // Radio butonları için değer ekle
-        const radioOptions = [
-            'witnessOption',
-            'severancePayOption',
-            'noticePayOption',
-            'unpaidWagesOption',
-            'overtimePayOption',
-            'annualLeavePayOption',
-            'ubgtPayOption'
-        ];
-
-        radioOptions.forEach(option => {
-            const selectedOption = document.querySelector(`input[name="${option}"]:checked`);
-            if (selectedOption) {
-                jsonData[option] = selectedOption.value;
-            }
-        });
-
-        // CSRF token al
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
-        // Form verilerini sunucuya gönder
-        fetch('/save_isci_gorusme_json', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify(jsonData)
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Sunucu hatası: ' + response.status);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Yükleme göstergesini gizle
-            if (loadingOverlay) {
-                loadingOverlay.style.display = 'none';
-            }
-            
-            if (data.success) {
-                showGlobalNotification('Form başarıyla kaydedildi!', 'success');
-                loadSavedForms(); // Kaydedilen formları yeniden yükle
-            } else {
-                alert('Form kaydedilirken bir hata oluştu: ' + (data.message || data.error || 'Bilinmeyen hata'));
-            }
-        })
-        .catch(error => {
-            // Yükleme göstergesini gizle
-            if (loadingOverlay) {
-                loadingOverlay.style.display = 'none';
-            }
-            
-            alert('Form kaydedilirken bir hata oluştu: ' + error.message);
-        });
-    }
+    // Global değişken - tüm formları saklamak için
+    let allForms = [];
 
     // Kaydedilmiş formları yükleme fonksiyonu
     function loadSavedForms() {
-        fetch('/get_isci_gorusme_forms')
+        fetch('/get_worker_interviews')
         .then(response => response.json())
         .then(data => {
             const formsList = document.getElementById('formsList');
             formsList.innerHTML = '';
             
             if (data.forms && data.forms.length > 0) {
-                data.forms.forEach(form => {
-                    const formItem = document.createElement('div');
-                    formItem.className = 'saved-form-item';
-                    formItem.innerHTML = `
-                        <div class="form-info">
-                            <h3>${form.name || 'İsimsiz Form'}</h3>
-                            <p>${form.date || 'Tarih yok'}</p>
-                        </div>
-                        <div class="form-actions">
-                            <button class="edit-btn" onclick="editForm(${form.id})" title="Düzenle">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="preview-btn" onclick="previewFormPDF(${form.id})" title="PDF Önizle">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="delete-btn" onclick="deleteForm(${form.id})" title="Sil">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    `;
-                    formsList.appendChild(formItem);
-                });
+                allForms = data.forms; // Tüm formları global değişkene kaydet
+                displayForms(data.forms);
             } else {
+                allForms = [];
                 formsList.innerHTML = '<p class="no-forms">Kaydedilmiş form bulunamadı.</p>';
             }
         })
@@ -1399,9 +1517,59 @@ input[type="text"][name$="Date"] {
         });
     }
 
+    // Formları görüntüleme fonksiyonu
+    function displayForms(forms) {
+        const formsList = document.getElementById('formsList');
+        formsList.innerHTML = '';
+        
+        if (forms && forms.length > 0) {
+            forms.forEach(form => {
+                const formItem = document.createElement('div');
+                formItem.className = 'saved-form-item';
+                formItem.setAttribute('data-form-name', (form.name || '').toLowerCase());
+                formItem.innerHTML = `
+                    <div class="form-info">
+                        <h3>${form.name || 'İsimsiz Form'}</h3>
+                        <p>${form.date || 'Tarih yok'}</p>
+                    </div>
+                    <div class="form-actions">
+                        <button class="edit-btn" onclick="editForm(${form.id})" title="Düzenle">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="preview-btn" onclick="previewFormPDF(${form.id})" title="PDF Önizle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="delete-btn" onclick="deleteForm(${form.id})" title="Sil">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                formsList.appendChild(formItem);
+            });
+        } else {
+            formsList.innerHTML = '<p class="no-forms">Arama kriterinize uygun form bulunamadı.</p>';
+        }
+    }
+
+    // Form filtreleme fonksiyonu
+    function filterForms(searchTerm) {
+        if (!searchTerm || searchTerm.length === 0) {
+            displayForms(allForms);
+            return;
+        }
+        
+        const filteredForms = allForms.filter(form => {
+            const formName = (form.name || '').toLowerCase();
+            const searchLower = searchTerm.toLowerCase();
+            return formName.includes(searchLower);
+        });
+        
+        displayForms(filteredForms);
+    }
+
     // Form düzenleme fonksiyonu
     function editForm(formId) {
-        fetch(`/get_isci_gorusme_form/${formId}`)
+        fetch(`/get_worker_interview/${formId}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -1444,7 +1612,85 @@ input[type="text"][name$="Date"] {
                         }
                     }
                 }
-                
+
+                // Radio button seçimlerini ayarla
+                const editRadioOptions = [
+                    'severancePayOption',
+                    'noticePayOption',
+                    'unpaidWagesOption',
+                    'overtimePayOption',
+                    'annualLeavePayOption',
+                    'ubgtPayOption',
+                    'witnessOption'
+                ];
+
+                editRadioOptions.forEach(option => {
+                    if (form[option]) {
+                        const radioButton = document.querySelector(`input[name="${option}"][value="${form[option]}"]`);
+                        if (radioButton) {
+                            radioButton.checked = true;
+                        }
+                    } else {
+                        // Default olarak "no" seç
+                        const defaultRadio = document.querySelector(`input[name="${option}"][value="no"]`);
+                        if (defaultRadio) {
+                            defaultRadio.checked = true;
+                        }
+                    }
+                });
+
+                // Tanık seçimi için özel işlem
+                if (form.witnessOption === 'yes') {
+                    document.querySelector('input[name="witnessOption"][value="yes"]').checked = true;
+                    toggleWitnessOptions(); // Tanık alanlarını göster
+
+                    // Önce tanık sayısını hesapla
+                    let witnessCount = 0;
+                    for (let i = 1; i <= 4; i++) {
+                        if (form[`witness${i}`] && form[`witness${i}`].trim()) {
+                            witnessCount++;
+                        }
+                    }
+
+                    console.log(`DEBUG - editForm: Tanık sayısı: ${witnessCount}`); // DEBUG
+
+                    // Tanık sayısını ayarla ve alanları oluştur
+                    const witnessCountSelect = document.getElementById('witnessCount');
+                    if (witnessCountSelect && witnessCount > 0) {
+                        witnessCountSelect.value = witnessCount;
+                        generateWitnessFields(); // Tanık alanlarını oluştur
+
+                        // generateWitnessFields çalıştıktan sonra kısa bir süre bekle ki HTML elemanları oluşsun
+                        setTimeout(() => {
+                            // Tanık bilgilerini doldur
+                            for (let i = 1; i <= 4; i++) {
+                                const witnessName = form[`witness${i}`];
+                                const witnessInfo = form[`witness${i}Info`];
+
+                                if (witnessName && witnessName.trim()) {
+                                    const witnessNameField = document.getElementById(`witness${i}Name`);
+                                    const witnessInfoField = document.getElementById(`witness${i}Info`);
+
+                                    console.log(`DEBUG - editForm: witness${i}Name field:`, witnessNameField); // DEBUG
+                                    console.log(`DEBUG - editForm: witness${i} value:`, witnessName); // DEBUG
+
+                                    if (witnessNameField) {
+                                        witnessNameField.value = witnessName;
+                                        console.log(`DEBUG - editForm: Set witness${i}Name = '${witnessName}'`); // DEBUG
+                                    }
+                                    if (witnessInfoField && witnessInfo) {
+                                        witnessInfoField.value = witnessInfo;
+                                        console.log(`DEBUG - editForm: Set witness${i}Info = '${witnessInfo}'`); // DEBUG
+                                    }
+                                }
+                            }
+                        }, 100); // 100ms bekle
+                    }
+                } else {
+                    document.querySelector('input[name="witnessOption"][value="no"]').checked = true;
+                    toggleWitnessOptions();
+                }
+
                 // Eski alan isimlerini yeni alan isimlerine eşleştir
                 const fieldMappings = {
                     'insuranceStatus': 'companyName',
@@ -1487,7 +1733,7 @@ input[type="text"][name$="Date"] {
                 });
                 
                 // Radio butonları için değerleri ayarla
-                const radioOptions = [
+                const previewRadioOptions = [
                     'witnessOption',
                     'severancePayOption', 
                     'noticePayOption', 
@@ -1496,8 +1742,8 @@ input[type="text"][name$="Date"] {
                     'annualLeavePayOption', 
                     'ubgtPayOption'
                 ];
-                
-                radioOptions.forEach(option => {
+
+                previewRadioOptions.forEach(option => {
                     if (form[option]) {
                         const radioButton = document.querySelector(`input[name="${option}"][value="${form[option]}"]`);
                         if (radioButton) {
@@ -1518,48 +1764,7 @@ input[type="text"][name$="Date"] {
                     }
                 });
                 
-                // Tanık bilgilerini yükle
-                if (form.witnesses && typeof form.witnesses === 'object') {
-                    const witnesses = form.witnesses;
-                    
-                    // Tanık var/yok seçeneğini ayarla
-                    if (witnesses.count > 0) {
-                        document.querySelector('input[name="witnessOption"][value="yes"]').checked = true;
-                        
-                        // Tanık sayısını ayarla
-                        const witnessCountSelect = document.getElementById('witnessCount');
-                        if (witnessCountSelect) {
-                            witnessCountSelect.value = witnesses.count;
-                        }
-                        
-                        // Tanık alanlarını oluştur
-                        toggleWitnessOptions();
-                        
-                        // Tanık bilgilerini doldur
-                        if (witnesses.witnesses && Array.isArray(witnesses.witnesses)) {
-                            witnesses.witnesses.forEach((witness, index) => {
-                                const nameField = document.getElementById(`witness${index+1}Name`);
-                                const infoField = document.getElementById(`witness${index+1}Info`);
-                                
-                                if (nameField && witness.name) {
-                                    nameField.value = witness.name;
-                                }
-                                
-                                if (infoField && witness.info) {
-                                    infoField.value = witness.info;
-                                }
-                            });
-                        }
-                    } else {
-                        // Tanık yoksa, "Yok" seçeneğini işaretle
-                        document.querySelector('input[name="witnessOption"][value="no"]').checked = true;
-                        toggleWitnessOptions();
-                    }
-                } else {
-                    // Tanık bilgisi yoksa, "Yok" seçeneğini işaretle
-                    document.querySelector('input[name="witnessOption"][value="no"]').checked = true;
-                    toggleWitnessOptions();
-                }
+                // Tanık bilgilerini otomatik yükleme - zaten yukarıda witnessOption kontrolü yapıldı
                 
                 // Bugünün tarihini imza bölümüne ekle (eğer form.date varsa onu kullan)
                 if (form.date) {
@@ -1584,7 +1789,7 @@ input[type="text"][name$="Date"] {
             // CSRF token al
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             
-            fetch(`/delete_isci_gorusme_form/${formId}`, {
+            fetch(`/delete_worker_interview/${formId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2188,7 +2393,7 @@ input[type="text"][name$="Date"] {
         document.querySelector('.loading-text').textContent = 'Form yükleniyor, lütfen bekleyin...';
         
         // Formu getir
-        fetch(`/get_isci_gorusme_form/${formId}`)
+        fetch(`/get_worker_interview/${formId}`)
         .then(response => response.json())
         .then(data => {
             console.log('PDF Önizleme - Form verisi:', data);
