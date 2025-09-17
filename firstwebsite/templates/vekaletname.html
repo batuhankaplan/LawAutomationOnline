@@ -5,38 +5,136 @@
 {% block content %}
 <div class="page-container" style="max-width: 900px; margin: 0 auto;">
     <div class="card" style="padding: 20px;">
-        <div class="d-flex justify-content-between align-items-center no-print" style="margin-bottom: 15px;">
-            <h3 style="margin: 0;">Vekaletname Metni</h3>
-            <div class="d-flex gap-2">
-                <button id="printBtn" class="btn btn-primary">Yazdır</button>
-                <button id="toggleEditBtn" class="btn btn-secondary">Düzenle</button>
-            </div>
+        <!-- Sekme Başlıkları -->
+        <div class="no-print" style="margin-bottom: 20px;">
+            <nav>
+                <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                    <button class="nav-link active" id="nav-genel-tab" data-bs-toggle="tab" data-bs-target="#nav-genel" 
+                            type="button" role="tab" aria-controls="nav-genel" aria-selected="true">
+                        <i class="material-icons align-middle me-2">description</i>Genel Vekaletname
+                    </button>
+                    <button class="nav-link" id="nav-bosanma-tab" data-bs-toggle="tab" data-bs-target="#nav-bosanma" 
+                            type="button" role="tab" aria-controls="nav-bosanma" aria-selected="false">
+                        <i class="material-icons align-middle me-2">gavel</i>Boşanma Davası Vekaletnamesi
+                    </button>
+                </div>
+            </nav>
         </div>
 
-        <div id="editor" contenteditable="true" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; min-height: 400px;">
-            <p style="text-align: center; font-weight: 700; text-decoration: underline;">AHZU KABZA SULH VE İBRAYA DAVADAN İSTİNAFTAN, TEMYİZDEN VE DİĞER KANUN YOLLARINDAN FERAGATE ARABULUCULUĞA BAŞVURMAYA DİLEDİĞİNDE DAVA DURUŞMALARINA MESLEKİ MAZERET GÖSTERMEYE , DİLEDİĞİ AVUKATA YETKİLENDİRME YETKİSİNİ TAŞIR GENEL VEKALETNAME VERİLECEK</p>
+        <!-- Sekme İçerikleri -->
+        <div class="tab-content" id="nav-tabContent">
+            <!-- Genel Vekaletname Sekmesi -->
+            <div class="tab-pane fade show active" id="nav-genel" role="tabpanel" aria-labelledby="nav-genel-tab">
+                <div class="d-flex justify-content-between align-items-center no-print" style="margin-bottom: 15px;">
+                    <h3 style="margin: 0;">Genel Vekaletname Metni</h3>
+                    <div class="d-flex gap-2">
+                        <button id="printGenelBtn" class="btn btn-primary">Yazdır</button>
+                        <button id="toggleEditGenelBtn" class="btn btn-secondary">Düzenle</button>
+                    </div>
+                </div>
 
-            <p style="text-align: center; font-weight: 700; margin-top: 24px;">KAPLAN HUKUK BÜROSU<br>Av.Mustafa KAPLAN<br>Güneşli VD: 68884068806</p>
+                <div id="genelEditor" contenteditable="false" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; min-height: 400px;">
+                    <p style="text-align: center; font-weight: 700; text-decoration: underline;">AHZU KABZA SULH VE İBRAYA DAVADAN İSTİNAFTAN, TEMYİZDEN VE DİĞER KANUN YOLLARINDAN FERAGATE ARABULUCULUĞA BAŞVURMAYA DİLEDİĞİNDE DAVA DURUŞMALARINA MESLEKİ MAZERET GÖSTERMEYE , DİLEDİĞİ AVUKATA YETKİLENDİRME YETKİSİNİ TAŞIR GENEL VEKALETNAME VERİLECEK</p>
 
-            <p style="text-align: center; margin-top: 16px;">Adres: Güneşli Meydanı Cumhuriyet Cad. No:47/32 Kat:3 Daire :8<br>Güneşli/Bağcılar/İstanbul</p>
+                    <p style="text-align: center; font-weight: 700; margin-top: 24px;">KAPLAN HUKUK BÜROSU<br>Av.Mustafa KAPLAN<br>Güneşli VD: 68884068806</p>
 
-            <p style="text-align: center; font-weight: 700; margin-top: 24px;">SİGORTALI OLARAK ÇALIŞAN AVUKATLAR</p>
+                    <p style="text-align: center; margin-top: 16px;">Adres: Güneşli Meydanı Cumhuriyet Cad. No:47/32 Kat:3 Daire :8<br>Güneşli/Bağcılar/İstanbul</p>
 
-            <table style="width: 80%; margin: 16px auto 0 auto; text-align: center;">
-                <tr>
-                    <td style="width: 50%; vertical-align: top;">
-                        <p><strong>Av. Batuhan KAPLAN</strong><br>TC No: 68857069762</p>
-                    </td>
-                    <td style="width: 50%; vertical-align: top;">
-                        <p><strong>Av. Selvi DERTLİ</strong><br>TC No : 42100348798</p>
-                    </td>
-                </tr>
-            </table>
+                    <p style="text-align: center; font-weight: 700; margin-top: 24px;">SİGORTALI OLARAK ÇALIŞAN AVUKATLAR</p>
+
+                    <table style="width: 80%; margin: 16px auto 0 auto; text-align: center;">
+                        <tr>
+                            <td style="width: 50%; vertical-align: top;">
+                                <p><strong>Av. Batuhan KAPLAN</strong><br>TC No: 68857069762</p>
+                            </td>
+                            <td style="width: 50%; vertical-align: top;">
+                                <p><strong>Av. Selvi DERTLİ</strong><br>TC No : 42100348798</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Boşanma Davası Vekaletnamesi Sekmesi -->
+            <div class="tab-pane fade" id="nav-bosanma" role="tabpanel" aria-labelledby="nav-bosanma-tab">
+                <div class="d-flex justify-content-between align-items-center no-print" style="margin-bottom: 15px;">
+                    <h3 style="margin: 0;">Boşanma Davası Vekaletnamesi</h3>
+                    <div class="d-flex gap-2">
+                        <button id="printBosanmaBtn" class="btn btn-primary">Yazdır</button>
+                        <button id="toggleEditBosanmaBtn" class="btn btn-secondary">Düzenle</button>
+                    </div>
+                </div>
+
+                <div id="bosanmaEditor" contenteditable="false" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; min-height: 400px;">
+                    <p style="text-align: center; font-weight: 700; text-decoration: underline;">BOŞANMA DAVASI VE İLGİLİ HUKUKI İŞLEMLER İÇİN ÖZEL VEKALETNAME</p>
+
+                    <p style="text-align: center; font-weight: 700; margin-top: 24px;">KAPLAN HUKUK BÜROSU<br>Av.Mustafa KAPLAN<br>Güneşli VD: 68884068806</p>
+
+                    <p style="text-align: center; margin-top: 16px;">Adres: Güneşli Meydanı Cumhuriyet Cad. No:47/32 Kat:3 Daire :8<br>Güneşli/Bağcılar/İstanbul</p>
+
+                    <p style="margin-top: 24px;">Bu vekaletname ile aşağıdaki yetkiler verilmiştir:</p>
+                    <ul style="margin-top: 16px; line-height: 1.6;">
+                        <li>Boşanma davası açmak ve takip etmek</li>
+                        <li>Nafaka talep etmek ve takip etmek</li>
+                        <li>Mal paylaşımı konularında temsil etmek</li>
+                        <li>Velayet ve çocukla kişisel ilişki kurulması konularında temsil etmek</li>
+                        <li>Sulh olmak ve anlaşma yapmak</li>
+                        <li>İcra takibi yapmak</li>
+                        <li>Temyiz ve istinaf başvurusu yapmak</li>
+                        <li>Arabuluculuk sürecine katılmak</li>
+                    </ul>
+
+                    <p style="text-align: center; font-weight: 700; margin-top: 24px;">SİGORTALI OLARAK ÇALIŞAN AVUKATLAR</p>
+
+                    <table style="width: 80%; margin: 16px auto 0 auto; text-align: center;">
+                        <tr>
+                            <td style="width: 50%; vertical-align: top;">
+                                <p><strong>Av. Batuhan KAPLAN</strong><br>TC No: 68857069762</p>
+                            </td>
+                            <td style="width: 50%; vertical-align: top;">
+                                <p><strong>Av. Selvi DERTLİ</strong><br>TC No : 42100348798</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
+/* Sekme stilleri */
+.nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+    margin-bottom: 0;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: transparent;
+    color: #495057;
+    background-color: #f8f9fa;
+}
+
+.nav-tabs .nav-link.active {
+    color: #2d313c;
+    background-color: transparent;
+    border-color: transparent transparent #2d313c transparent;
+    font-weight: 600;
+}
+
+.tab-content {
+    padding-top: 20px;
+}
+
 /* Yazdırma için optimize edilmiş görünüm */
 @media print {
     @page { size: A4 landscape; margin: 0; }
@@ -45,6 +143,9 @@
     /* Uygulama kromunu gizle */
     .sidebar, header, .site-footer, .profile-menu, .search-container, .ai-avukat-btn { display: none !important; }
     .no-print { display: none !important; }
+
+    /* Sekme başlıklarını gizle */
+    .nav-tabs { display: none !important; }
 
     /* Ana içerik alanını sıfırla */
     .app-container, .main-wrapper, .content, .page-container, .card {
@@ -57,7 +158,11 @@
 
     /* Sayfayı tek sayfada doldur */
     .page-container { width: 297mm !important; max-width: none !important; }
-    #editor {
+    
+    /* Sadece aktif sekmeyi yazdır */
+    .tab-pane:not(.active) { display: none !important; }
+    
+    #genelEditor, #bosanmaEditor {
         width: 297mm; height: 210mm;
         padding: 10mm; box-sizing: border-box;
         background: #fff !important; border: none !important; border-radius: 0 !important;
@@ -70,70 +175,112 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const editor = document.getElementById('editor');
-    const printBtn = document.getElementById('printBtn');
-    const toggleBtn = document.getElementById('toggleEditBtn');
-    // Vekaletname içeriğini localStorage'dan yükle (varsa)
-    try {
-        const saved = localStorage.getItem('vekaletname_content');
-        if (saved) {
-            editor.innerHTML = saved;
-        }
-    } catch (e) { /* ignore */ }
+    // Element referansları
+    const genelEditor = document.getElementById('genelEditor');
+    const bosanmaEditor = document.getElementById('bosanmaEditor');
+    const printGenelBtn = document.getElementById('printGenelBtn');
+    const printBosanmaBtn = document.getElementById('printBosanmaBtn');
+    const toggleGenelBtn = document.getElementById('toggleEditGenelBtn');
+    const toggleBosanmaBtn = document.getElementById('toggleEditBosanmaBtn');
 
-    printBtn.addEventListener('click', function() {
-        const wasEditable = editor.getAttribute('contenteditable');
-        editor.setAttribute('contenteditable', 'false');
-        window.getSelection && window.getSelection().removeAllRanges && window.getSelection().removeAllRanges();
-        setTimeout(() => {
-            window.print();
-            editor.setAttribute('contenteditable', wasEditable);
-        }, 50);
-    });
-
-    toggleBtn.addEventListener('click', function() {
-        const isEditable = editor.getAttribute('contenteditable') === 'true';
-        if (!isEditable) {
-            // Düzenlemeyi aç
-            editor.setAttribute('contenteditable', 'true');
-            toggleBtn.textContent = 'Kaydet';
-            showGlobalNotification('Düzenleme etkin.', 'info');
-        } else {
-            // Kaydet ve kapat
-            try {
-                localStorage.setItem('vekaletname_content', editor.innerHTML);
-                showGlobalNotification('Vekaletname metni kaydedildi.', 'success');
-            } catch (e) {
-                showGlobalNotification('Kaydedilemedi.', 'error');
-            }
-            editor.setAttribute('contenteditable', 'false');
-            toggleBtn.textContent = 'Düzenle';
-        }
-    });
-
-    function saveContent() {
+    // Vekaletname içeriklerini localStorage'dan yükle
+    function loadContent() {
         try {
-            localStorage.setItem('vekaletname_content', editor.innerHTML);
-            showGlobalNotification('Vekaletname metni yerel olarak kaydedildi.', 'success');
-        } catch (e) {
-            showGlobalNotification('Kaydetme sırasında hata oluştu.', 'error');
+            const genelContent = localStorage.getItem('vekaletname_genel_content');
+            const bosanmaContent = localStorage.getItem('vekaletname_bosanma_content');
+            
+            if (genelContent) {
+                genelEditor.innerHTML = genelContent;
+            }
+            if (bosanmaContent) {
+                bosanmaEditor.innerHTML = bosanmaContent;
+            }
+        } catch (e) { 
+            console.warn('İçerik yüklenirken hata:', e);
         }
     }
-    // Otomatik kaydetme (debounce)
-    let saveTimer;
-    editor.addEventListener('input', function() {
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(saveContent, 800);
-    });
-    // Yapıştırmaya izin ver (varsayılan izinli, ama kontrol edelim)
-    editor.addEventListener('paste', function(e) {
-        // Biçimlendirmeyi sadeleştir: düz metin olarak yapıştır
-        e.preventDefault();
-        const text = (e.clipboardData || window.clipboardData).getData('text');
-        document.execCommand('insertText', false, text);
+
+    // İçerik kaydetme fonksiyonu
+    function saveContent(type, content) {
+        try {
+            const key = `vekaletname_${type}_content`;
+            localStorage.setItem(key, content);
+            showGlobalNotification(`${type === 'genel' ? 'Genel' : 'Boşanma'} vekaletname metni kaydedildi.`, 'success');
+        } catch (e) {
+            showGlobalNotification('Kaydedilemedi.', 'error');
+        }
+    }
+
+    // Yazdırma fonksiyonu
+    function setupPrintButton(printBtn, editor) {
+        printBtn.addEventListener('click', function() {
+            const wasEditable = editor.getAttribute('contenteditable');
+            editor.setAttribute('contenteditable', 'false');
+            window.getSelection && window.getSelection().removeAllRanges && window.getSelection().removeAllRanges();
+            setTimeout(() => {
+                window.print();
+                editor.setAttribute('contenteditable', wasEditable);
+            }, 50);
+        });
+    }
+
+    // Düzenleme toggle fonksiyonu
+    function setupEditToggle(toggleBtn, editor, type) {
+        toggleBtn.addEventListener('click', function() {
+            const isEditable = editor.getAttribute('contenteditable') === 'true';
+            if (!isEditable) {
+                // Düzenlemeyi aç
+                editor.setAttribute('contenteditable', 'true');
+                toggleBtn.textContent = 'Kaydet';
+                showGlobalNotification('Düzenleme etkin.', 'info');
+            } else {
+                // Kaydet ve kapat
+                saveContent(type, editor.innerHTML);
+                editor.setAttribute('contenteditable', 'false');
+                toggleBtn.textContent = 'Düzenle';
+            }
+        });
+
+        // Otomatik kaydetme (debounce)
+        let saveTimer;
+        editor.addEventListener('input', function() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
+                if (editor.getAttribute('contenteditable') === 'true') {
+                    try {
+                        localStorage.setItem(`vekaletname_${type}_content`, editor.innerHTML);
+                    } catch (e) {
+                        console.warn('Otomatik kaydetme hatası:', e);
+                    }
+                }
+            }, 800);
+        });
+
+        // Yapıştırma kontrolü
+        editor.addEventListener('paste', function(e) {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            document.execCommand('insertText', false, text);
+        });
+    }
+
+    // Event listener'ları kur
+    setupPrintButton(printGenelBtn, genelEditor);
+    setupPrintButton(printBosanmaBtn, bosanmaEditor);
+    setupEditToggle(toggleGenelBtn, genelEditor, 'genel');
+    setupEditToggle(toggleBosanmaBtn, bosanmaEditor, 'bosanma');
+
+    // İçerikleri yükle
+    loadContent();
+
+    // Sekme değişiminde yazdırma butonunu güncelle
+    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function (event) {
+            // Aktif sekmeye göre yazdırma davranışını ayarla
+            const targetId = event.target.getAttribute('data-bs-target');
+            console.log('Aktif sekme:', targetId);
+        });
     });
 });
 </script>
 {% endblock %}
-
-

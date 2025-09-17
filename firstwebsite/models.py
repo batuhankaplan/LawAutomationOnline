@@ -680,3 +680,31 @@ class AISohbetGecmisi(db.Model):
     
     def __repr__(self):
         return f'<AISohbetGecmisi {self.baslik}>'
+
+class ContractTemplate(db.Model):
+    """Avukatlık sözleşme taslağı modeli - Global template"""
+    id = db.Column(db.Integer, primary_key=True)
+    template_name = db.Column(db.String(100), default='Varsayılan Taslak')
+    avukat_adi = db.Column(db.String(200))
+    avukat_adres = db.Column(db.Text)
+    banka_bilgisi = db.Column(db.String(200))
+    iban_no = db.Column(db.String(50))
+    yetkili_mahkeme = db.Column(db.String(200))
+    kanun_no = db.Column(db.String(100))
+    giris_metni = db.Column(db.Text)
+    madde2 = db.Column(db.Text)
+    madde3 = db.Column(db.Text)
+    madde4 = db.Column(db.Text)
+    madde5 = db.Column(db.Text)
+    madde6 = db.Column(db.Text)
+    madde7 = db.Column(db.Text)
+    madde8 = db.Column(db.Text)
+    madde9 = db.Column(db.Text)
+    madde10 = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))), onupdate=lambda: datetime.now(timezone(timedelta(hours=3))))
+    updated_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    is_active = db.Column(db.Boolean, default=True)
+
+    def __repr__(self):
+        return f'<ContractTemplate {self.template_name}>'

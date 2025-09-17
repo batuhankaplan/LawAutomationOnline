@@ -32,7 +32,7 @@ from email_utils import send_calendar_event_assignment_email, send_calendar_even
 import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect # CSRF Koruması için eklendi
-from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi, DilekceKategori, OrnekDilekce, OrnekSozlesme
+from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi, DilekceKategori, OrnekDilekce, OrnekSozlesme, ContractTemplate
 import uuid
 from PIL import Image
 from functools import wraps
@@ -6005,6 +6005,8 @@ def parse_tarifeler():
     return tarifeler
 
 @app.route('/api/tarifeler')
+@login_required
+@permission_required('ucret_tarifeleri')
 def api_tarifeler():
     data = parse_tarifeler()
     # parse_tarifeler artık her zaman bir dict döndürdüğü için error kontrolüne gerek yok,
@@ -6014,8 +6016,8 @@ def api_tarifeler():
 @app.route('/api/kaydet_kaplan_danismanlik_tarife', methods=['POST'])
 @login_required
 def kaydet_kaplan_danismanlik_tarife():
-    if not current_user.is_admin: 
-        return jsonify({"success": False, "error": "Yetkiniz yok."}), 403
+    if not current_user.has_permission('ucret_tarifeleri'): 
+        return jsonify({"success": False, "error": "Ücret tarifelerine erişim yetkiniz yok."}), 403
 
     try:
         new_kaplan_data = request.get_json()
@@ -6198,6 +6200,94 @@ def ornek_dilekceler():
 @permission_required('ornek_sozlesmeler')
 def ornek_sozlesme_formu():
     return render_template('ornek_sozlesme_formu.html')
+
+@app.route('/api/contract_template', methods=['GET'])
+@login_required
+def get_contract_template():
+    """Aktif sözleşme taslağını getir"""
+    try:
+        template = ContractTemplate.query.filter_by(is_active=True).first()
+        if not template:
+            # Eğer hiç taslak yoksa default bir tane oluştur
+            template = ContractTemplate(
+                template_name='Varsayılan Taslak',
+                avukat_adi='Av. Mustafa KAPLAN',
+                avukat_adres='Güneşli Meydanı Cumhuriyet Cd. No.47 K.3 D.8 (AKBANK ÜSTÜ) GÜNEŞLİ/İST.',
+                banka_bilgisi='Garanti Bankası Güneşli Şubesi',
+                iban_no='TR930006200029500006684655',
+                yetkili_mahkeme='Bakırköy Mahkemesi ve İcra Daireleri',
+                kanun_no='1136 sayılı Avukatlık Kanunu 171 ve 172',
+                giris_metni='Yukarıda adı, soyadı (veya ünvanı) ile tebligata elverişli adresleri belirtilen taraflar arasında aşağıda yazılı şartlarla AVUKATLIK ÜCRET SÖZLEŞMESİ yapılmıştır. Bu sözleşmede iş sahibi MÜVEKKİL ve işi üzerine alan AVUKAT diye adlandırılmıştır.',
+                madde2='MADDE 2) Sözleşme konusu olan işten dolayı, Avukat\'a {avukatlikUcreti} avukatlık ücreti ödenecektir.\nBu ücret {avukatAdi}\'a ait {bankaBilgisi} {ibanNo} İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.',
+                madde3='Tespit olunan ücret yalnız bu sözleşmede yazılı işin ve işlerin karşılığıdır. Bunlar dışında kalacak takipler ve bu işle ilgili bağlantılı bulunsa dahi karşı taraf veya üçüncü bir şahıs tarafından karşılıklı dava veya ayrı davalar şeklinde açılacak davalar bu sözleşme ücretin dışındadır. Avukat, bu sözleşmeye göre peşin verilmesi gerekli ücret ve aşağıda yazılı gider avansı kendisine ödenmediği sürece işe başlamak zorunluluğunda değildir. İş sahibi ile ilgili yapılacak hukuki, idari ve adli işlemlerden kaynaklanacak masraflar iş sahibine aittir.',
+                updated_by=current_user.id
+            )
+            db.session.add(template)
+            db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'template': {
+                'avukatAdi': template.avukat_adi,
+                'avukatAdres': template.avukat_adres,
+                'bankaBilgisi': template.banka_bilgisi,
+                'ibanNo': template.iban_no,
+                'yetkiliMahkeme': template.yetkili_mahkeme,
+                'kanunNo': template.kanun_no,
+                'girisMetni': template.giris_metni,
+                'madde2': template.madde2,
+                'madde3': template.madde3,
+                'madde4': template.madde4,
+                'madde5': template.madde5,
+                'madde6': template.madde6,
+                'madde7': template.madde7,
+                'madde8': template.madde8,
+                'madde9': template.madde9,
+                'madde10': template.madde10
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/contract_template', methods=['POST'])
+@login_required
+def save_contract_template():
+    """Sözleşme taslağını kaydet/güncelle"""
+    try:
+        data = request.get_json()
+        
+        # Mevcut aktif taslağı bul veya yeni oluştur
+        template = ContractTemplate.query.filter_by(is_active=True).first()
+        if not template:
+            template = ContractTemplate()
+            db.session.add(template)
+        
+        # Verileri güncelle
+        template.avukat_adi = data.get('avukatAdi', '')
+        template.avukat_adres = data.get('avukatAdres', '')
+        template.banka_bilgisi = data.get('bankaBilgisi', '')
+        template.iban_no = data.get('ibanNo', '')
+        template.yetkili_mahkeme = data.get('yetkiliMahkeme', '')
+        template.kanun_no = data.get('kanunNo', '')
+        template.giris_metni = data.get('girisMetni', '')
+        template.madde2 = data.get('madde2', '')
+        template.madde3 = data.get('madde3', '')
+        template.madde4 = data.get('madde4', '')
+        template.madde5 = data.get('madde5', '')
+        template.madde6 = data.get('madde6', '')
+        template.madde7 = data.get('madde7', '')
+        template.madde8 = data.get('madde8', '')
+        template.madde9 = data.get('madde9', '')
+        template.madde10 = data.get('madde10', '')
+        template.updated_by = current_user.id
+        template.is_active = True
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Taslak başarıyla kaydedildi'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/kayitli_ornek_sozlesmeler')
 @login_required

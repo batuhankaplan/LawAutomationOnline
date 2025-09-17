@@ -316,8 +316,16 @@
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="material-icons align-middle me-2">list_alt</i> Kayıtlı Sözleşmeler</h5>
+                <div class="card-header bg-light" style="padding: 1rem 1.25rem;">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <h5 class="mb-0 flex-shrink-0"><i class="material-icons align-middle me-2">list_alt</i> Kayıtlı Sözleşmeler</h5>
+                        <div class="search-box-container d-flex align-items-center" style="position: relative; min-width: 250px; max-width: 350px; flex: 0 1 auto;">
+                            <input type="text" id="contractsSearchInput" class="form-control form-control-sm" placeholder="Müvekkil adı ile arayınız..." style="padding-right: 35px; border-radius: 20px; border: 1px solid #ddd;">
+                            <button type="button" id="clearContractsSearchBtn" class="btn btn-sm" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 2px 5px; display: none; z-index: 10;">
+                                <i class="material-icons" style="font-size: 16px; color: #666;">close</i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -846,6 +854,15 @@
                                             <textarea class="form-control" id="taslakGirisMetni" rows="3">Yukarıda adı, soyadı (veya ünvanı) ile tebligata elverişli adresleri belirtilen taraflar arasında aşağıda yazılı şartlarla AVUKATLIK ÜCRET SÖZLEŞMESİ yapılmıştır. Bu sözleşmede iş sahibi MÜVEKKİL ve işi üzerine alan AVUKAT diye adlandırılmıştır.</textarea>
                                         </div>
                                         
+                                        <!-- Madde 2 -->
+                                        <div class="col-12">
+                                            <label for="taslakMadde2" class="form-label fw-semibold">
+                                                <i class="material-icons me-1 text-secondary" style="font-size: 1rem;">account_balance_wallet</i>Madde 2) Sözleşme Konusu ve Avukatlık Ücreti
+                                            </label>
+                                            <textarea class="form-control" id="taslakMadde2" rows="4">Sözleşme konusu olan işten dolayı, Avukat'a {avukatlikUcreti} avukatlık ücreti ödenecektir.
+Bu ücret {avukatAdi}'a ait {bankaBilgisi} {ibanNo} İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.</textarea>
+                                        </div>
+                                        
                                         <!-- Madde 3 -->
                                         <div class="col-md-6">
                                             <label for="taslakMadde3" class="form-label fw-semibold">
@@ -1063,6 +1080,7 @@
     let olusturulanPdfBelgesi = null;
     let aktifSozlesmeId = null;
     let allContractsData = []; // Sıralama için tüm sözleşme verilerini tutar
+    let filteredContractsData = []; // Arama sonuçları için filtrelenmiş veriler
     let sortState = {}; // Aktif sıralama durumunu tutar: { key: 'muvekkil_adi', order: 'asc' }
     
     // Global DOM element referansları
@@ -1920,12 +1938,13 @@
 
             if (sonuc.success && Array.isArray(sonuc.sozlesmeler)) {
                 allContractsData = sonuc.sozlesmeler;
+                filteredContractsData = [...allContractsData]; // Başlangıçta tüm veriler görünür
                 console.log("Kayıtlı Sözleşmeler Listelendi:", JSON.stringify(allContractsData, null, 2)); // LOG 3
                 if (allContractsData.length === 0) {
                     tabloBosDiv.style.display = 'block';
                 } else {
                     // Başlangıçta sıralama olmadan render et
-                    renderTableRows(allContractsData); 
+                    renderTableRows(filteredContractsData); 
                 }
             } else {
                 throw new Error('API yanıtı geçersiz format içeriyor.');
@@ -2026,7 +2045,7 @@
         const currentOrder = (sortState.key === sortKey && sortState.order === 'asc') ? 'desc' : 'asc';
         sortState = { key: sortKey, order: currentOrder };
 
-        allContractsData.sort((a, b) => {
+        filteredContractsData.sort((a, b) => {
             let valA, valB;
 
             if (sortKey === 'muvekkil_adi') {
@@ -2107,8 +2126,43 @@
             if (valA > valB) return currentOrder === 'asc' ? 1 : -1;
             return 0;
         });
-        renderTableRows(allContractsData);
+        renderTableRows(filteredContractsData);
         updateSortIcons(sortKey, currentOrder);
+    }
+
+    // Global fonksiyon - Sözleşmeleri filtrele
+    window.filterContracts = function(searchTerm) {
+        if (!searchTerm || searchTerm.trim() === '') {
+            filteredContractsData = [...allContractsData];
+        } else {
+            const term = searchTerm.toLowerCase().trim();
+            filteredContractsData = allContractsData.filter(sozlesme => {
+                const isSahibiAdi = (sozlesme.muvekkil_adi || '').toLowerCase();
+                return isSahibiAdi.includes(term);
+            });
+        }
+        
+        // Filtrelenmiş veriyi render et
+        const tabloBosDiv = document.getElementById('tabloBos');
+        if (filteredContractsData.length === 0) {
+            if (searchTerm && searchTerm.trim() !== '') {
+                // Arama sonucu boş
+                document.getElementById('sozlesmeTableBody').innerHTML = 
+                    `<tr><td colspan="4" class="text-center text-muted">
+                        <i class="material-icons" style="font-size: 48px; opacity: 0.5;">search_off</i>
+                        <p class="mt-2">Arama kriterlerinize uygun sözleşme bulunamadı.</p>
+                        <small>Farklı bir arama terimi deneyin.</small>
+                    </td></tr>`;
+                tabloBosDiv.style.display = 'none';
+            } else {
+                // Hiç sözleşme yok
+                tabloBosDiv.style.display = 'block';
+                document.getElementById('sozlesmeTableBody').innerHTML = '';
+            }
+        } else {
+            tabloBosDiv.style.display = 'none';
+            renderTableRows(filteredContractsData);
+        }
     }
 
     // Global fonksiyon - Sıralama ikonlarını güncelle
@@ -2705,7 +2759,7 @@
                     },
                     { text: '\nYukarıda adı, soyadı (veya ünvanı) ile tebligata elverişli adresleri belirtilen taraflar arasında aşağıda yazılı şartlarla AVUKATLIK ÜCRET SÖZLEŞMESİ yapılmıştır. Bu sözleşmede iş sahibi MÜVEKKİL ve işi üzerine alan AVUKAT diye adlandırılmıştır.\n', style: 'paragraph'},
                     { text: `MADDE 1) AVUKATIN ÜZERİNE ALDIĞI İŞ: \n${formVerileri.alinanIs}\n`, style: 'paragraph'},
-                    { text: `MADDE 2) Sözleşme konusu olan işten dolayı, Avukat'a ${formVerileri.avukatlikUcreti} avukatlık ücreti ödenecektir.\nBu ücret Av. Mustafa KAPLAN'a ait Garanti Bankası Güneşli Şubesi TR930006200029500006684655 İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.\n`, style: 'paragraph'},
+                    { text: taslakVerileri.madde2.replace('{avukatlikUcreti}', formVerileri.avukatlikUcreti).replace('{avukatAdi}', taslakVerileri.avukatAdi).replace('{bankaBilgisi}', taslakVerileri.bankaBilgisi).replace('{ibanNo}', taslakVerileri.ibanNo), style: 'paragraph'},
                     { text: 'MADDE 3) Tespit olunan ücret yalnız bu sözleşmede yazılı işin ve işlerin karşılığıdır. Bunlar dışında kalacak takipler ve bu işle ilgili bağlantılı bulunsa dahi karşı taraf veya üçüncü bir şahıs tarafından karşılıklı dava veya ayrı davalar şeklinde açılacak davalar bu sözleşme ücretin dışındadır. Avukat, bu sözleşmeye göre peşin verilmesi gerekli ücret ve aşağıda yazılı gider avansı kendisine ödenmediği sürece işe başlamak zorunluluğunda değildir. İş sahibi ile ilgili yapılacak hukuki, idari ve adli işlemlerden kaynaklanacak masraflar iş sahibine aittir.\n', style: 'paragraph'},
                     { text: 'MADDE 4) Avukat üzerine aldığı işi kanun ve bu sözleşme hükümleri uyarınca sonuna kadar takip edecektir. Avukat, verilen vekaletname ile başkasını tevkile yetkili bulunduğu takdirde, üzerine aldığı işi uygun göreceği diğer Avukatlarla birlikte takip edebileceği gibi, takibi tamamen onlara bırakabilecektir. Müvekkil de, Avukatın yazılı iznini almak şartı ile başka Avukatlara vekalet verebilir. Bu hallerde 1136 sayılı Kanunun 171 ve 172. Maddeleri hükmü uygulanır.\n', style: 'paragraph'},
                     { text: `MADDE 5) ${(() => {
@@ -2762,16 +2816,21 @@
     };
 
     window.taslakVerileriniYukle = function() {
-        // LocalStorage'dan taslak verilerini yükle, yoksa varsayılan değerleri kullan
-        const taslakVerileri = JSON.parse(localStorage.getItem('avukatTaslakSozlesme')) || {};
+        // Veritabanından taslak verilerini yükle
+        fetch('/api/contract_template')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.template) {
+                const taslakVerileri = data.template;
         
         document.getElementById('taslakAvukatAdi').value = taslakVerileri.avukatAdi || 'Av. Mustafa KAPLAN';
         document.getElementById('taslakAvukatAdres').value = taslakVerileri.avukatAdres || 'Güneşli Meydanı Cumhuriyet Cd. No.47 K.3 D.8 (AKBANK ÜSTÜ) GÜNEŞLİ/İST.';
         document.getElementById('taslakBankaBilgisi').value = taslakVerileri.bankaBilgisi || 'Garanti Bankası Güneşli Şubesi';
         document.getElementById('taslakIbanNo').value = taslakVerileri.ibanNo || 'TR930006200029500006684655';
-        document.getElementById('taslakYetkiliMahkeme').value = taslakVerileri.yetkiliMahkeme || 'Bakırköy Mahkemeleri ve icra daireleri';
+        document.getElementById('taslakYetkiliMahkeme').value = taslakVerileri.yetkiliMahkeme || 'Bakırköy Mahkemesi ve İcra Daireleri';
         document.getElementById('taslakKanunNo').value = taslakVerileri.kanunNo || '1136 sayılı Avukatlık Kanunu';
         document.getElementById('taslakGirisMetni').value = taslakVerileri.girisMetni || 'Yukarıda adı, soyadı (veya ünvanı) ile tebligata elverişli adresleri belirtilen taraflar arasında aşağıda yazılı şartlarla AVUKATLIK ÜCRET SÖZLEŞMESİ yapılmıştır. Bu sözleşmede iş sahibi MÜVEKKİL ve işi üzerine alan AVUKAT diye adlandırılmıştır.';
+        document.getElementById('taslakMadde2').value = taslakVerileri.madde2 || 'MADDE 2) Sözleşme konusu olan işten dolayı, Avukat\'a {avukatlikUcreti} avukatlık ücreti ödenecektir.\nBu ücret {avukatAdi}\'a ait {bankaBilgisi} {ibanNo} İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.';
         document.getElementById('taslakMadde3').value = taslakVerileri.madde3 || 'Tespit olunan ücret yalnız bu sözleşmede yazılı işin ve işlerin karşılığıdır. Bunlar dışında kalacak takipler ve bu işle ilgili bağlantılı bulunsa dahi karşı taraf veya üçüncü bir şahıs tarafından karşılıklı dava veya ayrı davalar şeklinde açılacak davalar bu sözleşme ücretin dışındadır. Avukat, bu sözleşmeye göre peşin verilmesi gerekli ücret ve aşağıda yazılı gider avansı kendisine ödenmediği sürece işe başlamak zorunluluğunda değildir. İş sahibi ile ilgili yapılacak hukuki, idari ve adli işlemlerden kaynaklanacak masraflar iş sahibine aittir.';
         document.getElementById('taslakMadde4').value = taslakVerileri.madde4 || 'Avukat üzerine aldığı işi kanun ve bu sözleşme hükümleri uyarınca sonuna kadar takip edecektir. Avukat, verilen vekaletname ile başkasını tevkile yetkili bulunduğu takdirde, üzerine aldığı işi uygun göreceği diğer Avukatlarla birlikte takip edebileceği gibi, takibi tamamen onlara bırakabilecektir. Müvekkil de, Avukatın yazılı iznini almak şartı ile başka Avukatlara vekalet verebilir. Bu hallerde 1136 sayılı Kanunun 171 ve 172. Maddeleri hükmü uygulanır.';
         
@@ -2782,6 +2841,15 @@
         document.getElementById('taslakMadde8').value = taslakVerileri.madde8 || 'İş bu sözleşmenin süresi sözleşmenin imzalandığı tarihten itibaren 1 yıldır. Taraflar anlaşarak 1 yılın sonunda sözleşmeyi karşılıklı olarak feshetmezler ise Avukatlık ücreti 1(bir) yılın sonunda TEFE/TÜFE ortalaması alınarak resen artar.';
         document.getElementById('taslakMadde9').value = taslakVerileri.madde9 || 'İş bu sözleşmede açıklık bulunmayan durumlarda {kanunNo} hükümleri uygulanır.';
         document.getElementById('taslakMadde10').value = taslakVerileri.madde10 || 'Bu sözleşmeden doğacak anlaşmazlıklarda yetkili mercii {yetkiliMahkeme}dir.';
+            } else {
+                console.error('Taslak veriler yüklenemedi:', data.error);
+                window.bildirimGoster('Uyarı', 'Taslak veriler yüklenemedi, varsayılan değerler kullanılıyor.', 'warning');
+            }
+        })
+        .catch(error => {
+            console.error('API hatası:', error);
+            window.bildirimGoster('Uyarı', 'Taslak veriler yüklenemedi, varsayılan değerler kullanılıyor.', 'warning');
+        });
     };
 
     window.taslakKaydet = function() {
@@ -2796,6 +2864,7 @@
                 yetkiliMahkeme: document.getElementById('taslakYetkiliMahkeme').value,
                 kanunNo: document.getElementById('taslakKanunNo').value,
                 girisMetni: document.getElementById('taslakGirisMetni').value,
+                madde2: document.getElementById('taslakMadde2').value,
                 madde3: document.getElementById('taslakMadde3').value,
                 madde4: document.getElementById('taslakMadde4').value,
                 madde5: document.getElementById('taslakMadde5').value,
@@ -2807,13 +2876,32 @@
                 kaydetmeTarihi: new Date().toISOString()
             };
             
-            // LocalStorage'a kaydet
-            localStorage.setItem('avukatTaslakSozlesme', JSON.stringify(taslakVerileri));
-            
-            // Mevcut sozlesmePdfIcerigiOlustur fonksiyonunu güncelle
-            window.sozlesmePdfIcerigiOlusturGuncelle(taslakVerileri);
-            
-            window.bildirimGoster('Başarılı', 'Taslak sözleşme değişiklikleri kaydedildi. Yeni sözleşmeler bu şablonu kullanacak.', 'success');
+            // Veritabanına kaydet (tüm kullanıcılar için)
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            fetch('/api/contract_template', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(taslakVerileri)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mevcut sozlesmePdfIcerigiOlustur fonksiyonunu güncelle
+                    window.sozlesmePdfIcerigiOlusturGuncelle(taslakVerileri);
+                    
+                    window.bildirimGoster('Başarılı', 'Taslak sözleşme değişiklikleri kaydedildi. Tüm kullanıcılar için güncellenmiş şablon aktif edildi.', 'success');
+                } else {
+                    window.bildirimGoster('Hata', 'Taslak kaydedilirken hata oluştu: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.bildirimGoster('Hata', 'Taslak kaydedilirken hata oluştu: ' + error.message, 'error');
+            });
             
             // Modal kapat
             const modalElement = document.getElementById('taslakDuzenleModal');
@@ -2856,7 +2944,7 @@
                     },
                     { text: `\n${taslakVerileri.girisMetni}\n`, style: 'paragraph'},
                     { text: `MADDE 1) AVUKATIN ÜZERİNE ALDIĞI İŞ: \n${formVerileri.alinanIs}\n`, style: 'paragraph'},
-                    { text: `MADDE 2) Sözleşme konusu olan işten dolayı, Avukat'a ${formVerileri.avukatlikUcreti} avukatlık ücreti ödenecektir.\nBu ücret ${taslakVerileri.avukatAdi}'a ait ${taslakVerileri.bankaBilgisi} ${taslakVerileri.ibanNo} İban nolu hesaba ödenecektir. Belirli sürelerde yapılması gereken ödemelerden herhangi biri yapılmadığı takdirde ücretin tamamı muaccel olur. İş sahibinin birden çok olması halinde sözleşmeyi birlikte imzalayanlar, Avukatlık Ücretinin ödenmesinde Avukata karşı müteselsilen borçlu ve sorumludurlar.\n`, style: 'paragraph'},
+                    { text: taslakVerileri.madde2.replace('{avukatlikUcreti}', formVerileri.avukatlikUcreti).replace('{avukatAdi}', taslakVerileri.avukatAdi).replace('{bankaBilgisi}', taslakVerileri.bankaBilgisi).replace('{ibanNo}', taslakVerileri.ibanNo), style: 'paragraph'},
                     { text: `MADDE 3) ${taslakVerileri.madde3}\n`, style: 'paragraph'},
                     { text: `MADDE 4) ${taslakVerileri.madde4}\n`, style: 'paragraph'},
                     { text: `MADDE 5) ${(() => {
@@ -2893,10 +2981,44 @@
 
     // Sayfa yüklendiğinde taslak verilerini kontrol et ve uygula
     window.addEventListener('DOMContentLoaded', function() {
-        const taslakVerileri = JSON.parse(localStorage.getItem('avukatTaslakSozlesme'));
-        if (taslakVerileri) {
-            console.log("Özel taslak veriler yüklendi:", taslakVerileri);
-            window.sozlesmePdfIcerigiOlusturGuncelle(taslakVerileri);
+        // Veritabanından taslak verilerini yükle ve uygula
+        fetch('/api/contract_template')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.template) {
+                console.log("Global taslak veriler yüklendi:", data.template);
+                window.sozlesmePdfIcerigiOlusturGuncelle(data.template);
+            }
+        })
+        .catch(error => {
+            console.error('Taslak veriler yüklenirken hata:', error);
+        });
+
+        // Arama kutusu event listener'ları
+        const searchInput = document.getElementById('contractsSearchInput');
+        const clearSearchBtn = document.getElementById('clearContractsSearchBtn');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value;
+                filterContracts(searchTerm);
+                
+                // Temizle butonunu göster/gizle
+                if (clearSearchBtn) {
+                    clearSearchBtn.style.display = searchTerm ? 'block' : 'none';
+                }
+            });
+        }
+        
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', function() {
+                if (searchInput) {
+                    searchInput.value = '';
+                    filterContracts('');
+                    this.style.display = 'none';
+                    searchInput.focus();
+                }
+            });
         }
     });
 

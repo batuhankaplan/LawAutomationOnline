@@ -49,7 +49,7 @@
                         <h3>Av. Mustafa KAPLAN</h3>
                         <p class="lawyer-phone">
                             <i class="material-icons">phone</i>
-                            <span>05422360969</span>
+                            <span class="phone-clickable" onclick="copyPhoneNumber('05422360969', this)" title="Kopyalamak için tıklayın">05422360969</span>
                         </p>
                     </div>
                 </div>
@@ -62,7 +62,7 @@
                         <h3>Av. Perize KAPLAN</h3>
                         <p class="lawyer-phone">
                             <i class="material-icons">phone</i>
-                            <span>05422652626</span>
+                            <span class="phone-clickable" onclick="copyPhoneNumber('05422652626', this)" title="Kopyalamak için tıklayın">05422652626</span>
                         </p>
                     </div>
                 </div>
@@ -75,7 +75,7 @@
                         <h3>Av. Batuhan KAPLAN</h3>
                         <p class="lawyer-phone">
                             <i class="material-icons">phone</i>
-                            <span>05415181226</span>
+                            <span class="phone-clickable" onclick="copyPhoneNumber('05415181226', this)" title="Kopyalamak için tıklayın">05415181226</span>
                         </p>
                     </div>
                 </div>
@@ -88,7 +88,7 @@
                         <h3>Av. Selvi DERTLİ</h3>
                         <p class="lawyer-phone">
                             <i class="material-icons">phone</i>
-                            <span>05077961148</span>
+                            <span class="phone-clickable" onclick="copyPhoneNumber('05077961148', this)" title="Kopyalamak için tıklayın">05077961148</span>
                         </p>
                     </div>
                 </div>
@@ -101,7 +101,33 @@
                         <h3>Zelal Hanım</h3>
                         <p class="lawyer-phone">
                             <i class="material-icons">phone</i>
-                            <span>05422940316</span>
+                            <span class="phone-clickable" onclick="copyPhoneNumber('05422940316', this)" title="Kopyalamak için tıklayın">05422940316</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="lawyer-card office-phone">
+                    <div class="lawyer-avatar">
+                        <i class="material-icons">local_phone</i>
+                    </div>
+                    <div class="lawyer-info">
+                        <h3>Ofis Sabit Hat</h3>
+                        <p class="lawyer-phone">
+                            <i class="material-icons">phone_in_talk</i>
+                            <span class="phone-clickable" onclick="copyPhoneNumber('02124890101', this)" title="Kopyalamak için tıklayın">02124890101</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="lawyer-card office-mobile">
+                    <div class="lawyer-avatar">
+                        <i class="material-icons">phone_iphone</i>
+                    </div>
+                    <div class="lawyer-info">
+                        <h3>Ofis Cep</h3>
+                        <p class="lawyer-phone">
+                            <i class="material-icons">mobile_friendly</i>
+                            <span class="phone-clickable" onclick="copyPhoneNumber('05397820202', this)" title="Kopyalamak için tıklayın">05397820202</span>
                         </p>
                     </div>
                 </div>
@@ -474,14 +500,16 @@
 .lawyer-card {
     background: linear-gradient(135deg, #2d313b 0%, #3a3f50 100%);
     border-radius: 12px;
-    padding: 18px;
+    padding: 18px;     /* Eski boyuta geri döndü */
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 15px;         /* Eski boyuta geri döndü */
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
     transition: all 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    min-height: 75px;
+    min-height: 80px;  /* Büyütüldü */
+    max-width: 280px;  /* Daha geniş */
+    width: 100%;
 }
 
 .lawyer-card:hover {
@@ -490,8 +518,8 @@
 }
 
 .lawyer-avatar {
-    width: 45px;
-    height: 45px;
+    width: 50px;   /* Büyütüldü */
+    height: 50px;  /* Büyütüldü */
     border-radius: 50%;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
     display: flex;
@@ -503,7 +531,7 @@
 
 .lawyer-avatar i {
     color: white;
-    font-size: 24px;
+    font-size: 26px;  /* Büyütüldü */
 }
 
 .lawyer-info {
@@ -512,9 +540,9 @@
 
 .lawyer-info h3 {
     color: white;
-    font-size: 1rem;
+    font-size: 1.1rem;   /* Büyütüldü */
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 8px;  /* Büyütüldü */
     margin-top: 0;
 }
 
@@ -527,12 +555,12 @@
 
 .lawyer-phone i {
     color: rgba(255, 255, 255, 0.7);
-    font-size: 18px;
+    font-size: 20px;  /* Büyütüldü */
 }
 
 .lawyer-phone span {
     color: rgba(255, 255, 255, 0.9);
-    font-size: 0.9rem;
+    font-size: 1rem;    /* Büyütüldü */
     font-weight: 500;
 }
 
@@ -819,9 +847,214 @@
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     }
 }
+
+/* Normal avukat boxları için koyu yeşil saydam stil */
+.lawyer-card:not(.office-phone):not(.office-mobile) {
+    background: linear-gradient(135deg, rgba(27, 94, 32, 0.85) 0%, rgba(46, 125, 50, 0.85) 100%);
+    color: white;
+    border: 2px solid rgba(27, 94, 32, 0.4);
+    backdrop-filter: blur(8px);
+}
+
+.lawyer-card:not(.office-phone):not(.office-mobile) .lawyer-avatar {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.lawyer-card:not(.office-phone):not(.office-mobile) .lawyer-avatar i {
+    color: #e8f5e8;
+}
+
+.lawyer-card:not(.office-phone):not(.office-mobile) .lawyer-info h3 {
+    color: #e8f5e8;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.lawyer-card:not(.office-phone):not(.office-mobile) .lawyer-phone {
+    color: #c8e6c9;
+}
+
+.lawyer-card:not(.office-phone):not(.office-mobile) .lawyer-phone i {
+    color: #a5d6a7;
+}
+
+.lawyer-card:not(.office-phone):not(.office-mobile) .lawyer-phone span {
+    color: white;
+    font-weight: 600;
+}
+
+/* Normal avukat boxları hover efekti */
+.lawyer-card:not(.office-phone):not(.office-mobile):hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(27, 94, 32, 0.6);
+    background: linear-gradient(135deg, rgba(27, 94, 32, 0.95) 0%, rgba(46, 125, 50, 0.95) 100%);
+}
+
+/* Ofis telefon boxları için özel stiller */
+.lawyer-card.office-phone,
+.lawyer-card.office-mobile {
+    background: linear-gradient(135deg, rgba(139, 195, 74, 0.8) 0%, rgba(104, 159, 56, 0.8) 100%);
+    color: #2e7d32;
+    border: 2px solid rgba(139, 195, 74, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.lawyer-card.office-phone .lawyer-avatar i,
+.lawyer-card.office-mobile .lawyer-avatar i {
+    color: #2e7d32;
+    background: rgba(139, 195, 74, 0.2);
+    border: 1px solid rgba(139, 195, 74, 0.3);
+}
+
+.lawyer-card.office-phone .lawyer-info h3,
+.lawyer-card.office-mobile .lawyer-info h3 {
+    color: #1b5e20;
+    font-weight: 600;
+}
+
+.lawyer-card.office-phone .lawyer-phone span,
+.lawyer-card.office-mobile .lawyer-phone span {
+    color: #2e7d32;
+    font-weight: 600;
+}
+
+.lawyer-card.office-phone .lawyer-phone i,
+.lawyer-card.office-mobile .lawyer-phone i {
+    color: #388e3c;
+}
+
+/* Hover efektleri */
+.lawyer-card.office-phone:hover,
+.lawyer-card.office-mobile:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(139, 195, 74, 0.5);
+    background: linear-gradient(135deg, rgba(139, 195, 74, 0.9) 0%, rgba(104, 159, 56, 0.9) 100%);
+}
+
+/* Ofis telefon boxlarını ortalama */
+.lawyers-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(260px, 1fr));
+    gap: 0.4rem;  /* Küçük boşluk ama biraz artırıldı */
+    align-items: start;
+    justify-items: center;
+    max-width: 1500px;  /* Daha geniş grid */
+    margin: 0 auto;     /* Ortala */
+}
+
+/* İlk satır - normal akış */
+.lawyer-card:nth-child(1) { grid-column: 1; }
+.lawyer-card:nth-child(2) { grid-column: 2; }
+.lawyer-card:nth-child(3) { grid-column: 3; }
+.lawyer-card:nth-child(4) { grid-column: 4; }
+.lawyer-card:nth-child(5) { grid-column: 5; }
+
+/* İkinci satır - ofis boxları normal grid hizasında */
+.lawyer-card.office-phone {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.lawyer-card.office-mobile {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+/* Tıklanabilir telefon numaraları */
+.phone-clickable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    padding: 2px 4px;
+    position: relative;
+}
+
+.phone-clickable:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.phone-clickable:active {
+    transform: scale(0.98);
+}
+
+/* Kopyalama efekti */
+.phone-clickable::after {
+    content: '📋';
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    font-size: 12px;
+}
+
+.phone-clickable:hover::after {
+    opacity: 0.7;
+}
 </style>
 
 <script>
+// Telefon numarasını kopyalama fonksiyonu
+function copyPhoneNumber(phoneNumber, element) {
+    // Numarayı temizle (sadece rakamlar ve + işareti)
+    const cleanNumber = phoneNumber.replace(/[^\d+]/g, '');
+    
+    // Clipboard API ile kopyala
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(cleanNumber).then(function() {
+            showCopyNotification(element, 'Kopyalandı!');
+        }).catch(function() {
+            // Fallback method
+            fallbackCopyTextToClipboard(cleanNumber, element);
+        });
+    } else {
+        // Fallback method for older browsers
+        fallbackCopyTextToClipboard(cleanNumber, element);
+    }
+}
+
+// Fallback kopyalama metodu
+function fallbackCopyTextToClipboard(text, element) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showCopyNotification(element, 'Kopyalandı!');
+    } catch (err) {
+        showCopyNotification(element, 'Kopyalanamadı!');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+// Kopyalama bildirimi göster
+function showCopyNotification(element, message) {
+    const originalText = element.textContent;
+    const originalColor = window.getComputedStyle(element).color;
+    const originalFontWeight = window.getComputedStyle(element).fontWeight;
+    
+    element.textContent = message;
+    element.style.color = '#4CAF50';
+    element.style.fontWeight = 'bold';
+    
+    setTimeout(function() {
+        element.textContent = originalText;
+        element.style.color = originalColor;
+        element.style.fontWeight = originalFontWeight;
+    }, 1500);
+}
+
 function submitForm(event) {
     event.preventDefault();
     

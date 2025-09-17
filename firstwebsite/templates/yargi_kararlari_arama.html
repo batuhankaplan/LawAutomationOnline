@@ -573,6 +573,68 @@
     </div>
 </div>
 
+<!-- Modal CSS Düzeltmeleri -->
+<style>
+/* Modal backdrop'ı tamamen gizle */
+.modal-backdrop {
+    display: none !important;
+}
+
+/* Modal'ın kendisini öne çıkar */
+#decisionModal {
+    z-index: 9999 !important;
+    background: rgba(0, 0, 0, 0.5) !important; /* Kendi arka planını ekle */
+}
+
+#decisionModal .modal-dialog {
+    z-index: 10000 !important;
+    position: relative;
+}
+
+#decisionModal .modal-content {
+    z-index: 10001 !important;
+    position: relative;
+    background: white;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* Modal içerik düzeltmeleri */
+#decisionModal .modal-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+}
+
+#decisionModal .modal-body {
+    padding: 2rem;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    background: white;
+}
+
+#decisionModal .modal-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    border-radius: 0 0 8px 8px;
+}
+
+#decisionModal .btn-close {
+    filter: invert(1);
+}
+
+/* Modal dış alanına tıklama ile kapatma */
+#decisionModal {
+    cursor: pointer;
+}
+
+#decisionModal .modal-dialog {
+    cursor: default;
+}
+</style>
+
 <!-- Karar Detayı Modal -->
 <div class="modal fade" id="decisionModal" tabindex="-1" aria-labelledby="decisionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-fullscreen">
@@ -1043,8 +1105,28 @@ $(document).ready(function() {
             </div>
         `);
         
-        // Modal'ı hemen aç
-        $('#decisionModal').modal('show');
+        // Modal'ı hemen aç (Bootstrap 5 uyumlu) - backdrop tamamen kapalı
+        const decisionModalElement = document.getElementById('decisionModal');
+        
+        // Önce mevcut modal instance'ını temizle
+        const existingModal = bootstrap.Modal.getInstance(decisionModalElement);
+        if (existingModal) {
+            existingModal.dispose();
+        }
+        
+        const decisionModal = new bootstrap.Modal(decisionModalElement, {
+            backdrop: false,  // backdrop'ı tamamen devre dışı bırak
+            keyboard: true,
+            focus: true
+        });
+        decisionModal.show();
+        
+        // Modal dış alanına tıklama ile kapatma
+        decisionModalElement.addEventListener('click', function(e) {
+            if (e.target === decisionModalElement) {
+                decisionModal.hide();
+            }
+        });
         
         // Karar metnini API'den yükle
         $.ajax({
