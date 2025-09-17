@@ -1461,7 +1461,7 @@ input[type="text"][name$="Date"] {
                 showGlobalNotification('Form başarıyla kaydedildi!', 'success');
                 loadSavedForms(); // Kaydedilen formları yeniden yükle
             } else {
-                alert('Form kaydedilirken bir hata oluştu: ' + data.error);
+                alert('Form kaydedilirken bir hata oluştu: ' + (data.message || data.error || 'Bilinmeyen hata'));
             }
         })
         .catch(error => {
