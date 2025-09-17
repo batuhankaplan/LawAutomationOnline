@@ -1433,11 +1433,15 @@ input[type="text"][name$="Date"] {
             }
         });
 
+        // CSRF token al
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
         // Form verilerini sunucuya gönder
         fetch('/save_isci_gorusme_json', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             },
             body: JSON.stringify(jsonData)
         })
