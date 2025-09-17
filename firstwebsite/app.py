@@ -4718,7 +4718,12 @@ def save_isci_gorusme_json():
 @login_required
 def get_worker_interviews():
     try:
-        interviews = WorkerInterview.query.filter_by(user_id=current_user.id).order_by(WorkerInterview.created_at.desc()).all()
+        # Yetki kontrolü - isci_gorusme_goruntule yetkisi olanlar tüm formları görebilir
+        if current_user.has_permission('isci_gorusme_goruntule') or current_user.is_admin:
+            interviews = WorkerInterview.query.order_by(WorkerInterview.created_at.desc()).all()
+        else:
+            interviews = WorkerInterview.query.filter_by(user_id=current_user.id).order_by(WorkerInterview.created_at.desc()).all()
+
         return jsonify({
             'success': True,
             'forms': [interview.to_dict() for interview in interviews]
@@ -4731,9 +4736,10 @@ def get_worker_interviews():
 def get_worker_interview(interview_id):
     try:
         interview = WorkerInterview.query.get_or_404(interview_id)
-        if interview.user_id != current_user.id:
+        # Yetki kontrolü - isci_gorusme_goruntule yetkisi olanlar erişebilir
+        if not current_user.has_permission('isci_gorusme_goruntule') and not current_user.is_admin:
             return jsonify({'success': False, 'error': 'Yetkisiz erişim'}), 403
-            
+
         return jsonify({
             'success': True,
             'form': interview.to_dict()
@@ -4746,12 +4752,13 @@ def get_worker_interview(interview_id):
 def delete_worker_interview(interview_id):
     try:
         interview = WorkerInterview.query.get_or_404(interview_id)
-        if interview.user_id != current_user.id:
+        # Yetki kontrolü - isci_gorusme_sil yetkisi olanlar silebilir
+        if not current_user.has_permission('isci_gorusme_sil') and not current_user.is_admin:
             return jsonify({'success': False, 'error': 'Yetkisiz erişim'}), 403
-            
+
         db.session.delete(interview)
         db.session.commit()
-        
+
         return jsonify({'success': True})
     except Exception as e:
         db.session.rollback()
@@ -4855,9 +4862,14 @@ def save_isci_gorusme_form():
 @permission_required('isci_gorusme_goruntule')
 def get_isci_gorusme_forms():
     try:
-        forms = IsciGorusmeTutanagi.query.order_by(IsciGorusmeTutanagi.created_at.desc()).all()
+        # Yetki kontrolü - isci_gorusme_goruntule yetkisi olanlar tüm formları görebilir
+        if current_user.has_permission('isci_gorusme_goruntule') or current_user.is_admin:
+            forms = IsciGorusmeTutanagi.query.order_by(IsciGorusmeTutanagi.created_at.desc()).all()
+        else:
+            forms = IsciGorusmeTutanagi.query.filter_by(user_id=current_user.id).order_by(IsciGorusmeTutanagi.created_at.desc()).all()
+
         forms_data = []
-        
+
         for form in forms:
             # Kullanıcı bilgisini al
             user = User.query.get(form.user_id)
@@ -4884,8 +4896,8 @@ def get_isci_gorusme_form(form_id):
         if not form:
             return jsonify({'success': False, 'error': 'Form bulunamadı'})
         
-        # Kullanıcı kontrolü
-        if form.user_id != current_user.id and not current_user.is_admin:
+        # Yetki kontrolü - isci_gorusme_goruntule yetkisi olanlar erişebilir
+        if not current_user.has_permission('isci_gorusme_goruntule') and not current_user.is_admin:
             return jsonify({'success': False, 'error': 'Bu forma erişim izniniz yok'})
         
         form_data = form.to_dict()
@@ -4904,8 +4916,8 @@ def delete_isci_gorusme_form(form_id):
         if not form:
             return jsonify({'success': False, 'error': 'Form bulunamadı'})
         
-        # Kullanıcı kontrolü
-        if form.user_id != current_user.id and not current_user.is_admin:
+        # Yetki kontrolü - isci_gorusme_sil yetkisi olanlar silebilir
+        if not current_user.has_permission('isci_gorusme_sil') and not current_user.is_admin:
             return jsonify({'success': False, 'error': 'Bu formu silme izniniz yok'})
         
         db.session.delete(form)
@@ -6035,8 +6047,11 @@ def api_ornek_sozlesme_kaydet():
 @permission_required('ornek_sozlesmeler')
 def api_kayitli_ornek_sozlesmeleri_listele():
     try:
-        # Sadece güncel kullanıcıya ait sözleşmeleri getir
-        sozlesmeler = OrnekSozlesme.query.filter_by(user_id=current_user.id).order_by(OrnekSozlesme.olusturulma_tarihi.desc()).all()
+        # Yetki kontrolü - ornek_sozlesmeler yetkisi olanlar tüm sözleşmeleri görebilir
+        if current_user.has_permission('ornek_sozlesmeler') or current_user.is_admin:
+            sozlesmeler = OrnekSozlesme.query.order_by(OrnekSozlesme.olusturulma_tarihi.desc()).all()
+        else:
+            sozlesmeler = OrnekSozlesme.query.filter_by(user_id=current_user.id).order_by(OrnekSozlesme.olusturulma_tarihi.desc()).all()
         data = [{
             'id': sozlesme.id,
             'muvekkil_adi': sozlesme.muvekkil_adi, # Doğru alan adı ve anahtar
@@ -6056,7 +6071,11 @@ def api_kayitli_ornek_sozlesmeleri_listele():
 def api_ornek_sozlesme_guncelle(sozlesme_id):
     try:
         data = request.get_json()
-        sozlesme = OrnekSozlesme.query.filter_by(id=sozlesme_id, user_id=current_user.id).first_or_404()
+        # Yetki kontrolü - ornek_sozlesmeler yetkisi olanlar tüm sözleşmelere erişebilir
+        if current_user.has_permission('ornek_sozlesmeler') or current_user.is_admin:
+            sozlesme = OrnekSozlesme.query.get_or_404(sozlesme_id)
+        else:
+            sozlesme = OrnekSozlesme.query.filter_by(id=sozlesme_id, user_id=current_user.id).first_or_404()
         
         # JavaScript'ten gelen alan adlarını kontrol et
         muvekkil_adi = data.get('muvekkil_adi') or data.get('muvekkil_adresi')
@@ -6086,7 +6105,11 @@ def api_ornek_sozlesme_guncelle(sozlesme_id):
 # @permission_required('kayitli_ornek_sozlesmeleri_goruntule') # İzin eklenebilir
 def api_kayitli_ornek_sozlesme_detay(sozlesme_id):
     try:
-        sozlesme = OrnekSozlesme.query.filter_by(id=sozlesme_id, user_id=current_user.id).first_or_404()
+        # Yetki kontrolü - ornek_sozlesmeler yetkisi olanlar tüm sözleşmelere erişebilir
+        if current_user.has_permission('ornek_sozlesmeler') or current_user.is_admin:
+            sozlesme = OrnekSozlesme.query.get_or_404(sozlesme_id)
+        else:
+            sozlesme = OrnekSozlesme.query.filter_by(id=sozlesme_id, user_id=current_user.id).first_or_404()
         return jsonify({
             'success': True, 
             'sozlesme': {
@@ -6107,7 +6130,11 @@ def api_kayitli_ornek_sozlesme_detay(sozlesme_id):
 # @permission_required('kayitli_ornek_sozlesme_sil') # İzin eklenebilir
 def api_kayitli_ornek_sozlesme_sil(sozlesme_id):
     try:
-        sozlesme = OrnekSozlesme.query.filter_by(id=sozlesme_id, user_id=current_user.id).first_or_404()
+        # Yetki kontrolü - ornek_sozlesmeler yetkisi olanlar tüm sözleşmelere erişebilir
+        if current_user.has_permission('ornek_sozlesmeler') or current_user.is_admin:
+            sozlesme = OrnekSozlesme.query.get_or_404(sozlesme_id)
+        else:
+            sozlesme = OrnekSozlesme.query.filter_by(id=sozlesme_id, user_id=current_user.id).first_or_404()
         sozlesme_adi_log = sozlesme.sozlesme_adi
         db.session.delete(sozlesme)
         db.session.commit()
@@ -6126,7 +6153,11 @@ def api_kayitli_ornek_sozlesme_sil(sozlesme_id):
 def api_sozlesme_pdf(sozlesme_id):
     """Sözleşmeyi PDF olarak döndür"""
     try:
-        sozlesme = OrnekSozlesme.query.filter_by(id=sozlesme_id, user_id=current_user.id).first_or_404()
+        # Yetki kontrolü - ornek_sozlesmeler yetkisi olanlar tüm sözleşmelere erişebilir
+        if current_user.has_permission('ornek_sozlesmeler') or current_user.is_admin:
+            sozlesme = OrnekSozlesme.query.get_or_404(sozlesme_id)
+        else:
+            sozlesme = OrnekSozlesme.query.filter_by(id=sozlesme_id, user_id=current_user.id).first_or_404()
         
         # JSON içeriğini parse et
         icerik = json.loads(sozlesme.icerik_json) if sozlesme.icerik_json else {}
