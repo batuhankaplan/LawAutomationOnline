@@ -1301,6 +1301,16 @@ input[type="text"][name$="Date"] {
         });
 
         // Radio butonları için değer ekle
+        const radioOptions = [
+            'witnessOption',
+            'severancePayOption',
+            'noticePayOption',
+            'unpaidWagesOption',
+            'overtimePayOption',
+            'annualLeavePayOption',
+            'ubgtPayOption'
+        ];
+
         radioOptions.forEach(option => {
             const selectedOption = document.querySelector(`input[name="${option}"]:checked`);
             if (selectedOption) {
