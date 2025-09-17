@@ -4710,34 +4710,56 @@ def save_isci_gorusme_json():
             except (ValueError, TypeError):
                 return default
         
-        # Yeni görüşme kaydı oluştur
+        # HTML form alanlarından DB alanlarına tam mapping
+        def get_field_value(field_name, default=''):
+            """HTML form alanından değer al, boşsa default döndür"""
+            value = data.get(field_name, default)
+            if value is None or str(value).strip() == '':
+                return default
+            return str(value).strip()
+
+        # Yeni görüşme kaydı oluştur - HTML form mapping ile
         interview = WorkerInterview(
-            fullName=data.get('name') or data.get('fullName'),  # HTML'de 'name', DB'de 'fullName'
-            tcNo=data.get('tcNo'),
-            phone=data.get('phone'),
-            address=data.get('address'),
-            startDate=start_date,
-            insuranceDate=insurance_date,
-            endDate=end_date,
-            endReason=data.get('endReason'),
-            companyName=data.get('companyName'),
-            businessType=data.get('businessType'),
-            companyAddress=data.get('companyAddress'),
-            position=data.get('position'),
-            workHours=data.get('workHours'),
-            overtime=data.get('overtime'),
+            # Kişisel Bilgiler
+            fullName=get_field_value('name', 'Belirtilmemiş'),  # HTML: name -> DB: fullName
+            tcNo=get_field_value('tcNo', '00000000000'),
+            phone=get_field_value('phone', '0000000000'),
+            address=get_field_value('address', 'Belirtilmemiş'),
+
+            # Tarih Bilgileri
+            startDate=start_date or datetime.now().date(),
+            insuranceDate=insurance_date or start_date or datetime.now().date(),
+            endDate=end_date or datetime.now().date(),
+
+            # İş Bilgileri
+            endReason=get_field_value('terminationReason', 'Belirtilmemiş'),  # HTML: terminationReason
+            companyName=get_field_value('insuranceStatus', 'Belirtilmemiş'),  # HTML: insuranceStatus mapping to companyName
+            businessType=get_field_value('department', 'Belirtilmemiş'),  # HTML: department -> businessType
+            companyAddress=get_field_value('address', 'Belirtilmemiş'),  # Aynı adres kullan
+            position=get_field_value('position', 'Belirtilmemiş'),
+
+            # Çalışma Bilgileri
+            workHours=get_field_value('workingHours', 'Belirtilmemiş'),  # HTML: workingHours -> workHours
+            overtime=get_field_value('overtime', 'Belirtilmemiş'),
+
+            # Ücret Bilgileri
             salary=safe_float(data.get('salary'), 0),
             transportation=safe_float(data.get('transportation'), 0) if data.get('transportation') else None,
             food=safe_float(data.get('food'), 0) if data.get('food') else None,
-            benefits=data.get('benefits'),
-            weeklyHoliday=data.get('weeklyHoliday'),
-            holidays=data.get('holidays'),
-            annualLeave=data.get('annualLeave'),
-            unpaidSalary=data.get('unpaidSalary'),
-            witness1=data.get('witness1'),
-            witness2=data.get('witness2'),
-            witness3=data.get('witness3'),
-            witness4=data.get('witness4'),
+            benefits=get_field_value('benefits', 'Belirtilmemiş'),
+
+            # Tatil Bilgileri
+            weeklyHoliday=get_field_value('weeklyHoliday', 'Belirtilmemiş'),
+            holidays=get_field_value('holidays', 'Belirtilmemiş'),
+            annualLeave=get_field_value('annualLeave', 'Belirtilmemiş'),
+            unpaidSalary=get_field_value('unpaidSalary', 'Belirtilmemiş'),
+
+            # Tanıklar
+            witness1=get_field_value('witness1'),
+            witness2=get_field_value('witness2'),
+            witness3=get_field_value('witness3'),
+            witness4=get_field_value('witness4'),
+
             user_id=current_user.id
         )
         
