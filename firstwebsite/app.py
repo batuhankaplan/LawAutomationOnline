@@ -4663,7 +4663,7 @@ def save_isci_gorusme():
 
 @app.route('/save_isci_gorusme_json', methods=['POST'])
 @login_required
-@permission_required('isci_gorusme_ekle')
+@permission_required('isci_gorusme_goruntule')
 def save_isci_gorusme_json():
     try:
         data = request.get_json()
