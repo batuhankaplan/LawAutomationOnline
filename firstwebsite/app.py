@@ -4712,7 +4712,7 @@ def save_isci_gorusme_json():
         
         # Yeni görüşme kaydı oluştur
         interview = WorkerInterview(
-            fullName=data.get('fullName'),
+            fullName=data.get('name') or data.get('fullName'),  # HTML'de 'name', DB'de 'fullName'
             tcNo=data.get('tcNo'),
             phone=data.get('phone'),
             address=data.get('address'),
