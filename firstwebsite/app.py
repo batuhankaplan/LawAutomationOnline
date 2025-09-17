@@ -4668,23 +4668,47 @@ def save_isci_gorusme_json():
     try:
         data = request.get_json()
         
-        # Tarihleri datetime.date formatına çevir - boş kontrolleri ekle
-        start_date_str = data.get('startDate', '').strip()
-        end_date_str = data.get('endDate', '').strip()
-        insurance_date_str = data.get('insuranceDate', '').strip()
+        # Tarih işleme fonksiyonu - esnek format desteği
+        def parse_date_flexible(date_str):
+            if not date_str or not date_str.strip():
+                return None
 
-        if not start_date_str:
-            return jsonify({'success': False, 'message': 'İşe başlama tarihi zorunludur'}), 400
-        if not end_date_str:
-            return jsonify({'success': False, 'message': 'İşten ayrılma tarihi zorunludur'}), 400
+            date_str = date_str.strip()
 
-        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            # YYYY-MM-DD formatı
+            try:
+                return datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
 
-        # insuranceDate opsiyonel - varsa çevir, yoksa None
-        insurance_date = None
-        if insurance_date_str:
-            insurance_date = datetime.strptime(insurance_date_str, '%Y-%m-%d').date()
+            # DD.MM.YYYY formatı
+            try:
+                return datetime.strptime(date_str, '%d.%m.%Y').date()
+            except ValueError:
+                pass
+
+            # DD/MM/YYYY formatı
+            try:
+                return datetime.strptime(date_str, '%d/%m/%Y').date()
+            except ValueError:
+                pass
+
+            # Tarih çevrilemezse None döndür
+            return None
+
+        # Tarihleri esnek şekilde çevir
+        start_date = parse_date_flexible(data.get('startDate'))
+        end_date = parse_date_flexible(data.get('endDate'))
+        insurance_date = parse_date_flexible(data.get('insuranceDate'))
+
+        # Sayı değerlerini güvenli şekilde çevir
+        def safe_float(value, default=0):
+            if not value or str(value).strip() == '':
+                return default
+            try:
+                return float(str(value).strip())
+            except (ValueError, TypeError):
+                return default
         
         # Yeni görüşme kaydı oluştur
         interview = WorkerInterview(
@@ -4702,9 +4726,9 @@ def save_isci_gorusme_json():
             position=data.get('position'),
             workHours=data.get('workHours'),
             overtime=data.get('overtime'),
-            salary=float(data.get('salary', 0)),
-            transportation=float(data.get('transportation', 0)) if data.get('transportation') else None,
-            food=float(data.get('food', 0)) if data.get('food') else None,
+            salary=safe_float(data.get('salary'), 0),
+            transportation=safe_float(data.get('transportation'), 0) if data.get('transportation') else None,
+            food=safe_float(data.get('food'), 0) if data.get('food') else None,
             benefits=data.get('benefits'),
             weeklyHoliday=data.get('weeklyHoliday'),
             holidays=data.get('holidays'),

@@ -1282,108 +1282,10 @@ input[type="text"][name$="Date"] {
             formData.append('id', formId.value);
         }
         
-        // Tarih alanlarını kontrol et
-        const dateFields = ['startDate', 'endDate'];
-        let dateError = false;
-        let errorField = '';
+        // Sadece zorunlu alanları kontrol et - format kontrolü yok
+        // Backend esnek format desteği ile tüm formatları kabul eder
         
-        dateFields.forEach(fieldName => {
-            const field = document.getElementById(fieldName);
-            if (field) {
-                let value = field.value.trim();
-                
-                if (value === '') {
-                    field.style.borderColor = 'red';
-                    dateError = true;
-                    errorField = fieldName === 'startDate' ? 'İşe Başlama Tarihi' : 
-                                fieldName === 'endDate' ? 'İşten Ayrılma Tarihi' : '';
-                } else {
-                    // Tarih formatı kontrolü (GG.AA.YYYY veya GG.AA.YYYY/GG.AA.YYYY)
-                    if (value.includes('/')) {
-                        // İki tarih formatı kontrolü
-                        const dates = value.split('/');
-                        if (dates.length === 2) {
-                            let isValid = true;
-                            dates.forEach(date => {
-                                const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
-                                if (!dateRegex.test(date.trim())) {
-                                    isValid = false;
-                                }
-                            });
-                            
-                            if (!isValid) {
-                                field.style.borderColor = 'red';
-                                dateError = true;
-                                errorField = fieldName === 'startDate' ? 'İşe Başlama Tarihi' : 
-                                            fieldName === 'endDate' ? 'İşten Ayrılma Tarihi' : '';
-                            } else {
-                                field.style.borderColor = '#dee2e6';
-                            }
-                        } else {
-                            field.style.borderColor = 'red';
-                            dateError = true;
-                            errorField = fieldName === 'startDate' ? 'İşe Başlama Tarihi' : 
-                                        fieldName === 'endDate' ? 'İşten Ayrılma Tarihi' : '';
-                        }
-                    } else {
-                        // Tek tarih formatı kontrolü
-                        const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
-                        if (!dateRegex.test(value)) {
-                            field.style.borderColor = 'red';
-                            dateError = true;
-                            errorField = fieldName === 'startDate' ? 'İşe Başlama Tarihi' : 
-                                        fieldName === 'endDate' ? 'İşten Ayrılma Tarihi' : '';
-                        } else {
-                            field.style.borderColor = '#dee2e6';
-                        }
-                    }
-                }
-            }
-        });
-        
-        if (dateError) {
-            alert(`Lütfen ${errorField} alanını GG.AA.YYYY veya GG.AA.YYYY/GG.AA.YYYY formatında doldurun.`);
-            return;
-        }
-        
-        // Form verilerini topla
-        inputs.forEach(input => {
-            let value = input.value.trim();
-            
-            // Tarih alanları için özel işlem
-            if (input.id === 'startDate' || input.id === 'endDate') {
-                // Tarih formatını sunucu tarafında işlenebilecek şekilde düzenle
-                // Eğer / içeriyorsa, iki tarih var demektir
-                if (value.includes('/')) {
-                    // Değeri olduğu gibi gönder, sunucu tarafında işlenecek
-                    formData.append(input.name, value);
-                } else {
-                    // Tek tarih formatı, olduğu gibi gönder
-                    formData.append(input.name, value);
-                }
-            } else {
-                // Diğer alanlar için normal işlem
-                formData.append(input.name, value);
-            }
-        });
-        
-        // Radio butonları için değer ekle
-        const radioOptions = [
-            'witnessOption',
-            'severancePayOption', 
-            'noticePayOption', 
-            'unpaidWagesOption', 
-            'overtimePayOption', 
-            'annualLeavePayOption', 
-            'ubgtPayOption'
-        ];
-        
-        radioOptions.forEach(option => {
-            const selectedOption = document.querySelector(`input[name="${option}"]:checked`);
-            if (selectedOption) {
-                formData.append(option, selectedOption.value);
-            }
-        });
+        // Bu bölüm artık yukarıda JSON formatında yapılıyor - temizlendi
         
         // Yükleme göstergesini göster
         const loadingOverlay = document.getElementById('loadingOverlay');
@@ -1392,37 +1294,10 @@ input[type="text"][name$="Date"] {
             document.querySelector('.loading-text').textContent = 'Form kaydediliyor, lütfen bekleyin...';
         }
         
-        // Form verilerini JSON formatında hazırla
+        // Form verilerini JSON formatında hazırla - basit ve esnek
         const jsonData = {};
         inputs.forEach(input => {
-            let value = input.value.trim();
-
-            // Tarih alanları için özel işlem
-            if (input.id === 'startDate' || input.id === 'endDate') {
-                // Tarih formatını YYYY-MM-DD formatına çevir
-                if (value.includes('/')) {
-                    // İki tarih formatı için ilk tarihi al
-                    const firstDate = value.split('/')[0];
-                    const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
-                    const match = firstDate.match(dateRegex);
-                    if (match) {
-                        jsonData[input.name] = `${match[3]}-${match[2]}-${match[1]}`;
-                    } else {
-                        jsonData[input.name] = value;
-                    }
-                } else {
-                    // Tek tarih formatı
-                    const dateRegex = /^(\d{2})\.(\d{2})\.(\d{4})$/;
-                    const match = value.match(dateRegex);
-                    if (match) {
-                        jsonData[input.name] = `${match[3]}-${match[2]}-${match[1]}`;
-                    } else {
-                        jsonData[input.name] = value;
-                    }
-                }
-            } else {
-                jsonData[input.name] = value;
-            }
+            jsonData[input.name] = input.value.trim();
         });
 
         // Radio butonları için değer ekle
