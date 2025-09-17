@@ -1748,7 +1748,9 @@ function setupModalEvents() {
     const progressBar = modal.querySelector('.progress');
 
     if (btn) {
-        btn.onclick = () => modal.style.display = 'block';
+        btn.onclick = () => {
+            alert('Bu özellik yakında kullanıma sunulacaktır. Lütfen daha sonra tekrar deneyin.');
+        };
     }
     if (span) {
         span.onclick = () => modal.style.display = 'none';

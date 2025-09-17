@@ -508,8 +508,7 @@
     transition: all 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.1);
     min-height: 80px;  /* Büyütüldü */
-    max-width: 280px;  /* Daha geniş */
-    width: 100%;
+    width: 100%;       /* Tam genişlik - max-width kaldırıldı */
 }
 
 .lawyer-card:hover {
@@ -568,14 +567,18 @@
 @media (max-width: 1200px) {
     .lawyers-grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
+        gap: 0.5rem;
+        max-width: 98%;
+        padding: 0 0.5rem;
     }
 }
 
 @media (max-width: 900px) {
     .lawyers-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        gap: 0.5rem;
+        max-width: 98%;
+        padding: 0 0.5rem;
     }
 }
 
@@ -587,7 +590,9 @@
     
     .lawyers-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 0.5rem;
+        max-width: 100%;
+        padding: 0 0.5rem;
     }
     
     .lawyer-card {
@@ -651,17 +656,18 @@
 }
 
 .iban-card {
-    background: linear-gradient(135deg, #2d313b 0%, #3a3f50 100%);
+    background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);  /* Çok koyu lacivert */
     border-radius: 12px;
     padding: 25px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
     transition: all 0.3s ease;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .iban-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 20px rgba(15, 20, 25, 0.4);  /* Koyu lacivert gölge */
+    background: linear-gradient(135deg, #141a22 0%, #1f2538 100%);  /* Hover'da biraz daha açık */
 }
 
 .iban-header {
@@ -823,8 +829,8 @@
 }
 
 [data-theme="dark"] .iban-card {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-    border-color: var(--border-color);
+    background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);  /* Çok koyu lacivert */
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Gönder butonu için renk uyumu */
@@ -848,11 +854,11 @@
     }
 }
 
-/* Normal avukat boxları için koyu yeşil saydam stil */
+/* Normal avukat boxları için çok koyu lacivert stil */
 .lawyer-card:not(.office-phone):not(.office-mobile) {
-    background: linear-gradient(135deg, rgba(27, 94, 32, 0.85) 0%, rgba(46, 125, 50, 0.85) 100%);
+    background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);  /* Çok koyu lacivert */
     color: white;
-    border: 2px solid rgba(27, 94, 32, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(8px);
 }
 
@@ -872,11 +878,11 @@
 }
 
 .lawyer-card:not(.office-phone):not(.office-mobile) .lawyer-phone {
-    color: #c8e6c9;
+    color: rgba(255, 255, 255, 0.9);  /* Telefon kısmı beyaz */
 }
 
 .lawyer-card:not(.office-phone):not(.office-mobile) .lawyer-phone i {
-    color: #a5d6a7;
+    color: rgba(255, 255, 255, 0.8);  /* Beyaz telefon ikonları */
 }
 
 .lawyer-card:not(.office-phone):not(.office-mobile) .lawyer-phone span {
@@ -887,60 +893,61 @@
 /* Normal avukat boxları hover efekti */
 .lawyer-card:not(.office-phone):not(.office-mobile):hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(27, 94, 32, 0.6);
-    background: linear-gradient(135deg, rgba(27, 94, 32, 0.95) 0%, rgba(46, 125, 50, 0.95) 100%);
+    box-shadow: 0 8px 25px rgba(15, 20, 25, 0.5);
+    background: linear-gradient(135deg, #141a22 0%, #1f2538 100%);  /* Hover'da biraz açık */
 }
 
 /* Ofis telefon boxları için özel stiller */
 .lawyer-card.office-phone,
 .lawyer-card.office-mobile {
-    background: linear-gradient(135deg, rgba(139, 195, 74, 0.8) 0%, rgba(104, 159, 56, 0.8) 100%);
-    color: #2e7d32;
-    border: 2px solid rgba(139, 195, 74, 0.3);
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);  /* Açık tonlu lacivert */
+    color: white;  /* Yazıları beyaz yap */
+    border: 2px solid rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
 }
 
 .lawyer-card.office-phone .lawyer-avatar i,
 .lawyer-card.office-mobile .lawyer-avatar i {
-    color: #2e7d32;
-    background: rgba(139, 195, 74, 0.2);
-    border: 1px solid rgba(139, 195, 74, 0.3);
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .lawyer-card.office-phone .lawyer-info h3,
 .lawyer-card.office-mobile .lawyer-info h3 {
-    color: #1b5e20;
+    color: white;
     font-weight: 600;
 }
 
 .lawyer-card.office-phone .lawyer-phone span,
 .lawyer-card.office-mobile .lawyer-phone span {
-    color: #2e7d32;
+    color: white;
     font-weight: 600;
 }
 
 .lawyer-card.office-phone .lawyer-phone i,
 .lawyer-card.office-mobile .lawyer-phone i {
-    color: #388e3c;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 /* Hover efektleri */
 .lawyer-card.office-phone:hover,
 .lawyer-card.office-mobile:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(139, 195, 74, 0.5);
-    background: linear-gradient(135deg, rgba(139, 195, 74, 0.9) 0%, rgba(104, 159, 56, 0.9) 100%);
+    box-shadow: 0 8px 25px rgba(44, 62, 80, 0.5);
+    background: linear-gradient(135deg, #34495e 0%, #3d566e 100%);  /* Hover'da biraz açık */
 }
 
 /* Ofis telefon boxlarını ortalama */
 .lawyers-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(260px, 1fr));
-    gap: 0.4rem;  /* Küçük boşluk ama biraz artırıldı */
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;  /* Küçük boşluk */
     align-items: start;
-    justify-items: center;
-    max-width: 1500px;  /* Daha geniş grid */
-    margin: 0 auto;     /* Ortala */
+    justify-items: stretch;  /* Boxları tam genişlikte yay */
+    max-width: 95%;  /* Konteyner genişliğinin %95'ini kullan */
+    margin: 0 auto;  /* Ortala */
+    padding: 0 1rem; /* Kenarlardan küçük padding */
 }
 
 /* İlk satır - normal akış */
