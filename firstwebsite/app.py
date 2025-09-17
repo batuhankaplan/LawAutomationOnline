@@ -4668,10 +4668,23 @@ def save_isci_gorusme_json():
     try:
         data = request.get_json()
         
-        # Tarihleri datetime.date formatına çevir
-        start_date = datetime.strptime(data.get('startDate'), '%Y-%m-%d').date()
-        insurance_date = datetime.strptime(data.get('insuranceDate'), '%Y-%m-%d').date()
-        end_date = datetime.strptime(data.get('endDate'), '%Y-%m-%d').date()
+        # Tarihleri datetime.date formatına çevir - boş kontrolleri ekle
+        start_date_str = data.get('startDate', '').strip()
+        end_date_str = data.get('endDate', '').strip()
+        insurance_date_str = data.get('insuranceDate', '').strip()
+
+        if not start_date_str:
+            return jsonify({'success': False, 'message': 'İşe başlama tarihi zorunludur'}), 400
+        if not end_date_str:
+            return jsonify({'success': False, 'message': 'İşten ayrılma tarihi zorunludur'}), 400
+
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+
+        # insuranceDate opsiyonel - varsa çevir, yoksa None
+        insurance_date = None
+        if insurance_date_str:
+            insurance_date = datetime.strptime(insurance_date_str, '%Y-%m-%d').date()
         
         # Yeni görüşme kaydı oluştur
         interview = WorkerInterview(
