@@ -4394,9 +4394,13 @@
             formData.forEach((value, key) => {
                 if (key === 'amount') {
                     // Tutar alanında sadece sayısal değeri al - parseFloat ile güvenli parse
+                    console.log('updateClient DEBUG - Orijinal amount value:', value);
                     let cleanValue = value.replace(/[^\d,.]/g, '').replace(/\./g, '').replace(',', '.');
+                    console.log('updateClient DEBUG - cleanValue after replace:', cleanValue);
                     // parseFloat ile sayıya çevir, sonra string'e geri çevir ki doğru format olsun
-                    data[key] = parseFloat(cleanValue).toString() || '0';
+                    const finalAmount = parseFloat(cleanValue).toString() || '0';
+                    console.log('updateClient DEBUG - Final amount:', finalAmount);
+                    data[key] = finalAmount;
                 } else {
                     data[key] = value;
                 }
@@ -4678,9 +4682,14 @@
             const amountParts = amountText.split(' ');
             // Tutar alanından sadece sayısal değeri al - formatı temizle
             let rawAmount = amountParts[0] || '';
+            console.log('fillEditForm DEBUG - Orijinal amountText:', amountText);
+            console.log('fillEditForm DEBUG - amountParts[0]:', rawAmount);
             // Binlik ayırıcıları kaldır ve sayıya çevir, sonra tekrar string yap
             rawAmount = rawAmount.replace(/\./g, '').replace(',', '.');
-            document.getElementById('editAmount').value = parseFloat(rawAmount).toString() || '0';
+            console.log('fillEditForm DEBUG - Temizlenmiş rawAmount:', rawAmount);
+            const finalAmount = parseFloat(rawAmount).toString() || '0';
+            console.log('fillEditForm DEBUG - Final amount:', finalAmount);
+            document.getElementById('editAmount').value = finalAmount;
             if (amountParts.length > 1) {
                 document.getElementById('editCurrency').value = amountParts[amountParts.length - 1];
             }
