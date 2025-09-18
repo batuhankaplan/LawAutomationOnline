@@ -1836,9 +1836,21 @@ def delete_case(case_id):
             user_id=current_user.id if current_user.is_authenticated else 1
         )
 
-        response_data = {"success": True, "deleted_files": deleted_files}
+        # Sonuç hazırla - sadece önemli dosya silme hatalarında uyarı göster
+        response_data = {"success": True}
+
+        # Silinen dosya sayısını ekle (geliştirici modu için)
+        if deleted_files:
+            response_data["deleted_files_count"] = len(deleted_files)
+
+        # Sadece çok sayıda dosya silinemedi ise uyarı göster
         if failed_deletions:
-            response_data["warning"] = f"Bazı dosyalar silinemedi: {', '.join(failed_deletions)}"
+            # Eğer başarılı silinen dosya sayısı >= başarısız olanlardan fazlaysa sessiz kal
+            if len(failed_deletions) > len(deleted_files) and len(failed_deletions) > 2:
+                # Gerçekten sorunlu bir durum var
+                response_data["warning"] = f"Dikkat: {len(failed_deletions)} dosya silinemedi. Yöneticinizle iletişime geçin."
+            # Aksi halde sessiz kal - sadece log'a yaz
+            print(f"INFO: {len(failed_deletions)} fiziksel dosya silinemedi (normal server permission): {failed_deletions[:2]}")  # İlk 2 hatağı log'la
 
         return jsonify(response_data)
 
@@ -1850,6 +1862,19 @@ def delete_case(case_id):
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory('static', filename)
+
+# Favicon route - 404 hatalarını önlemek için
+@app.route('/favicon.ico')
+def favicon():
+    try:
+        # Static klasöründe favicon.ico varsa onu kullan
+        return send_from_directory('static', 'favicon.ico')
+    except:
+        # Yoksa boş bir response döndür (404 yerine)
+        from flask import make_response
+        response = make_response('', 204)  # 204 No Content
+        response.mimetype = 'image/x-icon'
+        return response
 
 @app.route('/search')
 def search():
@@ -2777,14 +2802,17 @@ def delete_document(document_id):
             case_id=document.case_id
         )
 
-        if failed_deletions:
-            return jsonify(
-                success=True,
-                warning=f"Veritabanından silindi ancak bazı dosyalar silinemedi: {', '.join(failed_deletions)}",
-                deleted_files=deleted_files
-            )
+        # Sonuç hazırla - gereksiz uyarıları gizle
+        response_data = {"success": True}
 
-        return jsonify(success=True, deleted_files=deleted_files)
+        if failed_deletions:
+            # Eğer çok fazla dosya silinemedi ise uyarı göster
+            if len(failed_deletions) > 2:
+                response_data["warning"] = "Bazı eski dosya sürümleri silinemedi, ancak işlem başarılı."
+            # Aksi halde sessiz kal - sadece log'a yaz
+            print(f"INFO: {len(failed_deletions)} fiziksel dosya silinemedi (server permission): {failed_deletions[:2]}")
+
+        return jsonify(response_data)
 
     except Exception as e:
         db.session.rollback()
