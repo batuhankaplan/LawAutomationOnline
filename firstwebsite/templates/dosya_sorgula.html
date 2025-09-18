@@ -4761,7 +4761,12 @@ function saveChanges(caseId) {
             }
             
             closeEditModal();
+            // Detay modalını güncelle
             showDetails(caseId);
+            // Ana tabloyu da güncelle - status değişikliğini yansıtmak için
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000); // 1 saniye sonra sayfayı yenile
         } else {
             throw new Error(result.message || 'Güncelleme sırasında bir hata oluştu');
         }

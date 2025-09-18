@@ -1605,9 +1605,13 @@ def case_details(case_id):
 def edit_case(case_id):
     try:
         data = request.get_json()
-        
+
         if not data:
             return jsonify(success=False, message="Geçersiz veri formatı"), 400
+
+        # Debug: Gelen veriyi logla
+        print(f"DEBUG: edit_case - Gelen data: {data}")
+        print(f"DEBUG: edit_case - Status değeri: '{data.get('status')}'")
             
         case_file = db.session.get(CaseFile, case_id)
         if not case_file:
@@ -1632,7 +1636,9 @@ def edit_case(case_id):
         if 'phone_number' in data:
             case_file.phone_number = data['phone_number']
         if 'status' in data and data['status']:
+            print(f"DEBUG: Status değişimi: '{case_file.status}' -> '{data['status']}'")
             case_file.status = data['status']
+            print(f"DEBUG: Status güncellendi: '{case_file.status}'")
         if 'description' in data:
             case_file.description = data['description']
         if 'hearing_time' in data:
@@ -1738,15 +1744,19 @@ def edit_case(case_id):
                 case_file.next_hearing = None
         
         db.session.commit()
-        
+
+        # Debug: Commit sonrası kontrol
+        updated_case = db.session.get(CaseFile, case_id)
+        print(f"DEBUG: Commit sonrası status: '{updated_case.status}'")
+
         log_activity(
             activity_type='dosya_duzenleme',
             description=f"Dosya güncellendi: {case_file.client_name}",
             user_id=current_user.id,
             case_id=case_id
         )
-        
-        return jsonify(success=True, message="Dosya başarıyla güncellendi")
+
+        return jsonify(success=True, message="Dosya başarıyla güncellendi", new_status=updated_case.status)
         
     except Exception as e:
         print(f"Dosya güncelleme hatası: {str(e)}")
