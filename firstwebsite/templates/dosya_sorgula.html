@@ -4717,6 +4717,8 @@ function saveChanges(caseId) {
 
     console.log('DEBUG: Data being sent to server:', data);
     console.log('DEBUG: file_type in data:', data.file_type);
+    console.log('DEBUG: status in data:', data.status);
+    console.log('DEBUG: editStatus element value:', document.getElementById('editStatus').value);
     
     fetch(`/edit_case/${caseId}`, {
         method: 'POST',

@@ -1635,10 +1635,12 @@ def edit_case(case_id):
             case_file.client_name = data['client_name'].strip()
         if 'phone_number' in data:
             case_file.phone_number = data['phone_number']
-        if 'status' in data and data['status']:
+        if 'status' in data:
             print(f"DEBUG: Status değişimi: '{case_file.status}' -> '{data['status']}'")
             case_file.status = data['status']
             print(f"DEBUG: Status güncellendi: '{case_file.status}'")
+        else:
+            print(f"DEBUG: Status alanı data'da bulunamadı. Mevcut data keys: {list(data.keys())}")
         if 'description' in data:
             case_file.description = data['description']
         if 'hearing_time' in data:
