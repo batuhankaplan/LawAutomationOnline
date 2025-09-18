@@ -2796,7 +2796,13 @@ let currentCaseId = null;
 let currentExpenses = [];
 
 // Backend'den gelen tüm adliye verisi
-const allCourthousesData = JSON.parse('{{ all_courthouses | safe }}');
+let allCourthousesData;
+try {
+    allCourthousesData = JSON.parse('{{ all_courthouses | safe }}');
+} catch (e) {
+    console.error('allCourthousesData parse hatası:', e);
+    allCourthousesData = {};
+}
 
 // Dosya türüne göre sıfat seçenekleri
 const capacityOptions = {

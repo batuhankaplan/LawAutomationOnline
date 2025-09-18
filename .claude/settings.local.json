@@ -15,7 +15,8 @@
       "Bash(grep:*)",
       "Bash(git remote set-url:*)",
       "Bash(git pull:*)",
-      "Bash(journalctl:*)"
+      "Bash(journalctl:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": []
   }
