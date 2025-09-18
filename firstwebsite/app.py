@@ -4879,16 +4879,16 @@ def get_worker_interviews():
     try:
         # Yetki kontrolü - isci_gorusme_goruntule yetkisi olanlar tüm formları görebilir
         if current_user.has_permission('isci_gorusme_goruntule') or current_user.is_admin:
-            interviews = WorkerInterview.query.order_by(WorkerInterview.created_at.desc()).all()
+            interviews = IsciGorusmeTutanagi.query.order_by(IsciGorusmeTutanagi.created_at.desc()).all()
         else:
-            interviews = WorkerInterview.query.filter_by(user_id=current_user.id).order_by(WorkerInterview.created_at.desc()).all()
+            interviews = IsciGorusmeTutanagi.query.filter_by(user_id=current_user.id).order_by(IsciGorusmeTutanagi.created_at.desc()).all()
 
         # Frontend'e uygun format oluştur
         forms_data = []
         for interview in interviews:
             forms_data.append({
                 'id': interview.id,
-                'name': interview.fullName or 'İsimsiz Form',  # HTML'de 'name' alanı bekleniyor
+                'name': interview.name or 'İsimsiz Form',  # IsciGorusmeTutanagi'nde 'name' field'ı var
                 'date': interview.created_at.strftime('%d.%m.%Y') if interview.created_at else 'Tarih yok'
             })
 
@@ -4903,7 +4903,7 @@ def get_worker_interviews():
 @login_required
 def get_worker_interview(interview_id):
     try:
-        interview = WorkerInterview.query.get_or_404(interview_id)
+        interview = IsciGorusmeTutanagi.query.get_or_404(interview_id)
         # Yetki kontrolü - isci_gorusme_goruntule yetkisi olanlar erişebilir
         if not current_user.has_permission('isci_gorusme_goruntule') and not current_user.is_admin:
             return jsonify({'success': False, 'error': 'Yetkisiz erişim'}), 403
@@ -4911,31 +4911,31 @@ def get_worker_interview(interview_id):
         # HTML form alanlarına uygun format oluştur - doğru field mapping
         form_data = {
             # Kişisel Bilgiler
-            'name': interview.fullName or 'Belirtilmemiş',
+            'name': interview.name or 'Belirtilmemiş',
             'tcNo': interview.tcNo or 'Belirtilmemiş',
             'phone': interview.phone or 'Belirtilmemiş',
             'address': interview.address or 'Belirtilmemiş',
 
-            # Tarih Bilgileri - DD.MM.YYYY formatında
-            'startDate': interview.startDate.strftime('%d.%m.%Y') if interview.startDate else 'Belirtilmemiş',
-            'endDate': interview.endDate.strftime('%d.%m.%Y') if interview.endDate else 'Belirtilmemiş',
+            # Tarih Bilgileri - string olarak saklı
+            'startDate': interview.startDate or '',
+            'endDate': interview.endDate or '',
+            'insuranceDate': interview.insuranceDate or '',
 
-            # İş Bilgileri - DOĞRU FIELD MAPPING
-            'position': interview.position or 'Belirtilmemiş',
-            'salary': interview.businessType or 'Belirtilmemiş',  # İşyeri Faaliyeti/Konusu (HTML'de salary field)
-            'insuranceStatus': interview.companyName or 'Belirtilmemiş',  # Şirket İsmi
-            'department': interview.salary or 'Belirtilmemiş',  # Ücret (HTML'de department field)
-            'insuranceNo': interview.registryNumber or 'Belirtilmemiş',  # Mersis/Vergi/Ticaret Sicil No
-            'insuranceDate': interview.companyAddress or 'Belirtilmemiş',  # Şirket Adresi-Telefonu
+            # İş Bilgileri - IsciGorusmeTutanagi field'larına uygun
+            'position': interview.position or '',
+            'department': interview.department or '',
+            'insuranceStatus': interview.insuranceStatus or '',
+            'insuranceNo': interview.insuranceNo or '',
+            'salary': interview.salary or '',
 
             # Çalışma Bilgileri
-            'workingHours': interview.workHours or 'Belirtilmemiş',
-            'overtime': interview.overtime or 'Belirtilmemiş',
-            'weeklyHoliday': interview.weeklyHoliday or 'Belirtilmemiş',
-            'annualLeave': interview.annualLeave or 'Belirtilmemiş',
+            'workingHours': interview.workingHours or '',
+            'overtime': interview.overtime or '',
+            'weeklyHoliday': interview.weeklyHoliday or '',
+            'annualLeave': interview.annualLeave or '',
 
             # İşten Ayrılma
-            'terminationReason': interview.endReason or 'Belirtilmemiş',
+            'terminationReason': interview.terminationReason or '',
 
             # Radio button seçimleri
             'severancePayOption': interview.severancePayOption or 'no',
@@ -4946,34 +4946,40 @@ def get_worker_interview(interview_id):
             'ubgtPayOption': interview.ubgtPayOption or 'no',
             'witnessOption': interview.witnessOption or 'no',
 
-            # Tanık bilgileri
-            'witness1': interview.witness1 or '',
-            'witness1Info': interview.witness1Info or '',
-            'witness2': interview.witness2 or '',
-            'witness2Info': interview.witness2Info or '',
-            'witness3': interview.witness3 or '',
-            'witness3Info': interview.witness3Info or '',
-            'witness4': interview.witness4 or '',
-            'witness4Info': interview.witness4Info or '',
-
-            # Tanık sayısını hesapla ve ekle
-            'witnessCount': sum(1 for w in [interview.witness1, interview.witness2, interview.witness3, interview.witness4] if w and w.strip()),
-
-            # Tanık bilgilerini JSON formatında da sağla
-            'witnesses': json.dumps({
-                'count': sum(1 for w in [interview.witness1, interview.witness2, interview.witness3, interview.witness4] if w and w.strip()),
-                'witnesses': [
-                    {'name': w[0], 'info': w[1] or ''} for w in [
-                        (interview.witness1, interview.witness1Info),
-                        (interview.witness2, interview.witness2Info),
-                        (interview.witness3, interview.witness3Info),
-                        (interview.witness4, interview.witness4Info)
-                    ] if w[0] and w[0].strip()
-                ]
-            }),
         }
 
-        print(f"DEBUG - Dönen form verisi: witness1='{form_data.get('witness1')}', witness1Info='{form_data.get('witness1Info')}'")
+        # Tanık bilgilerini JSON'dan parse et
+        witnesses_data = {}
+        if interview.witnesses:
+            try:
+                witnesses = json.loads(interview.witnesses)
+                for i, witness in enumerate(witnesses, 1):
+                    if i <= 4:  # Maksimum 4 tanık
+                        witnesses_data[f'witness{i}Name'] = witness.get('name', '')
+                        witnesses_data[f'witness{i}Info'] = witness.get('info', '')
+            except:
+                pass
+
+        # Tanık bilgilerini form_data'ya ekle
+        for i in range(1, 5):
+            form_data[f'witness{i}Name'] = witnesses_data.get(f'witness{i}Name', '')
+            form_data[f'witness{i}Info'] = witnesses_data.get(f'witness{i}Info', '')
+
+        # Alacak bilgilerini ekle
+        form_data.update({
+            'severancePay': interview.severancePay or '',
+            'noticePay': interview.noticePay or '',
+            'unpaidWages': interview.unpaidWages or '',
+            'overtimePay': interview.overtimePay or '',
+            'annualLeavePay': interview.annualLeavePay or '',
+            'ubgtPay': interview.ubgtPay or '',
+        })
+
+        # Tanık sayısını hesapla
+        witness_count = len([w for w in witnesses_data.values() if w]) // 2  # Name ve info çiftleri
+        form_data['witnessCount'] = witness_count
+
+        print(f"DEBUG - Dönen form verisi: witness1Name='{form_data.get('witness1Name')}', witness1Info='{form_data.get('witness1Info')}'")
         return jsonify({
             'success': True,
             'form': form_data
@@ -4985,7 +4991,7 @@ def get_worker_interview(interview_id):
 @login_required
 def delete_worker_interview(interview_id):
     try:
-        interview = WorkerInterview.query.get_or_404(interview_id)
+        interview = IsciGorusmeTutanagi.query.get_or_404(interview_id)
         # Yetki kontrolü - isci_gorusme_goruntule yetkisi olanlar silebilir
         if not current_user.has_permission('isci_gorusme_goruntule') and not current_user.is_admin:
             return jsonify({'success': False, 'error': 'Yetkisiz erişim'}), 403
