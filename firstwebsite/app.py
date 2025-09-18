@@ -4561,7 +4561,7 @@ def worker_interview():
 
 @app.route('/save_isci_gorusme', methods=['POST'])
 @login_required
-@permission_required('isci_gorusme_ekle')
+@permission_required('isci_gorusme_goruntule')
 @csrf.exempt
 def save_isci_gorusme():
     try:
@@ -4961,8 +4961,8 @@ def get_worker_interview(interview_id):
 def delete_worker_interview(interview_id):
     try:
         interview = WorkerInterview.query.get_or_404(interview_id)
-        # Yetki kontrolü - isci_gorusme_sil yetkisi olanlar silebilir
-        if not current_user.has_permission('isci_gorusme_sil') and not current_user.is_admin:
+        # Yetki kontrolü - isci_gorusme_goruntule yetkisi olanlar silebilir
+        if not current_user.has_permission('isci_gorusme_goruntule') and not current_user.is_admin:
             return jsonify({'success': False, 'error': 'Yetkisiz erişim'}), 403
 
         db.session.delete(interview)
@@ -4983,7 +4983,7 @@ def generate_worker_interview_pdf():
 
 @app.route('/save_isci_gorusme_form', methods=['POST'])
 @login_required
-@permission_required('isci_gorusme_ekle')
+@permission_required('isci_gorusme_goruntule')
 def save_isci_gorusme_form():
     try:
         form_data = request.form.to_dict()
@@ -5125,8 +5125,8 @@ def delete_isci_gorusme_form(form_id):
         if not form:
             return jsonify({'success': False, 'error': 'Form bulunamadı'})
         
-        # Yetki kontrolü - isci_gorusme_sil yetkisi olanlar silebilir
-        if not current_user.has_permission('isci_gorusme_sil') and not current_user.is_admin:
+        # Yetki kontrolü - isci_gorusme_goruntule yetkisi olanlar silebilir
+        if not current_user.has_permission('isci_gorusme_goruntule') and not current_user.is_admin:
             return jsonify({'success': False, 'error': 'Bu formu silme izniniz yok'})
         
         db.session.delete(form)
