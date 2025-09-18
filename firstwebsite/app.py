@@ -1810,8 +1810,8 @@ def delete_case(case_id):
         # Not: Payment'lar Client modeli ile ilişkili, CaseFile ile değil.
         # Aynı client'a ait birden fazla CaseFile olabilir, bu yüzden payment'lar silinmez.
 
-        # İlişkili aktivite loglarını sil
-        activity_logs = ActivityLog.query.filter_by(case_id=case_id).all()
+        # İlişkili aktivite loglarını sil (ActivityLog modelinde case_id değil related_case_id var)
+        activity_logs = ActivityLog.query.filter_by(related_case_id=case_id).all()
         for log in activity_logs:
             db.session.delete(log)
 
