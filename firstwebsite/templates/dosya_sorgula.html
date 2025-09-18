@@ -590,6 +590,20 @@
     }
 }
 
+/* Loading animation for buttons */
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.rotating {
+    animation: rotate 1s linear infinite;
+}
+
 .modal-content {
     background: white;
     width: 95%;
@@ -4974,16 +4988,22 @@ function uploadDocument() {
     const documentType = document.getElementById('documentType');
     const fileInput = document.getElementById('documentFile');
     const documentName = document.getElementById('documentName');
-    
+    const uploadButton = document.querySelector('#uploadModal .btn.primary');
+
     if (!documentType.value) {
         showGlobalNotification('Lütfen belge türünü seçiniz.', 'error');
         return;
     }
-    
+
     if (!fileInput.files.length) {
         showGlobalNotification('Lütfen bir belge seçiniz.', 'error');
         return;
     }
+
+    // Yükleme butonu loading göstericisini aktif et
+    const originalButtonText = uploadButton.textContent;
+    uploadButton.textContent = 'Yükleniyor...';
+    uploadButton.disabled = true;
 
     const formData = new FormData();
     formData.append('document', fileInput.files[0]);
@@ -4997,7 +5017,25 @@ function uploadDocument() {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (response.status === 403) {
+            throw new Error('Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz.');
+        }
+
+        if (response.status === 413) {
+            throw new Error('Dosya çok büyük. Lütfen daha küçük bir dosya seçin.');
+        }
+
+        if (response.status === 500) {
+            throw new Error('Sunucu hatası - Lütfen yöneticinizle iletişime geçin');
+        }
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return response.json();
+    })
     .then(result => {
         if (result.success) {
             showGlobalNotification('Belge başarıyla yüklendi!', 'success');
@@ -5010,6 +5048,11 @@ function uploadDocument() {
     .catch(error => {
         console.error('Hata:', error);
         showGlobalNotification('Belge yüklenirken bir hata oluştu: ' + error.message, 'error');
+    })
+    .finally(() => {
+        // Butonu eski haline döndür
+        uploadButton.textContent = originalButtonText;
+        uploadButton.disabled = false;
     });
 }
 
@@ -5196,22 +5239,31 @@ function deleteDocument(docId) {
         fetch(`/delete_document/${docId}`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             }
         })
         .then(response => {
             if (response.status === 403) {
-                alert('Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz. Dosya silme yetkisi gereklidir.');
+                showGlobalNotification('Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz. Dosya silme yetkisi gereklidir.', 'error');
                 return Promise.reject(new Error('Yetki hatası'));
             }
-            
+
+            if (response.status === 500) {
+                throw new Error('Sunucu hatası - Lütfen yöneticinizle iletişime geçin');
+            }
+
             if (!response.ok) {
-                throw new Error('Sunucu hatası');
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             return response.json();
         })
         .then(result => {
             if (result.success) {
+                showGlobalNotification('Belge başarıyla silindi!', 'success');
+                if (result.warning) {
+                    showGlobalNotification(result.warning, 'warning');
+                }
                 showDetails(currentCaseId); // Belge listesini güncelle
             } else {
                 throw new Error(result.message || 'Belge silinirken bir hata oluştu');
@@ -5220,7 +5272,7 @@ function deleteDocument(docId) {
         .catch(error => {
             console.error('Hata:', error);
             if (error.message !== 'Yetki hatası') {
-                alert('Belge silinirken bir hata oluştu: ' + error.message);
+                showGlobalNotification('Belge silinirken bir hata oluştu: ' + error.message, 'error');
             }
         });
     }
@@ -6879,7 +6931,16 @@ function syncHearingToCalendar(caseId, hearingDate, hearingTime, status, hearing
 
 // Dosya silme fonksiyonu
 function deleteCase(caseId) {
-    if (confirm('Bu dosyayı silmek istediğinizden emin misiniz?')) {
+    if (confirm('Bu dosyayı ve tüm ilişkili bilgileri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+        // Delete butonunu bul ve loading göstericisini aktif et
+        const deleteButton = document.querySelector(`[onclick="deleteCase(${caseId})"]`);
+        let originalContent;
+        if (deleteButton) {
+            originalContent = deleteButton.innerHTML;
+            deleteButton.innerHTML = '<i class="material-icons rotating">refresh</i>';
+            deleteButton.disabled = true;
+        }
+
         fetch(`/delete_case/${caseId}`, {
             method: 'POST',
             headers: {
@@ -6889,21 +6950,34 @@ function deleteCase(caseId) {
         })
         .then(response => {
             if (response.status === 403) {
-                alert('Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz. Dosya silme yetkisi gereklidir.');
+                showGlobalNotification('Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz. Dosya silme yetkisi gereklidir.', 'error');
                 return Promise.reject(new Error('Yetki hatası'));
             }
-            
+
+            if (response.status === 500) {
+                throw new Error('Sunucu hatası - Lütfen yöneticinizle iletişime geçin');
+            }
+
             if (!response.ok) {
-                throw new Error('Sunucu hatası');
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             return response.json();
         })
         .then(result => {
             if (result.success) {
+                showGlobalNotification('Dosya başarıyla silindi!', 'success');
+                if (result.warning) {
+                    showGlobalNotification(result.warning, 'warning');
+                }
                 // Tablodan ilgili satırı kaldır
                 const row = document.querySelector(`tr[data-case-id="${caseId}"]`);
                 if (row) {
                     row.remove();
+                }
+                // Sayfa boşsa sayfayı yenile
+                const remainingRows = document.querySelectorAll('table tbody tr');
+                if (remainingRows.length === 0) {
+                    location.reload();
                 }
             } else {
                 throw new Error(result.message || 'Dosya silinirken bir hata oluştu');
@@ -6912,7 +6986,14 @@ function deleteCase(caseId) {
         .catch(error => {
             console.error('Hata:', error);
             if (error.message !== 'Yetki hatası') {
-                alert('Dosya silinirken bir hata oluştu: ' + error.message);
+                showGlobalNotification('Dosya silinirken bir hata oluştu: ' + error.message, 'error');
+            }
+        })
+        .finally(() => {
+            // Butonu eski haline döndür
+            if (deleteButton && originalContent) {
+                deleteButton.innerHTML = originalContent;
+                deleteButton.disabled = false;
             }
         });
     }

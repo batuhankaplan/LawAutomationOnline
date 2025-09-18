@@ -1756,13 +1756,95 @@ def edit_case(case_id):
 @app.route('/delete_case/<int:case_id>', methods=['POST'])
 @login_required
 @permission_required('dosya_sil')
+@csrf.exempt
 def delete_case(case_id):
-    case_file = CaseFile.query.get(case_id)
-    if case_file:
+    try:
+        case_file = CaseFile.query.get(case_id)
+        if not case_file:
+            return jsonify(success=False, message="Dosya bulunamadı")
+
+        # İlişkili belgeleri sil
+        documents = Document.query.filter_by(case_id=case_id).all()
+        deleted_files = []
+        failed_deletions = []
+
+        for document in documents:
+            # Fiziksel dosyaları sil
+            file_paths_to_check = []
+
+            # Ana dosya yolu
+            main_file_path = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+            file_paths_to_check.append(main_file_path)
+
+            # Eski format kontrol
+            if not os.path.exists(main_file_path):
+                old_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.filepath)
+                file_paths_to_check.append(old_filepath)
+
+                filename_only = os.path.basename(document.filepath)
+                alt_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', filename_only)
+                file_paths_to_check.append(alt_filepath)
+
+            # PDF versiyonu varsa
+            if document.pdf_version:
+                pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], document.pdf_version)
+                file_paths_to_check.append(pdf_path)
+
+            # Dosyaları sil
+            for file_path in file_paths_to_check:
+                if os.path.exists(file_path):
+                    try:
+                        if os.access(file_path, os.W_OK):
+                            os.remove(file_path)
+                            deleted_files.append(file_path)
+                        else:
+                            try:
+                                os.chmod(file_path, 0o666)
+                                os.remove(file_path)
+                                deleted_files.append(file_path)
+                            except Exception as chmod_error:
+                                failed_deletions.append(f"{file_path}: {str(chmod_error)}")
+                    except Exception as delete_error:
+                        failed_deletions.append(f"{file_path}: {str(delete_error)}")
+
+            # Belgeyi veritabanından sil
+            db.session.delete(document)
+
+        # İlişkili ödemeleri sil
+        payments = Payment.query.filter_by(case_id=case_id).all()
+        for payment in payments:
+            db.session.delete(payment)
+
+        # İlişkili aktivite loglarını sil
+        activity_logs = ActivityLog.query.filter_by(case_id=case_id).all()
+        for log in activity_logs:
+            db.session.delete(log)
+
+        # İlişkili takvim etkinliklerini sil
+        calendar_events = CalendarEvent.query.filter_by(case_id=case_id).all()
+        for event in calendar_events:
+            db.session.delete(event)
+
+        # Dosyayı sil
         db.session.delete(case_file)
         db.session.commit()
-        return jsonify(success=True)
-    return jsonify(success=False)
+
+        # İşlem logu ekle
+        log_activity(
+            activity_type='dosya_silme',
+            description=f"Dosya silindi: {case_file.client_name} - {case_file.case_number}",
+            user_id=current_user.id if current_user.is_authenticated else 1
+        )
+
+        response_data = {"success": True, "deleted_files": deleted_files}
+        if failed_deletions:
+            response_data["warning"] = f"Bazı dosyalar silinemedi: {', '.join(failed_deletions)}"
+
+        return jsonify(response_data)
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, message=f"Dosya silinirken hata oluştu: {str(e)}")
 
 # Static dosyalar için özel route
 @app.route('/static/<path:filename>')
@@ -2444,10 +2526,24 @@ def upload_document(case_id):
             
             # Benzersiz dosya adı oluştur
             unique_filename = f"{case_id}_{int(pytime.time())}_{original_filename}"
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', unique_filename)
-            
-            os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'documents'), exist_ok=True)
-            file.save(file_path)
+            documents_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'documents')
+            file_path = os.path.join(documents_dir, unique_filename)
+
+            # Klasörü oluştur ve izinleri ayarla
+            try:
+                os.makedirs(documents_dir, exist_ok=True)
+                # Klasör izinlerini ayarla (okuma, yazma, çalıştırma)
+                os.chmod(documents_dir, 0o755)
+            except Exception as e:
+                return jsonify(success=False, message=f"Klasör oluşturulamadı: {str(e)}")
+
+            # Dosyayı kaydet ve izinleri ayarla
+            try:
+                file.save(file_path)
+                # Dosya izinlerini ayarla (okuma, yazma)
+                os.chmod(file_path, 0o644)
+            except Exception as e:
+                return jsonify(success=False, message=f"Dosya kaydedilemedi: {str(e)}")
             
             # PDF path'i başlangıçta None olarak ayarla
             pdf_path = None
@@ -2541,26 +2637,76 @@ def download_document(document_id):
 def delete_document(document_id):
     try:
         document = Document.query.get_or_404(document_id)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
-        
+
+        # Dosya yollarını kontrol et
+        file_paths_to_check = []
+
+        # Ana dosya yolu
+        main_file_path = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+        file_paths_to_check.append(main_file_path)
+
         # Backward compatibility: Eski format kontrol et
-        if not os.path.exists(file_path):
+        if not os.path.exists(main_file_path):
             # Eski format: documents klasöründe sadece filename
             old_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.filepath)
-            if os.path.exists(old_filepath):
-                file_path = old_filepath
-        
-        # Dosyayı sil
-        if os.path.exists(file_path):
-            os.remove(file_path)
-        
-        # Veritabanından sil
+            file_paths_to_check.append(old_filepath)
+
+            # Başka olası yollar da ekle
+            filename_only = os.path.basename(document.filepath)
+            alt_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', filename_only)
+            file_paths_to_check.append(alt_filepath)
+
+        # PDF versiyonu varsa onu da sil
+        if document.pdf_version:
+            pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], document.pdf_version)
+            file_paths_to_check.append(pdf_path)
+
+        # Dosyaları güvenli şekilde sil
+        deleted_files = []
+        failed_deletions = []
+
+        for file_path in file_paths_to_check:
+            if os.path.exists(file_path):
+                try:
+                    # Dosya izinlerini kontrol et ve gerekirse değiştir
+                    if os.access(file_path, os.W_OK):
+                        os.remove(file_path)
+                        deleted_files.append(file_path)
+                    else:
+                        # Yazma izni yoksa izin ver ve tekrar dene
+                        try:
+                            os.chmod(file_path, 0o666)
+                            os.remove(file_path)
+                            deleted_files.append(file_path)
+                        except Exception as chmod_error:
+                            failed_deletions.append(f"{file_path}: {str(chmod_error)}")
+                except Exception as delete_error:
+                    failed_deletions.append(f"{file_path}: {str(delete_error)}")
+
+        # Veritabanından sil (dosya silme başarısız olsa bile)
         db.session.delete(document)
         db.session.commit()
-        
-        return jsonify(success=True)
+
+        # İşlem logu ekle
+        log_activity(
+            activity_type='belge_silme',
+            description=f"Belge silindi: {document.filename} (ID: {document_id})",
+            user_id=current_user.id if current_user.is_authenticated else 1,
+            case_id=document.case_id
+        )
+
+        if failed_deletions:
+            return jsonify(
+                success=True,
+                warning=f"Veritabanından silindi ancak bazı dosyalar silinemedi: {', '.join(failed_deletions)}",
+                deleted_files=deleted_files
+            )
+
+        return jsonify(success=True, deleted_files=deleted_files)
+
     except Exception as e:
-        return jsonify(success=False, message=str(e))
+        db.session.rollback()
+        return jsonify(success=False, message=f"Belge silinirken hata oluştu: {str(e)}")
 
 def convert_udf_to_pdf(input_path):
     try:
