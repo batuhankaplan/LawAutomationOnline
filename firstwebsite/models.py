@@ -559,6 +559,9 @@ class IsciGorusmeTutanagi(db.Model):
     insuranceDate = db.Column(db.String(10))  # GG.AA.YYYY formatında
     insuranceNo = db.Column(db.String(20))
     salary = db.Column(db.String(50))
+
+    # Şirket Bilgileri
+    companyAddress = db.Column(db.Text)  # Şirket Adresi-Telefonu
     
     # Çalışma Koşulları
     workingHours = db.Column(db.String(100))

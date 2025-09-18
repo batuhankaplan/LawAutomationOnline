@@ -4763,6 +4763,7 @@ def save_isci_gorusme_json():
             interview.insuranceStatus = get_field_value('insuranceStatus', '')
             interview.insuranceNo = get_field_value('insuranceNo', '')
             interview.salary = get_field_value('salary', '')
+            interview.companyAddress = get_field_value('companyAddress', '')
             interview.workingHours = get_field_value('workingHours', '')
             interview.overtime = get_field_value('overtime', '')
             interview.weeklyHoliday = get_field_value('weeklyHoliday', '')
@@ -4821,6 +4822,7 @@ def save_isci_gorusme_json():
                 insuranceStatus=get_field_value('insuranceStatus', ''),
                 insuranceNo=get_field_value('insuranceNo', ''),
                 salary=get_field_value('salary', ''),
+                companyAddress=get_field_value('companyAddress', ''),
                 workingHours=get_field_value('workingHours', ''),
                 overtime=get_field_value('overtime', ''),
                 weeklyHoliday=get_field_value('weeklyHoliday', ''),
@@ -4927,6 +4929,7 @@ def get_worker_interview(interview_id):
             'insuranceStatus': interview.insuranceStatus or '',
             'insuranceNo': interview.insuranceNo or '',
             'salary': interview.salary or '',
+            'companyAddress': interview.companyAddress or '',
 
             # Çalışma Bilgileri
             'workingHours': interview.workingHours or '',
@@ -4978,6 +4981,19 @@ def get_worker_interview(interview_id):
         # Tanık sayısını hesapla
         witness_count = len([w for w in witnesses_data.values() if w]) // 2  # Name ve info çiftleri
         form_data['witnessCount'] = witness_count
+
+        # Preview için witnesses JSON formatını da ekle
+        if interview.witnesses:
+            try:
+                witnesses_list = json.loads(interview.witnesses)
+                form_data['witnesses'] = json.dumps({
+                    'count': len(witnesses_list),
+                    'witnesses': witnesses_list
+                })
+            except:
+                form_data['witnesses'] = ''
+        else:
+            form_data['witnesses'] = ''
 
         print(f"DEBUG - Dönen form verisi: witness1Name='{form_data.get('witness1Name')}', witness1Info='{form_data.get('witness1Info')}'")
         return jsonify({

@@ -360,7 +360,7 @@
 }
 
 /* Adres ve işten ayrılma nedeni için özel stiller */
-#address, #terminationReason, #insuranceDate {
+#address, #terminationReason, #companyAddress {
     min-height: 60px;
     height: auto;
     white-space: pre-wrap;
@@ -781,9 +781,9 @@
     overflow: visible !important;
 }
 
-.pdf-mode #address, 
+.pdf-mode #address,
 .pdf-mode #terminationReason,
-.pdf-mode #insuranceDate {
+.pdf-mode #companyAddress {
     min-height: 50pt !important;
     height: auto !important;
     white-space: pre-wrap !important;
@@ -1043,8 +1043,8 @@ input[type="text"][name$="Date"] {
                         <textarea id="insuranceNo" name="insuranceNo" class="auto-resize"></textarea>
                     </div>
                     <div class="input-item">
-                        <label for="insuranceDate">Şirket Adresi-Telefonu</label>
-                        <textarea id="insuranceDate" name="insuranceDate" class="auto-resize"></textarea>
+                        <label for="companyAddress">Şirket Adresi-Telefonu</label>
+                        <textarea id="companyAddress" name="companyAddress" class="auto-resize"></textarea>
                     </div>
                 </div>
             </div>
@@ -1311,7 +1311,7 @@ input[type="text"][name$="Date"] {
                 }
 
                 if (data.success) {
-                    showGlobalNotification('Form başarıyla kaydedildi!', 'success');
+                    alert('Form başarıyla kaydedildi!');
                     loadSavedForms(); // Kaydedilen formları yeniden yükle
                 } else {
                     alert('Form kaydedilirken bir hata oluştu: ' + (data.message || data.error || 'Bilinmeyen hata'));
@@ -1647,7 +1647,7 @@ input[type="text"][name$="Date"] {
                     // Önce tanık sayısını hesapla
                     let witnessCount = 0;
                     for (let i = 1; i <= 4; i++) {
-                        if (form[`witness${i}`] && form[`witness${i}`].trim()) {
+                        if (form[`witness${i}Name`] && form[`witness${i}Name`].trim()) {
                             witnessCount++;
                         }
                     }
@@ -1664,7 +1664,7 @@ input[type="text"][name$="Date"] {
                         setTimeout(() => {
                             // Tanık bilgilerini doldur
                             for (let i = 1; i <= 4; i++) {
-                                const witnessName = form[`witness${i}`];
+                                const witnessName = form[`witness${i}Name`];
                                 const witnessInfo = form[`witness${i}Info`];
 
                                 if (witnessName && witnessName.trim()) {
@@ -1672,7 +1672,7 @@ input[type="text"][name$="Date"] {
                                     const witnessInfoField = document.getElementById(`witness${i}Info`);
 
                                     console.log(`DEBUG - editForm: witness${i}Name field:`, witnessNameField); // DEBUG
-                                    console.log(`DEBUG - editForm: witness${i} value:`, witnessName); // DEBUG
+                                    console.log(`DEBUG - editForm: witness${i}Name value:`, witnessName); // DEBUG
 
                                     if (witnessNameField) {
                                         witnessNameField.value = witnessName;
@@ -1694,7 +1694,7 @@ input[type="text"][name$="Date"] {
                 // Eski alan isimlerini yeni alan isimlerine eşleştir
                 const fieldMappings = {
                     'insuranceStatus': 'companyName',
-                    'insuranceDate': 'companyAddress',
+                    'companyAddress': 'companyAddress',
                     'insuranceNo': 'companyRegNo',
                     'salary': 'companyActivity'
                 };
@@ -2014,7 +2014,7 @@ input[type="text"][name$="Date"] {
             // Adres ve işten ayrılma nedeni için özel işlem - textarea yerine div kullan
             const addressTextarea = document.getElementById('address');
             const terminationReasonTextarea = document.getElementById('terminationReason');
-            const companyAddressTextarea = document.getElementById('insuranceDate');
+            const companyAddressTextarea = document.getElementById('companyAddress');
             
             // Adres, şirket adresi ve işten ayrılma nedeni için içeriği kaydet
             let addressContent = '';
@@ -2215,7 +2215,7 @@ input[type="text"][name$="Date"] {
             // Hata durumunda da div'leri kaldır ve textarea'ları geri göster
             const addressTextarea = document.getElementById('address');
             const terminationReasonTextarea = document.getElementById('terminationReason');
-            const companyAddressTextarea = document.getElementById('insuranceDate');
+            const companyAddressTextarea = document.getElementById('companyAddress');
             
             if (addressTextarea) {
                 const addressDiv = document.getElementById('addressDiv');
@@ -2460,7 +2460,7 @@ input[type="text"][name$="Date"] {
                             '<div><strong>Şirket İsmi:</strong> ' + escapeHtml(data.form.insuranceStatus) + '</div>',
                             '<div><strong>İşyeri Faaliyeti/Konusu:</strong> ' + escapeHtml(data.form.salary) + '</div>',
                             '<div><strong>Mersis/Vergi/Ticaret Sicil No:</strong> ' + escapeHtml(data.form.insuranceNo) + '</div>',
-                            '<div><strong>Şirket Adresi-Telefonu:</strong> ' + escapeHtml(data.form.insuranceDate) + '</div>',
+                            '<div><strong>Şirket Adresi-Telefonu:</strong> ' + escapeHtml(data.form.companyAddress) + '</div>',
                         '</div>',
                     '</div>',
                     
