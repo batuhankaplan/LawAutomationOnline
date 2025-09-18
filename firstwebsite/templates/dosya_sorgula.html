@@ -4700,10 +4700,9 @@ function saveChanges(caseId) {
 
     // Status'u mevcut data objesine ekle
     data.status = document.getElementById('editStatusModal') ? document.getElementById('editStatusModal').value : 'Aktif';
-        next_hearing: document.querySelector('#editModal #editNextHearing').value || null,
-        hearing_time: document.querySelector('#editModal #editHearingTime').value || null,
-        hearing_type: hearingType
-    };
+    data.next_hearing = document.querySelector('#editModal #editNextHearing').value || null;
+    data.hearing_time = document.querySelector('#editModal #editHearingTime').value || null;
+    data.hearing_type = hearingType;
     
     // Debug: Form verilerini konsola yazdır
     console.log('Form verileri:', {
