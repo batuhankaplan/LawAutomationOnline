@@ -1807,10 +1807,8 @@ def delete_case(case_id):
             # Belgeyi veritabanından sil
             db.session.delete(document)
 
-        # İlişkili ödemeleri sil
-        payments = Payment.query.filter_by(case_id=case_id).all()
-        for payment in payments:
-            db.session.delete(payment)
+        # Not: Payment'lar Client modeli ile ilişkili, CaseFile ile değil.
+        # Aynı client'a ait birden fazla CaseFile olabilir, bu yüzden payment'lar silinmez.
 
         # İlişkili aktivite loglarını sil
         activity_logs = ActivityLog.query.filter_by(case_id=case_id).all()
