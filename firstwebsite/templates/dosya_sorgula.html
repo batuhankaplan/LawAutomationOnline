@@ -4687,13 +4687,14 @@ function saveChanges(caseId) {
     };
 
     // Debug: Status değerini özellikle kontrol et
-    console.log('DEBUG: editStatus element:', document.getElementById('editStatus'));
-    console.log('DEBUG: editStatus value:', document.getElementById('editStatus').value);
-    console.log('DEBUG: editStatus selectedIndex:', document.getElementById('editStatus').selectedIndex);
+    console.log('DEBUG: editStatusModal element:', document.getElementById('editStatusModal'));
+    console.log('DEBUG: editStatusModal value:', document.getElementById('editStatusModal') ? document.getElementById('editStatusModal').value : 'BULUNAMADI');
+    console.log('DEBUG: editStatus (old) element:', document.getElementById('editStatus'));
+    console.log('DEBUG: editStatus (old) value:', document.getElementById('editStatus') ? document.getElementById('editStatus').value : 'BULUNAMADI');
 
     // Form verilerini yeniden oluştur
     data = {
-        file_type: fileType,
+        file_type: fileTypeValue,
         courthouse: courthouse,
         department: department,
         city: city,
