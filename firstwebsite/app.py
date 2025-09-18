@@ -4675,6 +4675,7 @@ def save_isci_gorusme_json():
                 return None
 
             date_str = date_str.strip()
+            print(f"DEBUG - Parsing date: '{date_str}'")
 
             # YYYY-MM-DD formatı
             try:
@@ -4682,9 +4683,17 @@ def save_isci_gorusme_json():
             except ValueError:
                 pass
 
-            # DD.MM.YYYY formatı
+            # DD.MM.YYYY formatı (öncelik ver)
             try:
-                return datetime.strptime(date_str, '%d.%m.%Y').date()
+                parsed = datetime.strptime(date_str, '%d.%m.%Y').date()
+                print(f"DEBUG - Successfully parsed as DD.MM.YYYY: {parsed}")
+                return parsed
+            except ValueError:
+                pass
+
+            # DD.MM.YY formatı
+            try:
+                return datetime.strptime(date_str, '%d.%m.%y').date()
             except ValueError:
                 pass
 
@@ -4695,12 +4704,19 @@ def save_isci_gorusme_json():
                 pass
 
             # Tarih çevrilemezse None döndür
+            print(f"DEBUG - Could not parse date: '{date_str}'")
             return None
 
         # Tarihleri esnek şekilde çevir
         start_date = parse_date_flexible(data.get('startDate'))
         end_date = parse_date_flexible(data.get('endDate'))
         insurance_date = parse_date_flexible(data.get('insuranceDate'))
+
+        # Kritik tarih alanları kontrol et
+        if not start_date:
+            return jsonify({'success': False, 'message': f'İşe başlama tarihi geçersiz: {data.get("startDate")}'}), 400
+        if not end_date:
+            return jsonify({'success': False, 'message': f'İşten ayrılma tarihi geçersiz: {data.get("endDate")}'}), 400
 
         # Sayı değerlerini güvenli şekilde çevir
         def safe_float(value, default=0):
@@ -4737,9 +4753,9 @@ def save_isci_gorusme_json():
             interview.tcNo = get_field_value('tcNo', '00000000000')
             interview.phone = get_field_value('phone', '0000000000')
             interview.address = get_field_value('address', 'Belirtilmemiş')
-            interview.startDate = start_date or datetime.now().date()
-            interview.insuranceDate = insurance_date or start_date or datetime.now().date()
-            interview.endDate = end_date or datetime.now().date()
+            interview.startDate = start_date
+            interview.insuranceDate = insurance_date or start_date
+            interview.endDate = end_date
             interview.endReason = get_field_value('terminationReason', 'Belirtilmemiş')
             interview.companyName = get_field_value('insuranceStatus', 'Belirtilmemiş')
             interview.businessType = get_field_value('salary', 'Belirtilmemiş')  # İşyeri Faaliyeti/Konusu
@@ -4786,9 +4802,9 @@ def save_isci_gorusme_json():
                 address=get_field_value('address', 'Belirtilmemiş'),
 
                 # Tarih Bilgileri
-                startDate=start_date or datetime.now().date(),
-                insuranceDate=insurance_date or start_date or datetime.now().date(),
-                endDate=end_date or datetime.now().date(),
+                startDate=start_date,
+                insuranceDate=insurance_date or start_date,
+                endDate=end_date,
 
                 # İş Bilgileri
                 endReason=get_field_value('terminationReason', 'Belirtilmemiş'),
