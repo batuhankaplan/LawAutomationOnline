@@ -1769,43 +1769,40 @@ def delete_case(case_id):
         failed_deletions = []
 
         for document in documents:
-            # Fiziksel dosyaları sil
-            file_paths_to_check = []
+            # Ana belge dosyasını bul ve sil
+            main_file_path = find_document_file(document.filepath)
+            if main_file_path:
+                try:
+                    if os.access(main_file_path, os.W_OK):
+                        os.remove(main_file_path)
+                        deleted_files.append(main_file_path)
+                    else:
+                        try:
+                            os.chmod(main_file_path, 0o666)
+                            os.remove(main_file_path)
+                            deleted_files.append(main_file_path)
+                        except Exception as chmod_error:
+                            failed_deletions.append(f"{main_file_path}: {str(chmod_error)}")
+                except Exception as delete_error:
+                    failed_deletions.append(f"{main_file_path}: {str(delete_error)}")
 
-            # Ana dosya yolu
-            main_file_path = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
-            file_paths_to_check.append(main_file_path)
-
-            # Eski format kontrol
-            if not os.path.exists(main_file_path):
-                old_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.filepath)
-                file_paths_to_check.append(old_filepath)
-
-                filename_only = os.path.basename(document.filepath)
-                alt_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', filename_only)
-                file_paths_to_check.append(alt_filepath)
-
-            # PDF versiyonu varsa
+            # PDF versiyonu varsa onu da bul ve sil
             if document.pdf_version:
-                pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], document.pdf_version)
-                file_paths_to_check.append(pdf_path)
-
-            # Dosyaları sil
-            for file_path in file_paths_to_check:
-                if os.path.exists(file_path):
+                pdf_file_path = find_document_file(document.pdf_version)
+                if pdf_file_path:
                     try:
-                        if os.access(file_path, os.W_OK):
-                            os.remove(file_path)
-                            deleted_files.append(file_path)
+                        if os.access(pdf_file_path, os.W_OK):
+                            os.remove(pdf_file_path)
+                            deleted_files.append(pdf_file_path)
                         else:
                             try:
-                                os.chmod(file_path, 0o666)
-                                os.remove(file_path)
-                                deleted_files.append(file_path)
+                                os.chmod(pdf_file_path, 0o666)
+                                os.remove(pdf_file_path)
+                                deleted_files.append(pdf_file_path)
                             except Exception as chmod_error:
-                                failed_deletions.append(f"{file_path}: {str(chmod_error)}")
+                                failed_deletions.append(f"{pdf_file_path}: {str(chmod_error)}")
                     except Exception as delete_error:
-                        failed_deletions.append(f"{file_path}: {str(delete_error)}")
+                        failed_deletions.append(f"{pdf_file_path}: {str(delete_error)}")
 
             # Belgeyi veritabanından sil
             db.session.delete(document)
@@ -2503,6 +2500,44 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def find_document_file(filepath):
+    """
+    Bir belge dosyasını çeşitli lokasyonlarda arar ve bulursa tam yolunu döndürür
+    """
+    if not filepath:
+        return None
+
+    # Mümkün dosya yollarını oluştur
+    possible_paths = []
+
+    # Eğer filepath zaten mutlak yolsa, direkt onu dene
+    if os.path.isabs(filepath):
+        possible_paths.append(filepath)
+    else:
+        # Göreceli yollar için çeşitli kombinasyonlar
+        base_paths = [
+            app.config['UPLOAD_FOLDER'],  # uploads/
+            os.getcwd(),  # proje kökü
+            os.path.join(os.getcwd(), 'firstwebsite'),  # firstwebsite/
+            os.path.join(os.getcwd(), 'firstwebsite', 'static'),  # firstwebsite/static/
+            '/'  # sistem kökü
+        ]
+
+        for base_path in base_paths:
+            possible_paths.append(os.path.join(base_path, filepath))
+
+        # Eski format uyumlu yollar
+        filename_only = os.path.basename(filepath)
+        possible_paths.append(os.path.join(app.config['UPLOAD_FOLDER'], 'documents', filename_only))
+        possible_paths.append(os.path.join(app.config['UPLOAD_FOLDER'], 'documents', filepath))
+
+    # Her yolu kontrol et
+    for path in possible_paths:
+        if os.path.exists(path) and os.path.isfile(path):
+            return path
+
+    return None
+
 @app.route('/upload_document/<int:case_id>', methods=['POST'])
 @csrf.exempt
 def upload_document(case_id):
@@ -2526,24 +2561,76 @@ def upload_document(case_id):
             
             # Benzersiz dosya adı oluştur
             unique_filename = f"{case_id}_{int(pytime.time())}_{original_filename}"
-            documents_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'documents')
-            file_path = os.path.join(documents_dir, unique_filename)
 
-            # Klasörü oluştur ve izinleri ayarla
-            try:
-                os.makedirs(documents_dir, exist_ok=True)
-                # Klasör izinlerini ayarla (okuma, yazma, çalıştırma)
-                os.chmod(documents_dir, 0o755)
-            except Exception as e:
-                return jsonify(success=False, message=f"Klasör oluşturulamadı: {str(e)}")
+            # Alternatif upload dizinlerini dene
+            upload_attempts = [
+                {
+                    'path': os.path.join(app.config['UPLOAD_FOLDER'], 'documents'),
+                    'db_path': f"documents/{unique_filename}",
+                    'description': 'Standart uploads/documents dizini'
+                },
+                {
+                    'path': os.path.join(os.getcwd(), 'firstwebsite', 'static', 'uploads', 'documents'),
+                    'db_path': f"static/uploads/documents/{unique_filename}",
+                    'description': 'Static dizini altında'
+                },
+                {
+                    'path': os.path.join(os.getcwd(), 'documents'),
+                    'db_path': f"../documents/{unique_filename}",
+                    'description': 'Proje kökünde documents dizini'
+                },
+                {
+                    'path': os.path.join('/tmp', 'law_app_uploads'),
+                    'db_path': f"/tmp/law_app_uploads/{unique_filename}",
+                    'description': 'Sistem geçici dizini'
+                }
+            ]
 
-            # Dosyayı kaydet ve izinleri ayarla
-            try:
-                file.save(file_path)
-                # Dosya izinlerini ayarla (okuma, yazma)
-                os.chmod(file_path, 0o644)
-            except Exception as e:
-                return jsonify(success=False, message=f"Dosya kaydedilemedi: {str(e)}")
+            file_path = None
+            db_filepath = None
+            successful_upload = False
+            upload_errors = []
+
+            # Her alternatifi sırayla dene
+            for attempt in upload_attempts:
+                try:
+                    target_dir = attempt['path']
+                    target_file_path = os.path.join(target_dir, unique_filename)
+
+                    # Klasör oluşturmayı dene
+                    os.makedirs(target_dir, exist_ok=True)
+
+                    # Yazma iznini test et - küçük test dosyası oluştur
+                    test_file_path = os.path.join(target_dir, f"test_{int(pytime.time())}.tmp")
+                    with open(test_file_path, 'w') as test_file:
+                        test_file.write("write_test")
+                    os.remove(test_file_path)
+
+                    # Gerçek dosyayı kaydet
+                    file.save(target_file_path)
+
+                    # İzinler ayarlamaya çalış (başarısız olsa da devam et)
+                    try:
+                        os.chmod(target_file_path, 0o644)
+                    except:
+                        pass
+
+                    # Başarılı!
+                    file_path = target_file_path
+                    db_filepath = attempt['db_path']
+                    successful_upload = True
+                    print(f"Dosya başarıyla yüklendi: {attempt['description']} - {target_file_path}")
+                    break
+
+                except Exception as e:
+                    error_msg = f"{attempt['description']}: {str(e)}"
+                    upload_errors.append(error_msg)
+                    print(f"Yükleme denemesi başarısız - {error_msg}")
+                    continue
+
+            if not successful_upload:
+                error_details = "\n".join(upload_errors)
+                return jsonify(success=False, message=f"Dosya yüklenemedi. Denenen alternatifler:\n{error_details}")
             
             # PDF path'i başlangıçta None olarak ayarla
             pdf_path = None
@@ -2580,7 +2667,7 @@ def upload_document(case_id):
                 case_id=case_id,
                 document_type=document_type,
                 filename=f"{display_name}.{file_ext}",  # Görünen isim
-                filepath=f"documents/{unique_filename}",  # Gerçek dosya yolu
+                filepath=db_filepath,  # Veritabanında saklanacak göreceli yol
                 upload_date=datetime.now(),
                 user_id=current_user.id if current_user.is_authenticated else 1,
                 pdf_version=pdf_path  # PDF versiyonu varsa kaydet
@@ -2619,15 +2706,13 @@ def get_documents(case_id):
 @app.route('/download_document/<int:document_id>')
 def download_document(document_id):
     document = Document.query.get_or_404(document_id)
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
-    
-    # Backward compatibility: Eski format kontrol et
-    if not os.path.exists(filepath):
-        # Eski format: documents klasöründe sadece filename
-        old_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.filepath)
-        if os.path.exists(old_filepath):
-            filepath = old_filepath
-    
+
+    # Dosyayı farklı lokasyonlarda ara
+    filepath = find_document_file(document.filepath)
+
+    if not filepath:
+        return jsonify(success=False, message="Dosya bulunamadı"), 404
+
     return send_file(filepath, as_attachment=True, download_name=document.filename)
 
 @app.route('/delete_document/<int:document_id>', methods=['POST'])
@@ -2638,50 +2723,44 @@ def delete_document(document_id):
     try:
         document = Document.query.get_or_404(document_id)
 
-        # Dosya yollarını kontrol et
-        file_paths_to_check = []
-
-        # Ana dosya yolu
-        main_file_path = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
-        file_paths_to_check.append(main_file_path)
-
-        # Backward compatibility: Eski format kontrol et
-        if not os.path.exists(main_file_path):
-            # Eski format: documents klasöründe sadece filename
-            old_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.filepath)
-            file_paths_to_check.append(old_filepath)
-
-            # Başka olası yollar da ekle
-            filename_only = os.path.basename(document.filepath)
-            alt_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', filename_only)
-            file_paths_to_check.append(alt_filepath)
-
-        # PDF versiyonu varsa onu da sil
-        if document.pdf_version:
-            pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], document.pdf_version)
-            file_paths_to_check.append(pdf_path)
-
-        # Dosyaları güvenli şekilde sil
+        # Ana dosyayı bul ve sil
         deleted_files = []
         failed_deletions = []
 
-        for file_path in file_paths_to_check:
-            if os.path.exists(file_path):
+        # Ana belge dosyasını bul
+        main_file_path = find_document_file(document.filepath)
+        if main_file_path:
+            try:
+                if os.access(main_file_path, os.W_OK):
+                    os.remove(main_file_path)
+                    deleted_files.append(main_file_path)
+                else:
+                    try:
+                        os.chmod(main_file_path, 0o666)
+                        os.remove(main_file_path)
+                        deleted_files.append(main_file_path)
+                    except Exception as chmod_error:
+                        failed_deletions.append(f"{main_file_path}: {str(chmod_error)}")
+            except Exception as delete_error:
+                failed_deletions.append(f"{main_file_path}: {str(delete_error)}")
+
+        # PDF versiyonu varsa onu da bul ve sil
+        if document.pdf_version:
+            pdf_file_path = find_document_file(document.pdf_version)
+            if pdf_file_path:
                 try:
-                    # Dosya izinlerini kontrol et ve gerekirse değiştir
-                    if os.access(file_path, os.W_OK):
-                        os.remove(file_path)
-                        deleted_files.append(file_path)
+                    if os.access(pdf_file_path, os.W_OK):
+                        os.remove(pdf_file_path)
+                        deleted_files.append(pdf_file_path)
                     else:
-                        # Yazma izni yoksa izin ver ve tekrar dene
                         try:
-                            os.chmod(file_path, 0o666)
-                            os.remove(file_path)
-                            deleted_files.append(file_path)
+                            os.chmod(pdf_file_path, 0o666)
+                            os.remove(pdf_file_path)
+                            deleted_files.append(pdf_file_path)
                         except Exception as chmod_error:
-                            failed_deletions.append(f"{file_path}: {str(chmod_error)}")
+                            failed_deletions.append(f"{pdf_file_path}: {str(chmod_error)}")
                 except Exception as delete_error:
-                    failed_deletions.append(f"{file_path}: {str(delete_error)}")
+                    failed_deletions.append(f"{pdf_file_path}: {str(delete_error)}")
 
         # Veritabanından sil (dosya silme başarısız olsa bile)
         db.session.delete(document)
@@ -2806,22 +2885,15 @@ def preview_document(document_id):
     
     # Önce belgenin PDF sürümü var mı kontrol et
     if document.pdf_version:
-        pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], document.pdf_version)
-        if os.path.exists(pdf_path):
+        pdf_path = find_document_file(document.pdf_version)
+        if pdf_path:
             print(f"Belge için hazır PDF sürümü kullanılıyor: {pdf_path}")
             return send_file(pdf_path, mimetype='application/pdf')
-    
-    # PDF sürümü yoksa, normal işleme devam et
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
-    
-    # Backward compatibility: Eski format kontrol et
-    if not os.path.exists(filepath):
-        # Eski format: documents klasöründe sadece filename
-        old_filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'documents', document.filepath)
-        if os.path.exists(old_filepath):
-            filepath = old_filepath
-        else:
-            return "Dosya bulunamadı", 404
+
+    # PDF sürümü yoksa, ana dosyayı bul
+    filepath = find_document_file(document.filepath)
+    if not filepath:
+        return "Dosya bulunamadı", 404
 
     _, extension = os.path.splitext(document.filepath)
     extension = extension.lower()
