@@ -4669,63 +4669,55 @@ def save_isci_gorusme_json():
         data = request.get_json()
         print(f"DEBUG - Gelen form verisi: {data}")  # DEBUG LOG
         
-        # Tarih işleme fonksiyonu - esnek format desteği
-        def parse_date_flexible(date_str):
+        # Tarih string validasyon fonksiyonu
+        def validate_date_string(date_str):
             if not date_str or not date_str.strip():
                 return None
 
             date_str = date_str.strip()
-            print(f"DEBUG - Parsing date: '{date_str}'")
+            print(f"DEBUG - Validating date string: '{date_str}'")
 
-            # YYYY-MM-DD formatı
-            try:
-                return datetime.strptime(date_str, '%Y-%m-%d').date()
-            except ValueError:
-                pass
+            # Çift tarih formatı DD.MM.YYYY/DD.MM.YYYY - olduğu gibi bırak
+            if '/' in date_str and len(date_str.split('/')) == 2:
+                parts = date_str.split('/')
+                try:
+                    # Her iki tarafın da geçerli tarih olduğunu kontrol et
+                    datetime.strptime(parts[0].strip(), '%d.%m.%Y')
+                    datetime.strptime(parts[1].strip(), '%d.%m.%Y')
+                    print(f"DEBUG - Valid dual date format: {date_str}")
+                    return date_str
+                except ValueError:
+                    print(f"DEBUG - Invalid dual date format: {date_str}")
+                    return None
 
-            # DD.MM.YYYY formatı (öncelik ver)
+            # Tek tarih formatları DD.MM.YYYY
             try:
-                parsed = datetime.strptime(date_str, '%d.%m.%Y').date()
-                print(f"DEBUG - Successfully parsed as DD.MM.YYYY: {parsed}")
-                return parsed
+                datetime.strptime(date_str, '%d.%m.%Y')
+                print(f"DEBUG - Valid single date format: {date_str}")
+                return date_str
             except ValueError:
                 pass
 
             # DD.MM.YY formatı
             try:
-                return datetime.strptime(date_str, '%d.%m.%y').date()
+                datetime.strptime(date_str, '%d.%m.%y')
+                print(f"DEBUG - Valid DD.MM.YY format: {date_str}")
+                return date_str
             except ValueError:
                 pass
 
-            # DD/MM/YYYY formatı
-            try:
-                return datetime.strptime(date_str, '%d/%m/%Y').date()
-            except ValueError:
-                pass
-
-            # Çift tarih formatı DD.MM.YYYY/DD.MM.YYYY - ilk tarihi al
-            if '/' in date_str and len(date_str.split('/')) == 2:
-                try:
-                    first_date = date_str.split('/')[0].strip()
-                    parsed = datetime.strptime(first_date, '%d.%m.%Y').date()
-                    print(f"DEBUG - Successfully parsed dual date (first): {parsed}")
-                    return parsed
-                except ValueError:
-                    pass
-
-            # Tarih çevrilemezse None döndür
-            print(f"DEBUG - Could not parse date: '{date_str}'")
+            print(f"DEBUG - Invalid date format: '{date_str}'")
             return None
 
-        # Tarihleri esnek şekilde çevir
-        start_date = parse_date_flexible(data.get('startDate'))
-        end_date = parse_date_flexible(data.get('endDate'))
-        insurance_date = parse_date_flexible(data.get('insuranceDate'))
+        # Tarihleri string olarak validate et
+        start_date_str = validate_date_string(data.get('startDate'))
+        end_date_str = validate_date_string(data.get('endDate'))
+        insurance_date_str = validate_date_string(data.get('insuranceDate'))
 
         # Kritik tarih alanları kontrol et
-        if not start_date:
+        if not start_date_str:
             return jsonify({'success': False, 'message': f'İşe başlama tarihi geçersiz: {data.get("startDate")}'}), 400
-        if not end_date:
+        if not end_date_str:
             return jsonify({'success': False, 'message': f'İşten ayrılma tarihi geçersiz: {data.get("endDate")}'}), 400
 
         # Sayı değerlerini güvenli şekilde çevir
@@ -4750,7 +4742,7 @@ def save_isci_gorusme_json():
 
         if form_id:
             # MEVCUT FORMU GÜNCELLE
-            interview = WorkerInterview.query.get(form_id)
+            interview = IsciGorusmeTutanagi.query.get(form_id)
             if not interview:
                 return jsonify({'success': False, 'message': 'Düzenlenecek form bulunamadı.'}), 404
 
@@ -4759,108 +4751,115 @@ def save_isci_gorusme_json():
                 return jsonify({'success': False, 'message': 'Bu formu düzenleme yetkiniz yok.'}), 403
 
             # Mevcut formun alanlarını güncelle
-            interview.fullName = get_field_value('name', 'Belirtilmemiş')
+            interview.name = get_field_value('name', 'Belirtilmemiş')
             interview.tcNo = get_field_value('tcNo', '00000000000')
             interview.phone = get_field_value('phone', '0000000000')
             interview.address = get_field_value('address', 'Belirtilmemiş')
-            interview.startDate = start_date
-            interview.insuranceDate = insurance_date or start_date
-            interview.endDate = end_date
-            interview.endReason = get_field_value('terminationReason', 'Belirtilmemiş')
-            interview.companyName = get_field_value('insuranceStatus', 'Belirtilmemiş')
-            interview.businessType = get_field_value('salary', 'Belirtilmemiş')  # İşyeri Faaliyeti/Konusu
-            interview.companyAddress = get_field_value('insuranceDate', 'Belirtilmemiş')
-            interview.registryNumber = get_field_value('insuranceNo', 'Belirtilmemiş')  # Mersis/Vergi/Ticaret Sicil No
-            interview.position = get_field_value('position', 'Belirtilmemiş')
-            interview.workHours = get_field_value('workingHours', 'Belirtilmemiş')
-            interview.overtime = get_field_value('overtime', 'Belirtilmemiş')
-            interview.salary = get_field_value('department', 'Belirtilmemiş')  # Ücret alanı (HTML'de department field)
-            interview.transportation = safe_float(data.get('transportation'), 0) if data.get('transportation') else None
-            interview.food = safe_float(data.get('food'), 0) if data.get('food') else None
-            interview.benefits = get_field_value('benefits', 'Belirtilmemiş')
-            interview.weeklyHoliday = get_field_value('weeklyHoliday', 'Belirtilmemiş')
-            interview.holidays = get_field_value('holidays', 'Belirtilmemiş')
-            interview.annualLeave = get_field_value('annualLeave', 'Belirtilmemiş')
-            interview.unpaidSalary = get_field_value('unpaidSalary', 'Belirtilmemiş')
-            interview.witness1 = get_field_value('witness1Name')
-            interview.witness1Info = get_field_value('witness1Info')
-            interview.witness2 = get_field_value('witness2Name')
-            interview.witness2Info = get_field_value('witness2Info')
-            interview.witness3 = get_field_value('witness3Name')
-            interview.witness3Info = get_field_value('witness3Info')
-            interview.witness4 = get_field_value('witness4Name')
-            interview.witness4Info = get_field_value('witness4Info')
+            interview.startDate = start_date_str
+            interview.insuranceDate = insurance_date_str or start_date_str
+            interview.endDate = end_date_str
+            interview.position = get_field_value('position', '')
+            interview.department = get_field_value('department', '')
+            interview.insuranceStatus = get_field_value('insuranceStatus', '')
+            interview.insuranceNo = get_field_value('insuranceNo', '')
+            interview.salary = get_field_value('salary', '')
+            interview.workingHours = get_field_value('workingHours', '')
+            interview.overtime = get_field_value('overtime', '')
+            interview.weeklyHoliday = get_field_value('weeklyHoliday', '')
+            interview.annualLeave = get_field_value('annualLeave', '')
+            interview.terminationReason = get_field_value('terminationReason', '')
+            # Alacak bilgileri
+            interview.severancePay = get_field_value('severancePay', '')
+            interview.noticePay = get_field_value('noticePay', '')
+            interview.unpaidWages = get_field_value('unpaidWages', '')
+            interview.overtimePay = get_field_value('overtimePay', '')
+            interview.annualLeavePay = get_field_value('annualLeavePay', '')
+            interview.ubgtPay = get_field_value('ubgtPay', '')
 
-            # Radio button seçimlerini güncelle
+            # Alacak seçenekleri
             interview.severancePayOption = get_field_value('severancePayOption', 'no')
             interview.noticePayOption = get_field_value('noticePayOption', 'no')
             interview.unpaidWagesOption = get_field_value('unpaidWagesOption', 'no')
             interview.overtimePayOption = get_field_value('overtimePayOption', 'no')
             interview.annualLeavePayOption = get_field_value('annualLeavePayOption', 'no')
             interview.ubgtPayOption = get_field_value('ubgtPayOption', 'no')
+
+            # Tanık bilgileri
             interview.witnessOption = get_field_value('witnessOption', 'no')
+
+            # Tanık bilgilerini JSON olarak kaydet
+            witnesses = []
+            for i in range(1, 5):
+                witness_name = get_field_value(f'witness{i}Name', '')
+                witness_info = get_field_value(f'witness{i}Info', '')
+                if witness_name or witness_info:
+                    witnesses.append({
+                        'name': witness_name,
+                        'info': witness_info
+                    })
+            interview.witnesses = json.dumps(witnesses) if witnesses else ''
 
             # UPDATE için add() gerekmez, sadece commit()
             message = 'Form başarıyla güncellendi.'
         else:
             # YENİ FORM OLUŞTUR
-            interview = WorkerInterview(
+            interview = IsciGorusmeTutanagi(
                 # Kişisel Bilgiler
-                fullName=get_field_value('name', 'Belirtilmemiş'),
+                name=get_field_value('name', 'Belirtilmemiş'),
                 tcNo=get_field_value('tcNo', '00000000000'),
                 phone=get_field_value('phone', '0000000000'),
                 address=get_field_value('address', 'Belirtilmemiş'),
 
                 # Tarih Bilgileri
-                startDate=start_date,
-                insuranceDate=insurance_date or start_date,
-                endDate=end_date,
+                startDate=start_date_str,
+                insuranceDate=insurance_date_str or start_date_str,
+                endDate=end_date_str,
 
                 # İş Bilgileri
-                endReason=get_field_value('terminationReason', 'Belirtilmemiş'),
-                companyName=get_field_value('insuranceStatus', 'Belirtilmemiş'),
-                businessType=get_field_value('salary', 'Belirtilmemiş'),  # İşyeri Faaliyeti/Konusu
-                companyAddress=get_field_value('insuranceDate', 'Belirtilmemiş'),
-                registryNumber=get_field_value('insuranceNo', 'Belirtilmemiş'),  # Mersis/Vergi/Ticaret Sicil No
-                position=get_field_value('position', 'Belirtilmemiş'),
+                position=get_field_value('position', ''),
+                department=get_field_value('department', ''),
+                insuranceStatus=get_field_value('insuranceStatus', ''),
+                insuranceNo=get_field_value('insuranceNo', ''),
+                salary=get_field_value('salary', ''),
+                workingHours=get_field_value('workingHours', ''),
+                overtime=get_field_value('overtime', ''),
+                weeklyHoliday=get_field_value('weeklyHoliday', ''),
+                annualLeave=get_field_value('annualLeave', ''),
+                terminationReason=get_field_value('terminationReason', ''),
 
-                # Çalışma Bilgileri
-                workHours=get_field_value('workingHours', 'Belirtilmemiş'),
-                overtime=get_field_value('overtime', 'Belirtilmemiş'),
+                # Alacak bilgileri
+                severancePay=get_field_value('severancePay', ''),
+                noticePay=get_field_value('noticePay', ''),
+                unpaidWages=get_field_value('unpaidWages', ''),
+                overtimePay=get_field_value('overtimePay', ''),
+                annualLeavePay=get_field_value('annualLeavePay', ''),
+                ubgtPay=get_field_value('ubgtPay', ''),
 
-                # Ücret Bilgileri
-                salary=get_field_value('department', 'Belirtilmemiş'),  # Ücret alanı (HTML'de department field)
-                transportation=safe_float(data.get('transportation'), 0) if data.get('transportation') else None,
-                food=safe_float(data.get('food'), 0) if data.get('food') else None,
-                benefits=get_field_value('benefits', 'Belirtilmemiş'),
-
-                # Tatil Bilgileri
-                weeklyHoliday=get_field_value('weeklyHoliday', 'Belirtilmemiş'),
-                holidays=get_field_value('holidays', 'Belirtilmemiş'),
-                annualLeave=get_field_value('annualLeave', 'Belirtilmemiş'),
-                unpaidSalary=get_field_value('unpaidSalary', 'Belirtilmemiş'),
-
-                # Tanıklar
-                witness1=get_field_value('witness1Name'),
-                witness1Info=get_field_value('witness1Info'),
-                witness2=get_field_value('witness2Name'),
-                witness2Info=get_field_value('witness2Info'),
-                witness3=get_field_value('witness3Name'),
-                witness3Info=get_field_value('witness3Info'),
-                witness4=get_field_value('witness4Name'),
-                witness4Info=get_field_value('witness4Info'),
-
-                # Radio button seçimleri
+                # Alacak seçenekleri
                 severancePayOption=get_field_value('severancePayOption', 'no'),
                 noticePayOption=get_field_value('noticePayOption', 'no'),
                 unpaidWagesOption=get_field_value('unpaidWagesOption', 'no'),
                 overtimePayOption=get_field_value('overtimePayOption', 'no'),
                 annualLeavePayOption=get_field_value('annualLeavePayOption', 'no'),
                 ubgtPayOption=get_field_value('ubgtPayOption', 'no'),
+
+                # Tanık bilgileri
                 witnessOption=get_field_value('witnessOption', 'no'),
 
                 user_id=current_user.id
             )
+
+            # Tanık bilgilerini JSON olarak kaydet
+            witnesses = []
+            for i in range(1, 5):
+                witness_name = get_field_value(f'witness{i}Name', '')
+                witness_info = get_field_value(f'witness{i}Info', '')
+                if witness_name or witness_info:
+                    witnesses.append({
+                        'name': witness_name,
+                        'info': witness_info
+                    })
+            interview.witnesses = json.dumps(witnesses) if witnesses else ''
 
             db.session.add(interview)
             message = 'Form başarıyla kaydedildi.'
