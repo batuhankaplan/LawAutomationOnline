@@ -4676,7 +4676,11 @@
 
             const amountText = targetRow.cells[3].textContent.trim();
             const amountParts = amountText.split(' ');
-            document.getElementById('editAmount').value = amountParts[0] || '';
+            // Tutar alanından sadece sayısal değeri al - formatı temizle
+            let rawAmount = amountParts[0] || '';
+            // Binlik ayırıcıları kaldır ve sayıya çevir, sonra tekrar string yap
+            rawAmount = rawAmount.replace(/\./g, '').replace(',', '.');
+            document.getElementById('editAmount').value = parseFloat(rawAmount).toString() || '0';
             if (amountParts.length > 1) {
                 document.getElementById('editCurrency').value = amountParts[amountParts.length - 1];
             }
