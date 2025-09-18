@@ -4393,8 +4393,10 @@
             const data = {};
             formData.forEach((value, key) => {
                 if (key === 'amount') {
-                    // Tutar alanında TL, € veya $ sembollerini ve binlik ayırıcıları kaldır
-                    data[key] = value.replace(/[^\d,.]/g, '').replace(/\./g, '').replace(',', '.');
+                    // Tutar alanında sadece sayısal değeri al - parseFloat ile güvenli parse
+                    let cleanValue = value.replace(/[^\d,.]/g, '').replace(/\./g, '').replace(',', '.');
+                    // parseFloat ile sayıya çevir, sonra string'e geri çevir ki doğru format olsun
+                    data[key] = parseFloat(cleanValue).toString() || '0';
                 } else {
                     data[key] = value;
                 }
@@ -4407,6 +4409,12 @@
             const editStatusCheckbox = document.getElementById('editStatus');
             if (editStatusCheckbox) {
                 data['status'] = editStatusCheckbox.checked ? 'Ödendi' : 'Ödenmedi';
+            }
+
+            // Açıklama alanını manuel olarak al ve ekle
+            const editDescription = document.getElementById('editDescription');
+            if (editDescription) {
+                data['description'] = editDescription.value || '';
             }
             
             console.log('Gönderilecek veri:', data);
