@@ -4692,40 +4692,8 @@ function saveChanges(caseId) {
     console.log('DEBUG: editStatus (old) element:', document.getElementById('editStatus'));
     console.log('DEBUG: editStatus (old) value:', document.getElementById('editStatus') ? document.getElementById('editStatus').value : 'BULUNAMADI');
 
-    // Form verilerini yeniden oluştur
-    data = {
-        file_type: fileTypeValue,
-        courthouse: courthouse,
-        department: department,
-        city: city,
-        client_entity_type: clientEntityType,
-        client_name: clientName,
-        client_identity_number: clientIdentityNumber,
-        client_capacity: clientCapacity,
-        phone_number: phoneNumber,
-        client_address: clientAddress,
-        opponent_entity_type: opponentEntityType,
-        opponent_name: opponentName,
-        opponent_identity_number: opponentIdentityNumber,
-        opponent_capacity: opponentCapacity,
-        opponent_phone: opponentPhone,
-        opponent_address: opponentAddress,
-        opponent_lawyer: opponentLawyer,
-        opponent_lawyer_bar_number: opponentLawyerBarNumber,
-        opponent_lawyer_phone: opponentLawyerPhone,
-        opponent_lawyer_address: opponentLawyerAddress,
-        description: description,
-        year: year,
-        case_number: caseNumber,
-        open_date: openDate,
-
-        // Ek kişiler
-        additional_clients_json: additionalClients,
-        additional_opponents_json: additionalOpponents,
-        additional_lawyers_json: additionalLawyers,
-
-        // Dosya bilgileri - Modal'daki doğru status element'ini kullan
-        status: document.getElementById('editStatusModal') ? document.getElementById('editStatusModal').value : 'Aktif',
+    // Status'u mevcut data objesine ekle
+    data.status = document.getElementById('editStatusModal') ? document.getElementById('editStatusModal').value : 'Aktif';
         next_hearing: document.querySelector('#editModal #editNextHearing').value || null,
         hearing_time: document.querySelector('#editModal #editHearingTime').value || null,
         hearing_type: hearingType
