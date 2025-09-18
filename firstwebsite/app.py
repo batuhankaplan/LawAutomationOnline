@@ -4703,6 +4703,16 @@ def save_isci_gorusme_json():
             except ValueError:
                 pass
 
+            # Çift tarih formatı DD.MM.YYYY/DD.MM.YYYY - ilk tarihi al
+            if '/' in date_str and len(date_str.split('/')) == 2:
+                try:
+                    first_date = date_str.split('/')[0].strip()
+                    parsed = datetime.strptime(first_date, '%d.%m.%Y').date()
+                    print(f"DEBUG - Successfully parsed dual date (first): {parsed}")
+                    return parsed
+                except ValueError:
+                    pass
+
             # Tarih çevrilemezse None döndür
             print(f"DEBUG - Could not parse date: '{date_str}'")
             return None
