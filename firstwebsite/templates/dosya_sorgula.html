@@ -3949,7 +3949,7 @@ function editCase(caseId) {
                             <div class="detail-grid">
                                 <div class="detail-group">
                                     <label>Dosya Durumu</label>
-                                    <select id="editStatus">
+                                    <select id="editStatusModal">
                                         <option value="Aktif" ${data.status === 'Aktif' ? 'selected' : ''}>Aktif</option>
                                         <option value="Kapalı" ${data.status === 'Kapalı' ? 'selected' : ''}>Kapalı</option>
                                     </select>
@@ -4684,6 +4684,47 @@ function saveChanges(caseId) {
         
         // Dosya bilgileri
         status: document.getElementById('editStatus').value,
+    };
+
+    // Debug: Status değerini özellikle kontrol et
+    console.log('DEBUG: editStatus element:', document.getElementById('editStatus'));
+    console.log('DEBUG: editStatus value:', document.getElementById('editStatus').value);
+    console.log('DEBUG: editStatus selectedIndex:', document.getElementById('editStatus').selectedIndex);
+
+    // Form verilerini yeniden oluştur
+    data = {
+        file_type: fileType,
+        courthouse: courthouse,
+        department: department,
+        city: city,
+        client_entity_type: clientEntityType,
+        client_name: clientName,
+        client_identity_number: clientIdentityNumber,
+        client_capacity: clientCapacity,
+        phone_number: phoneNumber,
+        client_address: clientAddress,
+        opponent_entity_type: opponentEntityType,
+        opponent_name: opponentName,
+        opponent_identity_number: opponentIdentityNumber,
+        opponent_capacity: opponentCapacity,
+        opponent_phone: opponentPhone,
+        opponent_address: opponentAddress,
+        opponent_lawyer: opponentLawyer,
+        opponent_lawyer_bar_number: opponentLawyerBarNumber,
+        opponent_lawyer_phone: opponentLawyerPhone,
+        opponent_lawyer_address: opponentLawyerAddress,
+        description: description,
+        year: year,
+        case_number: caseNumber,
+        open_date: openDate,
+
+        // Ek kişiler
+        additional_clients_json: additionalClients,
+        additional_opponents_json: additionalOpponents,
+        additional_lawyers_json: additionalLawyers,
+
+        // Dosya bilgileri - Modal'daki doğru status element'ini kullan
+        status: document.getElementById('editStatusModal') ? document.getElementById('editStatusModal').value : 'Aktif',
         next_hearing: document.querySelector('#editModal #editNextHearing').value || null,
         hearing_time: document.querySelector('#editModal #editHearingTime').value || null,
         hearing_type: hearingType
@@ -4715,10 +4756,16 @@ function saveChanges(caseId) {
         return;
     }
 
+    // DEBUG LOGS - Status kontrolü
+    const statusElement = document.getElementById('editStatusModal');
+    const oldStatusElement = document.getElementById('editStatus');
+    console.log('DEBUG: editStatusModal element found:', statusElement);
+    console.log('DEBUG: editStatusModal value:', statusElement ? statusElement.value : 'ELEMENT BULUNAMADI');
+    console.log('DEBUG: editStatusModal selectedIndex:', statusElement ? statusElement.selectedIndex : 'N/A');
+    console.log('DEBUG: old editStatus element (should be different):', oldStatusElement ? oldStatusElement.value : 'N/A');
     console.log('DEBUG: Data being sent to server:', data);
     console.log('DEBUG: file_type in data:', data.file_type);
     console.log('DEBUG: status in data:', data.status);
-    console.log('DEBUG: editStatus element value:', document.getElementById('editStatus').value);
     
     fetch(`/edit_case/${caseId}`, {
         method: 'POST',
