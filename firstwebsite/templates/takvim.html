@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'is': 'Yapılacak İş',
         'randevu': 'Randevu',
         'gunluk-kayit': 'Günlük Kayıt',
+        'arabuluculuk-toplantisi': 'Arabuluculuk Toplantısı',
         'diger': 'Diğer'
     };
 
@@ -186,14 +187,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const eventType = eventTypeSelect.value;
         const isHearing = eventType === 'durusma' || eventType === 'e-durusma';
         const isGunlukKayit = eventType === 'gunluk-kayit';
+        const isArabuluculuk = eventType === 'arabuluculuk-toplantisi';
         const citySelectGroup = document.getElementById('citySelectGroup');
         const gunlukKayitDetailsSection = document.getElementById('gunlukKayitDetailsSection');
+        const arabuluculukDetailsSection = document.getElementById('arabuluculukDetailsSection');
 
-        console.log('toggleFormFields called with eventType:', eventType, 'isGunlukKayit:', isGunlukKayit);
+        console.log('toggleFormFields called with eventType:', eventType, 'isGunlukKayit:', isGunlukKayit, 'isArabuluculuk:', isArabuluculuk);
 
         hearingDetailsSection.style.display = isHearing ? 'block' : 'none';
         if (gunlukKayitDetailsSection) {
             gunlukKayitDetailsSection.style.display = isGunlukKayit ? 'block' : 'none';
+        }
+        if (arabuluculukDetailsSection) {
+            arabuluculukDetailsSection.style.display = isArabuluculuk ? 'block' : 'none';
         }
         if (citySelectGroup) {
             citySelectGroup.style.display = isHearing ? 'block' : 'none';
@@ -231,11 +237,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 isCompletedGroup.style.setProperty('display', 'none', 'important');
                 console.log('IsCompleted group hidden');
             }
-            
+
             // Required alanları kaldır
             document.getElementById('eventTitle').required = false;
             document.getElementById('eventTime').required = false;
             // AssignedTo artık hiçbir zaman required değil
+
+            // Arabuluculuk alanlarını required'dan çıkar
+            document.getElementById('basvuranIsim').required = false;
+            document.getElementById('aleyhindekiIsim').required = false;
+            document.getElementById('arabulucuIsim').required = false;
+            document.getElementById('arabuluculukTuru').required = false;
+        } else if (isArabuluculuk) {
+            console.log('Hiding title field for Arabuluculuk Toplantısı');
+            // Arabuluculuk Toplantısı seçildiğinde başlık alanını gizle
+            if (titleGroup) {
+                titleGroup.style.setProperty('display', 'none', 'important');
+                console.log('Title group hidden for Arabuluculuk');
+            }
+
+            // Saat, Atanan Kişi ve Tamamlandı alanlarını göster
+            if (timeGroup) {
+                timeGroup.style.setProperty('display', 'block', 'important');
+            }
+            if (assignedToGroup) {
+                assignedToGroup.style.setProperty('display', 'block', 'important');
+            }
+            if (isCompletedGroup) {
+                isCompletedGroup.style.setProperty('display', 'block', 'important');
+            }
+
+            // Required alanları kaldır/ekle
+            document.getElementById('eventTitle').required = false;
+            document.getElementById('eventTime').required = true;
+
+            // Arabuluculuk alanlarını required yap
+            document.getElementById('basvuranIsim').required = true;
+            document.getElementById('aleyhindekiIsim').required = true;
+            document.getElementById('arabulucuIsim').required = true;
+            document.getElementById('arabuluculukTuru').required = true;
         } else {
             console.log('Showing fields for other event types');
             // Diğer etkinlik türlerinde bu alanları göster
@@ -248,6 +288,12 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('eventTitle').required = true;
             document.getElementById('eventTime').required = true;
             // AssignedTo artık hiçbir zaman required değil
+
+            // Arabuluculuk alanlarını required'dan çıkar
+            document.getElementById('basvuranIsim').required = false;
+            document.getElementById('aleyhindekiIsim').required = false;
+            document.getElementById('arabulucuIsim').required = false;
+            document.getElementById('arabuluculukTuru').required = false;
         }
 
         // Arabuluculuk, AİHM, AYM kontrolü
@@ -370,29 +416,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 departmentSelect.appendChild(option);
             });
 
-        // Numaralı mahkeme/daire ekleme (Opsiyonel, geliştirilebilir)
-        // Örnek: İstanbul, Ankara, İzmir için
-        const majorCities = ['İstanbul', 'Ankara', 'İzmir'];
-        if (majorCities.includes(selectedCity)) {
-             let maxNumber = 30; // Varsayılan
-            // Adliyeye göre maxNumber ayarlanabilir (örn. Çağlayan, Anadolu için daha fazla)
-             if (selectedFileType !== 'icra') { // Ceza ve Hukuk için
-                 for (let i = 1; i <= maxNumber; i++) {
-                     departments.forEach(baseDep => {
+        // Numaralı mahkeme/daire ekleme - Tüm şehirler için 70'e kadar
+        // Hangi şehir seçilirse seçilsin 70'e kadar mahkeme/birim seçeneği sunulur
+        let maxNumber = 70; // 30'dan 70'e çıkarıldı
+
+        if (selectedFileType !== 'icra') { // Ceza ve Hukuk için
+            for (let i = 1; i <= maxNumber; i++) {
+                departments.forEach(baseDep => {
+                    const option = document.createElement('option');
+                    option.value = `${i}. ${baseDep}`;
+                    option.textContent = `${i}. ${baseDep}`;
+                    departmentSelect.appendChild(option);
+                });
+            }
+        } else { // İcra için
+            for (let i = 1; i <= maxNumber; i++) {
                 const option = document.createElement('option');
-                         option.value = `${i}. ${baseDep}`;
-                         option.textContent = `${i}. ${baseDep}`;
+                option.value = `${i}. İcra Dairesi`;
+                option.textContent = `${i}. İcra Dairesi`;
                 departmentSelect.appendChild(option);
-            });
-                 }
-             } else { // İcra için
-                 for (let i = 1; i <= maxNumber; i++) {
-            const option = document.createElement('option');
-                     option.value = `${i}. İcra Dairesi`;
-                     option.textContent = `${i}. İcra Dairesi`;
-            departmentSelect.appendChild(option);
-                 }
-             }
+            }
         }
     }
 
@@ -420,6 +463,8 @@ document.addEventListener('DOMContentLoaded', function() {
             titleInput.placeholder = 'Müvekkil (Esas Numarası)';
         } else if (eventTypeSelect.value === 'gunluk-kayit') {
             titleInput.placeholder = 'Günlük kayıt başlığı';
+        } else if (eventTypeSelect.value === 'arabuluculuk-toplantisi') {
+            titleInput.placeholder = 'Arabuluculuk toplantısı başlığı';
         } else {
             titleInput.placeholder = 'Etkinlik başlığı';
         }
@@ -680,6 +725,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('muvekkilTelefon').value = eventToEdit.muvekkil_telefon || '';
                 }
             }
+
+            // Arabuluculuk Toplantısı bilgileri (eğer varsa)
+            if (eventToEdit.event_type === 'arabuluculuk-toplantisi') {
+                if (document.getElementById('basvuranIsim')) {
+                    document.getElementById('basvuranIsim').value = eventToEdit.basvuran_isim || '';
+                }
+                if (document.getElementById('basvuranTelefon')) {
+                    document.getElementById('basvuranTelefon').value = eventToEdit.basvuran_telefon || '';
+                }
+                if (document.getElementById('aleyhindekiIsim')) {
+                    document.getElementById('aleyhindekiIsim').value = eventToEdit.aleyhindeki_isim || '';
+                }
+                if (document.getElementById('aleyhindekiTelefon')) {
+                    document.getElementById('aleyhindekiTelefon').value = eventToEdit.aleyhindeki_telefon || '';
+                }
+                if (document.getElementById('arabulucuIsim')) {
+                    document.getElementById('arabulucuIsim').value = eventToEdit.arabulucu_isim || '';
+                }
+                if (document.getElementById('arabulucuTelefon')) {
+                    document.getElementById('arabulucuTelefon').value = eventToEdit.arabulucu_telefon || '';
+                }
+                if (document.getElementById('arabuluculukTuru')) {
+                    document.getElementById('arabuluculukTuru').value = eventToEdit.arabuluculuk_turu || '';
+                }
+            }
             
             // Düzenleme modunda etkinlik türüne göre form alanlarını güncelle
             toggleFormFields();
@@ -758,6 +828,73 @@ document.addEventListener('DOMContentLoaded', function() {
             if (timeItem) timeItem.style.display = 'flex';
             if (assignedItem) assignedItem.style.display = 'flex';
             if (statusItem) statusItem.style.display = 'flex';
+        }
+
+        // Arabuluculuk Toplantısı detaylarını göster/gizle
+        const basvuranItem = document.getElementById('detailBasvuranItem');
+        const basvuranTelefonItem = document.getElementById('detailBasvuranTelefonItem');
+        const aleyhindekiItem = document.getElementById('detailAleyhindekiItem');
+        const aleyhindekiTelefonItem = document.getElementById('detailAleyhindekiTelefonItem');
+        const arabulucuItem = document.getElementById('detailArabulucuItem');
+        const arabulucuTelefonItem = document.getElementById('detailArabulucuTelefonItem');
+        const arabuluculukTuruItem = document.getElementById('detailArabuluculukTuruItem');
+
+        if (event.event_type === 'arabuluculuk-toplantisi') {
+            // Debug: Arabuluculuk verilerini logla
+            console.log('Arabuluculuk Toplantısı Detayları (Event ID:', event.id, '):', {
+                basvuran_isim: event.basvuran_isim,
+                basvuran_telefon: event.basvuran_telefon,
+                aleyhindeki_isim: event.aleyhindeki_isim,
+                aleyhindeki_telefon: event.aleyhindeki_telefon,
+                arabulucu_isim: event.arabulucu_isim,
+                arabulucu_telefon: event.arabulucu_telefon,
+                arabuluculuk_turu: event.arabuluculuk_turu
+            });
+            console.log('Tam event objesi:', event);
+
+            // Arabuluculuk detaylarını doldur ve göster
+            if (basvuranItem) {
+                const basvuranText = `${event.basvuran_isim || '-'} - ${event.basvuran_telefon || '-'}`;
+                document.getElementById('detailBasvuran').textContent = basvuranText;
+                basvuranItem.style.display = 'flex';
+            }
+            // Başvuran telefon alanını gizle (artık tek satırda gösteriyoruz)
+            if (basvuranTelefonItem) {
+                basvuranTelefonItem.style.display = 'none';
+            }
+            if (aleyhindekiItem) {
+                const aleyhindekiText = `${event.aleyhindeki_isim || '-'} - ${event.aleyhindeki_telefon || '-'}`;
+                document.getElementById('detailAleyhindeki').textContent = aleyhindekiText;
+                aleyhindekiItem.style.display = 'flex';
+            }
+            // Aleyhindeki telefon alanını gizle
+            if (aleyhindekiTelefonItem) {
+                aleyhindekiTelefonItem.style.display = 'none';
+            }
+            if (arabulucuItem) {
+                const arabulucuText = `${event.arabulucu_isim || '-'} - ${event.arabulucu_telefon || '-'}`;
+                document.getElementById('detailArabulucuBilgi').textContent = arabulucuText;
+                arabulucuItem.style.display = 'flex';
+            }
+            // Arabulucu telefon alanını gizle
+            if (arabulucuTelefonItem) {
+                arabulucuTelefonItem.style.display = 'none';
+            }
+            if (arabuluculukTuruItem) {
+                const turuText = event.arabuluculuk_turu === 'yuzyuze' ? 'Yüzyüze' :
+                               event.arabuluculuk_turu === 'telekonferans' ? 'Telekonferans' : '-';
+                document.getElementById('detailArabuluculukTuru').textContent = turuText;
+                arabuluculukTuruItem.style.display = 'flex';
+            }
+        } else {
+            // Arabuluculuk detaylarını gizle
+            if (basvuranItem) basvuranItem.style.display = 'none';
+            if (basvuranTelefonItem) basvuranTelefonItem.style.display = 'none';
+            if (aleyhindekiItem) aleyhindekiItem.style.display = 'none';
+            if (aleyhindekiTelefonItem) aleyhindekiTelefonItem.style.display = 'none';
+            if (arabulucuItem) arabulucuItem.style.display = 'none';
+            if (arabulucuTelefonItem) arabulucuTelefonItem.style.display = 'none';
+            if (arabuluculukTuruItem) arabuluculukTuruItem.style.display = 'none';
         }
         document.getElementById('detailDescription').textContent = event.description || 'Açıklama yok.';
 
@@ -950,6 +1087,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (eventTypeSelect.value === 'gunluk-kayit') {
             const muvekkilIsim = document.getElementById('muvekkilIsim').value;
             eventTitle = muvekkilIsim || 'Günlük Kayıt';
+        } else if (eventTypeSelect.value === 'arabuluculuk-toplantisi') {
+            // Arabuluculuk Toplantısı için başlık oluştur
+            const basvuranIsim = document.getElementById('basvuranIsim').value;
+            const aleyhindekiIsim = document.getElementById('aleyhindekiIsim').value;
+            eventTitle = `${basvuranIsim || 'Başvuran'} / ${aleyhindekiIsim || 'Aleyhindeki'}`;
         }
         
         const formData = {
@@ -968,6 +1110,14 @@ document.addEventListener('DOMContentLoaded', function() {
             // Günlük Kayıt bilgileri (sadece günlük-kayit ise gönder)
             muvekkil_isim: (eventTypeSelect.value === 'gunluk-kayit') ? document.getElementById('muvekkilIsim').value : null,
             muvekkil_telefon: (eventTypeSelect.value === 'gunluk-kayit') ? document.getElementById('muvekkilTelefon').value : null,
+            // Arabuluculuk Toplantısı bilgileri (sadece arabuluculuk-toplantisi ise gönder)
+            basvuran_isim: (eventTypeSelect.value === 'arabuluculuk-toplantisi') ? document.getElementById('basvuranIsim').value : null,
+            basvuran_telefon: (eventTypeSelect.value === 'arabuluculuk-toplantisi') ? document.getElementById('basvuranTelefon').value : null,
+            aleyhindeki_isim: (eventTypeSelect.value === 'arabuluculuk-toplantisi') ? document.getElementById('aleyhindekiIsim').value : null,
+            aleyhindeki_telefon: (eventTypeSelect.value === 'arabuluculuk-toplantisi') ? document.getElementById('aleyhindekiTelefon').value : null,
+            arabulucu_isim: (eventTypeSelect.value === 'arabuluculuk-toplantisi') ? document.getElementById('arabulucuIsim').value : null,
+            arabulucu_telefon: (eventTypeSelect.value === 'arabuluculuk-toplantisi') ? document.getElementById('arabulucuTelefon').value : null,
+            arabuluculuk_turu: (eventTypeSelect.value === 'arabuluculuk-toplantisi') ? document.getElementById('arabuluculukTuru').value : null,
             // Şehir bilgisi frontend'de kullanıldı, backend'e göndermeye gerek yok (şimdilik)
         };
 
@@ -1918,6 +2068,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .event-type-badge.randevu { background: #9b59b6; }
 .event-type-badge.diger { background: #6c757d; }
 .event-type-badge.gunluk-kayit { background: #fd7e14; color: #fff; }
+.event-type-badge.arabuluculuk-toplantisi { background: #8B4513; color: #fff; }
 
 .event-list {
     flex: 1;
@@ -1966,6 +2117,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 .calendar-event[data-type="is"] { color: #ffc107; }
 .calendar-event[data-type="randevu"] { color: #9b59b6; }
 .calendar-event[data-type="gunluk-kayit"] { color: #fd7e14; }
+.calendar-event[data-type="arabuluculuk-toplantisi"] { color: #8B4513; }
 .calendar-event[data-type="diger"] { color: #6c757d; }
 
 .calendar-day.empty {
@@ -2276,6 +2428,7 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                             <option value="is">Yapılacak İş</option>
                             <option value="randevu">Randevu</option>
                             <option value="gunluk-kayit">Günlük Kayıt</option>
+                            <option value="arabuluculuk-toplantisi">Arabuluculuk Toplantısı</option>
                             <option value="diger">Diğer</option>
                         </select>
                     </div>
@@ -2341,7 +2494,75 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- Arabuluculuk Toplantısı için özel alanlar -->
+                <div id="arabuluculukDetailsSection" class="hidden-section">
+                    <div class="form-group full-width">
+                        <label>Arabuluculuğa Başvuran Taraf</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <input type="text" id="basvuranIsim" name="basvuran_isim" placeholder="İsim Soyisim">
+                                    <i class="material-icons">person</i>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <input type="tel" id="basvuranTelefon" name="basvuran_telefon" placeholder="Telefon (isteğe bağlı)">
+                                    <i class="material-icons">phone</i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Aleyhinde Arabuluculuğa Başvurulan Taraf</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <input type="text" id="aleyhindekiIsim" name="aleyhindeki_isim" placeholder="İsim Soyisim">
+                                    <i class="material-icons">person</i>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <input type="tel" id="aleyhindekiTelefon" name="aleyhindeki_telefon" placeholder="Telefon (isteğe bağlı)">
+                                    <i class="material-icons">phone</i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Arabulucu</label>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <input type="text" id="arabulucuIsim" name="arabulucu_isim" placeholder="İsim Soyisim">
+                                    <i class="material-icons">person</i>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="input-wrapper">
+                                    <input type="tel" id="arabulucuTelefon" name="arabulucu_telefon" placeholder="Telefon (isteğe bağlı)">
+                                    <i class="material-icons">phone</i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Arabuluculuk Türü</label>
+                        <div class="select-wrapper">
+                            <select id="arabuluculukTuru" name="arabuluculuk_turu" required>
+                                <option value="">Seçiniz</option>
+                                <option value="yuzyuze">Yüzyüze</option>
+                                <option value="telekonferans">Telekonferans</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label>Tarih</label>
@@ -2453,6 +2674,58 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                             <span class="meta-value" id="detailTelefon"></span>
                         </div>
                     </div>
+
+                    <!-- Arabuluculuk Toplantısı bilgileri -->
+                    <div class="meta-item hidden-section" id="detailBasvuranItem">
+                        <i class="material-icons">person_outline</i>
+                        <div>
+                            <span class="meta-label">Başvuran Taraf</span>
+                            <span class="meta-value" id="detailBasvuran"></span>
+                        </div>
+                    </div>
+                    <div class="meta-item hidden-section" id="detailBasvuranTelefonItem">
+                        <i class="material-icons">phone</i>
+                        <div>
+                            <span class="meta-label">Başvuran Telefon</span>
+                            <span class="meta-value" id="detailBasvuranTelefon"></span>
+                        </div>
+                    </div>
+                    <div class="meta-item hidden-section" id="detailAleyhindekiItem">
+                        <i class="material-icons">person_outline</i>
+                        <div>
+                            <span class="meta-label">Aleyhindeki Taraf</span>
+                            <span class="meta-value" id="detailAleyhindeki"></span>
+                        </div>
+                    </div>
+                    <div class="meta-item hidden-section" id="detailAleyhindekiTelefonItem">
+                        <i class="material-icons">phone</i>
+                        <div>
+                            <span class="meta-label">Aleyhindeki Telefon</span>
+                            <span class="meta-value" id="detailAleyhindekiTelefon"></span>
+                        </div>
+                    </div>
+                    <div class="meta-item hidden-section" id="detailArabulucuItem">
+                        <i class="material-icons">balance</i>
+                        <div>
+                            <span class="meta-label">Arabulucu</span>
+                            <span class="meta-value" id="detailArabulucuBilgi"></span>
+                        </div>
+                    </div>
+                    <div class="meta-item hidden-section" id="detailArabulucuTelefonItem">
+                        <i class="material-icons">phone</i>
+                        <div>
+                            <span class="meta-label">Arabulucu Telefon</span>
+                            <span class="meta-value" id="detailArabulucuTelefon"></span>
+                        </div>
+                    </div>
+                    <div class="meta-item hidden-section" id="detailArabuluculukTuruItem">
+                        <i class="material-icons">video_call</i>
+                        <div>
+                            <span class="meta-label">Toplantı Türü</span>
+                            <span class="meta-value" id="detailArabuluculukTuru"></span>
+                        </div>
+                    </div>
+
                     <!-- Mevcut Atanan Kişi ve Durum -->
                     <div class="meta-item" id="detailAssignedToItem">
                         <i class="material-icons">person</i>

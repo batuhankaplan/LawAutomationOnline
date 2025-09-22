@@ -968,7 +968,8 @@ def takvim():
     if not current_user.has_permission('etkinlik_goruntule'):
         events_data = []  # Yetki yoksa boş liste döndür
     else:
-        # Tüm etkinlikleri getir
+        # Tüm etkinlikleri getir (session refresh ile)
+        db.session.expire_all()  # Cache'i temizle
         events = CalendarEvent.query.all()
         events_data = []
         
@@ -987,9 +988,24 @@ def takvim():
                 'deadline_date': event.deadline_date.strftime('%Y-%m-%d') if event.deadline_date else None,
                 'is_completed': event.is_completed,
                 'muvekkil_isim': event.muvekkil_isim,
-                'muvekkil_telefon': event.muvekkil_telefon
+                'muvekkil_telefon': event.muvekkil_telefon,
+                'basvuran_isim': event.basvuran_isim,
+                'basvuran_telefon': event.basvuran_telefon,
+                'aleyhindeki_isim': event.aleyhindeki_isim,
+                'aleyhindeki_telefon': event.aleyhindeki_telefon,
+                'arabulucu_isim': event.arabulucu_isim,
+                'arabulucu_telefon': event.arabulucu_telefon,
+                'arabuluculuk_turu': event.arabuluculuk_turu
             }
             events_data.append(event_data)
+
+            # Debug: Arabuluculuk etkinliklerini logla
+            if event.event_type == 'arabuluculuk-toplantisi':
+                print(f"Arabuluculuk Etkinliği ID {event.id}:")
+                print(f"  Başvuran: {event.basvuran_isim} ({event.basvuran_telefon})")
+                print(f"  Aleyhindeki: {event.aleyhindeki_isim} ({event.aleyhindeki_telefon})")
+                print(f"  Arabulucu: {event.arabulucu_isim} ({event.arabulucu_telefon})")
+                print(f"  Tür: {event.arabuluculuk_turu}")
     
     # Debug için dosya türü, adliye ve departman verilerini kontrol et
     for event_data in events_data:
@@ -2006,7 +2022,14 @@ def add_event():
             courthouse=courthouse,
             department=department,
             muvekkil_isim=data.get('muvekkil_isim'),
-            muvekkil_telefon=data.get('muvekkil_telefon')
+            muvekkil_telefon=data.get('muvekkil_telefon'),
+            basvuran_isim=data.get('basvuran_isim'),
+            basvuran_telefon=data.get('basvuran_telefon'),
+            aleyhindeki_isim=data.get('aleyhindeki_isim'),
+            aleyhindeki_telefon=data.get('aleyhindeki_telefon'),
+            arabulucu_isim=data.get('arabulucu_isim'),
+            arabulucu_telefon=data.get('arabulucu_telefon'),
+            arabuluculuk_turu=data.get('arabuluculuk_turu')
         )
         
         db.session.add(event)
@@ -2108,7 +2131,16 @@ def add_event():
             'is_completed': event.is_completed,
             'file_type': file_type,
             'courthouse': courthouse,
-            'department': department
+            'department': department,
+            'muvekkil_isim': event.muvekkil_isim,
+            'muvekkil_telefon': event.muvekkil_telefon,
+            'basvuran_isim': event.basvuran_isim,
+            'basvuran_telefon': event.basvuran_telefon,
+            'aleyhindeki_isim': event.aleyhindeki_isim,
+            'aleyhindeki_telefon': event.aleyhindeki_telefon,
+            'arabulucu_isim': event.arabulucu_isim,
+            'arabulucu_telefon': event.arabulucu_telefon,
+            'arabuluculuk_turu': event.arabuluculuk_turu
         }
         
         if deadline_date:
@@ -2277,10 +2309,10 @@ def update_event():
         if event.event_type == 'gunluk-kayit':
             if 'muvekkil_isim' in data:
                 event.muvekkil_isim = data['muvekkil_isim']
-                
+
             if 'muvekkil_telefon' in data:
                 event.muvekkil_telefon = data['muvekkil_telefon']
-                
+
             # Günlük Kayıt için time'ı 00:00 yap (NULL yerine)
             event.time = datetime.strptime('00:00', '%H:%M').time()
             event.assigned_to = None
@@ -2289,6 +2321,32 @@ def update_event():
             # Günlük Kayıt değilse bu alanları temizle
             event.muvekkil_isim = None
             event.muvekkil_telefon = None
+
+        # Arabuluculuk Toplantısı bilgilerini güncelle
+        if event.event_type == 'arabuluculuk-toplantisi':
+            if 'basvuran_isim' in data:
+                event.basvuran_isim = data['basvuran_isim']
+            if 'basvuran_telefon' in data:
+                event.basvuran_telefon = data['basvuran_telefon']
+            if 'aleyhindeki_isim' in data:
+                event.aleyhindeki_isim = data['aleyhindeki_isim']
+            if 'aleyhindeki_telefon' in data:
+                event.aleyhindeki_telefon = data['aleyhindeki_telefon']
+            if 'arabulucu_isim' in data:
+                event.arabulucu_isim = data['arabulucu_isim']
+            if 'arabulucu_telefon' in data:
+                event.arabulucu_telefon = data['arabulucu_telefon']
+            if 'arabuluculuk_turu' in data:
+                event.arabuluculuk_turu = data['arabuluculuk_turu']
+        else:
+            # Arabuluculuk Toplantısı değilse bu alanları temizle
+            event.basvuran_isim = None
+            event.basvuran_telefon = None
+            event.aleyhindeki_isim = None
+            event.aleyhindeki_telefon = None
+            event.arabulucu_isim = None
+            event.arabulucu_telefon = None
+            event.arabuluculuk_turu = None
         
         # Değişiklikleri kaydet
         db.session.commit()
@@ -2421,7 +2479,16 @@ def update_event():
                 "is_completed": event.is_completed,
                 "file_type": event.file_type,
                 "courthouse": event.courthouse,
-                "department": event.department
+                "department": event.department,
+                "muvekkil_isim": event.muvekkil_isim,
+                "muvekkil_telefon": event.muvekkil_telefon,
+                "basvuran_isim": event.basvuran_isim,
+                "basvuran_telefon": event.basvuran_telefon,
+                "aleyhindeki_isim": event.aleyhindeki_isim,
+                "aleyhindeki_telefon": event.aleyhindeki_telefon,
+                "arabulucu_isim": event.arabulucu_isim,
+                "arabulucu_telefon": event.arabulucu_telefon,
+                "arabuluculuk_turu": event.arabuluculuk_turu
             }
         }), 200
     except Exception as e:
@@ -2739,8 +2806,10 @@ def get_documents(case_id):
     return jsonify(success=True, documents=[{
         'id': doc.id,
         'filename': doc.filename,
+        'filepath': doc.filepath,
         'document_type': doc.document_type,
-        'upload_date': doc.upload_date.strftime('%d.%m.%Y')
+        'upload_date': doc.upload_date.strftime('%d.%m.%Y'),
+        'upload_datetime': doc.upload_date.isoformat()  # Tam tarih/saat bilgisi
     } for doc in documents])
 
 @app.route('/download_document/<int:document_id>')

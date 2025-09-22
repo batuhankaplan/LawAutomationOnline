@@ -464,18 +464,7 @@
 
             <!-- Alt Bölümler Container - Yan Yana -->
             <div class="bottom-sections-container">
-                <!-- Masraflar -->
-                <div class="detail-section">
-                    <div class="section-header">
-                        <h3>Masraflar</h3>
-                        <button class="btn primary" onclick="showExpenseModal()">
-                            <i class="material-icons">add</i> Masraf Ekle
-                        </button>
-                    </div>
-                    <div id="editExpensesList" class="expenses-list"></div>
-                </div>
-
-                <!-- Belgeler -->
+                <!-- Belgeler (Sol Taraf) -->
                 <div class="detail-section">
                     <div class="section-header">
                         <h3>Belgeler</h3>
@@ -483,7 +472,54 @@
                             <i class="material-icons">upload</i> Belge Yükle
                         </button>
                     </div>
+
+                    <!-- Belgeler kontrol paneli -->
+                    <div class="documents-control-panel">
+                        <!-- Sıralama seçenekleri -->
+                        <div class="sorting-options">
+                            <label for="documentSortBy">Sıralama:</label>
+                            <select id="documentSortBy" onchange="sortDocuments()">
+                                <option value="date">Tarihe Göre (Varsayılan)</option>
+                                <option value="alphabetic">Alfabetik</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Son Yüklenen 10 Belge -->
+                    <div class="recent-documents-section">
+                        <div class="document-type-header-group" onclick="toggleRecentDocuments()">
+                            <h4>Son Yüklenen 10 Belge</h4>
+                            <span class="dropdown-arrow">▼</span>
+                        </div>
+                        <div class="document-type-content" id="recentDocuments" style="display: block;">
+                            <!-- Son 10 belge buraya yüklenecek -->
+                        </div>
+                    </div>
+
                     <div id="documentsList" class="documents-list"></div>
+                </div>
+
+                <!-- Masraflar (Sağ Taraf) -->
+                <div class="detail-section">
+                    <div class="section-header">
+                        <h3>Masraflar</h3>
+                        <button class="btn primary" onclick="showExpenseModal()">
+                            <i class="material-icons">add</i> Masraf Ekle
+                        </button>
+                    </div>
+
+                    <!-- Masraflar sıralama seçenekleri -->
+                    <div class="expenses-control-panel">
+                        <div class="sorting-options">
+                            <label for="expenseSortBy">Sıralama:</label>
+                            <select id="expenseSortBy" onchange="sortExpenses()">
+                                <option value="date">Tarihe Göre (Varsayılan)</option>
+                                <option value="alphabetic">Alfabetik</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="editExpensesList" class="expenses-list"></div>
                 </div>
             </div>
         </div>
@@ -1742,6 +1778,159 @@
     line-height: 1.4;
 }
 
+/* Belge kontrol paneli stilleri */
+.documents-control-panel {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+/* Masraflar kontrol paneli stilleri */
+.expenses-control-panel {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.recent-documents-dropdown {
+    position: relative;
+}
+
+.dropdown-toggle {
+    width: 100%;
+    padding: 10px 15px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.dropdown-toggle:hover {
+    background: #f0f0f0;
+    border-color: #3f51b5;
+}
+
+.dropdown-arrow {
+    margin-left: auto;
+    transition: transform 0.3s ease;
+}
+
+.dropdown-toggle.active .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.recent-document-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.2s ease;
+}
+
+.recent-document-item:hover {
+    background: #f0f0f0;
+}
+
+.recent-document-item:last-child {
+    border-bottom: none;
+}
+
+.sorting-options {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sorting-options label {
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+}
+
+.sorting-options select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+}
+
+/* Son yüklenen belgeler bölümü */
+.recent-documents-section {
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Belge türü grupları stilleri */
+.document-type-group {
+    margin-bottom: 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.document-type-header-group {
+    background: #3f51b5;
+    color: white;
+    padding: 12px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.document-type-header-group:hover {
+    background: #303f9f;
+}
+
+.document-type-header-group h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.document-type-content {
+    background: white;
+}
+
 /* Belge listesi stilleri */
 .documents-list {
     display: flex;
@@ -1751,18 +1940,19 @@
 
 .document-item {
     background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
+    border-bottom: 1px solid #e9ecef;
     overflow: hidden;
+    transition: background-color 0.2s ease;
 }
 
-.document-type-header {
-    background: #e3f2fd;
-    color: #1976d2;
-    padding: 8px 15px;
-    font-weight: 500;
-    font-size: 0.9rem;
+.document-item:last-child {
+    border-bottom: none;
 }
+
+.document-item:hover {
+    background: #e3f2fd;
+}
+
 
 .document-content {
     padding: 15px;
@@ -1771,7 +1961,8 @@
 .document-main {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
+    width: 100%;
 }
 
 .document-info {
@@ -1804,14 +1995,24 @@
     line-height: 1.4;
 }
 
-.document-date {
-    color: #6c757d;
-    font-size: 0.9rem;
-}
 
 .document-actions {
     display: flex;
     gap: 8px;
+}
+
+.document-right-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.document-date {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    min-width: 80px;
+    text-align: right;
 }
 
 .document-actions .btn {
@@ -2461,10 +2662,6 @@
     color: #2c3e50;
 }
 
-.document-date {
-    font-size: 0.85rem;
-    color: #666;
-}
 
 /* Belge Yükle Modal Özel Tasarımları */
 .modal-content.upload-modal {
@@ -2788,8 +2985,22 @@ const expenseTypes = [
 
 // Örnek Belge Türleri (Bunları kendi türlerinizle değiştirin)
 const documentTypes = [
-    "Dilekçe", "Vekaletname", "Fatura", "Makbuz", "Karar",
-    "Tutanak", "İhtarname", "Sözleşme", "Delil", "Diğer"
+    "Adli Yardım",
+    "Arabuluculuk",
+    "Bilirkişi Raporu",
+    "Diğer",
+    "Dilekçe",
+    "Duruşma Zaptı",
+    "İhtarname",
+    "İşçi Görüşme Formu",
+    "İstinaf",
+    "Karar",
+    "Sözleşme",
+    "Talep",
+    "Tazminat Rapor",
+    "Temyiz",
+    "Vekaletname",
+    "Yetki Belgesi"
 ];
 
 let currentCaseId = null;
@@ -3446,75 +3657,27 @@ function showDetails(caseId) {
             // Masrafları göster
             if (data.expenses && Array.isArray(data.expenses)) {
                 currentExpenses = data.expenses;
+                currentExpensesData = data.expenses;
+                displaySortedExpenses();
+            } else {
+                currentExpenses = [];
+                currentExpensesData = [];
                 const expensesList = document.getElementById('editExpensesList');
-                expensesList.innerHTML = data.expenses.map(expense => `
-                    <div class="expense-item">
-                        <div class="expense-info">
-                            <div class="expense-type">${expense.expense_type}</div>
-                            <div class="expense-amount">₺${expense.amount}</div>
-                            <div class="expense-date">${expense.date}</div>
-                            <div class="expense-description">${expense.description || ''}</div>
-                        </div>
-                        <div class="expense-actions">
-                            <div class="expense-status ${expense.is_paid ? 'status-paid' : 'status-unpaid'}">
-                                ${expense.is_paid ? 'Ödendi' : 'Ödenmedi'}
-                            </div>
-                            <button type="button" class="btn small" onclick="editExpense(${expense.id})">
-                                <i class="material-icons">edit</i>
-                            </button>
-                            <button type="button" class="btn small danger" onclick="deleteExpense(${expense.id})">
-                                <i class="material-icons">delete</i>
-                            </button>
-                        </div>
-                    </div>
-                `).join('') || '<p>Henüz masraf kaydı bulunmuyor.</p>';
+                if (expensesList) {
+                    expensesList.innerHTML = '<p>Henüz masraf kaydı bulunmuyor.</p>';
+                }
             }
 
             // Belgeleri göster
-            const documentsList = document.getElementById('documentsList');
-            if (documentsList && data.documents) {
-                documentsList.innerHTML = data.documents.map(doc => {
-                    // Dosya adı ve uzantıyı ayır
-                    const fileNameParts = doc.filename ? doc.filename.split('.') : ['', ''];
-                    const fileName = fileNameParts.slice(0, -1).join('.');
-                    const fileExt = fileNameParts[fileNameParts.length - 1];
-                    
-                    // Orijinal dosya adını al
-                    const originalName = doc.filepath ? doc.filepath.split('_').slice(2).join('_') : '';
-                    
-                    return `
-                        <div class="document-item">
-                            <div class="document-type-header">
-                                ${doc.document_type}
-                            </div>
-                            <div class="document-content">
-                                <div class="document-main">
-                                    <div class="document-info">
-                                        <i class="material-icons">${getFileIcon(doc.filename || '')}</i>
-                                        <div class="document-details">
-                                            <span class="document-name">${fileName}</span>
-                                            <span class="document-original-name">${originalName}</span>
-                                            <span class="document-date">${doc.upload_date}</span>
-                                        </div>
-                                    </div>
-                                    <div class="document-actions">
-                                        <button class="btn small" onclick="previewDocument(${doc.id}, '${doc.filename || ''}')" title="Önizle">
-                                            <i class="material-icons">visibility</i>
-                                        </button>
-                                        <button class="btn small" onclick="downloadDocument(${doc.id})" title="İndir">
-                                            <i class="material-icons">download</i>
-                                        </button>
-                                        ${hasFileDeletePermission ? `
-                                        <button class="btn danger small" onclick="deleteDocument(${doc.id})" title="Sil">
-                                            <i class="material-icons">delete</i>
-                                        </button>
-                                        ` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('') || '<p>Henüz belge yüklenmemiş.</p>';
+            if (data.documents) {
+                currentDocuments = data.documents;
+                displaySortedDocuments();
+            } else {
+                currentDocuments = [];
+                const documentsList = document.getElementById('documentsList');
+                if (documentsList) {
+                    documentsList.innerHTML = '<p>Henüz belge yüklenmemiş.</p>';
+                }
             }
 
             // Modalı göster
@@ -4444,17 +4607,8 @@ function updateEditNumberedDepartments(baseDepartment, selectedCity, selectedCou
         return;
     }
 
-    let maxCourtNumber = 30; // Varsayılan
-    if (selectedCity === 'İstanbul') {
-        if (selectedCourthouse && (selectedCourthouse.includes('Anadolu') || selectedCourthouse.includes('Çağlayan'))) {
-            if (baseDepartment === 'Asliye Hukuk Mahkemesi' || baseDepartment === 'Asliye Ceza Mahkemesi' || baseDepartment === 'İş Mahkemesi') maxCourtNumber = 50;
-            else if (baseDepartment === 'Ağır Ceza Mahkemesi') maxCourtNumber = 15;
-        } else if (selectedCourthouse && selectedCourthouse.includes('Bakırköy')) {
-            maxCourtNumber = 40;
-        }
-    } else if (selectedCity === 'Ankara' || selectedCity === 'İzmir') {
-        maxCourtNumber = 40;
-    }
+    // Tüm şehirler ve adliyeler için 70'e kadar mahkeme seçeneği
+    let maxCourtNumber = 70; // 30'dan 70'e çıkarıldı - artık tüm lokasyonlar için geçerli
     
     if (baseDepartment === 'İcra Dairesi') { // İcra daireleri için özel numaralandırma
          for (let i = 1; i <= maxCourtNumber; i++) { // Genelde 30 olur ama dinamik olsun
@@ -4485,11 +4639,10 @@ function updateEditNumberedDepartments(baseDepartment, selectedCity, selectedCou
     // Kaydedilmiş veya seçilmiş numaralı/temel değeri ayarla
     if (fullSelectedDepartmentToSelect && Array.from(numberedDepartmentSelect.options).some(opt => opt.value === fullSelectedDepartmentToSelect)) {
         numberedDepartmentSelect.value = fullSelectedDepartmentToSelect;
-    } else if (baseDepartment && Array.from(numberedDepartmentSelect.options).some(opt => opt.value === baseDepartment) && !fullSelectedDepartmentToSelect.match(/^\d+\.\s+(.*)$/)) {
-        // Eğer fullSelectedDepartmentToSelect numarasızsa ve baseDepartment listede varsa onu seç
+    } else if (baseDepartment && Array.from(numberedDepartmentSelect.options).some(opt => opt.value === baseDepartment) &&
+               (!fullSelectedDepartmentToSelect || !fullSelectedDepartmentToSelect.match(/^\d+\.\s+(.*)$/))) {
+        // Eğer fullSelectedDepartmentToSelect numarasızsa veya yoksa ve baseDepartment listede varsa onu seç
         numberedDepartmentSelect.value = baseDepartment;
-    } else if (numberedDepartmentSelect.options.length > 1) {
-        // Otomatik bir şey seçme, "Seçiniz" kalsın
     }
 }
 
@@ -4784,12 +4937,8 @@ function saveChanges(caseId) {
             }
             
             closeEditModal();
-            // Detay modalını güncelle
+            // Detay modalını güncelle ve geri dön
             showDetails(caseId);
-            // Ana tabloyu da güncelle - status değişikliğini yansıtmak için
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000); // 1 saniye sonra sayfayı yenile
         } else {
             throw new Error(result.message || 'Güncelleme sırasında bir hata oluştu');
         }
@@ -6824,6 +6973,346 @@ function closeUploadModal() {
     const modal = document.getElementById('uploadModal');
     if (modal) {
         modal.remove();
+    }
+}
+
+// Belge yönetim fonksiyonları
+let currentDocuments = [];
+let sortBy = 'date';
+
+// Masraf yönetim fonksiyonları
+let currentExpensesData = [];
+let expenseSortBy = 'date';
+
+// Son yüklenen belgeleri toggle etme
+function toggleRecentDocuments() {
+    const dropdown = document.getElementById('recentDocuments');
+    const arrow = document.querySelector('.recent-documents-section .dropdown-arrow');
+
+    if (dropdown.style.display === 'none') {
+        loadRecentDocuments();
+        dropdown.style.display = 'block';
+        arrow.textContent = '▼';
+    } else {
+        dropdown.style.display = 'none';
+        arrow.textContent = '▶';
+    }
+}
+
+// Son 10 belgeyi yükle
+function loadRecentDocuments() {
+    const recentDocuments = document.getElementById('recentDocuments');
+    const arrow = document.querySelector('.recent-documents-section .dropdown-arrow');
+
+    if (!recentDocuments) return;
+
+    // Dropdown'ı açık yap ve ok ikonunu güncelle
+    recentDocuments.style.display = 'block';
+    if (arrow) arrow.textContent = '▼';
+
+    if (!currentDocuments.length) {
+        recentDocuments.innerHTML = '<div style="padding: 15px; text-align: center; color: #666;">Henüz belge yüklenmemiş</div>';
+        return;
+    }
+
+    let recentDocs = [...currentDocuments];
+
+    // Debug: belgeleri console'da göster
+    console.log('All documents before sorting:', currentDocuments.map(doc => ({
+        id: doc.id,
+        filename: doc.filename,
+        upload_date: doc.upload_date,
+        upload_datetime: doc.upload_datetime
+    })));
+
+    // Sıralama seçeneğine göre sırala
+    if (sortBy === 'alphabetic') {
+        recentDocs.sort((a, b) => {
+            const nameA = a.filename ? a.filename.split('.').slice(0, -1).join('.') : '';
+            const nameB = b.filename ? b.filename.split('.').slice(0, -1).join('.') : '';
+            return nameA.localeCompare(nameB, 'tr');
+        });
+    } else {
+        // Tarihe göre sıralama - en basit yöntem: ID'ye göre ters sırala (büyük ID = daha yeni)
+        recentDocs.sort((a, b) => {
+            return (b.id || 0) - (a.id || 0);
+        });
+    }
+
+    // Debug: sıralama sonrası
+    console.log('Documents after sorting:', recentDocs.map(doc => ({
+        id: doc.id,
+        filename: doc.filename,
+        upload_date: doc.upload_date
+    })));
+
+    recentDocs = recentDocs.slice(0, 10);
+
+    // Debug: son 10 belge
+    console.log('Recent 10 documents:', recentDocs.map(doc => ({
+        id: doc.id,
+        filename: doc.filename
+    })));
+
+    recentDocuments.innerHTML = recentDocs.map(doc => createDocumentItemHTML(doc)).join('') ||
+        '<div style="padding: 15px; text-align: center; color: #666;">Henüz belge yüklenmemiş</div>';
+}
+
+// Belgeye kaydır
+function scrollToDocument(docId) {
+    const documentElement = document.querySelector(`[data-doc-id="${docId}"]`);
+    if (documentElement) {
+        documentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        documentElement.style.backgroundColor = '#fff3cd';
+        setTimeout(() => {
+            documentElement.style.backgroundColor = '';
+        }, 2000);
+    }
+
+    // Dropdown'ı kapat
+    const dropdown = document.getElementById('recentDocuments');
+    const toggle = document.getElementById('recentDocsToggle');
+    dropdown.style.display = 'none';
+    toggle.classList.remove('active');
+}
+
+// Belgeleri sırala
+function sortDocuments() {
+    const selectElement = document.getElementById('documentSortBy');
+    sortBy = selectElement.value;
+    displaySortedDocuments();
+
+    // Son yüklenen belgeleri de güncelle
+    const recentDocuments = document.getElementById('recentDocuments');
+    if (recentDocuments && recentDocuments.style.display !== 'none') {
+        loadRecentDocuments();
+    }
+}
+
+// Sıralanmış belgeleri göster
+function displaySortedDocuments() {
+    if (!currentDocuments.length) return;
+
+    let sortedDocuments = [...currentDocuments];
+
+    if (sortBy === 'alphabetic') {
+        // Alfabetik sıralama - önce türe göre, sonra isime göre
+        sortedDocuments.sort((a, b) => {
+            const typeCompare = a.document_type.localeCompare(b.document_type, 'tr');
+            if (typeCompare !== 0) return typeCompare;
+
+            const nameA = a.filename ? a.filename.split('.').slice(0, -1).join('.') : '';
+            const nameB = b.filename ? b.filename.split('.').slice(0, -1).join('.') : '';
+            return nameA.localeCompare(nameB, 'tr');
+        });
+    } else {
+        // Tarihe göre sıralama - en yeni en üstte
+        sortedDocuments.sort((a, b) => {
+            // Önce upload_datetime, sonra upload_date, son olarak ID'ye göre sırala
+            if (a.upload_datetime && b.upload_datetime) {
+                const dateA = new Date(a.upload_datetime);
+                const dateB = new Date(b.upload_datetime);
+                return dateB - dateA;
+            }
+
+            // upload_datetime yoksa upload_date kullan
+            if (a.upload_date && b.upload_date) {
+                const dateA = new Date(a.upload_date);
+                const dateB = new Date(b.upload_date);
+                return dateB - dateA;
+            }
+
+            // Son çare olarak ID'ye göre sırala (büyük ID = daha yeni)
+            return (b.id || 0) - (a.id || 0);
+        });
+    }
+
+    displayDocumentsByType(sortedDocuments);
+    loadRecentDocuments(); // Son yüklenen 10 belgeyi yükle
+}
+
+// Belgeleri türe göre grupla ve göster
+function displayDocumentsByType(documents) {
+    const documentsList = document.getElementById('documentsList');
+    if (!documentsList) return;
+
+    // Belgeleri türe göre grupla
+    const groupedDocs = {};
+    documents.forEach(doc => {
+        const type = doc.document_type || 'Diğer';
+        if (!groupedDocs[type]) {
+            groupedDocs[type] = [];
+        }
+        groupedDocs[type].push(doc);
+    });
+
+    // Türleri her zaman alfabetik sırala (sabit)
+    const typeKeys = Object.keys(groupedDocs).sort((a, b) => a.localeCompare(b, 'tr'));
+
+    // Her türün içindeki belgeleri sıralama seçeneğine göre sırala
+    typeKeys.forEach(type => {
+        if (sortBy === 'alphabetic') {
+            groupedDocs[type].sort((a, b) => {
+                const nameA = a.filename ? a.filename.split('.').slice(0, -1).join('.') : '';
+                const nameB = b.filename ? b.filename.split('.').slice(0, -1).join('.') : '';
+                return nameA.localeCompare(nameB, 'tr');
+            });
+        } else {
+            // Tarihe göre sıralama - en yeni en üstte
+            groupedDocs[type].sort((a, b) => {
+                // Önce upload_datetime, sonra upload_date, son olarak ID'ye göre sırala
+                if (a.upload_datetime && b.upload_datetime) {
+                    const dateA = new Date(a.upload_datetime);
+                    const dateB = new Date(b.upload_datetime);
+                    return dateB - dateA;
+                }
+
+                // upload_datetime yoksa upload_date kullan
+                if (a.upload_date && b.upload_date) {
+                    const dateA = new Date(a.upload_date);
+                    const dateB = new Date(b.upload_date);
+                    return dateB - dateA;
+                }
+
+                // Son çare olarak ID'ye göre sırala (büyük ID = daha yeni)
+                return (b.id || 0) - (a.id || 0);
+            });
+        }
+    });
+
+    // HTML oluştur
+    documentsList.innerHTML = typeKeys.map(type => {
+        const typeDocs = groupedDocs[type];
+        const typeId = `type-${type.replace(/\s+/g, '-').toLowerCase()}`;
+
+        return `
+            <div class="document-type-group">
+                <div class="document-type-header-group" onclick="toggleDocumentType('${typeId}')">
+                    <h4>${type} (${typeDocs.length})</h4>
+                    <span class="dropdown-arrow">▶</span>
+                </div>
+                <div class="document-type-content" id="${typeId}" style="display: none;">
+                    ${typeDocs.map(doc => createDocumentItemHTML(doc)).join('')}
+                </div>
+            </div>
+        `;
+    }).join('') || '<p>Henüz belge yüklenmemiş.</p>';
+}
+
+// Belge türü grubunu aç/kapat
+function toggleDocumentType(typeId) {
+    const content = document.getElementById(typeId);
+    const header = content.previousElementSibling;
+    const arrow = header.querySelector('.dropdown-arrow');
+
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        arrow.textContent = '▼';
+    } else {
+        content.style.display = 'none';
+        arrow.textContent = '▶';
+    }
+}
+
+// Belge item HTML'ini oluştur
+function createDocumentItemHTML(doc) {
+    const fileNameParts = doc.filename ? doc.filename.split('.') : ['', ''];
+    const fileName = fileNameParts.slice(0, -1).join('.');
+    const originalName = doc.filepath ? doc.filepath.split('_').slice(2).join('_') : '';
+
+    return `
+        <div class="document-item" data-doc-id="${doc.id}">
+            <div class="document-content">
+                <div class="document-main">
+                    <div class="document-info">
+                        <i class="material-icons">${getFileIcon(doc.filename || '')}</i>
+                        <div class="document-details">
+                            <span class="document-name">${fileName}</span>
+                            <span class="document-original-name">${originalName}</span>
+                        </div>
+                    </div>
+                    <div class="document-right-section">
+                        <span class="document-date">${doc.upload_date}</span>
+                        <div class="document-actions">
+                            <button class="btn small" onclick="previewDocument(${doc.id}, '${doc.filename || ''}')" title="Önizle">
+                                <i class="material-icons">visibility</i>
+                            </button>
+                            <button class="btn small" onclick="downloadDocument(${doc.id})" title="İndir">
+                                <i class="material-icons">download</i>
+                            </button>
+                            ${hasFileDeletePermission ? `
+                            <button class="btn danger small" onclick="deleteDocument(${doc.id})" title="Sil">
+                                <i class="material-icons">delete</i>
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Masraf sıralama fonksiyonları
+function sortExpenses() {
+    const selectElement = document.getElementById('expenseSortBy');
+    expenseSortBy = selectElement.value;
+    displaySortedExpenses();
+}
+
+function displaySortedExpenses() {
+    if (!currentExpensesData.length) return;
+
+    let sortedExpenses = [...currentExpensesData];
+
+    // Debug: masrafları console'da göster
+    console.log('All expenses before sorting:', currentExpensesData.map(expense => ({
+        id: expense.id,
+        expense_type: expense.expense_type,
+        amount: expense.amount,
+        date: expense.date
+    })));
+
+    if (expenseSortBy === 'alphabetic') {
+        // Alfabetik sıralama - türe göre
+        sortedExpenses.sort((a, b) => a.expense_type.localeCompare(b.expense_type, 'tr'));
+    } else {
+        // Tarihe göre sıralama - en basit yöntem: ID'ye göre ters sırala (büyük ID = daha yeni)
+        sortedExpenses.sort((a, b) => {
+            return (b.id || 0) - (a.id || 0);
+        });
+    }
+
+    // Debug: sıralama sonrası masraflar
+    console.log('Expenses after sorting:', sortedExpenses.map(expense => ({
+        id: expense.id,
+        expense_type: expense.expense_type,
+        date: expense.date
+    })));
+
+    const expensesList = document.getElementById('editExpensesList');
+    if (expensesList) {
+        expensesList.innerHTML = sortedExpenses.map(expense => `
+            <div class="expense-item">
+                <div class="expense-info">
+                    <div class="expense-type">${expense.expense_type}</div>
+                    <div class="expense-amount">₺${expense.amount}</div>
+                    <div class="expense-date">${expense.date}</div>
+                    <div class="expense-description">${expense.description || ''}</div>
+                </div>
+                <div class="expense-actions">
+                    <div class="expense-status ${expense.is_paid ? 'status-paid' : 'status-unpaid'}">
+                        ${expense.is_paid ? 'Ödendi' : 'Ödenmedi'}
+                    </div>
+                    <button type="button" class="btn small" onclick="editExpense(${expense.id})">
+                        <i class="material-icons">edit</i>
+                    </button>
+                    <button type="button" class="btn small danger" onclick="deleteExpense(${expense.id})">
+                        <i class="material-icons">delete</i>
+                    </button>
+                </div>
+            </div>
+        `).join('') || '<p>Henüz masraf kaydı bulunmuyor.</p>';
     }
 }
 

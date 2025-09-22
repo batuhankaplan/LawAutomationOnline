@@ -437,6 +437,14 @@ class CalendarEvent(db.Model):
     # Günlük Kayıt bilgileri için ek alanlar
     muvekkil_isim = db.Column(db.String(200))  # Müvekkil İsim Soyisim
     muvekkil_telefon = db.Column(db.String(20))  # Telefon Numarası (isteğe bağlı)
+    # Arabuluculuk Toplantısı bilgileri için ek alanlar
+    basvuran_isim = db.Column(db.String(200))  # Başvuran Taraf İsim Soyisim
+    basvuran_telefon = db.Column(db.String(20))  # Başvuran Telefon (isteğe bağlı)
+    aleyhindeki_isim = db.Column(db.String(200))  # Aleyhindeki Taraf İsim Soyisim
+    aleyhindeki_telefon = db.Column(db.String(20))  # Aleyhindeki Telefon (isteğe bağlı)
+    arabulucu_isim = db.Column(db.String(200))  # Arabulucu İsim Soyisim
+    arabulucu_telefon = db.Column(db.String(20))  # Arabulucu Telefon (isteğe bağlı)
+    arabuluculuk_turu = db.Column(db.String(50))  # Arabuluculuk Türü (yuzyuze/telekonferans)
 
 class WorkerInterview(db.Model):
     id = db.Column(db.Integer, primary_key=True)
