@@ -3881,7 +3881,7 @@ function editCase(caseId) {
                                             <div class="detail-info-grid">
                                                 <div class="detail-info-item">
                                                     <span class="detail-info-label">TİP</span>
-                                                    <span class="detail-info-value">${(data.client_entity_type || 'person') === 'person' ? 'Gerçek Kişi' : 'Şirket'}</span>
+                                                    <span class="detail-info-value">${(data.client_entity_type || 'person') === 'person' ? 'Kişi' : 'Kurum'}</span>
                                                 </div>
                                                 <div class="detail-info-item">
                                                     <span class="detail-info-label">SIFAT</span>
@@ -3987,7 +3987,7 @@ function editCase(caseId) {
                                             <div class="detail-info-grid">
                                                 <div class="detail-info-item">
                                                     <span class="detail-info-label">TİP</span>
-                                                    <span class="detail-info-value">${(data.opponent_entity_type || 'person') === 'person' ? 'Gerçek Kişi' : 'Şirket'}</span>
+                                                    <span class="detail-info-value">${(data.opponent_entity_type || 'person') === 'person' ? 'Kişi' : 'Kurum'}</span>
                                                 </div>
                                                 <div class="detail-info-item">
                                                     <span class="detail-info-label">SIFAT</span>
@@ -5754,39 +5754,32 @@ function updateMainEditLabels(personType) {
 }
 
 function loadMainPersonDataToEditForm(personType) {
+    // Ana form zaten template render'da doğru entity type ile geliyor
+    // Bu fonksiyon sadece diğer alanları yüklemeli, entity type'a dokunmamalı
     const cardId = personType === 'client' ? 'mainClientCard' : 'mainOpponentCard';
     const personCard = document.getElementById(cardId);
-    
-    if (!personCard) return;
-    
+
     // Mevcut verileri card'dan al
     const nameElement = personCard.querySelector('.person-title');
     const detailItems = personCard.querySelectorAll('.detail-info-item');
-    
+
     // Form alanlarına veriyi yükle
     const nameText = nameElement ? nameElement.textContent : '';
     const nameParts = nameText.includes(' - ') ? nameText.split(' - ') : ['', nameText];
-    
+
     if (nameParts.length > 1) {
         document.getElementById(`mainEdit_${personType}_capacity`).value = nameParts[0] || '';
         document.getElementById(`mainEdit_${personType}_name`).value = nameParts[1] || '';
     }
-    
+
     // Diğer alanları detail-info-item'lardan al
     detailItems.forEach(item => {
         const label = item.querySelector('.detail-info-label')?.textContent;
         const value = item.querySelector('.detail-info-value')?.textContent;
-        
+
         if (label && value && value !== '-') {
             switch(label) {
-                case 'TİP':
-                    const entityValue = value === 'Kurum' ? 'company' : 'person';
-                    const entitySelect = document.getElementById(`mainEdit_${personType}_entityType`);
-                    if (entitySelect) {
-                        entitySelect.value = entityValue;
-                        updateMainEditLabels(personType);
-                    }
-                    break;
+                // TİP artık yukarıda backend verisi ile set edildi
                 case 'TELEFON':
                     document.getElementById(`mainEdit_${personType}_phone`).value = value;
                     break;
@@ -6072,7 +6065,7 @@ function showPersonAddModal(personType, caseId, fileType = 'hukuk') {
                                 <label>Tip</label>
                                 <select id="addPersonEntityType" onchange="updateAddPersonModalLabels()">
                                     <option value="person">Kişi</option>
-                                    <option value="company">Şirket</option>
+                                    <option value="company">Kurum</option>
                                     <option value="public">Kamu Kurumu</option>
                                     <option value="company">Kurum</option>
                                 </select>
@@ -6713,7 +6706,7 @@ function createEditFormForPerson(personType, personIndex, caseId) {
                     <label>Tip</label>
                                                     <select id="edit_${personType}_${personIndex}_entityType" onchange="updatePersonEditLabels('${personType}', ${personIndex})">
                                     <option value="person">Kişi</option>
-                                    <option value="company">Şirket</option>
+                                    <option value="company">Kurum</option>
                                     <option value="public">Kamu Kurumu</option>
                                     <option value="company">Kurum</option>
                                 </select>
