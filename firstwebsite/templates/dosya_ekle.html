@@ -1644,7 +1644,7 @@ function toggleClientEntityType() {
     const idInput = document.getElementById('client-id');
     
     if (entityType === 'company') {
-        nameLabel.textContent = 'Şirket Unvanı *';
+        nameLabel.textContent = 'Kurum Unvanı *';
         idLabel.textContent = 'Vergi/Mersis/Ticaret Sicil No';
         idInput.maxLength = 20;
     } else {
@@ -1661,7 +1661,7 @@ function toggleOpponentEntityType() {
     const idInput = document.getElementById('opponent-id');
     
     if (entityType === 'company') {
-        nameLabel.textContent = 'Şirket Unvanı';
+        nameLabel.textContent = 'Kurum Unvanı';
         idLabel.textContent = 'Vergi/Mersis/Ticaret Sicil No';
         idInput.maxLength = 20;
     } else {
@@ -1927,7 +1927,7 @@ function addNewPersonToList(type) {
     
     // Validasyon
     if (!name) {
-        alert('Ad Soyad/Şirket Unvanı alanı zorunludur!');
+        alert('Ad Soyad/Kurum Unvanı alanı zorunludur!');
         return;
     }
     
@@ -2144,7 +2144,7 @@ function updateNewPersonInList(personId, type) {
     const entityType = document.getElementById('add-entity-type').value;
     
     if (!name) {
-        alert('Ad Soyad/Şirket Unvanı alanı zorunludur!');
+        alert('Ad Soyad/Kurum Unvanı alanı zorunludur!');
         return;
     }
     

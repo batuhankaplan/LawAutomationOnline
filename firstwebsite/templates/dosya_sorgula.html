@@ -5631,8 +5631,8 @@ function createMainEditForm(personType, caseId) {
                 <div class="detail-group">
                     <label>Tip</label>
                     <select id="mainEdit_${personType}_entityType" onchange="updateMainEditLabels('${personType}')">
-                        <option value="person">Gerçek Kişi</option>
-                        <option value="company">Tüzel Kişi</option>
+                        <option value="person">Kişi</option>
+                        <option value="company">Kurum</option>
                     </select>
                 </div>
                 <div class="detail-group">
@@ -5741,7 +5741,7 @@ function updateMainEditLabels(personType) {
     const identityInput = document.getElementById(`mainEdit_${personType}_identityNumber`);
     
     if (entityType === 'company') {
-        nameLabel.textContent = 'Şirket Unvanı';
+        nameLabel.textContent = 'Kurum Unvanı';
         identityLabel.textContent = 'Vergi/Mersis No';
         identityInput.maxLength = 20;
         identityInput.placeholder = 'Vergi/Mersis/Ticaret Sicil No';
@@ -5780,7 +5780,7 @@ function loadMainPersonDataToEditForm(personType) {
         if (label && value && value !== '-') {
             switch(label) {
                 case 'TİP':
-                    const entityValue = value === 'Tüzel Kişi' ? 'company' : 'person';
+                    const entityValue = value === 'Kurum' ? 'company' : 'person';
                     const entitySelect = document.getElementById(`mainEdit_${personType}_entityType`);
                     if (entitySelect) {
                         entitySelect.value = entityValue;
@@ -6071,10 +6071,10 @@ function showPersonAddModal(personType, caseId, fileType = 'hukuk') {
                             <div class="detail-group">
                                 <label>Tip</label>
                                 <select id="addPersonEntityType" onchange="updateAddPersonModalLabels()">
-                                    <option value="person">Gerçek Kişi</option>
+                                    <option value="person">Kişi</option>
                                     <option value="company">Şirket</option>
                                     <option value="public">Kamu Kurumu</option>
-                                    <option value="legal_entity">Tüzel Kişi</option>
+                                    <option value="company">Kurum</option>
                                 </select>
                             </div>
                             <div class="detail-group">
@@ -6595,7 +6595,7 @@ function updateAddPersonModalLabels() {
             identityInput.placeholder = 'T.C. Kimlik No';
             break;
         case 'company':
-            nameLabel.textContent = 'Şirket Unvanı';
+            nameLabel.textContent = 'Kurum Unvanı';
             identityLabel.textContent = 'Vergi/Mersis No';
             identityInput.maxLength = 20;
             identityInput.placeholder = 'Vergi numarası';
@@ -6712,10 +6712,10 @@ function createEditFormForPerson(personType, personIndex, caseId) {
                 <div class="detail-group">
                     <label>Tip</label>
                                                     <select id="edit_${personType}_${personIndex}_entityType" onchange="updatePersonEditLabels('${personType}', ${personIndex})">
-                                    <option value="person">Gerçek Kişi</option>
+                                    <option value="person">Kişi</option>
                                     <option value="company">Şirket</option>
                                     <option value="public">Kamu Kurumu</option>
-                                    <option value="legal_entity">Tüzel Kişi</option>
+                                    <option value="company">Kurum</option>
                                 </select>
                 </div>
                 <div class="detail-group">
@@ -6800,7 +6800,7 @@ function updatePersonEditLabels(personType, personIndex) {
             identityInput.placeholder = '12345678901';
             break;
         case 'company':
-            nameLabel.textContent = 'Şirket Unvanı';
+            nameLabel.textContent = 'Kurum Unvanı';
             identityLabel.textContent = 'Vergi/Mersis No';
             identityInput.maxLength = 20;
             identityInput.placeholder = 'Vergi/Mersis/Ticaret Sicil No';
