@@ -1426,7 +1426,8 @@ const istanbulSpecificCourthouses = [
     "Çatalca Adliyesi",
     "Üsküdar Adliyesi",
     "Adalar Adliyesi",
-    "Sarıyer Adliyesi"
+    "Sarıyer Adliyesi",
+    "Şile Adliyesi"
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1606,25 +1607,8 @@ function updateCourtNumbers(department) {
     const selectedCity = citySelect.value;
     const selectedCourthouse = courthouseSelect.value;
     
-    // Varsayılan olarak her mahkemeden 30 tane
-    let maxCourtNumber = 30;
-    
-    // İstanbul ve belirli adliyeler için daha fazla mahkeme
-    if (selectedCity === 'İstanbul') {
-        if (selectedCourthouse && (selectedCourthouse.includes('Anadolu') || selectedCourthouse.includes('Çağlayan'))) {
-            if (department === 'Asliye Hukuk Mahkemesi' || 
-                department === 'Asliye Ceza Mahkemesi' || 
-                department === 'İş Mahkemesi') {
-                maxCourtNumber = 50;
-            } else if (department === 'Ağır Ceza Mahkemesi') {
-                maxCourtNumber = 15;
-            }
-        } else if (selectedCourthouse && selectedCourthouse.includes('Bakırköy')) {
-            maxCourtNumber = 40;
-        }
-    } else if (selectedCity === 'Ankara' || selectedCity === 'İzmir') {
-        maxCourtNumber = 40;
-    }
+    // Tüm şehirler ve adliyeler için 70'e kadar mahkeme seçeneği
+    let maxCourtNumber = 70; // 30'dan 70'e çıkarıldı - artık tüm lokasyonlar için geçerli
     
     if (department === 'İcra Dairesi') {
         // İcra daireleri için özel numaralandırma
