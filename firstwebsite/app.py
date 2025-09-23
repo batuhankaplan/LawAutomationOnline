@@ -5690,31 +5690,12 @@ def preview_udf(document_id):
     """UDF dosyaları için özel önizleme sayfası"""
     try:
         document = Document.query.get_or_404(document_id)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
 
-        # Debug bilgileri
-        print(f"UDF Preview Debug - Document ID: {document_id}")
-        print(f"UDF Preview Debug - UPLOAD_FOLDER: {app.config['UPLOAD_FOLDER']}")
-        print(f"UDF Preview Debug - Document filepath: {document.filepath}")
-        print(f"UDF Preview Debug - Full filepath: {filepath}")
-        print(f"UDF Preview Debug - File exists: {os.path.exists(filepath)}")
+        # find_document_file fonksiyonunu kullan - bu zaten tüm yolları deniyor
+        filepath = find_document_file(document.filepath)
 
-        if not os.path.exists(filepath):
-            # Alternatif yolları dene
-            alt_filepath1 = os.path.join('firstwebsite', app.config['UPLOAD_FOLDER'], document.filepath)
-            alt_filepath2 = os.path.join(os.getcwd(), 'firstwebsite', app.config['UPLOAD_FOLDER'], document.filepath)
-
-            print(f"UDF Preview Debug - Alternative path 1: {alt_filepath1} (exists: {os.path.exists(alt_filepath1)})")
-            print(f"UDF Preview Debug - Alternative path 2: {alt_filepath2} (exists: {os.path.exists(alt_filepath2)})")
-
-            if os.path.exists(alt_filepath1):
-                filepath = alt_filepath1
-                print(f"UDF Preview Debug - Using alternative path 1")
-            elif os.path.exists(alt_filepath2):
-                filepath = alt_filepath2
-                print(f"UDF Preview Debug - Using alternative path 2")
-            else:
-                return f"Dosya bulunamadı. Aranan yollar: {filepath}, {alt_filepath1}, {alt_filepath2}", 404
+        if not filepath:
+            return f"UDF dosyası bulunamadı: {document.filepath}", 404
             
         _, extension = os.path.splitext(document.filepath)
         if extension.lower() != '.udf':
@@ -6230,31 +6211,12 @@ def direct_view_udf(document_id):
     """UDF içeriğini doğrudan tarayıcıda göster"""
     try:
         document = Document.query.get_or_404(document_id)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
 
-        # Debug bilgileri
-        print(f"UDF Direct View Debug - Document ID: {document_id}")
-        print(f"UDF Direct View Debug - UPLOAD_FOLDER: {app.config['UPLOAD_FOLDER']}")
-        print(f"UDF Direct View Debug - Document filepath: {document.filepath}")
-        print(f"UDF Direct View Debug - Full filepath: {filepath}")
-        print(f"UDF Direct View Debug - File exists: {os.path.exists(filepath)}")
+        # find_document_file fonksiyonunu kullan - bu zaten tüm yolları deniyor
+        filepath = find_document_file(document.filepath)
 
-        if not os.path.exists(filepath):
-            # Alternatif yolları dene
-            alt_filepath1 = os.path.join('firstwebsite', app.config['UPLOAD_FOLDER'], document.filepath)
-            alt_filepath2 = os.path.join(os.getcwd(), 'firstwebsite', app.config['UPLOAD_FOLDER'], document.filepath)
-
-            print(f"UDF Direct View Debug - Alternative path 1: {alt_filepath1} (exists: {os.path.exists(alt_filepath1)})")
-            print(f"UDF Direct View Debug - Alternative path 2: {alt_filepath2} (exists: {os.path.exists(alt_filepath2)})")
-
-            if os.path.exists(alt_filepath1):
-                filepath = alt_filepath1
-                print(f"UDF Direct View Debug - Using alternative path 1")
-            elif os.path.exists(alt_filepath2):
-                filepath = alt_filepath2
-                print(f"UDF Direct View Debug - Using alternative path 2")
-            else:
-                return f"Dosya bulunamadı. Aranan yollar: {filepath}, {alt_filepath1}, {alt_filepath2}", 404
+        if not filepath:
+            return f"UDF dosyası bulunamadı: {document.filepath}", 404
             
         # UDF dosyasını ayrıştır ve HTML olarak göster
         print(f"UDF içeriği doğrudan ayrıştırılıyor: {filepath}")
