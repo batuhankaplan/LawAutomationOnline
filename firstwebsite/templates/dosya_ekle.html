@@ -1806,10 +1806,8 @@ function showNewPersonModal(type) {
                             <div class="form-group">
                                 <label for="add-entity-type">Tür *</label>
                                 <select id="add-entity-type" name="add-entity-type" onchange="updatePersonModalLabels()" required>
-                                    <option value="person">Gerçek Kişi</option>
-                                    <option value="company">Şirket</option>
-                                    <option value="public">Kamu Kurumu</option>
-                                    <option value="legal_entity">Tüzel Kişi</option>
+                                    <option value="person">Kişi</option>
+                                    <option value="company">Kurum</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1876,23 +1874,9 @@ function updatePersonModalLabels() {
             identityInput.maxLength = 11;
             break;
         case 'company':
-            nameLabel.textContent = 'Şirket Unvanı *';
+            nameLabel.textContent = 'Kurum Unvanı *';
             identityLabel.textContent = 'Vergi/Mersis No';
-            nameInput.placeholder = 'Şirket unvanını girin';
-            identityInput.placeholder = '1234567890';
-            identityInput.maxLength = 20;
-            break;
-        case 'public':
-            nameLabel.textContent = 'Kurum Adı *';
-            identityLabel.textContent = 'Vergi/Kurum No';
-            nameInput.placeholder = 'Kamu kurumu adını girin';
-            identityInput.placeholder = '1234567890';
-            identityInput.maxLength = 20;
-            break;
-        case 'legal_entity':
-            nameLabel.textContent = 'Kuruluş Unvanı *';
-            identityLabel.textContent = 'Vergi/Sicil No';
-            nameInput.placeholder = 'Tüzel kişi unvanını girin';
+            nameInput.placeholder = 'Kurum unvanını girin';
             identityInput.placeholder = '1234567890';
             identityInput.maxLength = 20;
             break;

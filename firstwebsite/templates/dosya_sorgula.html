@@ -3423,7 +3423,7 @@ function showDetails(caseId) {
             
             // Müvekkil Bilgileri
             document.getElementById('detailClientEntityType').textContent = 
-                data.client_entity_type === 'company' ? 'Şirket' : 'Gerçek Kişi';
+                data.client_entity_type === 'company' ? 'Kurum' : 'Kişi';
             document.getElementById('detailClientCapacity').textContent = data.client_capacity || '-';
             document.getElementById('detailClientIdentityNumber').textContent = data.client_identity_number || '-';
             document.getElementById('detailPhoneNumber').textContent = data.phone_number || '-';
@@ -3431,7 +3431,7 @@ function showDetails(caseId) {
             
             // Karşı Taraf Bilgileri
             document.getElementById('detailOpponentEntityType').textContent = 
-                data.opponent_entity_type === 'company' ? 'Şirket' : 'Gerçek Kişi';
+                data.opponent_entity_type === 'company' ? 'Kurum' : 'Kişi';
             document.getElementById('detailOpponentCapacity').textContent = data.opponent_capacity || '-';
             document.getElementById('detailOpponentIdentityNumber').textContent = data.opponent_identity_number || '-';
             document.getElementById('detailOpponentPhone').textContent = data.opponent_phone || '-';
@@ -3555,7 +3555,7 @@ function showDetails(caseId) {
                             <div class="detail-info-grid">
                                 <div class="detail-info-item">
                                     <span class="detail-info-label">TİP</span>
-                                    <span class="detail-info-value">${client.entity_type === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</span>
+                                    <span class="detail-info-value">${client.entity_type === 'company' ? 'Kurum' : 'Kişi'}</span>
                                 </div>
                                 <div class="detail-info-item">
                                     <span class="detail-info-label">SIFAT</span>
@@ -3602,7 +3602,7 @@ function showDetails(caseId) {
                             <div class="detail-info-grid">
                                 <div class="detail-info-item">
                                     <span class="detail-info-label">TİP</span>
-                                    <span class="detail-info-value">${opponent.entity_type === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</span>
+                                    <span class="detail-info-value">${opponent.entity_type === 'company' ? 'Kurum' : 'Kişi'}</span>
                                 </div>
                                 <div class="detail-info-item">
                                     <span class="detail-info-label">SIFAT</span>
@@ -3909,8 +3909,8 @@ function editCase(caseId) {
                                             <div class="detail-group">
                                                 <label>Tip</label>
                                                 <select id="editClientEntityType">
-                                                    <option value="person" ${(data.client_entity_type || 'person') === 'person' ? 'selected' : ''}>Gerçek Kişi</option>
-                                                    <option value="company" ${data.client_entity_type === 'company' ? 'selected' : ''}>Şirket</option>
+                                                    <option value="person" ${(data.client_entity_type || 'person') === 'person' ? 'selected' : ''}>Kişi</option>
+                                                    <option value="company" ${data.client_entity_type === 'company' ? 'selected' : ''}>Kurum</option>
                                                 </select>
                                             </div>
                                             <div class="detail-group">
@@ -4015,8 +4015,8 @@ function editCase(caseId) {
                                             <div class="detail-group">
                                                 <label>Tip</label>
                                                 <select id="editOpponentEntityType">
-                                                    <option value="person" ${(data.opponent_entity_type || 'person') === 'person' ? 'selected' : ''}>Gerçek Kişi</option>
-                                                    <option value="company" ${data.opponent_entity_type === 'company' ? 'selected' : ''}>Şirket</option>
+                                                    <option value="person" ${(data.opponent_entity_type || 'person') === 'person' ? 'selected' : ''}>Kişi</option>
+                                                    <option value="company" ${data.opponent_entity_type === 'company' ? 'selected' : ''}>Kurum</option>
                                                 </select>
                                             </div>
                                             <div class="detail-group">
@@ -4265,7 +4265,7 @@ function editCase(caseId) {
                                 <i class="material-icons person-icon">person_add</i>
                                 <div class="person-info">
                                     <div class="person-title">${client.capacity || 'Müvekkil'} - ${client.name || 'İsim belirtilmemiş'}</div>
-                                    <div class="person-subtitle">${client.entity_type === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}${client.identity_number ? ' • ' + client.identity_number : ''}</div>
+                                    <div class="person-subtitle">${client.entity_type === 'company' ? 'Kurum' : 'Kişi'}${client.identity_number ? ' • ' + client.identity_number : ''}</div>
                                 </div>
                             </div>
                             <div class="card-actions" onclick="event.stopPropagation()">
@@ -4282,7 +4282,7 @@ function editCase(caseId) {
                             <div class="detail-info-grid">
                                 <div class="detail-info-item">
                                     <span class="detail-info-label">TİP</span>
-                                    <span class="detail-info-value">${client.entity_type === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</span>
+                                    <span class="detail-info-value">${client.entity_type === 'company' ? 'Kurum' : 'Kişi'}</span>
                                 </div>
                                 <div class="detail-info-item">
                                     <span class="detail-info-label">SIFAT</span>
@@ -4320,7 +4320,7 @@ function editCase(caseId) {
                                 <i class="material-icons person-icon">group_add</i>
                                 <div class="person-info">
                                     <div class="person-title">${opponent.capacity || 'Karşı Taraf'} - ${opponent.name || 'İsim belirtilmemiş'}</div>
-                                    <div class="person-subtitle">${opponent.entity_type === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}${opponent.identity_number ? ' • ' + opponent.identity_number : ''}</div>
+                                    <div class="person-subtitle">${opponent.entity_type === 'company' ? 'Kurum' : 'Kişi'}${opponent.identity_number ? ' • ' + opponent.identity_number : ''}</div>
                                 </div>
                             </div>
                             <div class="card-actions" onclick="event.stopPropagation()">
@@ -4337,7 +4337,7 @@ function editCase(caseId) {
                             <div class="detail-info-grid">
                                 <div class="detail-info-item">
                                     <span class="detail-info-label">TİP</span>
-                                    <span class="detail-info-value">${opponent.entity_type === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</span>
+                                    <span class="detail-info-value">${opponent.entity_type === 'company' ? 'Kurum' : 'Kişi'}</span>
                                 </div>
                                 <div class="detail-info-item">
                                     <span class="detail-info-label">SIFAT</span>
@@ -5482,27 +5482,33 @@ function toggleCollapsibleCard(header) {
 
 // Ana müvekkil/karşı taraf düzenleme fonksiyonu - ek kişi mantığıyla
 function editMainPersonInModal(personType, caseId) {
+    // Vekil düzenleme için özel işlem
+    if (personType === 'opponent_lawyer') {
+        editMainLawyerInModal(caseId);
+        return;
+    }
+
     const cardId = personType === 'client' ? 'mainClientCard' : 'mainOpponentCard';
     const personCard = document.getElementById(cardId);
-    
+
     if (!personCard) return;
-    
+
     // Mevcut card'ı gizle ve edit form'u göster
     const cardContent = personCard.querySelector('.collapsible-content');
     const editFormId = `mainEditForm_${personType}`;
-    
+
     // Eğer edit form yoksa oluştur
     let editForm = document.getElementById(editFormId);
     if (!editForm) {
         createMainEditForm(personType, caseId);
         editForm = document.getElementById(editFormId);
     }
-    
+
     // Card content'i gizle, edit form'u göster
     if (cardContent && editForm) {
         cardContent.style.display = 'none';
         editForm.style.display = 'block';
-        
+
         // Mevcut değerleri forma yükle
         loadMainPersonDataToEditForm(personType);
     }
@@ -5526,8 +5532,14 @@ function cancelMainPersonEdit(personType) {
 
 // Ana kişi silme fonksiyonu
 function deleteMainPersonInModal(personType, caseId) {
+    // Vekil silme için özel işlem
+    if (personType === 'opponent_lawyer') {
+        deleteMainLawyerInModal(caseId);
+        return;
+    }
+
     const personTypeText = personType === 'client' ? 'müvekkil' : 'karşı taraf';
-    
+
     if (confirm(`Ana ${personTypeText} bilgilerini silmek istediğinizden emin misiniz?`)) {
         // Backend'e silme isteği gönder
         const formData = new FormData();
