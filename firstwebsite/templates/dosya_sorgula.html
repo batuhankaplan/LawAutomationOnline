@@ -5488,42 +5488,59 @@ function editMainPersonInModal(personType, caseId) {
         return;
     }
 
-    const cardId = personType === 'client' ? 'mainClientCard' : 'mainOpponentCard';
+    // Ana modalda zaten edit formları var, onları kullan
+    const prefix = personType === 'client' ? 'Client' : 'Opponent';
+    const cardId = `main${prefix}Card`;
+    const editFormId = `mainEdit${prefix}Form`;
+
     const personCard = document.getElementById(cardId);
+    const editForm = document.getElementById(editFormId);
 
-    if (!personCard) return;
-
-    // Mevcut card'ı gizle ve edit form'u göster
-    const cardContent = personCard.querySelector('.collapsible-content');
-    const editFormId = `mainEditForm_${personType}`;
-
-    // Eğer edit form yoksa oluştur
-    let editForm = document.getElementById(editFormId);
-    if (!editForm) {
-        createMainEditForm(personType, caseId);
-        editForm = document.getElementById(editFormId);
-    }
+    if (!personCard || !editForm) return;
 
     // Card content'i gizle, edit form'u göster
-    if (cardContent && editForm) {
+    const cardContent = personCard.querySelector('.collapsible-content');
+    if (cardContent) {
         cardContent.style.display = 'none';
         editForm.style.display = 'block';
 
-        // Mevcut değerleri forma yükle
+        // Entity type'ı TİP alanından al ve form select'ine set et
+        const detailItems = cardContent.querySelectorAll('.detail-info-item');
+        let tipValue = null;
+
+        detailItems.forEach(item => {
+            const label = item.querySelector('.detail-info-label')?.textContent;
+            if (label === 'TİP') {
+                tipValue = item.querySelector('.detail-info-value')?.textContent;
+            }
+        });
+
+        const entitySelect = document.getElementById(`edit${prefix}EntityType`);
+        if (entitySelect && tipValue) {
+            entitySelect.value = tipValue === 'Kurum' ? 'company' : 'person';
+            // Label'ları güncelle - eğer onchange event varsa çalıştır
+            if (entitySelect.onchange) {
+                entitySelect.onchange();
+            }
+        }
+
+        // Mevcut değerleri forma yükle (entity type hariç, o yukarıda set edildi)
         loadMainPersonDataToEditForm(personType);
     }
 }
 
 // Ana kişi düzenleme iptal fonksiyonu
 function cancelMainPersonEdit(personType) {
-    const editFormId = `mainEditForm_${personType}`;
-    const cardId = personType === 'client' ? 'mainClientCard' : 'mainOpponentCard';
-    const personCard = document.getElementById(cardId);
+    const prefix = personType === 'client' ? 'Client' : 'Opponent';
+    const editFormId = `mainEdit${prefix}Form`;
+    const cardId = `main${prefix}Card`;
+
     const editForm = document.getElementById(editFormId);
-    
-    if (personCard && editForm) {
-        const cardContent = personCard.querySelector('.collapsible-content');
+    const personCard = document.getElementById(cardId);
+
+    if (editForm && personCard) {
         editForm.style.display = 'none';
+        const cardContent = personCard.querySelector('.collapsible-content');
         if (cardContent) {
             cardContent.style.display = 'block';
         }
@@ -5796,13 +5813,31 @@ function loadMainPersonDataToEditForm(personType) {
 
 // Ana kişi düzenleme kaydet fonksiyonu - gerçekten çalışan versiyon
 function saveMainPersonEdit(personType, caseId) {
-    // Form verilerini al
-    const capacity = document.getElementById(`mainEdit_${personType}_capacity`).value;
-    const name = document.getElementById(`mainEdit_${personType}_name`).value;
-    const entityType = document.getElementById(`mainEdit_${personType}_entityType`)?.value || 'person';
-    const phone = document.getElementById(`mainEdit_${personType}_phone`).value;
-    const identityNumber = document.getElementById(`mainEdit_${personType}_identityNumber`).value;
-    const address = document.getElementById(`mainEdit_${personType}_address`).value;
+    // Form verilerini al - ana modalda doğru ID'leri kullan
+    const prefix = personType === 'client' ? 'Client' : 'Opponent';
+
+    // Önce ana modal form elementlerini dene
+    const entityTypeElement = document.getElementById(`edit${prefix}EntityType`);
+    const capacityElement = document.getElementById(`edit${prefix}Capacity`);
+    const nameElement = document.getElementById(`edit${prefix}Name`);
+    const phoneElement = document.getElementById(`edit${prefix}Phone`);
+    const identityElement = document.getElementById(`edit${prefix}IdentityNumber`);
+    const addressElement = document.getElementById(`edit${prefix}Address`);
+
+    // Alternatif olarak secondary form elementlerini dene
+    const altEntityTypeElement = document.getElementById(`mainEdit_${personType}_entityType`);
+    const altCapacityElement = document.getElementById(`mainEdit_${personType}_capacity`);
+    const altNameElement = document.getElementById(`mainEdit_${personType}_name`);
+    const altPhoneElement = document.getElementById(`mainEdit_${personType}_phone`);
+    const altIdentityElement = document.getElementById(`mainEdit_${personType}_identityNumber`);
+    const altAddressElement = document.getElementById(`mainEdit_${personType}_address`);
+
+    const entityType = (entityTypeElement || altEntityTypeElement)?.value || 'person';
+    const capacity = (capacityElement || altCapacityElement)?.value || '';
+    const name = (nameElement || altNameElement)?.value || '';
+    const phone = (phoneElement || altPhoneElement)?.value || '';
+    const identityNumber = (identityElement || altIdentityElement)?.value || '';
+    const address = (addressElement || altAddressElement)?.value || '';
     
     // Validasyon
     if (!name.trim()) {
