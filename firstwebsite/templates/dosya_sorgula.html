@@ -3419,7 +3419,24 @@ function showDetails(caseId) {
             document.getElementById('detailDepartment').textContent = shouldShowDepartment ? (data.department || '') : '';
             document.getElementById('detailYear').textContent = data.year || '-';
             document.getElementById('detailCaseNumber').textContent = data.case_number || '-';
-            document.getElementById('detailCity').textContent = data.city || '-';
+            console.log('DEBUG: city value from server:', data.city);
+            // Şehir değeri "Bilinmiyor" ise alternatif kaynaklardan al
+            let cityValue = data.city;
+            if (!cityValue || cityValue === 'Bilinmiyor') {
+                // Adliye adından şehir çıkarmaya çalış
+                if (data.courthouse) {
+                    const courthouseName = data.courthouse.toLowerCase();
+                    if (courthouseName.includes('istanbul') || courthouseName.includes('İstanbul')) {
+                        cityValue = 'İstanbul';
+                    } else if (courthouseName.includes('ankara')) {
+                        cityValue = 'Ankara';
+                    } else if (courthouseName.includes('izmir')) {
+                        cityValue = 'İzmir';
+                    }
+                    // Diğer şehirler için de eklenebilir
+                }
+            }
+            document.getElementById('detailCity').textContent = cityValue || '-';
             
             // Müvekkil Bilgileri
             document.getElementById('detailClientEntityType').textContent = 
@@ -5491,7 +5508,7 @@ function editMainPersonInModal(personType, caseId) {
     // Ana modalda zaten edit formları var, onları kullan
     const prefix = personType === 'client' ? 'Client' : 'Opponent';
     const cardId = `main${prefix}Card`;
-    const editFormId = `mainEdit${prefix}Form`;
+    const editFormId = `main${prefix}EditForm`;
 
     const personCard = document.getElementById(cardId);
     const editForm = document.getElementById(editFormId);
@@ -5532,7 +5549,7 @@ function editMainPersonInModal(personType, caseId) {
 // Ana kişi düzenleme iptal fonksiyonu
 function cancelMainPersonEdit(personType) {
     const prefix = personType === 'client' ? 'Client' : 'Opponent';
-    const editFormId = `mainEdit${prefix}Form`;
+    const editFormId = `main${prefix}EditForm`;
     const cardId = `main${prefix}Card`;
 
     const editForm = document.getElementById(editFormId);
