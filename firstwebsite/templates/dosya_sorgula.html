@@ -175,9 +175,11 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2>Dosya Detayları</h2>
-            <button class="close-btn" onclick="closeDetailModal()">
-                <i class="material-icons">close</i>
-            </button>
+            <div class="modal-header-actions">
+                <button class="close-btn" onclick="closeDetailModal()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
         </div>
         
         <div class="modal-body">
@@ -249,7 +251,7 @@
                         <div class="info-row">
                             <div class="info-group">
                                 <label>DOSYA TÜRÜ</label>
-                                <select id="editFileType" onchange="updateEditFileType()">
+                                <select id="fileInfoEditFileType" onchange="updateEditFileType(); updateEditCapacityOptions()">
                                     <option value="hukuk">Hukuk</option>
                                     <option value="ceza">Ceza</option>
                                     <option value="icra">İcra</option>
@@ -277,13 +279,13 @@
                         <div class="info-row">
                             <div class="info-group">
                                 <label>ŞEHİR</label>
-                                <select id="editCity" onchange="updateEditCourthouse()">
+                                <select id="fileInfoEditCity" onchange="updateEditCourthouse()">
                                     <option value="">Seçiniz</option>
                                 </select>
                             </div>
                             <div class="info-group">
                                 <label>ADLİYE</label>
-                                <select id="editCourthouse">
+                                <select id="fileInfoEditCourthouse">
                                     <option value="">Önce şehir seçiniz</option>
                                 </select>
                             </div>
@@ -359,12 +361,12 @@
                                     <span class="detail-info-value" id="detailClientCapacity"></span>
                                 </div>
                                 <div class="detail-info-item">
-                                    <span class="detail-info-label">TELEFON</span>
-                                    <span class="detail-info-value" id="detailPhoneNumber"></span>
+                                    <span class="detail-info-label" id="detailClientIdentityLabel">T.C. KİMLİK NO</span>
+                                    <span class="detail-info-value" id="detailClientIdentityNumber"></span>
                                 </div>
                                 <div class="detail-info-item">
-                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
-                                    <span class="detail-info-value" id="detailClientIdentityNumber"></span>
+                                    <span class="detail-info-label">TELEFON</span>
+                                    <span class="detail-info-value" id="detailPhoneNumber"></span>
                                 </div>
                                 <div class="detail-info-item full-width">
                                     <span class="detail-info-label">ADRES</span>
@@ -407,12 +409,12 @@
                                     <span class="detail-info-value" id="detailOpponentCapacity"></span>
                                 </div>
                                 <div class="detail-info-item">
-                                    <span class="detail-info-label">TELEFON</span>
-                                    <span class="detail-info-value" id="detailOpponentPhone"></span>
+                                    <span class="detail-info-label" id="detailOpponentIdentityLabel">T.C. KİMLİK NO</span>
+                                    <span class="detail-info-value" id="detailOpponentIdentityNumber"></span>
                                 </div>
                                 <div class="detail-info-item">
-                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
-                                    <span class="detail-info-value" id="detailOpponentIdentityNumber"></span>
+                                    <span class="detail-info-label">TELEFON</span>
+                                    <span class="detail-info-value" id="detailOpponentPhone"></span>
                                 </div>
                                 <div class="detail-info-item full-width">
                                     <span class="detail-info-label">ADRES</span>
@@ -3068,6 +3070,7 @@ const istanbulSpecificCourthouses = [
     "Çatalca Adliyesi",
     "Üsküdar Adliyesi",
     "Adalar Adliyesi",
+    "Şile Adliyesi",
     "Sarıyer Adliyesi"
 ];
 
@@ -3420,14 +3423,24 @@ function showDetails(caseId) {
             document.getElementById('detailYear').textContent = data.year || '-';
             document.getElementById('detailCaseNumber').textContent = data.case_number || '-';
             console.log('DEBUG: city value from server:', data.city);
+            console.log('DEBUG: courthouse value from server:', data.courthouse);
+            console.log('DEBUG: department value from server:', data.department);
             // Şehir değeri "Bilinmiyor" ise alternatif kaynaklardan al
             let cityValue = data.city;
             if (!cityValue || cityValue === 'Bilinmiyor') {
                 // Adliye adından şehir çıkarmaya çalış
                 if (data.courthouse) {
                     const courthouseName = data.courthouse.toLowerCase();
-                    if (courthouseName.includes('istanbul') || courthouseName.includes('İstanbul')) {
+                    console.log('DEBUG: checking courthouse name:', courthouseName);
+                    if (courthouseName.includes('istanbul') || courthouseName.includes('İstanbul') ||
+                        courthouseName.includes('şile') || courthouseName.includes('beylikdüzü') ||
+                        courthouseName.includes('silivri') || courthouseName.includes('çatalca') ||
+                        courthouseName.includes('kartal') || courthouseName.includes('pendik') ||
+                        courthouseName.includes('tuzla') || courthouseName.includes('maltepe') ||
+                        courthouseName.includes('ataşehir') || courthouseName.includes('ümraniye') ||
+                        courthouseName.includes('üsküdar') || courthouseName.includes('kadıköy')) {
                         cityValue = 'İstanbul';
+                        console.log('DEBUG: Found İstanbul or İstanbul district in courthouse name');
                     } else if (courthouseName.includes('ankara')) {
                         cityValue = 'Ankara';
                     } else if (courthouseName.includes('izmir')) {
@@ -3435,24 +3448,77 @@ function showDetails(caseId) {
                     }
                     // Diğer şehirler için de eklenebilir
                 }
+
+                // Mahkeme adından da şehir çıkarmaya çalış
+                if (!cityValue || cityValue === 'Bilinmiyor') {
+                    if (data.department) {
+                        const departmentName = data.department.toLowerCase();
+                        console.log('DEBUG: checking department name:', departmentName);
+                        if (departmentName.includes('istanbul') || departmentName.includes('İstanbul')) {
+                            cityValue = 'İstanbul';
+                            console.log('DEBUG: Found İstanbul in department name');
+                        } else if (departmentName.includes('ankara')) {
+                            cityValue = 'Ankara';
+                        } else if (departmentName.includes('izmir')) {
+                            cityValue = 'İzmir';
+                        }
+                    }
+                }
             }
+            console.log('DEBUG: final city value:', cityValue);
+            console.log('DEBUG: original data.city:', data.city);
+            console.log('DEBUG: courthouse name for city detection:', data.courthouse);
+
+            // Şile Adliyesi için ekstra kontrol
+            if ((!cityValue || cityValue === 'Bilinmiyor') && data.courthouse && data.courthouse.toLowerCase().includes('şile')) {
+                cityValue = 'İstanbul';
+                console.log('DEBUG: Special Şile detection - setting city to İstanbul');
+            }
+
             document.getElementById('detailCity').textContent = cityValue || '-';
+
+            // Edit modalında da şehir değerini ayarla
+            const editCityElement = document.getElementById('editCity');
+            if (editCityElement) {
+                editCityElement.value = cityValue || '';
+            }
+
+            // Edit modalında adliye değerini de ayarla
+            const editCourthouseElement = document.getElementById('editCourthouse');
+            if (editCourthouseElement && data.courthouse) {
+                // Adliye seçeneklerini önce yükle, sonra değeri ayarla
+                setTimeout(() => {
+                    editCourthouseElement.value = data.courthouse;
+                }, 100);
+            }
             
             // Müvekkil Bilgileri
-            document.getElementById('detailClientEntityType').textContent = 
+            document.getElementById('detailClientEntityType').textContent =
                 data.client_entity_type === 'company' ? 'Kurum' : 'Kişi';
             document.getElementById('detailClientCapacity').textContent = data.client_capacity || '-';
             document.getElementById('detailClientIdentityNumber').textContent = data.client_identity_number || '-';
             document.getElementById('detailPhoneNumber').textContent = data.phone_number || '-';
             document.getElementById('detailClientAddress').textContent = data.client_address || '-';
+
+            // Müvekkil kimlik etiketini güncelle
+            const clientIdentityLabel = document.getElementById('detailClientIdentityLabel');
+            if (clientIdentityLabel) {
+                clientIdentityLabel.textContent = data.client_entity_type === 'company' ? 'VERGİ/MERSİS/TİCARET SİCİL NO' : 'T.C. KİMLİK NO';
+            }
             
             // Karşı Taraf Bilgileri
-            document.getElementById('detailOpponentEntityType').textContent = 
+            document.getElementById('detailOpponentEntityType').textContent =
                 data.opponent_entity_type === 'company' ? 'Kurum' : 'Kişi';
             document.getElementById('detailOpponentCapacity').textContent = data.opponent_capacity || '-';
             document.getElementById('detailOpponentIdentityNumber').textContent = data.opponent_identity_number || '-';
             document.getElementById('detailOpponentPhone').textContent = data.opponent_phone || '-';
             document.getElementById('detailOpponentAddress').textContent = data.opponent_address || '-';
+
+            // Karşı taraf kimlik etiketini güncelle
+            const opponentIdentityLabel = document.getElementById('detailOpponentIdentityLabel');
+            if (opponentIdentityLabel) {
+                opponentIdentityLabel.textContent = data.opponent_entity_type === 'company' ? 'VERGİ/MERSİS/TİCARET SİCİL NO' : 'T.C. KİMLİK NO';
+            }
             
             // Ana müvekkil başlık ve subtitle'ını güncelle
             const mainClientTitle = document.querySelector('.main-client-title');
@@ -3579,7 +3645,7 @@ function showDetails(caseId) {
                                     <span class="detail-info-value">${client.capacity || '-'}</span>
                                 </div>
                                 <div class="detail-info-item">
-                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                    <span class="detail-info-label">${client.entity_type === 'company' ? 'VERGİ/MERSİS/TİCARET SİCİL NO' : 'T.C. KİMLİK NO'}</span>
                                     <span class="detail-info-value">${client.identity_number || '-'}</span>
                                 </div>
                                 <div class="detail-info-item">
@@ -3626,7 +3692,7 @@ function showDetails(caseId) {
                                     <span class="detail-info-value">${opponent.capacity || '-'}</span>
                                 </div>
                                 <div class="detail-info-item">
-                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                    <span class="detail-info-label">${opponent.entity_type === 'company' ? 'VERGİ/MERSİS/TİCARET SİCİL NO' : 'T.C. KİMLİK NO'}</span>
                                     <span class="detail-info-value">${opponent.identity_number || '-'}</span>
                                 </div>
                                 <div class="detail-info-item">
@@ -3787,20 +3853,41 @@ function editCase(caseId) {
             const openDate = data.open_date ? data.open_date.split('.').reverse().join('-') : '';
             const nextHearing = data.next_hearing ? data.next_hearing.split('.').reverse().join('-') : '';
 
-            // Şehir ve adliye bilgilerini belirle
-            let city = '';
-            if (data.courthouse) {
-                if (istanbulSpecificCourthouses.includes(data.courthouse)) {
-                    city = 'İstanbul';
-                } else {
-                    for (const [cityName, courthouses] of Object.entries(allCourthousesData)) {
-                        if (courthouses.includes(data.courthouse)) {
-                            city = cityName;
-                            break;
-                        }
+            // Şehir bilgilerini belirle - Detail modal ile aynı algoritma
+            let cityValue = data.city;
+            console.log('DEBUG: Edit modal original city from server:', cityValue);
+
+            if (!cityValue || cityValue === 'Bilinmiyor') {
+                console.log('DEBUG: Edit modal - city is missing or unknown, trying to detect from courthouse');
+                // Adliye adından şehir çıkarmaya çalış
+                if (data.courthouse) {
+                    const courthouseName = data.courthouse.toLowerCase();
+                    console.log('DEBUG: Edit modal - checking courthouse name:', courthouseName);
+                    if (courthouseName.includes('istanbul') || courthouseName.includes('İstanbul') ||
+                        courthouseName.includes('şile') || courthouseName.includes('beylikdüzü') ||
+                        courthouseName.includes('silivri') || courthouseName.includes('çatalca') ||
+                        courthouseName.includes('kartal') || courthouseName.includes('pendik') ||
+                        courthouseName.includes('tuzla') || courthouseName.includes('maltepe') ||
+                        courthouseName.includes('ataşehir') || courthouseName.includes('ümraniye') ||
+                        courthouseName.includes('üsküdar') || courthouseName.includes('kadıköy')) {
+                        cityValue = 'İstanbul';
+                        console.log('DEBUG: Edit modal - Found İstanbul or İstanbul district in courthouse name');
+                    } else if (courthouseName.includes('ankara')) {
+                        cityValue = 'Ankara';
+                    } else if (courthouseName.includes('izmir')) {
+                        cityValue = 'İzmir';
                     }
                 }
+
+                // Şile Adliyesi için ekstra kontrol
+                if ((!cityValue || cityValue === 'Bilinmiyor') && data.courthouse && data.courthouse.toLowerCase().includes('şile')) {
+                    cityValue = 'İstanbul';
+                    console.log('DEBUG: Edit modal - Special Şile detection - setting city to İstanbul');
+                }
             }
+
+            console.log('DEBUG: Edit modal - final city value:', cityValue);
+            let city = cityValue;
 
             const editHtml = `
                 <div class="modal-content">
@@ -3829,10 +3916,6 @@ function editCase(caseId) {
                                     <label>Şehir</label>
                                     <select id="editCity" onchange="updateEditCourthouses(); populateEditDepartments(document.getElementById('editFileType').value, document.getElementById('editDepartment'), null, document.getElementById('editCourthouse').value);" ${['ARABULUCULUK', 'AİHM', 'AYM'].includes(data.file_type) ? 'disabled' : ''}>
                                         <option value="">Seçiniz</option>
-                                        ${Object.keys(allCourthousesData).map(cityName => 
-                                            `<option value="${cityName}" ${city === cityName ? 'selected' : ''}>${cityName}</option>`
-                                        ).join('')}
-                                        <option value="İstanbul" ${city === 'İstanbul' ? 'selected' : ''}>İstanbul</option>
                                     </select>
                                 </div>
                                 <div class="detail-group">
@@ -3880,8 +3963,8 @@ function editCase(caseId) {
                                             <div class="collapsible-title">
                                                 <i class="material-icons person-icon">person</i>
                                                 <div class="person-info">
-                                                    <div class="person-title main-edit-client-title">${(data.client_capacity || 'Müvekkil') + ' - ' + (data.client_name || 'İsim belirtilmemiş')}</div>
-                                                    <div class="person-subtitle">${data.client_identity_number || ''}</div>
+                                                    <div class="person-title main-edit-client-title">${data.client_name || 'İsim belirtilmemiş'}</div>
+                                                    <div class="person-subtitle">${data.client_entity_type === 'company' ? 'Kurum' : 'Kişi'}${data.client_identity_number ? ' • ' + data.client_identity_number : ''}</div>
                                                 </div>
                                             </div>
                                             <div class="card-actions" onclick="event.stopPropagation()">
@@ -3905,12 +3988,12 @@ function editCase(caseId) {
                                                     <span class="detail-info-value">${data.client_capacity || '-'}</span>
                                                 </div>
                                                 <div class="detail-info-item">
-                                                    <span class="detail-info-label">TELEFON</span>
-                                                    <span class="detail-info-value">${data.phone_number || '-'}</span>
+                                                    <span class="detail-info-label">${data.client_entity_type === 'company' ? 'VERGİ/MERSİS/TİCARET SİCİL NO' : 'T.C. KİMLİK NO'}</span>
+                                                    <span class="detail-info-value">${data.client_identity_number || '-'}</span>
                                                 </div>
                                                 <div class="detail-info-item">
-                                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
-                                                    <span class="detail-info-value">${data.client_identity_number || '-'}</span>
+                                                    <span class="detail-info-label">TELEFON</span>
+                                                    <span class="detail-info-value">${data.phone_number || '-'}</span>
                                                 </div>
                                                 <div class="detail-info-item full-width">
                                                     <span class="detail-info-label">ADRES</span>
@@ -3925,7 +4008,7 @@ function editCase(caseId) {
                                         <div class="detail-grid">
                                             <div class="detail-group">
                                                 <label>Tip</label>
-                                                <select id="editClientEntityType">
+                                                <select id="editClientEntityType" onchange="updateEditFormLabels('client')">
                                                     <option value="person" ${(data.client_entity_type || 'person') === 'person' ? 'selected' : ''}>Kişi</option>
                                                     <option value="company" ${data.client_entity_type === 'company' ? 'selected' : ''}>Kurum</option>
                                                 </select>
@@ -3945,12 +4028,12 @@ function editCase(caseId) {
                                         </div>
                                         <div class="detail-grid">
                                             <div class="detail-group">
-                                                <label>Telefon</label>
-                                                <input type="text" id="editPhoneNumber" value="${data.phone_number || ''}">
+                                                <label id="editClientIdentityLabel">${data.client_entity_type === 'company' ? 'Vergi/Mersis/Ticaret Sicil No' : 'T.C. Kimlik No'}</label>
+                                                <input type="text" id="editClientIdentityNumber" value="${data.client_identity_number || ''}">
                                             </div>
                                             <div class="detail-group">
-                                                <label>Kimlik / Vergi No</label>
-                                                <input type="text" id="editClientIdentityNumber" value="${data.client_identity_number || ''}">
+                                                <label>Telefon</label>
+                                                <input type="text" id="editPhoneNumber" value="${data.phone_number || ''}">
                                             </div>
                                         </div>
                                         <div class="detail-grid">
@@ -3986,8 +4069,8 @@ function editCase(caseId) {
                                             <div class="collapsible-title">
                                                 <i class="material-icons person-icon">group</i>
                                                 <div class="person-info">
-                                                    <div class="person-title main-edit-opponent-title">${(data.opponent_capacity || 'Karşı Taraf') + ' - ' + (data.opponent_name || 'İsim belirtilmemiş')}</div>
-                                                    <div class="person-subtitle">${data.opponent_identity_number || ''}</div>
+                                                    <div class="person-title main-edit-opponent-title">${data.opponent_name || 'İsim belirtilmemiş'}</div>
+                                                    <div class="person-subtitle">${data.opponent_entity_type === 'company' ? 'Kurum' : 'Kişi'}${data.opponent_identity_number ? ' • ' + data.opponent_identity_number : ''}</div>
                                                 </div>
                                             </div>
                                             <div class="card-actions" onclick="event.stopPropagation()">
@@ -4011,12 +4094,12 @@ function editCase(caseId) {
                                                     <span class="detail-info-value">${data.opponent_capacity || '-'}</span>
                                                 </div>
                                                 <div class="detail-info-item">
-                                                    <span class="detail-info-label">TELEFON</span>
-                                                    <span class="detail-info-value">${data.opponent_phone || '-'}</span>
+                                                    <span class="detail-info-label">${data.opponent_entity_type === 'company' ? 'VERGİ/MERSİS/TİCARET SİCİL NO' : 'T.C. KİMLİK NO'}</span>
+                                                    <span class="detail-info-value">${data.opponent_identity_number || '-'}</span>
                                                 </div>
                                                 <div class="detail-info-item">
-                                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
-                                                    <span class="detail-info-value">${data.opponent_identity_number || '-'}</span>
+                                                    <span class="detail-info-label">TELEFON</span>
+                                                    <span class="detail-info-value">${data.opponent_phone || '-'}</span>
                                                 </div>
                                                 <div class="detail-info-item full-width">
                                                     <span class="detail-info-label">ADRES</span>
@@ -4031,7 +4114,7 @@ function editCase(caseId) {
                                         <div class="detail-grid">
                                             <div class="detail-group">
                                                 <label>Tip</label>
-                                                <select id="editOpponentEntityType">
+                                                <select id="editOpponentEntityType" onchange="updateEditFormLabels('opponent')">
                                                     <option value="person" ${(data.opponent_entity_type || 'person') === 'person' ? 'selected' : ''}>Kişi</option>
                                                     <option value="company" ${data.opponent_entity_type === 'company' ? 'selected' : ''}>Kurum</option>
                                                 </select>
@@ -4051,12 +4134,12 @@ function editCase(caseId) {
                                         </div>
                                         <div class="detail-grid">
                                             <div class="detail-group">
-                                                <label>Telefon</label>
-                                                <input type="text" id="editOpponentPhone" value="${data.opponent_phone || ''}">
+                                                <label id="editOpponentIdentityLabel">${data.opponent_entity_type === 'company' ? 'Vergi/Mersis/Ticaret Sicil No' : 'T.C. Kimlik No'}</label>
+                                                <input type="text" id="editOpponentIdentityNumber" value="${data.opponent_identity_number || ''}">
                                             </div>
                                             <div class="detail-group">
-                                                <label>Kimlik / Vergi No</label>
-                                                <input type="text" id="editOpponentIdentityNumber" value="${data.opponent_identity_number || ''}">
+                                                <label>Telefon</label>
+                                                <input type="text" id="editOpponentPhone" value="${data.opponent_phone || ''}">
                                             </div>
                                         </div>
                                         <div class="detail-grid">
@@ -4203,7 +4286,13 @@ function editCase(caseId) {
             // editModal.style.display = 'flex'; // Bu satırı aşağı taşıdık
 
             const editFileTypeSelect = editModal.querySelector('#editFileType');
-            
+
+            // CRITICAL: editFileType'ı doğru değere zorla ayarla (template string'den gelmeyebilir)
+            console.log('DEBUG: Initial editFileType value:', editFileTypeSelect.value);
+            console.log('DEBUG: Expected file_type from server:', data.file_type);
+            editFileTypeSelect.value = data.file_type;
+            console.log('DEBUG: editFileType value after forced assignment:', editFileTypeSelect.value);
+
             // Debug: Modal oluşturulduktan sonra seçili değeri kontrol et
             console.log('DEBUG: editFileType select value after modal creation:', editFileTypeSelect.value);
             console.log('DEBUG: editFileType select HTML:', editFileTypeSelect.outerHTML);
@@ -4211,7 +4300,38 @@ function editCase(caseId) {
             const editCourthouseSelect = editModal.querySelector('#editCourthouse');
             const editDepartmentSelect = editModal.querySelector('#editDepartment');
 
-            // İlk adliye ve departman yüklemesi için
+            // ÖNCE şehir options'larını JavaScript ile populate et
+            console.log('DEBUG: Populating city options...');
+            console.log('DEBUG: allCourthousesData:', allCourthousesData);
+            if (allCourthousesData && typeof allCourthousesData === 'object') {
+                Object.keys(allCourthousesData).forEach(cityName => {
+                    const option = document.createElement('option');
+                    option.value = cityName;
+                    option.textContent = cityName;
+                    editCitySelect.appendChild(option);
+                });
+                console.log('DEBUG: Populated city select with', Object.keys(allCourthousesData).length, 'cities');
+            } else {
+                console.warn('DEBUG: allCourthousesData is not available, using fallback cities');
+                // Fallback şehir listesi
+                const fallbackCities = ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Adana', 'Konya', 'Gaziantep', 'Kayseri', 'Mersin'];
+                fallbackCities.forEach(cityName => {
+                    const option = document.createElement('option');
+                    option.value = cityName;
+                    option.textContent = cityName;
+                    editCitySelect.appendChild(option);
+                });
+                console.log('DEBUG: Used fallback city list with', fallbackCities.length, 'cities');
+            }
+
+            // SONRA şehir değerini set et - artık options mevcut
+            if (data.city) {
+                editCitySelect.value = data.city;
+                console.log('DEBUG: City set to:', data.city, 'Current value:', editCitySelect.value);
+                console.log('DEBUG: City options count after set:', editCitySelect.options.length);
+            }
+
+            // İlk adliye ve departman yüklemesi için - ARTIK DOĞRU fileType ile çalışacak
             updateEditCourthouses(editCitySelect, editCourthouseSelect, data.courthouse); // Adliyeleri yükle ve seçili adliyeyi ayarla
             populateEditDepartments(data.file_type, editDepartmentSelect, data.department, editCourthouseSelect.value, editCitySelect.value); // Departmanları yükle, temel ve numaralıyı ayarla
 
@@ -4241,7 +4361,7 @@ function editCase(caseId) {
                 populateEditDepartments(editFileTypeSelect.value, editDepartmentSelect, null, this.value, editCitySelect.value); // Departmanları adliyeye göre güncelle
             };
              editDepartmentSelect.onchange = function() {
-                updateEditNumberedDepartments(this.value, document.getElementById('editCity').value, document.getElementById('editCourthouse').value, data.department);
+                updateEditNumberedDepartments(this.value, editCitySelect.value, editCourthouseSelect.value, data.department);
             };
 
 
@@ -4281,7 +4401,7 @@ function editCase(caseId) {
                             <div class="collapsible-title">
                                 <i class="material-icons person-icon">person_add</i>
                                 <div class="person-info">
-                                    <div class="person-title">${client.capacity || 'Müvekkil'} - ${client.name || 'İsim belirtilmemiş'}</div>
+                                    <div class="person-title">${client.capacity ? client.capacity + ' - ' : ''}${client.name || 'İsim belirtilmemiş'}</div>
                                     <div class="person-subtitle">${client.entity_type === 'company' ? 'Kurum' : 'Kişi'}${client.identity_number ? ' • ' + client.identity_number : ''}</div>
                                 </div>
                             </div>
@@ -4306,7 +4426,7 @@ function editCase(caseId) {
                                     <span class="detail-info-value">${client.capacity || '-'}</span>
                                 </div>
                                 <div class="detail-info-item">
-                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                    <span class="detail-info-label">${client.entity_type === 'company' ? 'VERGİ/MERSİS/TİCARET SİCİL NO' : 'T.C. KİMLİK NO'}</span>
                                     <span class="detail-info-value">${client.identity_number || '-'}</span>
                                 </div>
                                 <div class="detail-info-item">
@@ -4336,7 +4456,7 @@ function editCase(caseId) {
                             <div class="collapsible-title">
                                 <i class="material-icons person-icon">group_add</i>
                                 <div class="person-info">
-                                    <div class="person-title">${opponent.capacity || 'Karşı Taraf'} - ${opponent.name || 'İsim belirtilmemiş'}</div>
+                                    <div class="person-title">${opponent.capacity ? opponent.capacity + ' - ' : ''}${opponent.name || 'İsim belirtilmemiş'}</div>
                                     <div class="person-subtitle">${opponent.entity_type === 'company' ? 'Kurum' : 'Kişi'}${opponent.identity_number ? ' • ' + opponent.identity_number : ''}</div>
                                 </div>
                             </div>
@@ -4361,7 +4481,7 @@ function editCase(caseId) {
                                     <span class="detail-info-value">${opponent.capacity || '-'}</span>
                                 </div>
                                 <div class="detail-info-item">
-                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                    <span class="detail-info-label">${opponent.entity_type === 'company' ? 'VERGİ/MERSİS/TİCARET SİCİL NO' : 'T.C. KİMLİK NO'}</span>
                                     <span class="detail-info-value">${opponent.identity_number || '-'}</span>
                                 </div>
                                 <div class="detail-info-item">
@@ -4455,9 +4575,10 @@ function editCase(caseId) {
                 editAdditionalLawyersDisplay.appendChild(lawyerDiv);
             });
             
-            // Sıfat seçeneklerini yükle
+            // Sıfat seçeneklerini yükle - ARTIK DOĞRU editFileType değeri ile çalışacak
+            console.log('DEBUG: Calling updateEditCapacityOptions with fileType:', editFileTypeSelect.value);
             updateEditCapacityOptions();
-            
+
             // Mevcut değerleri set et
             if (data.client_capacity) {
                 document.getElementById('editClientCapacity').value = data.client_capacity;
@@ -4479,7 +4600,7 @@ function editCase(caseId) {
             } else {
                 console.log('DEBUG: Select value is correct, no manual correction needed');
             }
-            
+
             editModal.style.display = 'flex'; // Modal'ı tüm kurulumlar bittikten sonra göster
             
             // Debug: Modal tamamen açıldıktan sonra select değerini kontrol et
@@ -4490,12 +4611,80 @@ function editCase(caseId) {
         });
 }
 
+// Ana müvekkil ve karşı taraf etiketlerini entity type'a göre güncelle
+function updateEditModalIdentityLabels(data) {
+    console.log('DEBUG: updateEditModalIdentityLabels called with data:', data);
+    console.log('DEBUG: client_entity_type:', data.client_entity_type);
+    console.log('DEBUG: opponent_entity_type:', data.opponent_entity_type);
+
+    // Ana müvekkil etiketi güncelle
+    const clientIdentityLabel = document.getElementById('editClientIdentityLabel');
+    console.log('DEBUG: clientIdentityLabel element:', clientIdentityLabel);
+    if (clientIdentityLabel) {
+        const oldText = clientIdentityLabel.textContent;
+        if (data.client_entity_type === 'company') {
+            clientIdentityLabel.textContent = 'Vergi/Mersis/Ticaret Sicil No';
+            console.log('DEBUG: Updated client label from', oldText, 'to Vergi/Mersis/Ticaret Sicil No');
+        } else {
+            clientIdentityLabel.textContent = 'T.C. Kimlik No';
+            console.log('DEBUG: Updated client label from', oldText, 'to T.C. Kimlik No');
+        }
+    } else {
+        console.log('DEBUG: clientIdentityLabel element not found!');
+    }
+
+    // Ana karşı taraf etiketi güncelle
+    const opponentIdentityLabel = document.getElementById('editOpponentIdentityLabel');
+    console.log('DEBUG: opponentIdentityLabel element:', opponentIdentityLabel);
+    if (opponentIdentityLabel) {
+        const oldText = opponentIdentityLabel.textContent;
+        if (data.opponent_entity_type === 'company') {
+            opponentIdentityLabel.textContent = 'Vergi/Mersis/Ticaret Sicil No';
+            console.log('DEBUG: Updated opponent label from', oldText, 'to Vergi/Mersis/Ticaret Sicil No');
+        } else {
+            opponentIdentityLabel.textContent = 'T.C. Kimlik No';
+            console.log('DEBUG: Updated opponent label from', oldText, 'to T.C. Kimlik No');
+        }
+    } else {
+        console.log('DEBUG: opponentIdentityLabel element not found!');
+    }
+}
+
+// Detail modal'da da ana müvekkil ve karşı taraf etiketlerini güncelle
+function updateDetailModalIdentityLabels(data) {
+    // Ana müvekkil etiketi güncelle
+    const detailClientIdentityLabel = document.getElementById('detailClientIdentityLabel');
+    if (detailClientIdentityLabel) {
+        if (data.client_entity_type === 'company') {
+            detailClientIdentityLabel.textContent = 'VERGİ/MERSİS/TİCARET SİCİL NO';
+        } else {
+            detailClientIdentityLabel.textContent = 'T.C. KİMLİK NO';
+        }
+    }
+
+    // Ana karşı taraf etiketi güncelle
+    const detailOpponentIdentityLabel = document.getElementById('detailOpponentIdentityLabel');
+    if (detailOpponentIdentityLabel) {
+        if (data.opponent_entity_type === 'company') {
+            detailOpponentIdentityLabel.textContent = 'VERGİ/MERSİS/TİCARET SİCİL NO';
+        } else {
+            detailOpponentIdentityLabel.textContent = 'T.C. KİMLİK NO';
+        }
+    }
+}
+
 // Düzenleme modalında sıfat seçeneklerini güncelle
 function updateEditCapacityOptions() {
-    const fileType = document.getElementById('editFileType')?.value;
+    const editFileTypeElement = document.getElementById('editFileType');
+    const fileType = editFileTypeElement?.value;
     const clientCapacitySelect = document.getElementById('editClientCapacity');
     const opponentCapacitySelect = document.getElementById('editOpponentCapacity');
-    
+
+    console.log('DEBUG: updateEditCapacityOptions - editFileTypeElement:', editFileTypeElement);
+    console.log('DEBUG: updateEditCapacityOptions - fileType:', fileType);
+    console.log('DEBUG: updateEditCapacityOptions - element value:', editFileTypeElement?.value);
+    console.log('DEBUG: updateEditCapacityOptions - element selectedIndex:', editFileTypeElement?.selectedIndex);
+
     if (!fileType || !clientCapacitySelect || !opponentCapacitySelect) return;
     
     // Müvekkil sıfat seçeneklerini güncelle
@@ -4512,6 +4701,7 @@ function updateEditCapacityOptions() {
     // Karşı taraf sıfat seçeneklerini güncelle
     opponentCapacitySelect.innerHTML = '<option value="">Seçiniz</option>';
     if (capacityOptions[fileType] && capacityOptions[fileType].opponent && capacityOptions[fileType].opponent.length > 0) {
+        console.log(`DEBUG: ${fileType} için opponent capacity options:`, capacityOptions[fileType].opponent);
         capacityOptions[fileType].opponent.forEach(capacity => {
             const option = document.createElement('option');
             option.value = capacity;
@@ -4519,7 +4709,9 @@ function updateEditCapacityOptions() {
             opponentCapacitySelect.appendChild(option);
         });
         opponentCapacitySelect.disabled = false;
+        console.log(`DEBUG: Opponent capacity select güncellendi, toplam option sayısı:`, opponentCapacitySelect.options.length);
     } else {
+        console.log(`DEBUG: ${fileType} için opponent capacity options yok veya boş`);
         opponentCapacitySelect.disabled = true;
     }
 }
@@ -4703,7 +4895,7 @@ function saveChanges(caseId) {
         const client = {
             name: titleText.includes(' - ') ? titleText.split(' - ')[1] : titleText,
             capacity: titleText.includes(' - ') ? titleText.split(' - ')[0] : '',
-            entity_type: subtitleText.includes('Tüzel Kişi') ? 'company' : 'person'
+            entity_type: subtitleText.includes('Kurum') ? 'company' : 'person'
         };
         
         // Detail bilgilerini al
@@ -4714,6 +4906,8 @@ function saveChanges(caseId) {
             if (label && value && value !== '-') {
                 switch(label) {
                     case 'KİMLİK / VERGİ NO':
+                    case 'T.C. KİMLİK NO':
+                    case 'VERGİ/MERSİS/TİCARET SİCİL NO':
                         client.identity_number = value;
                         break;
                     case 'TELEFON':
@@ -4740,7 +4934,7 @@ function saveChanges(caseId) {
         const opponent = {
             name: titleText.includes(' - ') ? titleText.split(' - ')[1] : titleText,
             capacity: titleText.includes(' - ') ? titleText.split(' - ')[0] : '',
-            entity_type: subtitleText.includes('Tüzel Kişi') ? 'company' : 'person'
+            entity_type: subtitleText.includes('Kurum') ? 'company' : 'person'
         };
         
         // Detail bilgilerini al
@@ -4751,6 +4945,8 @@ function saveChanges(caseId) {
             if (label && value && value !== '-') {
                 switch(label) {
                     case 'KİMLİK / VERGİ NO':
+                    case 'T.C. KİMLİK NO':
+                    case 'VERGİ/MERSİS/TİCARET SİCİL NO':
                         opponent.identity_number = value;
                         break;
                     case 'TELEFON':
@@ -4826,9 +5022,34 @@ function saveChanges(caseId) {
         });
     }
     
+    // KRITIK DEBUG: City ve courthouse elementlerinin tam durumunu kontrol et
+    const cityElement = document.getElementById('editCity');
+    const courthouseElement = document.getElementById('editCourthouse');
+
+    console.log('DEBUG CRITICAL: City element:', cityElement);
+    console.log('DEBUG CRITICAL: City element innerHTML:', cityElement ? cityElement.innerHTML : 'NULL');
+    console.log('DEBUG CRITICAL: City element options count:', cityElement ? cityElement.options.length : 'NULL');
+    console.log('DEBUG CRITICAL: City element value:', cityElement ? cityElement.value : 'NULL');
+    console.log('DEBUG CRITICAL: City element selectedIndex:', cityElement ? cityElement.selectedIndex : 'NULL');
+    if (cityElement && cityElement.options.length > 0) {
+        console.log('DEBUG CRITICAL: City options list:', Array.from(cityElement.options).map(opt => opt.value));
+        console.log('DEBUG CRITICAL: City selected option:', cityElement.options[cityElement.selectedIndex]);
+    }
+
+    console.log('DEBUG CRITICAL: Courthouse element:', courthouseElement);
+    console.log('DEBUG CRITICAL: Courthouse element innerHTML:', courthouseElement ? courthouseElement.innerHTML : 'NULL');
+    console.log('DEBUG CRITICAL: Courthouse element options count:', courthouseElement ? courthouseElement.options.length : 'NULL');
+    console.log('DEBUG CRITICAL: Courthouse element value:', courthouseElement ? courthouseElement.value : 'NULL');
+    console.log('DEBUG CRITICAL: Courthouse element selectedIndex:', courthouseElement ? courthouseElement.selectedIndex : 'NULL');
+    if (courthouseElement && courthouseElement.options.length > 0) {
+        console.log('DEBUG CRITICAL: Courthouse options list:', Array.from(courthouseElement.options).map(opt => opt.value));
+        console.log('DEBUG CRITICAL: Courthouse selected option:', courthouseElement.options[courthouseElement.selectedIndex]);
+    }
+
     const data = {
         file_type: fileTypeValue,
-        courthouse: document.getElementById('editCourthouse').value,
+        city: cityElement ? cityElement.value : '',
+        courthouse: courthouseElement ? courthouseElement.value : '',
         department: finalDepartmentValue, // Güncellenmiş departman değeri
         
         // Müvekkil bilgileri
@@ -5524,11 +5745,15 @@ function editMainPersonInModal(personType, caseId) {
         // Entity type'ı TİP alanından al ve form select'ine set et
         const detailItems = cardContent.querySelectorAll('.detail-info-item');
         let tipValue = null;
+        let currentCapacity = null; // Mevcut sıfatı sakla
 
         detailItems.forEach(item => {
             const label = item.querySelector('.detail-info-label')?.textContent;
+            const value = item.querySelector('.detail-info-value')?.textContent;
             if (label === 'TİP') {
-                tipValue = item.querySelector('.detail-info-value')?.textContent;
+                tipValue = value;
+            } else if (label === 'SIFAT' && value && value !== '-') {
+                currentCapacity = value; // Mevcut sıfatı sakla
             }
         });
 
@@ -5541,8 +5766,45 @@ function editMainPersonInModal(personType, caseId) {
             }
         }
 
+        // DİĞER TARAFIN SIFATINI KORU - updateEditCapacityOptions() çalışmadan önce
+        const otherPersonType = personType === 'client' ? 'opponent' : 'client';
+        const otherPrefix = otherPersonType === 'client' ? 'Client' : 'Opponent';
+        const otherCapacityElement = document.getElementById(`edit${otherPrefix}Capacity`);
+        const otherCurrentCapacity = otherCapacityElement ? otherCapacityElement.value : null;
+        console.log(`DEBUG: ${otherPersonType} mevcut sıfatı korunuyor:`, otherCurrentCapacity);
+
+        // Sıfat seçeneklerini güncelle
+        updateEditCapacityOptions();
+
+        // Form label'larını güncelle
+        updateEditFormLabels(personType);
+
         // Mevcut değerleri forma yükle (entity type hariç, o yukarıda set edildi)
         loadMainPersonDataToEditForm(personType);
+
+        // Sıfatı updateEditCapacityOptions() çağrısından sonra tekrar set et
+        setTimeout(() => {
+            // Düzenlenen kişinin sıfatını geri yükle
+            if (currentCapacity) {
+                const capacityElement = document.getElementById(`edit${prefix}Capacity`);
+                if (capacityElement) {
+                    console.log(`DEBUG: ${personType} için ${prefix}Capacity elementi bulundu:`, capacityElement);
+                    console.log(`DEBUG: ${personType} için mevcut options:`, Array.from(capacityElement.options).map(opt => opt.value));
+                    capacityElement.value = currentCapacity;
+                    console.log(`DEBUG: Ana ${personType} sıfatı tekrar set edildi:`, currentCapacity);
+                    console.log(`DEBUG: ${personType} için final selected value:`, capacityElement.value);
+                } else {
+                    console.log(`DEBUG: ${personType} için ${prefix}Capacity elementi bulunamadı!`);
+                }
+            }
+
+            // DİĞER TARAFIN SIFATINI DA GERİ YÜKLE
+            if (otherCurrentCapacity && otherCapacityElement) {
+                console.log(`DEBUG: ${otherPersonType} sıfatı geri yükleniyor:`, otherCurrentCapacity);
+                otherCapacityElement.value = otherCurrentCapacity;
+                console.log(`DEBUG: ${otherPersonType} sıfatı geri yüklendi:`, otherCapacityElement.value);
+            }
+        }, 100);
     }
 }
 
@@ -5632,6 +5894,8 @@ function deleteMainPersonInModal(personType, caseId) {
                                 case 'SIFAT':
                                 case 'TELEFON':
                                 case 'KİMLİK / VERGİ NO':
+                                case 'T.C. KİMLİK NO':
+                                case 'VERGİ/MERSİS/TİCARET SİCİL NO':
                                 case 'ADRES':
                                     valueSpan.textContent = '-';
                                     break;
@@ -5776,7 +6040,7 @@ function updateMainEditLabels(personType) {
     
     if (entityType === 'company') {
         nameLabel.textContent = 'Kurum Unvanı';
-        identityLabel.textContent = 'Vergi/Mersis No';
+        identityLabel.textContent = 'Vergi/Mersis/Ticaret Sicil No';
         identityInput.maxLength = 20;
         identityInput.placeholder = 'Vergi/Mersis/Ticaret Sicil No';
     } else {
@@ -5793,18 +6057,18 @@ function loadMainPersonDataToEditForm(personType) {
     const cardId = personType === 'client' ? 'mainClientCard' : 'mainOpponentCard';
     const personCard = document.getElementById(cardId);
 
+    if (!personCard) return;
+
+    const prefix = personType === 'client' ? 'Client' : 'Opponent';
+
     // Mevcut verileri card'dan al
     const nameElement = personCard.querySelector('.person-title');
     const detailItems = personCard.querySelectorAll('.detail-info-item');
 
-    // Form alanlarına veriyi yükle
+    // Form alanlarına veriyi yükle - İsmi sadece nameText'ten al
     const nameText = nameElement ? nameElement.textContent : '';
-    const nameParts = nameText.includes(' - ') ? nameText.split(' - ') : ['', nameText];
-
-    if (nameParts.length > 1) {
-        document.getElementById(`mainEdit_${personType}_capacity`).value = nameParts[0] || '';
-        document.getElementById(`mainEdit_${personType}_name`).value = nameParts[1] || '';
-    }
+    const nameField = document.getElementById(`edit${prefix}Name`);
+    if (nameField) nameField.value = nameText;
 
     // Diğer alanları detail-info-item'lardan al
     detailItems.forEach(item => {
@@ -5813,19 +6077,86 @@ function loadMainPersonDataToEditForm(personType) {
 
         if (label && value && value !== '-') {
             switch(label) {
-                // TİP artık yukarıda backend verisi ile set edildi
+                case 'SIFAT':
+                    const capacityElement = document.getElementById(`edit${prefix}Capacity`);
+                    if (capacityElement) capacityElement.value = value;
+                    break;
                 case 'TELEFON':
-                    document.getElementById(`mainEdit_${personType}_phone`).value = value;
+                    // Müvekkil için editPhoneNumber, karşı taraf için editOpponentPhone
+                    const phoneElement = personType === 'client' ?
+                        document.getElementById('editPhoneNumber') :
+                        document.getElementById('editOpponentPhone');
+                    if (phoneElement) phoneElement.value = value;
                     break;
                 case 'KİMLİK / VERGİ NO':
-                    document.getElementById(`mainEdit_${personType}_identityNumber`).value = value;
+                case 'T.C. KİMLİK NO':
+                case 'VERGİ/MERSİS/TİCARET SİCİL NO':
+                    const identityElement = document.getElementById(`edit${prefix}IdentityNumber`);
+                    if (identityElement) identityElement.value = value;
                     break;
                 case 'ADRES':
-                    document.getElementById(`mainEdit_${personType}_address`).value = value;
+                    const addressElement = document.getElementById(`edit${prefix}Address`);
+                    if (addressElement) addressElement.value = value;
                     break;
             }
         }
     });
+}
+
+// Edit form label'larını güncelle
+function updateEditFormLabels(personType) {
+    const prefix = personType === 'client' ? 'Client' : 'Opponent';
+    const entitySelect = document.getElementById(`edit${prefix}EntityType`);
+
+    if (!entitySelect) return;
+
+    const entityType = entitySelect.value;
+
+    // Form container'ı bul
+    const formContainer = document.getElementById(`main${prefix}EditForm`);
+    if (!formContainer) return;
+
+    // Label'ları bul - input'lardan önceki label'ları
+    const nameInput = document.getElementById(`edit${prefix}Name`);
+    const identityInput = document.getElementById(`edit${prefix}IdentityNumber`);
+
+    if (nameInput) {
+        const nameLabel = nameInput.parentElement.querySelector('label');
+        if (nameLabel) {
+            if (entityType === 'company') {
+                nameLabel.textContent = 'Kurum Unvanı';
+            } else {
+                nameLabel.textContent = 'Ad Soyad';
+            }
+        }
+
+        // Placeholder güncelle
+        if (entityType === 'company') {
+            nameInput.placeholder = 'Kurum unvanını girin';
+        } else {
+            nameInput.placeholder = 'Ad soyadını girin';
+        }
+    }
+
+    if (identityInput) {
+        const identityLabel = identityInput.parentElement.querySelector('label');
+        if (identityLabel) {
+            if (entityType === 'company') {
+                identityLabel.textContent = 'Vergi/Mersis/Ticaret Sicil No';
+            } else {
+                identityLabel.textContent = 'T.C. Kimlik No';
+            }
+        }
+
+        // Placeholder ve maxLength güncelle
+        if (entityType === 'company') {
+            identityInput.placeholder = '1234567890';
+            identityInput.maxLength = 20;
+        } else {
+            identityInput.placeholder = '12345678901';
+            identityInput.maxLength = 11;
+        }
+    }
 }
 
 // Ana kişi düzenleme kaydet fonksiyonu - gerçekten çalışan versiyon
@@ -5837,7 +6168,10 @@ function saveMainPersonEdit(personType, caseId) {
     const entityTypeElement = document.getElementById(`edit${prefix}EntityType`);
     const capacityElement = document.getElementById(`edit${prefix}Capacity`);
     const nameElement = document.getElementById(`edit${prefix}Name`);
-    const phoneElement = document.getElementById(`edit${prefix}Phone`);
+    // Telefon elementi - müvekkil için editPhoneNumber, karşı taraf için editOpponentPhone
+    const phoneElement = personType === 'client' ?
+        document.getElementById('editPhoneNumber') :
+        document.getElementById('editOpponentPhone');
     const identityElement = document.getElementById(`edit${prefix}IdentityNumber`);
     const addressElement = document.getElementById(`edit${prefix}Address`);
 
@@ -5913,16 +6247,16 @@ function saveMainPersonEdit(personType, caseId) {
             const personCard = document.getElementById(cardId);
             
             if (personCard) {
-                // Başlığı güncelle
+                // Başlığı güncelle - sadece isim
                 const titleElement = personCard.querySelector('.person-title');
                 if (titleElement) {
-                    titleElement.textContent = `${capacity || (personType === 'client' ? 'Müvekkil' : 'Karşı Taraf')} - ${name || 'İsim belirtilmemiş'}`;
+                    titleElement.textContent = name || 'İsim belirtilmemiş';
                 }
                 
                 // Subtitle'ı güncelle
                 const subtitleElement = personCard.querySelector('.person-subtitle');
                 if (subtitleElement) {
-                    const entityText = entityType === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi';
+                    const entityText = entityType === 'company' ? 'Kurum' : 'Kişi';
                     const identityText = identityNumber ? ' • ' + identityNumber : '';
                     subtitleElement.textContent = entityText + identityText;
                 }
@@ -5936,7 +6270,7 @@ function saveMainPersonEdit(personType, caseId) {
                     if (label && valueSpan) {
                         switch(label) {
                             case 'TİP':
-                                valueSpan.textContent = entityType === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi';
+                                valueSpan.textContent = entityType === 'company' ? 'Kurum' : 'Kişi';
                                 break;
                             case 'SIFAT':
                                 valueSpan.textContent = capacity || '-';
@@ -5945,6 +6279,8 @@ function saveMainPersonEdit(personType, caseId) {
                                 valueSpan.textContent = phone || '-';
                                 break;
                             case 'KİMLİK / VERGİ NO':
+                            case 'T.C. KİMLİK NO':
+                            case 'VERGİ/MERSİS/TİCARET SİCİL NO':
                                 valueSpan.textContent = identityNumber || '-';
                                 break;
                             case 'ADRES':
@@ -6264,8 +6600,8 @@ function saveNewPerson(personType, caseId) {
                             <div class="collapsible-title">
                                 <i class="material-icons person-icon">${iconClass}</i>
                                 <div class="person-info">
-                                    <div class="person-title">${capacity || (personType === 'client' ? 'Müvekkil' : 'Karşı Taraf')} - ${name}</div>
-                                    <div class="person-subtitle">${entityType === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}${identityNumber ? ' • ' + identityNumber : ''}</div>
+                                    <div class="person-title">${capacity ? capacity + ' - ' + name : name}</div>
+                                    <div class="person-subtitle">${entityType === 'company' ? 'Kurum' : 'Kişi'}${identityNumber ? ' • ' + identityNumber : ''}</div>
                                 </div>
                             </div>
                             <div class="card-actions" onclick="event.stopPropagation()">
@@ -6282,14 +6618,14 @@ function saveNewPerson(personType, caseId) {
                             <div class="detail-info-grid">
                                 <div class="detail-info-item">
                                     <span class="detail-info-label">TİP</span>
-                                    <span class="detail-info-value">${entityType === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</span>
+                                    <span class="detail-info-value">${entityType === 'company' ? 'Kurum' : 'Kişi'}</span>
                                 </div>
                                 <div class="detail-info-item">
                                     <span class="detail-info-label">SIFAT</span>
                                     <span class="detail-info-value">${capacity || '-'}</span>
                                 </div>
                                 <div class="detail-info-item">
-                                    <span class="detail-info-label">KİMLİK / VERGİ NO</span>
+                                    <span class="detail-info-label">${entityType === 'company' ? 'VERGİ/MERSİS/TİCARET SİCİL NO' : 'T.C. KİMLİK NO'}</span>
                                     <span class="detail-info-value">${identityNumber || '-'}</span>
                                 </div>
                                 <div class="detail-info-item">
@@ -6641,7 +6977,7 @@ function updateAddPersonModalLabels() {
             break;
         case 'company':
             nameLabel.textContent = 'Kurum Unvanı';
-            identityLabel.textContent = 'Vergi/Mersis No';
+            identityLabel.textContent = 'Vergi/Mersis/Ticaret Sicil No';
             identityInput.maxLength = 20;
             identityInput.placeholder = 'Vergi numarası';
             break;
@@ -6739,7 +7075,10 @@ function editPersonInModal(personType, personIndex, caseId) {
     if (cardContent && editForm) {
         cardContent.style.display = 'none';
         editForm.style.display = 'block';
-        
+
+        // Sıfat seçeneklerini yükle
+        updatePersonEditCapacityOptions(personType, personIndex);
+
         // Mevcut değerleri forma yükle
         loadPersonDataToEditForm(personType, personIndex);
     }
@@ -6846,7 +7185,7 @@ function updatePersonEditLabels(personType, personIndex) {
             break;
         case 'company':
             nameLabel.textContent = 'Kurum Unvanı';
-            identityLabel.textContent = 'Vergi/Mersis No';
+            identityLabel.textContent = 'Vergi/Mersis/Ticaret Sicil No';
             identityInput.maxLength = 20;
             identityInput.placeholder = 'Vergi/Mersis/Ticaret Sicil No';
             break;
@@ -6873,43 +7212,40 @@ function updatePersonEditLabels(personType, personIndex) {
 function loadPersonDataToEditForm(personType, personIndex) {
     const cardSelector = `[data-person-type="${personType}"][data-person-index="${personIndex}"]`;
     const personCard = document.querySelector(cardSelector);
-    
+
     if (!personCard) return;
-    
+
     // Mevcut verileri card'dan al
     const nameElement = personCard.querySelector('.person-title');
     const subtitleElement = personCard.querySelector('.person-subtitle');
     const detailItems = personCard.querySelectorAll('.detail-info-item');
-    
-    // Form alanlarına veriyi yükle
+
+    // Form alanlarına veriyi yükle - isim direkt title'dan al
     const nameText = nameElement ? nameElement.textContent : '';
-    const nameParts = nameText.includes(' - ') ? nameText.split(' - ') : ['', nameText];
-    
-    if (nameParts.length > 1) {
-        // Sıfat select'i için değeri al
-        const capacitySelect = document.getElementById(`edit_${personType}_${personIndex}_capacity`);
-        if (capacitySelect) {
-            capacitySelect.value = nameParts[0] || '';
-        }
-        document.getElementById(`edit_${personType}_${personIndex}_name`).value = nameParts[1] || '';
-    }
-    
+    document.getElementById(`edit_${personType}_${personIndex}_name`).value = nameText;
+
     let entityTypeFromCard = 'person';
-    
+    let currentCapacity = null; // Sıfatı sakla
+
     // Diğer alanları detail-info-item'lardan al
     detailItems.forEach(item => {
         const label = item.querySelector('.detail-info-label')?.textContent;
         const value = item.querySelector('.detail-info-value')?.textContent;
-        
+
         if (label && value && value !== '-') {
             switch(label) {
                 case 'TİP':
-                    entityTypeFromCard = value === 'Tüzel Kişi' ? 'company' : 'person';
+                    entityTypeFromCard = value === 'Kurum' ? 'company' : 'person';
+                    break;
+                case 'SIFAT':
+                    currentCapacity = value; // Sıfatı sakla, sonra set edeceğiz
                     break;
                 case 'TELEFON':
                     document.getElementById(`edit_${personType}_${personIndex}_phone`).value = value;
                     break;
                 case 'KİMLİK / VERGİ NO':
+                case 'T.C. KİMLİK NO':
+                case 'VERGİ/MERSİS/TİCARET SİCİL NO':
                     document.getElementById(`edit_${personType}_${personIndex}_identityNumber`).value = value;
                     break;
                 case 'ADRES':
@@ -6918,12 +7254,23 @@ function loadPersonDataToEditForm(personType, personIndex) {
             }
         }
     });
-    
+
     // Entity type dropdown'ını set et
     const entitySelect = document.getElementById(`edit_${personType}_${personIndex}_entityType`);
     if (entitySelect) {
         entitySelect.value = entityTypeFromCard;
         updatePersonEditLabels(personType, personIndex);
+    }
+
+    // Sıfatı capacity seçenekleri yüklendikten sonra set et
+    if (currentCapacity) {
+        setTimeout(() => {
+            const capacityElement = document.getElementById(`edit_${personType}_${personIndex}_capacity`);
+            if (capacityElement) {
+                capacityElement.value = currentCapacity;
+                console.log(`DEBUG: Ek ${personType} ${personIndex} sıfatı set edildi:`, currentCapacity);
+            }
+        }, 50);
     }
 }
 
@@ -6956,16 +7303,17 @@ function savePersonEdit(personType, personIndex, caseId) {
     const personCard = document.querySelector(cardSelector);
     
     if (personCard) {
-        // Başlığı güncelle
+        // Başlığı güncelle - sıfat ve isimle birlikte
         const titleElement = personCard.querySelector('.person-title');
         if (titleElement) {
-            titleElement.textContent = `${capacity || (personType === 'client' ? 'Müvekkil' : 'Karşı Taraf')} - ${name || 'İsim belirtilmemiş'}`;
+            const titleText = capacity ? `${capacity} - ${name || 'İsim belirtilmemiş'}` : (name || 'İsim belirtilmemiş');
+            titleElement.textContent = titleText;
         }
         
         // Subtitle'ı güncelle
         const subtitleElement = personCard.querySelector('.person-subtitle');
         if (subtitleElement) {
-            const entityText = entityType === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi';
+            const entityText = entityType === 'company' ? 'Kurum' : 'Kişi';
             const identityText = identityNumber ? ' • ' + identityNumber : '';
             subtitleElement.textContent = entityText + identityText;
         }
@@ -6979,7 +7327,7 @@ function savePersonEdit(personType, personIndex, caseId) {
             if (label && valueSpan) {
                 switch(label) {
                     case 'TİP':
-                        valueSpan.textContent = entityType === 'company' ? 'Tüzel Kişi' : 'Gerçek Kişi';
+                        valueSpan.textContent = entityType === 'company' ? 'Kurum' : 'Kişi';
                         break;
                     case 'SIFAT':
                         valueSpan.textContent = capacity || '-';
@@ -6988,6 +7336,8 @@ function savePersonEdit(personType, personIndex, caseId) {
                         valueSpan.textContent = phone || '-';
                         break;
                     case 'KİMLİK / VERGİ NO':
+                    case 'T.C. KİMLİK NO':
+                    case 'VERGİ/MERSİS/TİCARET SİCİL NO':
                         valueSpan.textContent = identityNumber || '-';
                         break;
                     case 'ADRES':
@@ -7853,7 +8203,7 @@ function loadFileInfoToEdit() {
     console.log('DEBUG: Normalized fileType for select:', normalizedFileType);
     
     // Form alanlarını doldur
-    document.getElementById('editFileType').value = normalizedFileType;
+    document.getElementById('fileInfoEditFileType').value = normalizedFileType;
     document.getElementById('editYear').value = year;
     document.getElementById('editCaseNumber').value = caseNumber;
     document.getElementById('editStatus').value = status;
@@ -7892,9 +8242,9 @@ function loadFileInfoToEdit() {
 }
 
 function loadEditCityOptions() {
-    const citySelect = document.getElementById('editCity');
+    const citySelect = document.getElementById('fileInfoEditCity');
     citySelect.innerHTML = '<option value="">Seçiniz</option>';
-    
+
     // cities_list global değişkeni varsa kullan
     if (typeof cities_list !== 'undefined') {
         cities_list.forEach(city => {
@@ -7903,25 +8253,67 @@ function loadEditCityOptions() {
             option.textContent = city;
             citySelect.appendChild(option);
         });
+    } else {
+        // Fallback: temel şehirler listesi - İstanbul'u da dahil et
+        const fallbackCities = ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Adana', 'Konya', 'Gaziantep', 'Kayseri', 'Mersin'];
+
+        // Önce mevcut option'ları kontrol et, duplicate eklememe
+        const existingCities = Array.from(citySelect.options).map(opt => opt.value);
+
+        fallbackCities.forEach(city => {
+            if (!existingCities.includes(city)) {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            }
+        });
+        console.log('DEBUG: Used fallback cities list (no duplicates)');
     }
     
+    // Şehir değişikliği dinleyicisi ekle
+    citySelect.onchange = function() {
+        updateEditCourthouse();
+    };
+
     // Mevcut şehri seç
     const currentCity = document.getElementById('detailCity').textContent;
-    if (currentCity && currentCity !== '-') {
+    const currentCourthouse = document.getElementById('detailCourthouse').textContent;
+    console.log('DEBUG: loadEditCityOptions - currentCity:', currentCity);
+    console.log('DEBUG: loadEditCityOptions - currentCourthouse:', currentCourthouse);
+    console.log('DEBUG: Available city options:', Array.from(citySelect.options).map(opt => opt.value));
+    console.log('DEBUG: currentCity conditions check:');
+    console.log('  - currentCity exists:', !!currentCity);
+    console.log('  - currentCity !== "-":', currentCity !== '-');
+    console.log('  - currentCity !== "Bilinmiyor":', currentCity !== 'Bilinmiyor');
+
+    if (currentCity && currentCity !== '-' && currentCity !== 'Bilinmiyor') {
         citySelect.value = currentCity;
+        console.log('DEBUG: Set city select value to:', currentCity);
         updateEditCourthouse();
+    } else {
+        console.log('DEBUG: City value is empty, - or Bilinmiyor, not setting edit form city');
+        // Şile Adliyesi için özel kontrol
+        if (currentCourthouse && currentCourthouse.toLowerCase().includes('şile')) {
+            console.log('DEBUG: Detected Şile courthouse, setting city to İstanbul');
+            citySelect.value = 'İstanbul';
+            updateEditCourthouse();
+        }
     }
 }
 
 function updateEditCourthouse() {
-    const citySelect = document.getElementById('editCity');
-    const courthouseSelect = document.getElementById('editCourthouse');
+    const citySelect = document.getElementById('fileInfoEditCity');
+    const courthouseSelect = document.getElementById('fileInfoEditCourthouse');
     const selectedCity = citySelect.value;
-    
+
+    console.log('DEBUG: updateEditCourthouse - selectedCity:', selectedCity);
+
     courthouseSelect.innerHTML = '<option value="">Seçiniz</option>';
-    
+
     if (!selectedCity) {
         courthouseSelect.innerHTML = '<option value="">Önce şehir seçiniz</option>';
+        console.log('DEBUG: No city selected, showing message');
         return;
     }
     
@@ -7933,12 +8325,51 @@ function updateEditCourthouse() {
             option.textContent = courthouse;
             courthouseSelect.appendChild(option);
         });
+    } else {
+        // Fallback: temel adliyeler
+        const fallbackCourthouses = {
+            'İstanbul': ['İstanbul Adliyesi', 'Çağlayan Adliyesi', 'Anadolu Adliyesi', 'Şile Adliyesi', 'Kartal Adliyesi', 'Beylikdüzü Adliyesi', 'Silivri Adliyesi', 'Çatalca Adliyesi', 'Pendik Adliyesi', 'Tuzla Adliyesi', 'Maltepe Adliyesi', 'Ataşehir Adliyesi', 'Ümraniye Adliyesi', 'Üsküdar Adliyesi', 'Kadıköy Adliyesi'],
+            'Ankara': ['Ankara Adliyesi'],
+            'İzmir': ['İzmir Adliyesi']
+        };
+
+        if (fallbackCourthouses[selectedCity]) {
+            fallbackCourthouses[selectedCity].forEach(courthouse => {
+                const option = document.createElement('option');
+                option.value = courthouse;
+                option.textContent = courthouse;
+                courthouseSelect.appendChild(option);
+            });
+        } else {
+            console.log('DEBUG: No courthouses available for selected city:', selectedCity);
+        }
+        console.log('DEBUG: Used fallback courthouses for city:', selectedCity);
+        console.log('DEBUG: Added courthouse options:', fallbackCourthouses[selectedCity] || 'none');
     }
     
     // Mevcut adliyeyi seç
     const currentCourthouse = document.getElementById('detailCourthouse').textContent;
+    console.log('DEBUG: updateEditCourthouse - currentCourthouse:', currentCourthouse);
+    console.log('DEBUG: Available courthouse options:', Array.from(courthouseSelect.options).map(opt => opt.value));
+
     if (currentCourthouse && currentCourthouse !== '-') {
         courthouseSelect.value = currentCourthouse;
+        console.log('DEBUG: Set courthouse value to:', currentCourthouse);
+
+        // Eğer değer set edilmediyse (option bulunamadıysa), manuel kontrol yap
+        if (!courthouseSelect.value && currentCourthouse.toLowerCase().includes('şile')) {
+            console.log('DEBUG: Şile courthouse not found in options, checking fallback');
+            // Şile Adliyesi option'ını arıyoruz
+            for (let option of courthouseSelect.options) {
+                if (option.value.toLowerCase().includes('şile')) {
+                    courthouseSelect.value = option.value;
+                    console.log('DEBUG: Found and set Şile courthouse:', option.value);
+                    break;
+                }
+            }
+        }
+    } else {
+        console.log('DEBUG: Courthouse value is empty or -, not setting');
     }
     
     // Mahkeme seçeneklerini güncelle
@@ -7946,7 +8377,7 @@ function updateEditCourthouse() {
 }
 
 function updateEditDepartment() {
-    const fileType = document.getElementById('editFileType').value.toLowerCase();
+    const fileType = document.getElementById('fileInfoEditFileType').value.toLowerCase();
     const departmentSelect = document.getElementById('editDepartment');
     
     // Mevcut seçenekleri temizle
@@ -7993,13 +8424,13 @@ function cancelFileInfoEdit() {
 
 function saveFileInfo() {
     // Form verilerini al
-    const fileType = document.getElementById('editFileType').value;
+    const fileType = document.getElementById('fileInfoEditFileType').value;
     console.log('DEBUG: Saving fileType:', fileType);
     const year = document.getElementById('editYear').value;
     const caseNumber = document.getElementById('editCaseNumber').value;
     const openDate = document.getElementById('editOpenDate').value;
-    const city = document.getElementById('editCity').value;
-    const courthouse = document.getElementById('editCourthouse').value;
+    const city = document.getElementById('fileInfoEditCity').value;
+    const courthouse = document.getElementById('fileInfoEditCourthouse').value;
     const department = document.getElementById('editDepartment').value;
     const status = document.getElementById('editStatus').value;
     const nextHearing = document.getElementById('editNextHearing').value;
