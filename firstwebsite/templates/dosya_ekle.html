@@ -120,13 +120,13 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="client-id" id="client-id-label">T.C. Kimlik No</label>
-                            <input type="text" id="client-id" name="client-id" maxlength="11">
+                            <label for="client-phone">Telefon</label>
+                            <input type="tel" id="client-phone" name="client-phone" pattern="[0-9]{10,11}" placeholder="5XX XXX XX XX">
                         </div>
 
                         <div class="form-group">
-                            <label for="client-phone">Telefon</label>
-                            <input type="tel" id="client-phone" name="client-phone" pattern="[0-9]{10,11}" placeholder="5XX XXX XX XX">
+                            <label for="client-id" id="client-id-label">T.C. Kimlik No</label>
+                            <input type="text" id="client-id" name="client-id" maxlength="11">
                         </div>
 
                         <div class="form-group full-width">
@@ -184,13 +184,13 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="opponent-id" id="opponent-id-label">T.C. Kimlik No</label>
-                            <input type="text" id="opponent-id" name="opponent-id" maxlength="11">
+                            <label for="opponent-phone">Telefon</label>
+                            <input type="tel" id="opponent-phone" name="opponent-phone" pattern="[0-9]{10,11}" placeholder="5XX XXX XX XX">
                         </div>
 
                         <div class="form-group">
-                            <label for="opponent-phone">Telefon</label>
-                            <input type="tel" id="opponent-phone" name="opponent-phone" pattern="[0-9]{10,11}" placeholder="5XX XXX XX XX">
+                            <label for="opponent-id" id="opponent-id-label">T.C. Kimlik No</label>
+                            <input type="text" id="opponent-id" name="opponent-id" maxlength="11">
                         </div>
 
                         <div class="form-group full-width">
@@ -1821,12 +1821,12 @@ function showNewPersonModal(type) {
                                 <input type="text" id="add-name" required placeholder="Kişinin ad soyadını girin">
                             </div>
                             <div class="form-group">
-                                <label for="add-identity" id="add-identity-label">T.C. Kimlik No</label>
-                                <input type="text" id="add-identity" maxlength="11" placeholder="12345678901">
-                            </div>
-                            <div class="form-group">
                                 <label for="add-phone">Telefon</label>
                                 <input type="tel" id="add-phone" placeholder="5XX XXX XX XX">
+                            </div>
+                            <div class="form-group">
+                                <label for="add-identity" id="add-identity-label">T.C. Kimlik No</label>
+                                <input type="text" id="add-identity" maxlength="11" placeholder="12345678901">
                             </div>
                             <div class="form-group full-width">
                                 <label for="add-address">Adres</label>
@@ -1875,7 +1875,7 @@ function updatePersonModalLabels() {
             break;
         case 'company':
             nameLabel.textContent = 'Kurum Unvanı *';
-            identityLabel.textContent = 'Vergi/Mersis No';
+            identityLabel.textContent = 'Vergi/Mersis/Ticaret Sicil No';
             nameInput.placeholder = 'Kurum unvanını girin';
             identityInput.placeholder = '1234567890';
             identityInput.maxLength = 20;
@@ -2007,7 +2007,7 @@ function createNewPersonCard(person, type, index) {
     const entityLabel = entityLabels[person.entity_type] || 'Gerçek Kişi';
     const idLabels = {
         'person': 'T.C. Kimlik No',
-        'company': 'Vergi/Mersis No', 
+        'company': 'Vergi/Mersis/Ticaret Sicil No',
         'public': 'Vergi/Kurum No',
         'legal_entity': 'Vergi/Sicil No'
     };

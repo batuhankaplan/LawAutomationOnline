@@ -1561,7 +1561,7 @@ def case_details(case_id):
             'success': True,
             'file_type': case_file.file_type,
             'courthouse': case_file.courthouse,
-            'city': city,  # Şehir bilgisi eklendi
+            'city': case_file.city or city,  # Şehir bilgisi - önce database'den, yoksa hesaplanmış değer
             'department': case_file.department,
             'year': case_file.year,
             'case_number': formatted_case_number,  # Formatlanmış dosya numarası
@@ -1647,6 +1647,8 @@ def edit_case(case_id):
                 print(f"DEBUG: edit_case - updated file_type to: {case_file.file_type}")
         if 'courthouse' in data and data['courthouse']:
             case_file.courthouse = data['courthouse']
+        if 'city' in data and data['city']:
+            case_file.city = data['city']
         if 'client_name' in data and data['client_name']:
             case_file.client_name = data['client_name'].strip()
         if 'phone_number' in data:
@@ -8938,7 +8940,13 @@ def update_main_person():
         phone = request.form.get('phone')
         identity_number = request.form.get('identity_number')
         address = request.form.get('address')
-        
+
+        # Debug log
+        print(f"DEBUG update_main_person: case_id={case_id}, person_type={person_type}")
+        print(f"DEBUG update_main_person: entity_type={entity_type}, capacity={capacity}")
+        print(f"DEBUG update_main_person: name='{name}', phone='{phone}'")
+        print(f"DEBUG update_main_person: identity_number='{identity_number}', address='{address}'")
+
         if not all([case_id, person_type, name]):
             return jsonify({
                 'success': False,
@@ -8953,6 +8961,8 @@ def update_main_person():
             }), 404
         
         # Ana kişi bilgilerini güncelle
+        print(f"DEBUG update_main_person: Updating {person_type} for case {case_id}")
+
         if person_type == 'client':
             case.client_entity_type = entity_type
             case.client_capacity = capacity
@@ -8967,8 +8977,10 @@ def update_main_person():
             case.opponent_phone = phone
             case.opponent_identity_number = identity_number
             case.opponent_address = address
-        
+
+        print(f"DEBUG update_main_person: About to commit changes")
         db.session.commit()
+        print(f"DEBUG update_main_person: Changes committed successfully")
         
         # Activity log oluştur
         log_activity(
@@ -9114,7 +9126,9 @@ def update_case_basic_info():
         case.hearing_time = hearing_time if hearing_time and hearing_time.strip() else None
         case.hearing_type = hearing_type if hearing_type else 'durusma'
         
-        # Şehir bilgisini courthouse string'inden çıkar ve güncelle
+        # Şehir ve adliye bilgilerini güncelle
+        # Not: Şehri ayrı alanda saklıyoruz; adliye alanında ise mevcut davranışı koruyoruz
+        case.city = city if city else None
         if city and courthouse:
             case.courthouse = f"{city} - {courthouse}"
         elif courthouse:

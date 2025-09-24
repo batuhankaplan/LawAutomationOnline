@@ -4304,13 +4304,20 @@ function editCase(caseId) {
             console.log('DEBUG: Populating city options...');
             console.log('DEBUG: allCourthousesData:', allCourthousesData);
             if (allCourthousesData && typeof allCourthousesData === 'object') {
-                Object.keys(allCourthousesData).forEach(cityName => {
+                // Şehirleri alfabetik sıralama - Türkçe karakter desteği ile
+                const sortedCities = Object.keys(allCourthousesData).sort((a, b) => {
+                    return a.localeCompare(b, 'tr', { sensitivity: 'base' });
+                });
+
+                sortedCities.forEach(cityName => {
                     const option = document.createElement('option');
                     option.value = cityName;
                     option.textContent = cityName;
                     editCitySelect.appendChild(option);
                 });
-                console.log('DEBUG: Populated city select with', Object.keys(allCourthousesData).length, 'cities');
+                console.log('DEBUG: Populated city select with', sortedCities.length, 'cities (sorted)');
+                console.log('DEBUG: First few cities:', sortedCities.slice(0, 5));
+                console.log('DEBUG: İstanbul position:', sortedCities.indexOf('İstanbul'));
             } else {
                 console.warn('DEBUG: allCourthousesData is not available, using fallback cities');
                 // Fallback şehir listesi
@@ -5046,9 +5053,23 @@ function saveChanges(caseId) {
         console.log('DEBUG CRITICAL: Courthouse selected option:', courthouseElement.options[courthouseElement.selectedIndex]);
     }
 
+    // İstanbul seçimi için özel kontrol
+    let cityValue = cityElement ? cityElement.value : '';
+
+    // İstanbul seçiliyse ama cityValue boşsa, debug bilgisi ile düzelt
+    if (cityElement && cityElement.selectedIndex > 0) {
+        const selectedOption = cityElement.options[cityElement.selectedIndex];
+        if (selectedOption && selectedOption.textContent === 'İstanbul' && !cityValue) {
+            console.log('DEBUG: İstanbul seçili ama value boş - düzeltiliyor');
+            cityValue = 'İstanbul';
+        }
+    }
+
+    console.log('DEBUG: Final city value being sent to server:', cityValue);
+
     const data = {
         file_type: fileTypeValue,
-        city: cityElement ? cityElement.value : '',
+        city: cityValue,
         courthouse: courthouseElement ? courthouseElement.value : '',
         department: finalDepartmentValue, // Güncellenmiş departman değeri
         

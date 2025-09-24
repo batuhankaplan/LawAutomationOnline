@@ -317,6 +317,7 @@ class Expense(db.Model):
 class CaseFile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     file_type = db.Column(db.String(50), nullable=False)
+    city = db.Column(db.String(50))  # Şehir
     courthouse = db.Column(db.String(100), nullable=False)  # Adliye
     department = db.Column(db.String(100), nullable=False)  # Birim
     year = db.Column(db.Integer, nullable=False)
