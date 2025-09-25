@@ -27,11 +27,36 @@ class User(UserMixin, db.Model):
     approved_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     permissions = db.Column(db.JSON, default={})
 
+    # Password reset fields
+    reset_token = db.Column(db.String(100), unique=True, nullable=True)
+    reset_token_expires = db.Column(db.DateTime, nullable=True)
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def generate_reset_token(self):
+        """Şifre sıfırlama tokeni oluştur"""
+        import secrets
+        token = secrets.token_urlsafe(32)
+        self.reset_token = token
+        self.reset_token_expires = datetime.utcnow() + timedelta(hours=1)  # 1 saat geçerli
+        return token
+
+    def verify_reset_token(self, token):
+        """Şifre sıfırlama tokenini doğrula"""
+        if (self.reset_token == token and
+            self.reset_token_expires and
+            datetime.utcnow() < self.reset_token_expires):
+            return True
+        return False
+
+    def clear_reset_token(self):
+        """Şifre sıfırlama tokenini temizle"""
+        self.reset_token = None
+        self.reset_token_expires = None
 
     def has_permission(self, permission):
         """Kullanıcının belirli bir yetkiye sahip olup olmadığını kontrol eder"""
@@ -346,6 +371,7 @@ class CaseFile(db.Model):
     opponent_phone = db.Column(db.String(20))
     opponent_address = db.Column(db.Text)
     opponent_lawyer = db.Column(db.String(150))
+    opponent_lawyer_bar = db.Column(db.String(100))
     opponent_lawyer_bar_number = db.Column(db.String(20))
     opponent_lawyer_phone = db.Column(db.String(20))
     opponent_lawyer_address = db.Column(db.Text)

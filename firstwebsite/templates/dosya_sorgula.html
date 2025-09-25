@@ -3563,6 +3563,7 @@ function showDetails(caseId) {
             if (data.opponent_lawyer || data.opponent_lawyer_phone || data.opponent_lawyer_address) {
                 allLawyers.push({
                     name: data.opponent_lawyer || 'Ad belirtilmemiş',
+                    bar: data.opponent_lawyer_bar || '',
                     bar_number: data.opponent_lawyer_bar_number || '',
                     phone: data.opponent_lawyer_phone || '',
                     address: data.opponent_lawyer_address || ''
@@ -3574,6 +3575,7 @@ function showDetails(caseId) {
                 data.additional_lawyers.forEach(lawyer => {
                     allLawyers.push({
                         name: lawyer.name || 'Ad belirtilmemiş',
+                        bar: lawyer.bar || '',
                         bar_number: lawyer.bar_number || '',
                         phone: lawyer.phone || '',
                         address: lawyer.address || ''
@@ -3591,13 +3593,17 @@ function showDetails(caseId) {
                             <i class="material-icons person-icon lawyer-icon">account_balance</i>
                             <div class="person-info">
                                 <div class="person-title">Vekil - ${lawyer.name}</div>
-                                <div class="person-subtitle">Baro No: ${lawyer.bar_number || 'Belirtilmemiş'}</div>
+                                <div class="person-subtitle">${lawyer.bar ? lawyer.bar + ' • ' : ''}Sicil: ${lawyer.bar_number || 'Belirtilmemiş'}</div>
                             </div>
                         </div>
                         <i class="material-icons collapse-arrow">expand_more</i>
                     </div>
                     <div class="collapsible-content">
                         <div class="detail-info-grid">
+                            ${lawyer.bar ? `<div class="detail-info-item">
+                                <span class="detail-info-label">BARO</span>
+                                <span class="detail-info-value">${lawyer.bar}</span>
+                            </div>` : ''}
                             <div class="detail-info-item">
                                 <span class="detail-info-label">BARO NUMARASI</span>
                                 <span class="detail-info-value">${lawyer.bar_number || '-'}</span>
@@ -4187,6 +4193,95 @@ function editCase(caseId) {
                                             <input type="text" id="editOpponentLawyer" value="${data.opponent_lawyer || ''}">
                                         </div>
                                         <div class="detail-group">
+                                            <label>Baro</label>
+                                            <select id="editOpponentLawyerBar">
+                                                <option value="">Seçiniz</option>
+                                                <option value="Adana Barosu">Adana Barosu</option>
+                                                <option value="Adıyaman Barosu">Adıyaman Barosu</option>
+                                                <option value="Afyonkarahisar Barosu">Afyonkarahisar Barosu</option>
+                                                <option value="Ağrı Barosu">Ağrı Barosu</option>
+                                                <option value="Aksaray Barosu">Aksaray Barosu</option>
+                                                <option value="Amasya Barosu">Amasya Barosu</option>
+                                                <option value="Ankara 1 Nolu Barosu">Ankara 1 Nolu Barosu</option>
+                                                <option value="Ankara 2 Nolu Barosu">Ankara 2 Nolu Barosu</option>
+                                                <option value="Antalya Barosu">Antalya Barosu</option>
+                                                <option value="Ardahan Barosu">Ardahan Barosu</option>
+                                                <option value="Artvin Barosu">Artvin Barosu</option>
+                                                <option value="Aydın Barosu">Aydın Barosu</option>
+                                                <option value="Balıkesir Barosu">Balıkesir Barosu</option>
+                                                <option value="Bartın Barosu">Bartın Barosu</option>
+                                                <option value="Batman Barosu">Batman Barosu</option>
+                                                <option value="Bayburt Barosu">Bayburt Barosu</option>
+                                                <option value="Bilecik Barosu">Bilecik Barosu</option>
+                                                <option value="Bingöl Barosu">Bingöl Barosu</option>
+                                                <option value="Bitlis Barosu">Bitlis Barosu</option>
+                                                <option value="Bolu Barosu">Bolu Barosu</option>
+                                                <option value="Burdur Barosu">Burdur Barosu</option>
+                                                <option value="Bursa Barosu">Bursa Barosu</option>
+                                                <option value="Çanakkale Barosu">Çanakkale Barosu</option>
+                                                <option value="Çankırı Barosu">Çankırı Barosu</option>
+                                                <option value="Çorum Barosu">Çorum Barosu</option>
+                                                <option value="Denizli Barosu">Denizli Barosu</option>
+                                                <option value="Diyarbakır Barosu">Diyarbakır Barosu</option>
+                                                <option value="Düzce Barosu">Düzce Barosu</option>
+                                                <option value="Edirne Barosu">Edirne Barosu</option>
+                                                <option value="Elazığ Barosu">Elazığ Barosu</option>
+                                                <option value="Erzincan Barosu">Erzincan Barosu</option>
+                                                <option value="Erzurum Barosu">Erzurum Barosu</option>
+                                                <option value="Eskişehir Barosu">Eskişehir Barosu</option>
+                                                <option value="Gaziantep Barosu">Gaziantep Barosu</option>
+                                                <option value="Giresun Barosu">Giresun Barosu</option>
+                                                <option value="Gümüşhane Barosu">Gümüşhane Barosu</option>
+                                                <option value="Hakkari Barosu">Hakkari Barosu</option>
+                                                <option value="Hatay Barosu">Hatay Barosu</option>
+                                                <option value="Iğdır Barosu">Iğdır Barosu</option>
+                                                <option value="Isparta Barosu">Isparta Barosu</option>
+                                                <option value="İstanbul 1 Nolu Barosu">İstanbul 1 Nolu Barosu</option>
+                                                <option value="İstanbul 2 Nolu Barosu">İstanbul 2 Nolu Barosu</option>
+                                                <option value="İzmir Barosu">İzmir Barosu</option>
+                                                <option value="Kahramanmaraş Barosu">Kahramanmaraş Barosu</option>
+                                                <option value="Karabük Barosu">Karabük Barosu</option>
+                                                <option value="Karaman Barosu">Karaman Barosu</option>
+                                                <option value="Kars Barosu">Kars Barosu</option>
+                                                <option value="Kastamonu Barosu">Kastamonu Barosu</option>
+                                                <option value="Kayseri Barosu">Kayseri Barosu</option>
+                                                <option value="Kırıkkale Barosu">Kırıkkale Barosu</option>
+                                                <option value="Kırklareli Barosu">Kırklareli Barosu</option>
+                                                <option value="Kırşehir Barosu">Kırşehir Barosu</option>
+                                                <option value="Kilis Barosu">Kilis Barosu</option>
+                                                <option value="Kocaeli Barosu">Kocaeli Barosu</option>
+                                                <option value="Konya Barosu">Konya Barosu</option>
+                                                <option value="Kütahya Barosu">Kütahya Barosu</option>
+                                                <option value="Malatya Barosu">Malatya Barosu</option>
+                                                <option value="Manisa Barosu">Manisa Barosu</option>
+                                                <option value="Mardin Barosu">Mardin Barosu</option>
+                                                <option value="Mersin Barosu">Mersin Barosu</option>
+                                                <option value="Muğla Barosu">Muğla Barosu</option>
+                                                <option value="Muş Barosu">Muş Barosu</option>
+                                                <option value="Nevşehir Barosu">Nevşehir Barosu</option>
+                                                <option value="Niğde Barosu">Niğde Barosu</option>
+                                                <option value="Ordu Barosu">Ordu Barosu</option>
+                                                <option value="Osmaniye Barosu">Osmaniye Barosu</option>
+                                                <option value="Rize Barosu">Rize Barosu</option>
+                                                <option value="Sakarya Barosu">Sakarya Barosu</option>
+                                                <option value="Samsun Barosu">Samsun Barosu</option>
+                                                <option value="Siirt Barosu">Siirt Barosu</option>
+                                                <option value="Sinop Barosu">Sinop Barosu</option>
+                                                <option value="Sivas Barosu">Sivas Barosu</option>
+                                                <option value="Şanlıurfa Barosu">Şanlıurfa Barosu</option>
+                                                <option value="Şırnak Barosu">Şırnak Barosu</option>
+                                                <option value="Tekirdağ Barosu">Tekirdağ Barosu</option>
+                                                <option value="Tokat Barosu">Tokat Barosu</option>
+                                                <option value="Trabzon Barosu">Trabzon Barosu</option>
+                                                <option value="Tunceli Barosu">Tunceli Barosu</option>
+                                                <option value="Uşak Barosu">Uşak Barosu</option>
+                                                <option value="Van Barosu">Van Barosu</option>
+                                                <option value="Yalova Barosu">Yalova Barosu</option>
+                                                <option value="Yozgat Barosu">Yozgat Barosu</option>
+                                                <option value="Zonguldak Barosu">Zonguldak Barosu</option>
+                                            </select>
+                                        </div>
+                                        <div class="detail-group">
                                             <label>Baro Numarası</label>
                                             <input type="text" id="editOpponentLawyerBarNumber" value="${data.opponent_lawyer_bar_number || ''}">
                                         </div>
@@ -4515,6 +4610,7 @@ function editCase(caseId) {
             if (data.opponent_lawyer || data.opponent_lawyer_phone || data.opponent_lawyer_address) {
                 allEditLawyers.push({
                     name: data.opponent_lawyer || 'Ad belirtilmemiş',
+                    bar: data.opponent_lawyer_bar || '',
                     bar_number: data.opponent_lawyer_bar_number || '',
                     phone: data.opponent_lawyer_phone || '',
                     address: data.opponent_lawyer_address || '',
@@ -4528,6 +4624,7 @@ function editCase(caseId) {
                 data.additional_lawyers.forEach((lawyer, index) => {
                     allEditLawyers.push({
                         name: lawyer.name || 'İsim belirtilmemiş',
+                        bar: lawyer.bar || '',
                         bar_number: lawyer.bar_number || '',
                         phone: lawyer.phone || '',
                         address: lawyer.address || '',
@@ -4549,7 +4646,7 @@ function editCase(caseId) {
                             <i class="material-icons person-icon lawyer-icon">account_balance</i>
                             <div class="person-info">
                                 <div class="person-title">Vekil - ${lawyer.name}</div>
-                                <div class="person-subtitle">Baro No: ${lawyer.bar_number || 'Belirtilmemiş'}</div>
+                                <div class="person-subtitle">${lawyer.bar ? lawyer.bar + ' • ' : ''}Sicil: ${lawyer.bar_number || 'Belirtilmemiş'}</div>
                             </div>
                         </div>
                         <div class="card-actions" onclick="event.stopPropagation()">
@@ -4564,6 +4661,10 @@ function editCase(caseId) {
                     </div>
                     <div class="collapsible-content">
                         <div class="detail-info-grid">
+                            ${lawyer.bar ? `<div class="detail-info-item">
+                                <span class="detail-info-label">BARO</span>
+                                <span class="detail-info-value">${lawyer.bar}</span>
+                            </div>` : ''}
                             <div class="detail-info-item">
                                 <span class="detail-info-label">BARO NUMARASI</span>
                                 <span class="detail-info-value">${lawyer.bar_number || '-'}</span>
@@ -4606,6 +4707,14 @@ function editCase(caseId) {
                 console.log('DEBUG: After manual correction, value is:', document.getElementById('editFileType').value);
             } else {
                 console.log('DEBUG: Select value is correct, no manual correction needed');
+            }
+
+            // Baro seçimini ayarla
+            if (data.opponent_lawyer_bar) {
+                const barSelect = document.getElementById('editOpponentLawyerBar');
+                if (barSelect) {
+                    barSelect.value = data.opponent_lawyer_bar;
+                }
             }
 
             editModal.style.display = 'flex'; // Modal'ı tüm kurulumlar bittikten sonra göster
@@ -4987,6 +5096,9 @@ function saveChanges(caseId) {
             
             if (label && value && value !== '-') {
                 switch(label) {
+                    case 'BARO':
+                        lawyer.bar = value;
+                        break;
                     case 'BARO NUMARASI':
                         lawyer.bar_number = value;
                         break;
@@ -5091,6 +5203,7 @@ function saveChanges(caseId) {
         
         // Vekil bilgileri
         opponent_lawyer: document.getElementById('editOpponentLawyer').value,
+        opponent_lawyer_bar: document.getElementById('editOpponentLawyerBar') ? document.getElementById('editOpponentLawyerBar').value : '',
         opponent_lawyer_bar_number: document.getElementById('editOpponentLawyerBarNumber').value,
         opponent_lawyer_phone: document.getElementById('editOpponentLawyerPhone').value,
         opponent_lawyer_address: document.getElementById('editOpponentLawyerAddress').value,
@@ -6543,6 +6656,95 @@ function showLawyerAddModal(caseId) {
                                 <input type="text" id="addLawyerName" required>
                             </div>
                             <div class="detail-group">
+                                <label>Baro</label>
+                                <select id="addLawyerBar">
+                                    <option value="">Seçiniz</option>
+                                    <option value="Adana Barosu">Adana Barosu</option>
+                                    <option value="Adıyaman Barosu">Adıyaman Barosu</option>
+                                    <option value="Afyonkarahisar Barosu">Afyonkarahisar Barosu</option>
+                                    <option value="Ağrı Barosu">Ağrı Barosu</option>
+                                    <option value="Aksaray Barosu">Aksaray Barosu</option>
+                                    <option value="Amasya Barosu">Amasya Barosu</option>
+                                    <option value="Ankara 1 Nolu Barosu">Ankara 1 Nolu Barosu</option>
+                                    <option value="Ankara 2 Nolu Barosu">Ankara 2 Nolu Barosu</option>
+                                    <option value="Antalya Barosu">Antalya Barosu</option>
+                                    <option value="Ardahan Barosu">Ardahan Barosu</option>
+                                    <option value="Artvin Barosu">Artvin Barosu</option>
+                                    <option value="Aydın Barosu">Aydın Barosu</option>
+                                    <option value="Balıkesir Barosu">Balıkesir Barosu</option>
+                                    <option value="Bartın Barosu">Bartın Barosu</option>
+                                    <option value="Batman Barosu">Batman Barosu</option>
+                                    <option value="Bayburt Barosu">Bayburt Barosu</option>
+                                    <option value="Bilecik Barosu">Bilecik Barosu</option>
+                                    <option value="Bingöl Barosu">Bingöl Barosu</option>
+                                    <option value="Bitlis Barosu">Bitlis Barosu</option>
+                                    <option value="Bolu Barosu">Bolu Barosu</option>
+                                    <option value="Burdur Barosu">Burdur Barosu</option>
+                                    <option value="Bursa Barosu">Bursa Barosu</option>
+                                    <option value="Çanakkale Barosu">Çanakkale Barosu</option>
+                                    <option value="Çankırı Barosu">Çankırı Barosu</option>
+                                    <option value="Çorum Barosu">Çorum Barosu</option>
+                                    <option value="Denizli Barosu">Denizli Barosu</option>
+                                    <option value="Diyarbakır Barosu">Diyarbakır Barosu</option>
+                                    <option value="Düzce Barosu">Düzce Barosu</option>
+                                    <option value="Edirne Barosu">Edirne Barosu</option>
+                                    <option value="Elazığ Barosu">Elazığ Barosu</option>
+                                    <option value="Erzincan Barosu">Erzincan Barosu</option>
+                                    <option value="Erzurum Barosu">Erzurum Barosu</option>
+                                    <option value="Eskişehir Barosu">Eskişehir Barosu</option>
+                                    <option value="Gaziantep Barosu">Gaziantep Barosu</option>
+                                    <option value="Giresun Barosu">Giresun Barosu</option>
+                                    <option value="Gümüşhane Barosu">Gümüşhane Barosu</option>
+                                    <option value="Hakkari Barosu">Hakkari Barosu</option>
+                                    <option value="Hatay Barosu">Hatay Barosu</option>
+                                    <option value="Iğdır Barosu">Iğdır Barosu</option>
+                                    <option value="Isparta Barosu">Isparta Barosu</option>
+                                    <option value="İstanbul 1 Nolu Barosu">İstanbul 1 Nolu Barosu</option>
+                                    <option value="İstanbul 2 Nolu Barosu">İstanbul 2 Nolu Barosu</option>
+                                    <option value="İzmir Barosu">İzmir Barosu</option>
+                                    <option value="Kahramanmaraş Barosu">Kahramanmaraş Barosu</option>
+                                    <option value="Karabük Barosu">Karabük Barosu</option>
+                                    <option value="Karaman Barosu">Karaman Barosu</option>
+                                    <option value="Kars Barosu">Kars Barosu</option>
+                                    <option value="Kastamonu Barosu">Kastamonu Barosu</option>
+                                    <option value="Kayseri Barosu">Kayseri Barosu</option>
+                                    <option value="Kırıkkale Barosu">Kırıkkale Barosu</option>
+                                    <option value="Kırklareli Barosu">Kırklareli Barosu</option>
+                                    <option value="Kırşehir Barosu">Kırşehir Barosu</option>
+                                    <option value="Kilis Barosu">Kilis Barosu</option>
+                                    <option value="Kocaeli Barosu">Kocaeli Barosu</option>
+                                    <option value="Konya Barosu">Konya Barosu</option>
+                                    <option value="Kütahya Barosu">Kütahya Barosu</option>
+                                    <option value="Malatya Barosu">Malatya Barosu</option>
+                                    <option value="Manisa Barosu">Manisa Barosu</option>
+                                    <option value="Mardin Barosu">Mardin Barosu</option>
+                                    <option value="Mersin Barosu">Mersin Barosu</option>
+                                    <option value="Muğla Barosu">Muğla Barosu</option>
+                                    <option value="Muş Barosu">Muş Barosu</option>
+                                    <option value="Nevşehir Barosu">Nevşehir Barosu</option>
+                                    <option value="Niğde Barosu">Niğde Barosu</option>
+                                    <option value="Ordu Barosu">Ordu Barosu</option>
+                                    <option value="Osmaniye Barosu">Osmaniye Barosu</option>
+                                    <option value="Rize Barosu">Rize Barosu</option>
+                                    <option value="Sakarya Barosu">Sakarya Barosu</option>
+                                    <option value="Samsun Barosu">Samsun Barosu</option>
+                                    <option value="Siirt Barosu">Siirt Barosu</option>
+                                    <option value="Sinop Barosu">Sinop Barosu</option>
+                                    <option value="Sivas Barosu">Sivas Barosu</option>
+                                    <option value="Şanlıurfa Barosu">Şanlıurfa Barosu</option>
+                                    <option value="Şırnak Barosu">Şırnak Barosu</option>
+                                    <option value="Tekirdağ Barosu">Tekirdağ Barosu</option>
+                                    <option value="Tokat Barosu">Tokat Barosu</option>
+                                    <option value="Trabzon Barosu">Trabzon Barosu</option>
+                                    <option value="Tunceli Barosu">Tunceli Barosu</option>
+                                    <option value="Uşak Barosu">Uşak Barosu</option>
+                                    <option value="Van Barosu">Van Barosu</option>
+                                    <option value="Yalova Barosu">Yalova Barosu</option>
+                                    <option value="Yozgat Barosu">Yozgat Barosu</option>
+                                    <option value="Zonguldak Barosu">Zonguldak Barosu</option>
+                                </select>
+                            </div>
+                            <div class="detail-group">
                                 <label>Baro Numarası</label>
                                 <input type="text" id="addLawyerBarNumber">
                             </div>
@@ -6677,19 +6879,21 @@ function saveNewPerson(personType, caseId) {
 // Yeni vekil kaydet - direkt backend'e kaydeder
 function saveNewLawyer(caseId) {
     const name = document.getElementById('addLawyerName').value;
+    const bar = document.getElementById('addLawyerBar').value;
     const barNumber = document.getElementById('addLawyerBarNumber').value;
     const phone = document.getElementById('addLawyerPhone').value;
     const address = document.getElementById('addLawyerAddress').value;
-    
+
     if (!name.trim()) {
         alert('Vekil Adı Soyadı alanı zorunludur.');
         return;
     }
-    
+
     // Backend'e yeni vekil eklemek için API call
     const formData = new FormData();
     formData.append('case_id', caseId);
     formData.append('name', name);
+    formData.append('bar', bar);
     formData.append('bar_number', barNumber);
     formData.append('phone', phone);
     formData.append('address', address);
@@ -6753,7 +6957,7 @@ function saveNewLawyer(caseId) {
                 }
             } else {
                 // Ek vekil olarak eklendi - yeni card oluştur
-                addAdditionalLawyerCard(name, barNumber, phone, address, data.lawyer_id);
+                addAdditionalLawyerCard(name, bar, barNumber, phone, address, data.lawyer_id);
             }
             
             alert(data.message);
@@ -6768,7 +6972,7 @@ function saveNewLawyer(caseId) {
 }
 
 // Ek vekil card'ı oluştur
-function addAdditionalLawyerCard(name, barNumber, phone, address, lawyerId) {
+function addAdditionalLawyerCard(name, bar, barNumber, phone, address, lawyerId) {
     const lawyersDisplay = document.getElementById('editAdditionalLawyersDisplay');
     
     if (!lawyersDisplay) {
@@ -6794,7 +6998,7 @@ function addAdditionalLawyerCard(name, barNumber, phone, address, lawyerId) {
                     <i class="material-icons person-icon lawyer-icon">account_balance</i>
                     <div class="person-info">
                         <div class="person-title">Ek Vekil - ${name}</div>
-                        <div class="person-subtitle">Baro No: ${barNumber || 'Belirtilmemiş'}</div>
+                        <div class="person-subtitle">${bar ? bar + ' • ' : ''}Sicil: ${barNumber || 'Belirtilmemiş'}</div>
                     </div>
                 </div>
                 <div class="card-actions" onclick="event.stopPropagation()">
@@ -6809,6 +7013,10 @@ function addAdditionalLawyerCard(name, barNumber, phone, address, lawyerId) {
             </div>
             <div class="collapsible-content">
                 <div class="detail-info-grid">
+                    ${bar ? `<div class="detail-info-item">
+                        <span class="detail-info-label">BARO</span>
+                        <span class="detail-info-value">${bar}</span>
+                    </div>` : ''}
                     <div class="detail-info-item">
                         <span class="detail-info-label">BARO NUMARASI</span>
                         <span class="detail-info-value">${barNumber || '-'}</span>

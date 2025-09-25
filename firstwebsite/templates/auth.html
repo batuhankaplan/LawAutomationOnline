@@ -332,7 +332,7 @@
                     <button type="submit" class="btn-submit">
                         {% if require_2fa %}Doğrula ve Giriş Yap{% else %}Giriş Yap{% endif %}
                     </button>
-                    
+
                     {% if require_2fa %}
                     <div class="back-link">
                         <a href="{{ url_for('login') }}">
@@ -340,6 +340,12 @@
                         </a>
                     </div>
                     {% else %}
+                    <div class="forgot-password-link" style="text-align: center; margin: 15px 0;">
+                        <a href="{{ url_for('forgot_password') }}" style="color: #667eea; text-decoration: none; font-size: 14px; transition: color 0.3s;">
+                            <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 5px;">lock_reset</i>
+                            Şifremi Unuttum
+                        </a>
+                    </div>
                     <div class="toggle-form">
                         Hesabınız yok mu? <a href="#" onclick="toggleForms()">Kayıt Ol</a>
                     </div>

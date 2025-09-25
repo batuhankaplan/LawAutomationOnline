@@ -706,7 +706,7 @@ def admin_required(f):
 @app.before_request
 def check_user_auth():
     # Giriş gerektirmeyen sayfalar
-    public_endpoints = ['login', 'register', 'static']
+    public_endpoints = ['login', 'register', 'static', 'forgot_password', 'reset_password']
     
     # Kullanıcı giriş yapmış ama onaylanmamış ise
     if current_user.is_authenticated and not current_user.is_approved and not current_user.is_admin:
@@ -1453,6 +1453,7 @@ def dosya_ekle():
                 
                 # Vekil bilgileri
                 opponent_lawyer=data.get('opponent-lawyer', ''),
+                opponent_lawyer_bar=data.get('opponent-lawyer-bar', ''),
                 opponent_lawyer_bar_number=data.get('opponent-lawyer-bar-number', ''),
                 opponent_lawyer_phone=data.get('opponent-lawyer-phone', ''),
                 opponent_lawyer_address=data.get('opponent-lawyer-address', ''),
@@ -1591,6 +1592,7 @@ def case_details(case_id):
             
             # Vekil bilgileri
             'opponent_lawyer': case_file.opponent_lawyer,
+            'opponent_lawyer_bar': case_file.opponent_lawyer_bar,
             'opponent_lawyer_bar_number': case_file.opponent_lawyer_bar_number,
             'opponent_lawyer_phone': case_file.opponent_lawyer_phone,
             'opponent_lawyer_address': case_file.opponent_lawyer_address,
@@ -1687,6 +1689,8 @@ def edit_case(case_id):
         # Vekil bilgileri
         if 'opponent_lawyer' in data:
             case_file.opponent_lawyer = data['opponent_lawyer']
+        if 'opponent_lawyer_bar' in data:
+            case_file.opponent_lawyer_bar = data['opponent_lawyer_bar']
         if 'opponent_lawyer_bar_number' in data:
             case_file.opponent_lawyer_bar_number = data['opponent_lawyer_bar_number']
         if 'opponent_lawyer_phone' in data:
@@ -8862,6 +8866,7 @@ def add_lawyer_to_case():
     try:
         case_id = request.form.get('case_id')
         name = request.form.get('name')
+        bar = request.form.get('bar')
         bar_number = request.form.get('bar_number')
         phone = request.form.get('phone')
         address = request.form.get('address')
@@ -8882,6 +8887,7 @@ def add_lawyer_to_case():
         # Eğer ana vekil boşsa, ana vekil olarak ekle
         if not case.opponent_lawyer:
             case.opponent_lawyer = name
+            case.opponent_lawyer_bar = bar
             case.opponent_lawyer_bar_number = bar_number
             case.opponent_lawyer_phone = phone
             case.opponent_lawyer_address = address
@@ -8892,6 +8898,7 @@ def add_lawyer_to_case():
             
             new_lawyer = {
                 'name': name,
+                'bar': bar,
                 'bar_number': bar_number,
                 'phone': phone,
                 'address': address
@@ -9299,6 +9306,143 @@ def login():
 @app.route('/vekaletname')
 def vekaletname():
     return render_template('vekaletname.html')
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+@csrf.exempt
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            # Token oluştur
+            token = user.generate_reset_token()
+            db.session.commit()
+
+            # Email gönder
+            try:
+                from email_utils import send_email
+
+                reset_url = url_for('reset_password', token=token, _external=True)
+                subject = "Şifre Sıfırlama Talebi - Hukuk Otomasyon"
+
+                body = """
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; color: white;">
+                        <h1>Şifre Sıfırlama Talebi</h1>
+                    </div>
+                    <div style="padding: 30px; background: #f9f9f9;">
+                        <p>Merhaba <strong>{first_name} {last_name}</strong>,</p>
+
+                        <p>Hukuk Otomasyon sistemi için şifre sıfırlama talebinde bulundunuz.</p>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="{reset_url}" style="background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
+                                Şifremi Sıfırla
+                            </a>
+                        </div>
+
+                        <p>Bu link 1 saat boyunca geçerlidir. Eğer şifre sıfırlama talebinde bulunmadıysanız, bu e-postayı görmezden gelebilirsiniz.</p>
+
+                        <p>Link çalışmıyorsa, aşağıdaki adresi tarayıcınıza kopyalayın:</p>
+                        <p style="word-break: break-all; background: #e9e9e9; padding: 10px; border-radius: 4px;">{reset_url}</p>
+                    </div>
+                    <div style="background: #333; color: white; text-align: center; padding: 15px; font-size: 12px;">
+                        <p>Bu e-posta Hukuk Otomasyon sistemi tarafından gönderilmiştir.</p>
+                    </div>
+                </div>
+                """.format(
+                    first_name=user.first_name,
+                    last_name=user.last_name,
+                    reset_url=reset_url
+                )
+
+                # email_utils kullanarak gönder
+                success, message = send_email(email, subject, body, is_html=True)
+
+                if success:
+                    flash('Şifre sıfırlama linki e-posta adresinize gönderildi.', 'success')
+                else:
+                    app.logger.error(f"Email gönderme hatası: {message}")
+                    flash('E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error')
+
+            except Exception as e:
+                app.logger.error(f"Email gönderme hatası: {str(e)}")
+                flash('E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error')
+        else:
+            # Güvenlik için her durumda aynı mesajı göster
+            flash('E-posta adresinize şifre sıfırlama linki gönderildi.', 'success')
+
+        return redirect(url_for('forgot_password'))
+
+    return render_template('forgot_password.html')
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+@csrf.exempt
+def reset_password(token):
+    user = User.query.filter_by(reset_token=token).first()
+
+    if not user or not user.verify_reset_token(token):
+        flash('Geçersiz veya süresi dolmuş şifre sıfırlama linki.', 'error')
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        new_password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+
+        if not new_password or len(new_password) < 6:
+            flash('Şifre en az 6 karakter olmalıdır.', 'error')
+            return render_template('reset_password.html', token=token)
+
+        if new_password != confirm_password:
+            flash('Şifreler eşleşmiyor.', 'error')
+            return render_template('reset_password.html', token=token)
+
+        # Şifreyi güncelle ve tokeni temizle
+        user.set_password(new_password)
+        user.clear_reset_token()
+        db.session.commit()
+
+        # Şifre değişikliği bildirim e-postası gönder
+        try:
+            from email_utils import send_email
+
+            subject = "Şifreniz Başarıyla Değiştirildi - Hukuk Otomasyon"
+            change_time = datetime.now(timezone(timedelta(hours=3))).strftime('%d.%m.%Y %H:%M')
+            body = """
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; color: white;">
+                    <h1>Şifre Değişikliği Onayı</h1>
+                </div>
+                <div style="padding: 30px; background: #f9f9f9;">
+                    <p>Merhaba <strong>{first_name} {last_name}</strong>,</p>
+
+                    <p>Hukuk Otomasyon sistemi şifreniz başarıyla değiştirildi.</p>
+
+                    <p><strong>Değişiklik Zamanı:</strong> {change_time}</p>
+
+                    <p>Bu değişikliği siz yapmadıysanız, lütfen derhal sistem yöneticinizle iletişime geçin.</p>
+                </div>
+                <div style="background: #333; color: white; text-align: center; padding: 15px; font-size: 12px;">
+                    <p>Bu e-posta Hukuk Otomasyon sistemi tarafından gönderilmiştir.</p>
+                </div>
+            </div>
+            """.format(
+                first_name=user.first_name,
+                last_name=user.last_name,
+                change_time=change_time
+            )
+
+            # email_utils kullanarak gönder
+            send_email(user.email, subject, body, is_html=True)
+
+        except Exception as e:
+            app.logger.error(f"Şifre değişikliği bildirim e-postası gönderme hatası: {str(e)}")
+
+        flash('Şifreniz başarıyla değiştirildi. Şimdi giriş yapabilirsiniz.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('reset_password.html', token=token, user=user)
 
 @app.route('/test_route')
 def test_route():
