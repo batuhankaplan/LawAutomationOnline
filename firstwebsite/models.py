@@ -313,6 +313,7 @@ class Client(db.Model):
     payments = db.relationship('Payment', backref='client', lazy=True)
     status = db.Column(db.String(10), nullable=False, default='Ödenmedi')
     description = db.Column(db.Text, nullable=True)
+    payment_type = db.Column(db.String(50), nullable=True)  # Ödeme türü
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)

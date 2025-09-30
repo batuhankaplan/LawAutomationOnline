@@ -1,7 +1,2 @@
 YAPILACAKLAR:
-1) Son gün uyarısı.
-2) IA Avukat sistemi. # yapıldı
-3) Örnek dilekçelerden veya dosya detayları modalında kayıtlı belgelerin (udf,pdf,doc,docx gibi) içeriğinden yani içerdiği kelimerden arama yapılabilsin.
-4) Avukat sözleşmesi sayfasına isim soy isimden sonra bir de tc ekleme boxu gelsin. tc no girelim ve müvekkil isminden hemen sonra (T.C. Kimlik No:) şeklinde yer alsın.
-HATA VE BUGLAR:
--
+senden bazı isteklerim olacak uygulamamız ile ilgili fakat öncesinde hafızana atmanı istediklerim: 1) bu uygulamamız şuanda canlı da yayında www.kaplanhukukotomasyonu.com adresinde. 2) Bu uygulamamız digitalocean üzerinden yayında. 3) Uygulamamızın canlı database'i PostgreSQL 17 ile yine canlıda digitalocean database sisteminde tutuluyor. Localdeki database'lerimiz ile canlıdaki databaselerimiz bu yüzden bazen karmaşaya uğrayabiliyor sorunlar çıkabiliyor bunlara dikkat et. 4) Uygulamada değişiklik yapacağımız zaman yöntemimiz şu: önce localde o değişikliği deniyoruz eğer onaylarsam githuba push ve commit ediyoruz ardından da ben digitalocean console'u açıyorum venv yi çalıştırıyorum ve ardından git pull origin main yaparak githubdaki kodları canlıdaki uygulamaya çekiyorum ardından da systemctl restart lawautomation diyip uygulamaya restart atıp canlıda deniyorum uygulamayı. 5) Son olarak benimle herzaman ve her şart altında yalnızca türkçe konuşacaksın. Bunları anladıysan anladım de bende sana yapılacaklar ile ilgili talimatları vermeye başlayayım.

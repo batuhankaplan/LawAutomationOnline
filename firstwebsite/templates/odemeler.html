@@ -10,66 +10,33 @@
         <h1>Ödemeler</h1>
     </div>
 
-    {% if current_user.has_permission('odeme_ekle') %}
-    <div class="form-container">
-        <form method="POST" id="paymentForm">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="input-group">
-                <label for="name">Ad</label>
-                <input type="text" id="name" name="name" required>
-            </div>
-            <div class="input-group">
-                <label for="surname">Soyad</label>
-                <input type="text" id="surname" name="surname" required>
-            </div>
-            <div class="input-group">
-                <label for="tc">TC Kimlik No</label>
-                <input type="text" id="tc" name="tc" required>
-            </div>
-            <div class="input-group">
-                <label for="amount">Tutar</label>
-                <div class="amount-container">
-                    <input type="text" id="amount" name="amount" required class="amount-input" placeholder="Örn: 1000.50">
-                    <select id="currency" name="currency" required class="currency-select" title="Para birimi seçiniz">
-                        <option value="TL">TL</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                    </select>
-                </div>
-            </div>
-            <div class="input-group">
-                <label for="installments">Taksit Sayısı</label>
-                <select id="installments" name="installments" required>
-                    {% for i in range(1, 13) %}
-                        <option value="{{ i }}">{{ i }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="input-group">
-                <label for="registration_date">Borç Kayıt Tarihi</label>
-                <input type="date" id="registration_date" name="registration_date" value="{{ today_date if today_date else '' }}">
-            </div>
-            <div class="input-group">
-                <label for="due_date">Son Ödeme Tarihi</label>
-                <input type="date" id="due_date" name="due_date">
-            </div>
-            <button type="button" onclick="savePayment(event)">Kaydet</button>
-        </form>
-    </div>
-    {% endif %}
-
     <div class="table-container">
         <div class="table-header">
-        <h2>Müvekkil Ödeme Listesi</h2>
+            <h2>Müvekkil Ödeme Listesi</h2>
+            <div style="display: flex; gap: 10px;">
+                {% if current_user.has_permission('odeme_ekle') %}
+                <button id="addPaymentBtn" class="modern-add-btn" title="Yeni Ödeme Ekle">
+                    <i class="material-icons">add</i>
+                    Yeni Ödeme Ekle
+                </button>
+                {% endif %}
             {% if current_user.has_permission('odeme_istatistik_goruntule') %}
             <button id="statsButton" class="stats-btn" title="İstatistikleri Görüntüle">
                 <i class="material-icons">insert_chart</i>
             </button>
             {% endif %}
+            </div>
         </div>
         <table class="data-table modern-table">
             <thead class="modern-header">
                 <tr>
+                    <th id="sort-payment-type" class="sortable-header">
+                        <div class="header-content">
+                            <i class="material-icons text-secondary me-1">category</i>
+                            <span>Ödeme Türü</span>
+                            <i class="material-icons sort-icon">unfold_more</i>
+                        </div>
+                    </th>
                     <th id="sort-name" class="sortable-header">
                         <div class="header-content">
                             <i class="material-icons text-secondary me-1">person</i>
@@ -136,7 +103,14 @@
             </thead>
             <tbody>
                 {% for client in clients %}
-                <tr data-client-id="{{ client.id }}" data-description="{{ client.description }}">
+                <tr data-client-id="{{ client.id }}" data-description="{{ client.description }}" data-payment-type="{{ client.payment_type if client.payment_type else '' }}">
+                    <td contenteditable="false">
+                        {% if client.payment_type %}
+                            <span class="payment-type-badge">{{ client.payment_type }}</span>
+                        {% else %}
+                            <span class="payment-type-badge-empty">-</span>
+                        {% endif %}
+                    </td>
                     <td contenteditable="false">{{ client.name }}</td>
                     <td contenteditable="false">{{ client.surname }}</td>
                     <td contenteditable="false">{{ client.tc }}</td>
@@ -168,6 +142,104 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+
+    <!-- Yeni Ödeme Ekle Modalı -->
+    <div id="addPaymentModal" class="modal">
+        <div class="modal-content modern-edit-modal">
+            <div class="modal-header modern-edit-header">
+                <div class="modal-title-container">
+                    <i class="material-icons modal-icon">add_circle</i>
+                    <h2>Yeni Ödeme Ekle</h2>
+                </div>
+                <span class="close modern-edit-close" id="closeAddPaymentModal">&times;</span>
+            </div>
+            <form id="addPaymentForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body modern-edit-body">
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="paymentType">Ödeme Türü</label>
+                            <select id="paymentType" name="payment_type" class="form-control" required>
+                                <option value="">Ödeme türü seçiniz</option>
+                                <option value="Danışma Ücreti">Danışma Ücreti</option>
+                                <option value="İhtarname Ücreti">İhtarname Ücreti</option>
+                                <option value="Dilekçe Ücreti">Dilekçe Ücreti</option>
+                                <option value="Dosya Masrafı">Dosya Masrafı</option>
+                                <option value="Sözleşme Vekalet Ücreti">Sözleşme Vekalet Ücreti</option>
+                                <option value="Yasal Mahkeme Vekalet Ücreti">Yasal Mahkeme Vekalet Ücreti</option>
+                                <option value="Diğer">Diğer</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="addName">Ad</label>
+                            <input type="text" id="addName" name="name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="addSurname">Soyad</label>
+                            <input type="text" id="addSurname" name="surname" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group tc-group">
+                            <label for="addTc">TC Kimlik No</label>
+                            <input type="text" id="addTc" name="tc" class="form-control" required maxlength="11">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group amount-group">
+                            <label for="addAmount">Tutar</label>
+                            <div class="amount-input">
+                                <input type="text" id="addAmount" name="amount" class="form-control" required placeholder="Örn: 1000.50">
+                                <select id="addCurrency" name="currency" class="form-control currency-select" required>
+                                    <option value="TL">TL</option>
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="addInstallments">Taksit Sayısı</label>
+                            <select id="addInstallments" name="installments" class="form-control" required>
+                                {% for i in range(1, 13) %}
+                                    <option value="{{ i }}">{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group date-group">
+                            <label for="addRegistrationDate">Borç Kayıt Tarihi</label>
+                            <input type="date" id="addRegistrationDate" name="registration_date" class="form-control" value="{{ today_date if today_date else '' }}">
+                        </div>
+                        <div class="form-group date-group">
+                            <label for="addDueDate">Son Ödeme Tarihi</label>
+                            <input type="date" id="addDueDate" name="due_date" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="addDescription">Açıklama (İsteğe Bağlı)</label>
+                            <div class="textarea-container">
+                                <textarea id="addDescription" name="description" class="form-control" rows="3" placeholder="Açıklama giriniz"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer modern-edit-footer">
+                    <button type="submit" class="btn modern-save-btn" id="saveAddPaymentBtn">
+                        <i class="material-icons">save</i>
+                        Kaydet
+                    </button>
+                    <button type="button" class="btn modern-cancel-btn" id="cancelAddPaymentBtn">
+                        <i class="material-icons">close</i>
+                        Kapat
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Düzenleme Modalı -->
@@ -1042,6 +1114,48 @@
         .stats-btn:hover {
             background-color: #367c39; /* Hoverda koyu yeşil */
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .modern-add-btn {
+            background-color: #2c303c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(44, 48, 60, 0.2);
+        }
+
+        .modern-add-btn:hover {
+            background-color: #1a1d24;
+            box-shadow: 0 4px 8px rgba(44, 48, 60, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .modern-add-btn i {
+            font-size: 18px;
+        }
+
+        .payment-type-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background-color: #e3f2fd;
+            color: #1976d2;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .payment-type-badge-empty {
+            color: #999;
+            font-style: italic;
         }
 
         .action-buttons .view-btn {
@@ -2131,7 +2245,118 @@
             }
         }
 
-        // Yeni basitleştirilmiş ödeme kaydetme fonksiyonu
+        // Yeni Ödeme Ekle Modal İşlemleri
+        const addPaymentBtn = document.getElementById('addPaymentBtn');
+        const addPaymentModal = document.getElementById('addPaymentModal');
+        const closeAddPaymentModal = document.getElementById('closeAddPaymentModal');
+        const cancelAddPaymentBtn = document.getElementById('cancelAddPaymentBtn');
+        const addPaymentForm = document.getElementById('addPaymentForm');
+
+        // Modal açma
+        if (addPaymentBtn) {
+            addPaymentBtn.addEventListener('click', function() {
+                addPaymentModal.style.display = 'block';
+            });
+        }
+
+        // Modal kapatma
+        if (closeAddPaymentModal) {
+            closeAddPaymentModal.addEventListener('click', function() {
+                addPaymentModal.style.display = 'none';
+                addPaymentForm.reset();
+            });
+        }
+
+        if (cancelAddPaymentBtn) {
+            cancelAddPaymentBtn.addEventListener('click', function() {
+                addPaymentModal.style.display = 'none';
+                addPaymentForm.reset();
+            });
+        }
+
+        // Modal dışına tıklama
+        window.addEventListener('click', function(event) {
+            if (event.target == addPaymentModal) {
+                addPaymentModal.style.display = 'none';
+                addPaymentForm.reset();
+            }
+        });
+
+        // Form submit
+        if (addPaymentForm) {
+            addPaymentForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                // Tarih alanlarının dolu olup olmadığını kontrol et
+                const registrationDate = document.getElementById('addRegistrationDate').value;
+                const dueDate = document.getElementById('addDueDate').value;
+
+                if (!registrationDate || !dueDate) {
+                    alert('Lütfen tarih alanlarını doldurun.');
+                    return;
+                }
+
+                // Tutar kontrolü
+                const amountValue = document.getElementById('addAmount').value.trim();
+                if (amountValue === '' || isNaN(parseFloat(amountValue))) {
+                    alert('Lütfen geçerli bir sayı girin.');
+                    return;
+                }
+
+                // CSRF token al
+                let csrfTokenValue = '';
+                if (typeof CSRF_TOKEN !== 'undefined') {
+                    csrfTokenValue = CSRF_TOKEN;
+                } else {
+                    const csrfTokenElement = addPaymentForm.querySelector('input[name="csrf_token"]');
+                    csrfTokenValue = csrfTokenElement ? csrfTokenElement.value : '';
+                }
+
+                // Form verisini oluştur
+                const formData = new FormData();
+                formData.append('payment_type', document.getElementById('paymentType').value);
+                formData.append('name', document.getElementById('addName').value);
+                formData.append('surname', document.getElementById('addSurname').value);
+                formData.append('tc', document.getElementById('addTc').value);
+                formData.append('amount', document.getElementById('addAmount').value);
+                formData.append('currency', document.getElementById('addCurrency').value);
+                formData.append('installments', document.getElementById('addInstallments').value);
+                formData.append('registration_date', document.getElementById('addRegistrationDate').value);
+                formData.append('due_date', document.getElementById('addDueDate').value);
+
+                const description = document.getElementById('addDescription').value;
+                if (description) {
+                    formData.append('description', description);
+                }
+
+                if (csrfTokenValue) {
+                    formData.append('csrf_token', csrfTokenValue);
+                }
+
+                // Form verisini gönder
+                fetch('/odemeler', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfTokenValue
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Ödeme kaydedilemedi: ' + (data.error || 'Bilinmeyen bir hata oluştu'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Ödeme kaydedilemedi: ' + error.message);
+                });
+            });
+        }
+
+        // Yeni basitleştirilmiş ödeme kaydetme fonksiyonu (eski form için - artık kullanılmıyor ama uyumluluk için kalıyor)
         function savePayment(event) {
             event.preventDefault();
             
@@ -4599,6 +4824,15 @@
                                 <div class="info-grid">
                                     <div class="info-item">
                                         <div class="info-icon">
+                                            <i class="material-icons">category</i>
+                                        </div>
+                                        <div class="info-content">
+                                            <div class="info-label">Ödeme Türü</div>
+                                            <div class="info-value">${data.payment_type || 'Belirtilmemiş'}</div>
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-icon">
                                             <i class="material-icons">event_note</i>
                                         </div>
                                         <div class="info-content">
@@ -4675,11 +4909,12 @@
 
         function fillEditForm(targetRow, paymentId) {
             document.getElementById('editClientId').value = paymentId;
-            document.getElementById('editName').value = targetRow.cells[0].textContent.trim();
-            document.getElementById('editSurname').value = targetRow.cells[1].textContent.trim();
-            document.getElementById('editTc').value = targetRow.cells[2].textContent.trim();
+            // Sütun sıralaması: 0=payment_type, 1=name, 2=surname, 3=tc, 4=amount, 5=installments, 6=reg_date, 7=due_date
+            document.getElementById('editName').value = targetRow.cells[1].textContent.trim();
+            document.getElementById('editSurname').value = targetRow.cells[2].textContent.trim();
+            document.getElementById('editTc').value = targetRow.cells[3].textContent.trim();
 
-            const amountText = targetRow.cells[3].textContent.trim();
+            const amountText = targetRow.cells[4].textContent.trim();
             const amountParts = amountText.split(' ');
             // Tutar alanından sadece sayısal değeri al - formatı temizle
             let rawAmount = amountParts[0] || '';
@@ -4694,9 +4929,9 @@
                 document.getElementById('editCurrency').value = amountParts[amountParts.length - 1];
             }
 
-            document.getElementById('editInstallments').value = targetRow.cells[4].textContent.trim();
+            document.getElementById('editInstallments').value = targetRow.cells[5].textContent.trim();
 
-            const regDateText = targetRow.cells[5].textContent.trim();
+            const regDateText = targetRow.cells[6].textContent.trim();
             if (regDateText && regDateText !== '-') {
                 const dateParts = regDateText.split('.');
                 if (dateParts.length === 3) {
@@ -4705,7 +4940,7 @@
                 }
             }
 
-            const dueDateText = targetRow.cells[6].textContent.trim();
+            const dueDateText = targetRow.cells[7].textContent.trim();
             if (dueDateText && dueDateText !== '-') {
                 const dateParts = dueDateText.split('.');
                 if (dateParts.length === 3) {
@@ -4714,7 +4949,7 @@
                 }
             }
 
-            const isPaid = targetRow.cells[7].textContent.trim().includes('Ödendi');
+            const isPaid = targetRow.cells[8].textContent.trim().includes('Ödendi');
             const editStatusCheckbox = document.getElementById('editStatus');
             const statusTextSpan = document.querySelector('.status-text');
             

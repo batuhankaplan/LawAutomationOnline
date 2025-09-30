@@ -1180,16 +1180,22 @@ def odemeler():
         if request.form.get('due_date'):
             due_date = datetime.strptime(request.form.get('due_date'), '%Y-%m-%d').date()
         
+        # Ödeme türünü ve açıklamayı al
+        payment_type = request.form.get('payment_type')
+        description = request.form.get('description')
+
         # Yeni client oluştur
         new_client = Client(
-            name=name, 
-            surname=surname, 
-            tc=tc, 
+            name=name,
+            surname=surname,
+            tc=tc,
             amount=amount_value,  # Sayısal değeri kullan
-            currency=currency, 
-            installments=installments, 
-            registration_date=registration_date, 
-            due_date=due_date
+            currency=currency,
+            installments=installments,
+            registration_date=registration_date,
+            due_date=due_date,
+            payment_type=payment_type,
+            description=description
         )
         
         # Kaydet
@@ -6562,13 +6568,14 @@ def get_odeme_detay(client_id):
         'name': client.name,
         'surname': client.surname,
         'tc': client.tc,
-        'amount': client.amount, 
+        'amount': client.amount,
         'currency': client.currency,
-        'installments': client.installments, 
+        'installments': client.installments,
         'registration_date': client.registration_date.strftime('%Y-%m-%d') if client.registration_date else None,
         'due_date': client.due_date.strftime('%Y-%m-%d') if client.due_date else None,
         'status': client.status,
-        'description': client.description, 
+        'description': client.description,
+        'payment_type': client.payment_type,
         'odeme_gecmisi': odeme_gecmisi_data
     }
     return jsonify(data)
