@@ -206,7 +206,7 @@ def send_calendar_event_assignment_email(user_email, user_name, event_title, eve
                     <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden;">
                         <!-- Header -->
                         <tr>
-                            <td style="background-color: #1e3c72; padding: 40px 30px; text-align: center;">
+                            <td style="background-color: #2c303c; padding: 40px 30px; text-align: center;">
                                 <img src="https://www.kaplanhukukotomasyon.com/static/images/logo.png" alt="Kaplan Hukuk Otomasyonu" style="max-width: 180px; height: auto; margin-bottom: 20px;">
                                 <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">{event_icon} Yeni Etkinlik Ataması</h1>
                             </td>
@@ -265,7 +265,7 @@ def send_calendar_event_assignment_email(user_email, user_name, event_title, eve
                                 <table role="presentation" style="margin: 30px auto 0;">
                                     <tr>
                                         <td style="text-align: center;">
-                                            <a href="https://www.kaplanhukukotomasyon.com/takvim" style="background-color: #1e3c72; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 15px; box-shadow: 0 4px 6px rgba(30, 60, 114, 0.3);">
+                                            <a href="https://www.kaplanhukukotomasyon.com/takvim" style="background-color: #2c303c; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 15px; box-shadow: 0 4px 6px rgba(44, 48, 60, 0.3);">
                                                 📅 Takvimi Görüntüle
                                             </a>
                                         </td>
