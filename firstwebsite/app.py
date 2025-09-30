@@ -7154,47 +7154,71 @@ def api_ornek_dilekce_indir(dilekce_id):
 # @permission_required('ornek_dilekce_onizle') # İzin eklenebilir
 def api_ornek_dilekce_onizle(dilekce_id):
     try:
+        print(f"=== ÖNIZLEME İSTEĞI BAŞLADI - Dilekçe ID: {dilekce_id} ===")
+
+        # Dilekçeyi veritabanından al
         dilekce = OrnekDilekce.query.get_or_404(dilekce_id)
-        filepath = os.path.join(app.config['ORNEK_DILEKCE_UPLOAD_FOLDER'], dilekce.dosya_yolu)
+        print(f"Dilekçe bilgileri - Ad: {dilekce.ad}, Dosya yolu: {dilekce.dosya_yolu}")
+
+        # Dosya yolunu oluştur
+        upload_folder = app.config.get('ORNEK_DILEKCE_UPLOAD_FOLDER')
+        print(f"Upload klasörü: {upload_folder}")
+
+        if not upload_folder:
+            raise ValueError("ORNEK_DILEKCE_UPLOAD_FOLDER yapılandırması bulunamadı")
+
+        filepath = os.path.join(upload_folder, dilekce.dosya_yolu)
+        print(f"Tam dosya yolu: {filepath}")
+        print(f"Dosya mevcut mu: {os.path.exists(filepath)}")
+
+        # Dosya varsa içeriğini kontrol et
+        if os.path.exists(filepath):
+            file_size = os.path.getsize(filepath)
+            print(f"Dosya boyutu: {file_size} bytes")
+
+        # Dosya yoksa hata döndür
         if not os.path.exists(filepath):
-            return jsonify({'success': False, 'message': 'Dosya bulunamadı.'}), 404
-        
+            error_msg = f"Dosya bulunamadı. Aranan yol: {filepath}"
+            print(f"HATA: {error_msg}")
+            return jsonify({'success': False, 'message': error_msg}), 404
+
         # Dosya uzantısını kontrol et
         file_ext = dilekce.dosya_yolu.rsplit('.', 1)[1].lower() if '.' in dilekce.dosya_yolu else ''
-        
-        print(f"Önizleme istenen dilekçe - ID: {dilekce_id}, Ad: {dilekce.ad}, Uzantı: {file_ext}")
-        if os.getenv('DEBUG', 'False').lower() == 'true':
-            print(f"DEBUG: DOCX/DOC dosya yolu: {filepath}")
-            print(f"DEBUG: Dosya mevcut mu? {os.path.exists(filepath)}")
-        
+        print(f"Dosya uzantısı: {file_ext}")
+
         # UDF dosyası ise UDF viewer endpoint'ine yönlendir
         if file_ext == 'udf':
-            print(f"UDF dosyası tespit edildi, UDF viewer'a yönlendiriliyor: {dilekce_id}")
+            print(f"UDF dosyası tespit edildi, UDF viewer'a yönlendiriliyor")
             return redirect(url_for('direct_view_udf_dilekce', dilekce_id=dilekce_id))
-        
+
         # PDF dosyalar için doğrudan dosyayı gönder
         elif file_ext == 'pdf':
-            print(f"PDF dosyası tespit edildi, doğrudan gönderiliyor: {dilekce.ad}")
+            print(f"PDF dosyası tespit edildi, send_file ile gönderiliyor")
             return send_file(filepath, mimetype='application/pdf')
-        
+
         # TXT dosyalar için doğrudan gönder
         elif file_ext == 'txt':
-            print(f"TXT dosyası tespit edildi, doğrudan gönderiliyor: {dilekce.ad}")
+            print(f"TXT dosyası tespit edildi, send_file ile gönderiliyor")
             return send_file(filepath, mimetype='text/plain')
-        
+
         # DOC/DOCX dosyalar için HTML önizleme
         elif file_ext in ['doc', 'docx']:
-            print(f"DOC/DOCX dosyası tespit edildi, HTML önizleme yapılacak: {dilekce.ad}")
+            print(f"DOC/DOCX dosyası tespit edildi, HTML önizleme endpoint'ine yönlendiriliyor")
             return redirect(url_for('api_ornek_dilekce_html_onizle', dilekce_id=dilekce_id))
-        
+
         # Diğer dosya türleri için doğrudan gönder
         else:
-            print(f"Genel dosya türü tespit edildi ({file_ext}), doğrudan gönderiliyor: {dilekce.ad}")
-            return send_file(filepath, mimetype=None)
-        
+            print(f"Genel dosya türü ({file_ext}), send_file ile gönderiliyor")
+            return send_file(filepath)
+
     except Exception as e:
-        print(f"Dilekçe önizleme hatası (ID: {dilekce_id}): {str(e)}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"=== HATA DETAYI ===")
+        print(f"Dilekçe ID: {dilekce_id}")
+        print(f"Hata mesajı: {str(e)}")
+        print(f"Stack trace:\n{error_trace}")
+        return jsonify({'success': False, 'message': f'Önizleme hatası: {str(e)}'}), 500
 
 
 @app.route('/api/ornek_dilekceler/<int:dilekce_id>/html_onizle', methods=['GET'])
