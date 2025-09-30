@@ -7167,8 +7167,9 @@ def api_ornek_dilekce_onizle(dilekce_id):
         if not upload_folder:
             raise ValueError("ORNEK_DILEKCE_UPLOAD_FOLDER yapılandırması bulunamadı")
 
-        filepath = os.path.join(upload_folder, dilekce.dosya_yolu)
-        print(f"Tam dosya yolu: {filepath}")
+        # Absolute path oluştur
+        filepath = os.path.abspath(os.path.join(upload_folder, dilekce.dosya_yolu))
+        print(f"Tam dosya yolu (absolute): {filepath}")
         print(f"Dosya mevcut mu: {os.path.exists(filepath)}")
 
         # Dosya varsa içeriğini kontrol et
