@@ -46,4 +46,4 @@ gunicorn>=21.2.0
 
 # Database Drivers (uncomment the one you need)
 # psycopg2-binary>=2.9.0  # For PostgreSQL
-# pymysql>=1.1.0  # For MySQL/MariaDB
+# pymysql>=1.1.0  # For MySQL/MariaDBsendgrid==6.11.0
