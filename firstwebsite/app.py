@@ -9343,69 +9343,90 @@ def vekaletname():
 @csrf.exempt
 def forgot_password():
     if request.method == 'POST':
-        email = request.form.get('email')
-        user = User.query.filter_by(email=email).first()
+        try:
+            email = request.form.get('email')
+            app.logger.info(f"Şifre sıfırlama isteği alındı: {email}")
 
-        if user:
-            # Token oluştur
-            token = user.generate_reset_token()
-            db.session.commit()
+            user = User.query.filter_by(email=email).first()
 
-            # Email gönder
-            try:
-                from email_utils import send_email
+            if user:
+                app.logger.info(f"Kullanıcı bulundu: {user.full_name}")
 
-                reset_url = url_for('reset_password', token=token, _external=True)
-                subject = "Şifre Sıfırlama Talebi - Hukuk Otomasyon"
+                # Token oluştur
+                token = user.generate_reset_token()
+                db.session.commit()
+                app.logger.info(f"Token oluşturuldu ve veritabanına kaydedildi")
 
-                body = """
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; color: white;">
-                        <h1>Şifre Sıfırlama Talebi</h1>
-                    </div>
-                    <div style="padding: 30px; background: #f9f9f9;">
-                        <p>Merhaba <strong>{first_name} {last_name}</strong>,</p>
+                # Email gönder
+                try:
+                    from email_utils import send_email
 
-                        <p>Hukuk Otomasyon sistemi için şifre sıfırlama talebinde bulundunuz.</p>
+                    reset_url = url_for('reset_password', token=token, _external=True)
+                    app.logger.info(f"Reset URL oluşturuldu: {reset_url}")
 
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="{reset_url}" style="background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
-                                Şifremi Sıfırla
-                            </a>
+                    subject = "Şifre Sıfırlama Talebi - Hukuk Otomasyon"
+
+                    body = """
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; color: white;">
+                            <h1>Şifre Sıfırlama Talebi</h1>
                         </div>
+                        <div style="padding: 30px; background: #f9f9f9;">
+                            <p>Merhaba <strong>{first_name} {last_name}</strong>,</p>
 
-                        <p>Bu link 1 saat boyunca geçerlidir. Eğer şifre sıfırlama talebinde bulunmadıysanız, bu e-postayı görmezden gelebilirsiniz.</p>
+                            <p>Hukuk Otomasyon sistemi için şifre sıfırlama talebinde bulundunuz.</p>
 
-                        <p>Link çalışmıyorsa, aşağıdaki adresi tarayıcınıza kopyalayın:</p>
-                        <p style="word-break: break-all; background: #e9e9e9; padding: 10px; border-radius: 4px;">{reset_url}</p>
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="{reset_url}" style="background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
+                                    Şifremi Sıfırla
+                                </a>
+                            </div>
+
+                            <p>Bu link 1 saat boyunca geçerlidir. Eğer şifre sıfırlama talebinde bulunmadıysanız, bu e-postayı görmezden gelebilirsiniz.</p>
+
+                            <p>Link çalışmıyorsa, aşağıdaki adresi tarayıcınıza kopyalayın:</p>
+                            <p style="word-break: break-all; background: #e9e9e9; padding: 10px; border-radius: 4px;">{reset_url}</p>
+                        </div>
+                        <div style="background: #333; color: white; text-align: center; padding: 15px; font-size: 12px;">
+                            <p>Bu e-posta Hukuk Otomasyon sistemi tarafından gönderilmiştir.</p>
+                        </div>
                     </div>
-                    <div style="background: #333; color: white; text-align: center; padding: 15px; font-size: 12px;">
-                        <p>Bu e-posta Hukuk Otomasyon sistemi tarafından gönderilmiştir.</p>
-                    </div>
-                </div>
-                """.format(
-                    first_name=user.first_name,
-                    last_name=user.last_name,
-                    reset_url=reset_url
-                )
+                    """.format(
+                        first_name=user.first_name,
+                        last_name=user.last_name,
+                        reset_url=reset_url
+                    )
 
-                # email_utils kullanarak gönder
-                success, message = send_email(email, subject, body, is_html=True)
+                    app.logger.info("Email gönderimi başlatılıyor...")
+                    # email_utils kullanarak gönder
+                    success, message = send_email(email, subject, body, is_html=True)
 
-                if success:
-                    flash('Şifre sıfırlama linki e-posta adresinize gönderildi.', 'success')
-                else:
-                    app.logger.error(f"Email gönderme hatası: {message}")
+                    if success:
+                        app.logger.info(f"Email başarıyla gönderildi: {email}")
+                        flash('Şifre sıfırlama linki e-posta adresinize gönderildi.', 'success')
+                    else:
+                        app.logger.error(f"Email gönderme hatası: {message}")
+                        flash('E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error')
+
+                except Exception as e:
+                    import traceback
+                    error_trace = traceback.format_exc()
+                    app.logger.error(f"Email gönderme exception: {str(e)}")
+                    app.logger.error(f"Stack trace:\n{error_trace}")
                     flash('E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error')
+            else:
+                app.logger.warning(f"Kullanıcı bulunamadı: {email}")
+                # Güvenlik için her durumda aynı mesajı göster
+                flash('E-posta adresinize şifre sıfırlama linki gönderildi.', 'success')
 
-            except Exception as e:
-                app.logger.error(f"Email gönderme hatası: {str(e)}")
-                flash('E-posta gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.', 'error')
-        else:
-            # Güvenlik için her durumda aynı mesajı göster
-            flash('E-posta adresinize şifre sıfırlama linki gönderildi.', 'success')
+            return redirect(url_for('forgot_password'))
 
-        return redirect(url_for('forgot_password'))
+        except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
+            app.logger.error(f"Forgot password hatası: {str(e)}")
+            app.logger.error(f"Stack trace:\n{error_trace}")
+            return jsonify({'error': f'Bir hata oluştu: {str(e)}'}), 500
 
     return render_template('forgot_password.html')
 
