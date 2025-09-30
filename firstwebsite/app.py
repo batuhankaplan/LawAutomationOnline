@@ -9350,7 +9350,7 @@ def forgot_password():
             user = User.query.filter_by(email=email).first()
 
             if user:
-                app.logger.info(f"Kullanıcı bulundu: {user.full_name}")
+                app.logger.info(f"Kullanıcı bulundu: {user.first_name} {user.last_name}")
 
                 # Token oluştur
                 token = user.generate_reset_token()
