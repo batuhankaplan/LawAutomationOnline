@@ -157,7 +157,9 @@ def send_calendar_event_assignment_email(user_email, user_name, event_title, eve
     # Arabuluculuk toplantısı için ek bilgiler
     if event_type == 'arabuluculuk-toplantisi':
         if arabuluculuk_turu:
-            turu_display = "Yüz Yüze" if arabuluculuk_turu == "Yüzyüze" else "Online"
+            # Case-insensitive kontrol
+            turu_lower = arabuluculuk_turu.lower().replace(' ', '').replace('ü', 'u')
+            turu_display = "Yüz Yüze" if 'yuzyuze' in turu_lower or 'yuz' in turu_lower else "Online"
             extra_info_html += f"""
         <tr>
             <td style="padding: 12px 20px; border-bottom: 1px solid #e9ecef;">
@@ -204,7 +206,7 @@ def send_calendar_event_assignment_email(user_email, user_name, event_title, eve
                     <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden;">
                         <!-- Header -->
                         <tr>
-                            <td style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 40px 30px; text-align: center;">
+                            <td style="background-color: #1e3c72; padding: 40px 30px; text-align: center;">
                                 <img src="https://www.kaplanhukukotomasyon.com/static/images/logo.png" alt="Kaplan Hukuk Otomasyonu" style="max-width: 180px; height: auto; margin-bottom: 20px;">
                                 <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">{event_icon} Yeni Etkinlik Ataması</h1>
                             </td>
@@ -263,7 +265,7 @@ def send_calendar_event_assignment_email(user_email, user_name, event_title, eve
                                 <table role="presentation" style="margin: 30px auto 0;">
                                     <tr>
                                         <td style="text-align: center;">
-                                            <a href="https://www.kaplanhukukotomasyon.com/takvim" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 15px; box-shadow: 0 4px 6px rgba(30, 60, 114, 0.3);">
+                                            <a href="https://www.kaplanhukukotomasyon.com/takvim" style="background-color: #1e3c72; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 15px; box-shadow: 0 4px 6px rgba(30, 60, 114, 0.3);">
                                                 📅 Takvimi Görüntüle
                                             </a>
                                         </td>
@@ -364,7 +366,9 @@ def send_calendar_event_reminder_email(user_email, user_name, event_title, event
             </td>
         </tr>"""
         if arabuluculuk_turu:
-            turu_display = "Yüz Yüze" if arabuluculuk_turu == "Yüzyüze" else "Online"
+            # Case-insensitive kontrol
+            turu_lower = arabuluculuk_turu.lower().replace(' ', '').replace('ü', 'u')
+            turu_display = "Yüz Yüze" if 'yuzyuze' in turu_lower or 'yuz' in turu_lower else "Online"
             extra_info_html += f"""
         <tr>
             <td style="padding: 12px 20px; border-bottom: 1px solid #e9ecef;">

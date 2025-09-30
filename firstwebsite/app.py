@@ -9384,7 +9384,7 @@ def forgot_password():
                                     <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden;">
                                         <!-- Header with gradient background -->
                                         <tr>
-                                            <td style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 40px 30px; text-align: center;">
+                                            <td style="background-color: #1e3c72; padding: 40px 30px; text-align: center;">
                                                 <img src="https://www.kaplanhukukotomasyon.com/static/images/logo.png" alt="Kaplan Hukuk Otomasyonu" style="max-width: 180px; height: auto; margin-bottom: 20px;">
                                                 <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">Şifre Sıfırlama Talebi</h1>
                                             </td>
@@ -9405,7 +9405,7 @@ def forgot_password():
                                                 <table role="presentation" style="margin: 0 auto;">
                                                     <tr>
                                                         <td style="text-align: center; padding: 20px 0;">
-                                                            <a href="{reset_url}" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(30, 60, 114, 0.3);">
+                                                            <a href="{reset_url}" style="background-color: #1e3c72; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(30, 60, 114, 0.3);">
                                                                 🔐 Şifremi Sıfırla
                                                             </a>
                                                         </td>
