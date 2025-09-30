@@ -74,6 +74,13 @@ def send_event_reminders():
                             ).first()
                     
                     if assigned_user:
+                        # Atayan bilgisini al
+                        assigned_by = None
+                        if event.user_id:
+                            assigner = User.query.get(event.user_id)
+                            if assigner:
+                                assigned_by = assigner.get_full_name()
+
                         success = send_calendar_event_reminder_email(
                             user_email=assigned_user.email,
                             user_name=assigned_user.get_full_name(),
@@ -83,7 +90,10 @@ def send_event_reminders():
                             event_type=event.event_type,
                             courthouse=event.courthouse,
                             department=event.department,
-                            description=event.description
+                            description=event.description,
+                            arabuluculuk_turu=event.arabuluculuk_turu,
+                            toplanti_adresi=event.toplanti_adresi,
+                            assigned_by_name=assigned_by
                         )
                         
                         if success:
@@ -152,6 +162,13 @@ def send_today_reminders():
                             ).first()
                     
                     if assigned_user:
+                        # Atayan bilgisini al
+                        assigned_by = None
+                        if event.user_id:
+                            assigner = User.query.get(event.user_id)
+                            if assigner:
+                                assigned_by = assigner.get_full_name()
+
                         success = send_calendar_event_reminder_email(
                             user_email=assigned_user.email,
                             user_name=assigned_user.get_full_name(),
@@ -161,7 +178,10 @@ def send_today_reminders():
                             event_type=event.event_type,
                             courthouse=event.courthouse,
                             department=event.department,
-                            description=event.description
+                            description=event.description,
+                            arabuluculuk_turu=event.arabuluculuk_turu,
+                            toplanti_adresi=event.toplanti_adresi,
+                            assigned_by_name=assigned_by
                         )
                         
                         if success:

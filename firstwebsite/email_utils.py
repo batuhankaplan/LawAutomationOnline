@@ -87,7 +87,7 @@ def send_notification_email(to_email, subject, body):
     """
     return send_email(to_email, subject, body, is_html=True)
 
-def send_calendar_event_assignment_email(user_email, user_name, event_title, event_date, event_time, event_type, assigned_by_name, courthouse=None, department=None, description=None):
+def send_calendar_event_assignment_email(user_email, user_name, event_title, event_date, event_time, event_type, assigned_by_name, courthouse=None, department=None, description=None, arabuluculuk_turu=None, toplanti_adresi=None):
     """
     Takvim etkinliği atama bildirimi gönder
     """
@@ -153,6 +153,30 @@ def send_calendar_event_assignment_email(user_email, user_name, event_title, eve
                     {department}
                 </td>
             </tr>"""
+
+    # Arabuluculuk toplantısı için ek bilgiler
+    if event_type == 'arabuluculuk-toplantisi':
+        if arabuluculuk_turu:
+            turu_display = "Yüz Yüze" if arabuluculuk_turu == "Yüzyüze" else "Online"
+            extra_info_html += f"""
+        <tr>
+            <td style="padding: 12px 20px; border-bottom: 1px solid #e9ecef;">
+                <strong style="color: #495057;">📍 Toplantı Türü:</strong>
+            </td>
+            <td style="padding: 12px 20px; border-bottom: 1px solid #e9ecef; color: #212529;">
+                {turu_display}
+            </td>
+        </tr>"""
+        if toplanti_adresi and toplanti_adresi.strip():
+            extra_info_html += f"""
+        <tr>
+            <td style="padding: 12px 20px; border-bottom: 1px solid #e9ecef;">
+                <strong style="color: #495057;">📍 Toplantı Adresi:</strong>
+            </td>
+            <td style="padding: 12px 20px; border-bottom: 1px solid #e9ecef; color: #212529;">
+                {toplanti_adresi.strip()}
+            </td>
+        </tr>"""
 
     description_html = ""
     if description and description.strip():
@@ -271,7 +295,7 @@ def send_calendar_event_assignment_email(user_email, user_name, event_title, eve
 
     return send_email(user_email, subject, body, is_html=True)
 
-def send_calendar_event_reminder_email(user_email, user_name, event_title, event_date, event_time, event_type, courthouse=None, department=None, description=None):
+def send_calendar_event_reminder_email(user_email, user_name, event_title, event_date, event_time, event_type, courthouse=None, department=None, description=None, arabuluculuk_turu=None, toplanti_adresi=None, assigned_by_name=None):
     """
     Takvim etkinliği hatırlatma bildirimi gönder
     """
@@ -326,6 +350,40 @@ def send_calendar_event_reminder_email(user_email, user_name, event_title, event
                     {department}
                 </td>
             </tr>"""
+
+    # Arabuluculuk toplantısı için ek bilgiler
+    if event_type == 'arabuluculuk-toplantisi':
+        if assigned_by_name:
+            extra_info_html += f"""
+        <tr>
+            <td style="padding: 12px 20px; border-bottom: 1px solid #e9ecef;">
+                <strong style="color: #495057;">👤 Atayan:</strong>
+            </td>
+            <td style="padding: 12px 20px; border-bottom: 1px solid #e9ecef; color: #212529;">
+                {assigned_by_name}
+            </td>
+        </tr>"""
+        if arabuluculuk_turu:
+            turu_display = "Yüz Yüze" if arabuluculuk_turu == "Yüzyüze" else "Online"
+            extra_info_html += f"""
+        <tr>
+            <td style="padding: 12px 20px; border-bottom: 1px solid #e9ecef;">
+                <strong style="color: #495057;">📍 Toplantı Türü:</strong>
+            </td>
+            <td style="padding: 12px 20px; border-bottom: 1px solid #e9ecef; color: #212529;">
+                {turu_display}
+            </td>
+        </tr>"""
+        if toplanti_adresi and toplanti_adresi.strip():
+            extra_info_html += f"""
+        <tr>
+            <td style="padding: 12px 20px; border-bottom: 1px solid #e9ecef;">
+                <strong style="color: #495057;">📍 Toplantı Adresi:</strong>
+            </td>
+            <td style="padding: 12px 20px; border-bottom: 1px solid #e9ecef; color: #212529;">
+                {toplanti_adresi.strip()}
+            </td>
+        </tr>"""
 
     description_html = ""
     if description and description.strip():

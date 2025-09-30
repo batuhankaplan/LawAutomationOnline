@@ -1,4 +1,8 @@
 {
+  "env": {
+    "CLAUDE_LANGUAGE": "turkish",
+    "CLAUDE_INSTRUCTIONS": "Her zaman Türkçe yanıt ver. Hafıza dolduktan sonra da Türkçe konuşmaya devam et."
+  },
   "permissions": {
     "allow": [
       "Bash(find:*)",
@@ -16,7 +20,16 @@
       "Bash(git remote set-url:*)",
       "Bash(git pull:*)",
       "Bash(journalctl:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "mcp__ide__executeCode",
+      "Bash(taskkill:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(cmd /c:*)",
+      "Bash(sqlite3:*)",
+      "Bash(timeout:*)",
+      "Bash(cat:*)",
+      "Bash(dir:*)"
     ],
     "deny": []
   }

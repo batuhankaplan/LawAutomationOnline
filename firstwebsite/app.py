@@ -2120,7 +2120,9 @@ def add_event():
                         assigned_by_name=current_user.get_full_name(),
                         courthouse=courthouse,
                         department=department,
-                        description=description
+                        description=description,
+                        arabuluculuk_turu=event.arabuluculuk_turu if hasattr(event, 'arabuluculuk_turu') else None,
+                        toplanti_adresi=event.toplanti_adresi if hasattr(event, 'toplanti_adresi') else None
                     )
                     app.logger.info(f"Atama e-postası gönderildi: {assigned_user.email}")
                 else:
@@ -2423,7 +2425,9 @@ def update_event():
                             assigned_by_name=current_user.get_full_name(),
                             courthouse=event.courthouse,
                             department=event.department,
-                            description=event.description
+                            description=event.description,
+                            arabuluculuk_turu=event.arabuluculuk_turu if hasattr(event, 'arabuluculuk_turu') else None,
+                            toplanti_adresi=event.toplanti_adresi if hasattr(event, 'toplanti_adresi') else None
                         )
                         app.logger.info(f"Güncelleme atama e-postası gönderildi: {assigned_user.email}")
                     else:
