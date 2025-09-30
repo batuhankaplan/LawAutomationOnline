@@ -48,9 +48,16 @@ class User(UserMixin, db.Model):
     def verify_reset_token(self, token):
         """Şifre sıfırlama tokenini doğrula"""
         if (self.reset_token == token and
-            self.reset_token_expires and
-            datetime.utcnow() < self.reset_token_expires):
-            return True
+            self.reset_token_expires):
+            # Timezone-aware karşılaştırma için
+            now = datetime.utcnow()
+            expires = self.reset_token_expires
+            # Eğer expires timezone-aware ise, now'ı da timezone-aware yap
+            if expires.tzinfo is not None:
+                from datetime import timezone
+                now = now.replace(tzinfo=timezone.utc)
+            if now < expires:
+                return True
         return False
 
     def clear_reset_token(self):
