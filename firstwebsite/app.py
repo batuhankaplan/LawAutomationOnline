@@ -995,7 +995,8 @@ def takvim():
                 'aleyhindeki_telefon': event.aleyhindeki_telefon,
                 'arabulucu_isim': event.arabulucu_isim,
                 'arabulucu_telefon': event.arabulucu_telefon,
-                'arabuluculuk_turu': event.arabuluculuk_turu
+                'arabuluculuk_turu': event.arabuluculuk_turu,
+                'toplanti_adresi': event.toplanti_adresi
             }
             events_data.append(event_data)
 
@@ -2035,7 +2036,8 @@ def add_event():
             aleyhindeki_telefon=data.get('aleyhindeki_telefon'),
             arabulucu_isim=data.get('arabulucu_isim'),
             arabulucu_telefon=data.get('arabulucu_telefon'),
-            arabuluculuk_turu=data.get('arabuluculuk_turu')
+            arabuluculuk_turu=data.get('arabuluculuk_turu'),
+            toplanti_adresi=data.get('toplanti_adresi')
         )
         
         db.session.add(event)
@@ -2146,7 +2148,8 @@ def add_event():
             'aleyhindeki_telefon': event.aleyhindeki_telefon,
             'arabulucu_isim': event.arabulucu_isim,
             'arabulucu_telefon': event.arabulucu_telefon,
-            'arabuluculuk_turu': event.arabuluculuk_turu
+            'arabuluculuk_turu': event.arabuluculuk_turu,
+            'toplanti_adresi': event.toplanti_adresi
         }
         
         if deadline_date:
@@ -2344,6 +2347,8 @@ def update_event():
                 event.arabulucu_telefon = data['arabulucu_telefon']
             if 'arabuluculuk_turu' in data:
                 event.arabuluculuk_turu = data['arabuluculuk_turu']
+            if 'toplanti_adresi' in data:
+                event.toplanti_adresi = data['toplanti_adresi']
         else:
             # Arabuluculuk Toplantısı değilse bu alanları temizle
             event.basvuran_isim = None
@@ -2353,6 +2358,7 @@ def update_event():
             event.arabulucu_isim = None
             event.arabulucu_telefon = None
             event.arabuluculuk_turu = None
+            event.toplanti_adresi = None
         
         # Değişiklikleri kaydet
         db.session.commit()
@@ -2494,7 +2500,8 @@ def update_event():
                 "aleyhindeki_telefon": event.aleyhindeki_telefon,
                 "arabulucu_isim": event.arabulucu_isim,
                 "arabulucu_telefon": event.arabulucu_telefon,
-                "arabuluculuk_turu": event.arabuluculuk_turu
+                "arabuluculuk_turu": event.arabuluculuk_turu,
+                "toplanti_adresi": event.toplanti_adresi
             }
         }), 200
     except Exception as e:

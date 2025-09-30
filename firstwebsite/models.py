@@ -472,6 +472,7 @@ class CalendarEvent(db.Model):
     arabulucu_isim = db.Column(db.String(200))  # Arabulucu İsim Soyisim
     arabulucu_telefon = db.Column(db.String(20))  # Arabulucu Telefon (isteğe bağlı)
     arabuluculuk_turu = db.Column(db.String(50))  # Arabuluculuk Türü (yuzyuze/telekonferans)
+    toplanti_adresi = db.Column(db.String(500))  # Toplantı Adresi (yüzyüze toplantılar için, isteğe bağlı)
 
 class WorkerInterview(db.Model):
     id = db.Column(db.Integer, primary_key=True)

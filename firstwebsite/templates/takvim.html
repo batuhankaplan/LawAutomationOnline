@@ -749,9 +749,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 if (document.getElementById('arabuluculukTuru')) {
                     document.getElementById('arabuluculukTuru').value = eventToEdit.arabuluculuk_turu || '';
+                    // Toplantı türü yüz yüze ise toplantı adresi alanını göster
+                    if (eventToEdit.arabuluculuk_turu === 'yuzyuze') {
+                        document.getElementById('toplantiAdresiRow').style.display = 'block';
+                    }
+                }
+                if (document.getElementById('toplantiAdresi')) {
+                    document.getElementById('toplantiAdresi').value = eventToEdit.toplanti_adresi || '';
                 }
             }
-            
+
             // Düzenleme modunda etkinlik türüne göre form alanlarını güncelle
             toggleFormFields();
         } else {
@@ -882,10 +889,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 arabulucuTelefonItem.style.display = 'none';
             }
             if (arabuluculukTuruItem) {
-                const turuText = event.arabuluculuk_turu === 'yuzyuze' ? 'Yüzyüze' :
+                const turuText = event.arabuluculuk_turu === 'yuzyuze' ? 'Yüz Yüze' :
                                event.arabuluculuk_turu === 'telekonferans' ? 'Telekonferans' : '-';
                 document.getElementById('detailArabuluculukTuru').textContent = turuText;
                 arabuluculukTuruItem.style.display = 'flex';
+            }
+            // Toplantı adresi göster (sadece yüz yüze ise ve adres varsa)
+            const toplantiAdresiBox = document.getElementById('detailToplantiAdresiBox');
+            if (toplantiAdresiBox) {
+                if (event.arabuluculuk_turu === 'yuzyuze' && event.toplanti_adresi) {
+                    document.getElementById('detailToplantiAdresi').textContent = event.toplanti_adresi;
+                    toplantiAdresiBox.style.display = 'block';
+                } else {
+                    toplantiAdresiBox.style.display = 'none';
+                }
             }
         } else {
             // Arabuluculuk detaylarını gizle
@@ -896,6 +913,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (arabulucuItem) arabulucuItem.style.display = 'none';
             if (arabulucuTelefonItem) arabulucuTelefonItem.style.display = 'none';
             if (arabuluculukTuruItem) arabuluculukTuruItem.style.display = 'none';
+            const toplantiAdresiBox = document.getElementById('detailToplantiAdresiBox');
+            if (toplantiAdresiBox) toplantiAdresiBox.style.display = 'none';
         }
         document.getElementById('detailDescription').textContent = event.description || 'Açıklama yok.';
 
@@ -1119,6 +1138,7 @@ document.addEventListener('DOMContentLoaded', function() {
             arabulucu_isim: (eventTypeSelect.value === 'arabuluculuk-toplantisi') ? document.getElementById('arabulucuIsim').value : null,
             arabulucu_telefon: (eventTypeSelect.value === 'arabuluculuk-toplantisi') ? document.getElementById('arabulucuTelefon').value : null,
             arabuluculuk_turu: (eventTypeSelect.value === 'arabuluculuk-toplantisi') ? document.getElementById('arabuluculukTuru').value : null,
+            toplanti_adresi: (eventTypeSelect.value === 'arabuluculuk-toplantisi') ? document.getElementById('toplantiAdresi').value : null,
             // Şehir bilgisi frontend'de kullanıldı, backend'e göndermeye gerek yok (şimdilik)
         };
 
@@ -1242,6 +1262,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // citySelect dinamik eklendiği için listener eklenmişti.
     courthouseSelect.addEventListener('change', handleCourthouseChange);
 
+    // Arabuluculuk türü değişikliklerini dinle (toplantı adresi gösterimi için)
+    const arabuluculukTuruSelect = document.getElementById('arabuluculukTuru');
+    if (arabuluculukTuruSelect) {
+        arabuluculukTuruSelect.addEventListener('change', function() {
+            const toplantiAdresiRow = document.getElementById('toplantiAdresiRow');
+            if (this.value === 'yuzyuze') {
+                toplantiAdresiRow.style.display = 'block';
+            } else {
+                toplantiAdresiRow.style.display = 'none';
+                // Telekonferans seçildiğinde adresi temizle
+                document.getElementById('toplantiAdresi').value = '';
+            }
+        });
+    }
 
     // İlk takvim görünümünü oluştur
     renderCalendar();
@@ -2553,13 +2587,23 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                     </div>
 
                     <div class="form-group full-width">
-                        <label>Arabuluculuk Türü</label>
+                        <label>Toplantı Türü</label>
                         <div class="select-wrapper">
                             <select id="arabuluculukTuru" name="arabuluculuk_turu" required>
                                 <option value="">Seçiniz</option>
-                                <option value="yuzyuze">Yüzyüze</option>
+                                <option value="yuzyuze">Yüz Yüze</option>
                                 <option value="telekonferans">Telekonferans</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Toplantı Adresi alanı (sadece yüz yüze seçildiğinde gösterilecek) -->
+                <div class="form-row" id="toplantiAdresiRow" style="display: none;">
+                    <div class="form-group full-width">
+                        <label>Toplantı Adresi (İsteğe Bağlı)</label>
+                        <div class="input-wrapper">
+                            <textarea id="toplantiAdresi" name="toplanti_adresi" rows="3" placeholder="Toplantı adresi giriniz..."></textarea>
                         </div>
                     </div>
                 </div>
@@ -2743,6 +2787,16 @@ input[type="time"]::-webkit-calendar-picker-indicator {
                         </div>
                     </div>
                 </div>
+
+                <!-- Toplantı Adresi (sadece arabuluculuk toplantısı için) -->
+                <div class="event-description" id="detailToplantiAdresiBox" style="display: none;">
+                    <h4>
+                        <i class="material-icons">location_on</i>
+                        Toplantı Adresi
+                    </h4>
+                    <p id="detailToplantiAdresi"></p>
+                </div>
+
                 <div class="event-description">
                     <h4>
                         <i class="material-icons">description</i>
