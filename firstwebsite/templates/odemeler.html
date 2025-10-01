@@ -102,7 +102,23 @@
                 <tr data-client-id="{{ client.id }}" data-description="{{ client.description }}" data-payment-type="{{ client.payment_type if client.payment_type else '' }}">
                     <td contenteditable="false">
                         {% if client.payment_type %}
-                            <span class="payment-type-badge">{{ client.payment_type }}</span>
+                            {% set type_class = '' %}
+                            {% if 'Danışma' in client.payment_type %}
+                                {% set type_class = 'payment-type-danisma' %}
+                            {% elif 'İhtarname' in client.payment_type %}
+                                {% set type_class = 'payment-type-ihtarname' %}
+                            {% elif 'Dilekçe' in client.payment_type %}
+                                {% set type_class = 'payment-type-dilekce' %}
+                            {% elif 'Dosya' in client.payment_type %}
+                                {% set type_class = 'payment-type-dosya' %}
+                            {% elif 'Sözleşme' in client.payment_type %}
+                                {% set type_class = 'payment-type-sozlesme' %}
+                            {% elif 'Mahkeme' in client.payment_type %}
+                                {% set type_class = 'payment-type-mahkeme' %}
+                            {% elif 'Diğer' in client.payment_type %}
+                                {% set type_class = 'payment-type-diger' %}
+                            {% endif %}
+                            <span class="payment-type-badge {{ type_class }}">{{ client.payment_type }}</span>
                         {% else %}
                             <span class="payment-type-badge-empty">-</span>
                         {% endif %}
@@ -1168,12 +1184,46 @@
         .payment-type-badge {
             display: inline-block;
             padding: 6px 12px;
-            background-color: #e3f2fd;
-            color: #1976d2;
             border-radius: 6px;
             font-size: 13px;
             font-weight: 500;
             white-space: nowrap;
+        }
+
+        /* Ödeme türlerine özel renkler */
+        .payment-type-danisma {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .payment-type-ihtarname {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+
+        .payment-type-dilekce {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .payment-type-dosya {
+            background-color: #f3e5f5;
+            color: #6a1b9a;
+        }
+
+        .payment-type-sozlesme {
+            background-color: #fce4ec;
+            color: #c2185b;
+        }
+
+        .payment-type-mahkeme {
+            background-color: #e0f2f1;
+            color: #00695c;
+        }
+
+        .payment-type-diger {
+            background-color: #fff9c4;
+            color: #f57f17;
         }
 
         .payment-type-badge-empty {
