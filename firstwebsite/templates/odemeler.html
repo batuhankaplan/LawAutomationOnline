@@ -469,8 +469,8 @@
                             </div>
                         </div>
 
-                        <!-- Detay Kartları (Küçük - 3 Sütun) -->
-                        <div class="detail-stats-grid">
+                        <!-- Detay Kartları (Simetrik 3+3 Düzen) -->
+                        <div class="detail-stats-grid-top">
                             <div class="detail-stat-card">
                                 <div class="detail-icon purple-bg">
                                     <i class="material-icons">event_available</i>
@@ -500,7 +500,9 @@
                                     <span class="detail-value" id="overdueCount">0</span>
                                 </div>
                             </div>
+                        </div>
 
+                        <div class="detail-stats-grid-bottom">
                             <div class="detail-stat-card">
                                 <div class="detail-icon teal-bg">
                                     <i class="material-icons">format_list_numbered</i>
@@ -567,6 +569,17 @@
                             <div id="expectedPaymentsByYearTableContainer">
                                 <!-- Tablo JavaScript ile eklenecek -->
                                 <canvas id="expectedPaymentsByYearChart" class="chart-canvas"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Döviz Kuru Notu -->
+                        <div class="exchange-rate-note">
+                            <div class="note-icon">
+                                <i class="material-icons">info</i>
+                            </div>
+                            <div class="note-content">
+                                <strong>Döviz Kurları:</strong>
+                                <span id="exchangeRateInfo">USD ve EUR döviz kurları yükleniyor...</span>
                             </div>
                         </div>
                     </div>
@@ -1767,12 +1780,27 @@
             font-size: 16px;
         }
 
-        /* Detay Kartları Grid */
-        .detail-stats-grid {
+        /* Detay Kartları Grid - Simetrik 3+3 */
+        .detail-stats-grid-top,
+        .detail-stats-grid-bottom {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1200px) {
+            .detail-stats-grid-top,
+            .detail-stats-grid-bottom {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .detail-stats-grid-top,
+            .detail-stats-grid-bottom {
+                grid-template-columns: 1fr;
+            }
         }
 
         .detail-stat-card {
@@ -1837,6 +1865,46 @@
             font-size: 0.75rem;
             color: #64748b;
             font-weight: 500;
+        }
+
+        /* Döviz Kuru Notu */
+        .exchange-rate-note {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #4361ee;
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .note-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #4361ee 0%, #3651d4 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .note-icon i {
+            color: white;
+            font-size: 20px;
+        }
+
+        .note-content {
+            flex: 1;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+
+        .note-content strong {
+            color: #2c3e50;
+            margin-right: 8px;
         }
 
         /* Tablolar için stil */
@@ -3173,11 +3241,11 @@
                         }
                     }
                     
-                    // En yüksek ödemeyi bul
+                    // En yüksek ödemeyi bul (güncel kurlarla)
                     let comparisonAmount = amount;
-                    if (currency === 'USD') comparisonAmount *= 30; // Örnek kur
-                    if (currency === 'EUR') comparisonAmount *= 32; // Örnek kur
-                    
+                    if (currency === 'USD') comparisonAmount *= parseFloat(exchangeRates.USD);
+                    if (currency === 'EUR') comparisonAmount *= parseFloat(exchangeRates.EUR);
+
                     if (comparisonAmount > highestPayment.amount) {
                         highestPayment = {
                             amount: amount,
@@ -4578,6 +4646,15 @@
 
             document.getElementById('totalAmountEUR').textContent = `${formatCurrency(eurTotal)} EUR`;
             document.getElementById('totalAmountEURinTL').textContent = `≈ ${formatCurrency(eurInTL)} TL (${exchangeRates.EUR} ₺/EUR)`;
+
+            // Döviz kuru notunu güncelle
+            const currentDate = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            document.getElementById('exchangeRateInfo').innerHTML = `
+                Güncel kurlar (${currentDate}):
+                <strong>1 USD = ${exchangeRates.USD} ₺</strong> |
+                <strong>1 EUR = ${exchangeRates.EUR} ₺</strong>
+                <span style="font-size: 0.85rem; color: #6c757d; margin-left: 8px;">(exchangerate-api.com)</span>
+            `;
 
             // Yıllara Göre Beklenen Ödemeler Tablosu
             const tableContainer = document.getElementById('expectedPaymentsByYearTableContainer');
