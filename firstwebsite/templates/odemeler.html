@@ -3173,9 +3173,17 @@
                 if (!isNaN(amount)) {
                     currencyTotals[currency].total += amount;
 
-                    // Ödeme türü istatistiklerini güncelle (sadece TL için şimdilik)
-                    if (paymentType && paymentType !== '-' && currency === 'TL') {
-                        paymentTypeStats[paymentType].total += amount;
+                    // Ödeme türü istatistiklerini güncelle (TÜM PARA BİRİMLERİ - TL'ye çevrilmiş)
+                    if (paymentType && paymentType !== '-') {
+                        // Para birimini TL'ye çevir
+                        let amountInTL = amount;
+                        if (currency === 'USD') {
+                            amountInTL = amount * parseFloat(exchangeRates.USD);
+                        } else if (currency === 'EUR') {
+                            amountInTL = amount * parseFloat(exchangeRates.EUR);
+                        }
+
+                        paymentTypeStats[paymentType].total += amountInTL;
                         paymentTypeStats[paymentType].count++;
                     }
 
@@ -3184,16 +3192,30 @@
                         paidCount++;
                         paidInstallments += installments;
 
-                        if (paymentType && paymentType !== '-' && currency === 'TL') {
-                            paymentTypeStats[paymentType].paid += amount;
+                        if (paymentType && paymentType !== '-') {
+                            let amountInTL = amount;
+                            if (currency === 'USD') {
+                                amountInTL = amount * parseFloat(exchangeRates.USD);
+                            } else if (currency === 'EUR') {
+                                amountInTL = amount * parseFloat(exchangeRates.EUR);
+                            }
+
+                            paymentTypeStats[paymentType].paid += amountInTL;
                             paymentTypeStats[paymentType].paidCount++;
                         }
                     } else {
                         currencyTotals[currency].unpaid += amount;
                         unpaidCount++;
 
-                        if (paymentType && paymentType !== '-' && currency === 'TL') {
-                            paymentTypeStats[paymentType].unpaid += amount;
+                        if (paymentType && paymentType !== '-') {
+                            let amountInTL = amount;
+                            if (currency === 'USD') {
+                                amountInTL = amount * parseFloat(exchangeRates.USD);
+                            } else if (currency === 'EUR') {
+                                amountInTL = amount * parseFloat(exchangeRates.EUR);
+                            }
+
+                            paymentTypeStats[paymentType].unpaid += amountInTL;
                             paymentTypeStats[paymentType].unpaidCount++;
                         }
                         
@@ -4651,6 +4673,142 @@
                 row.insertCell().textContent = formatCurrency(expectedPaymentsByYear[year].EUR || 0) + ' EUR';
             });
             tableContainer.appendChild(table);
+
+            // Detay kartlarını güncelle (window.statsData'dan al)
+            if (window.statsData) {
+                const {
+                    avgDueTime,
+                    totalOverdueDays,
+                    mostOverdue,
+                    avgInstallments,
+                    avgPaidInstallments,
+                    mostUsedCurrency,
+                    avgPerClient,
+                    highestClient,
+                    lowestClient,
+                    clientVariation,
+                    paidPercentage,
+                    unpaidPercentage,
+                    overduePercentage,
+                    totalOverdueAmountTL,
+                    predictions
+                } = window.statsData;
+
+                // Vade Durumu Analizi
+                const avgDueElement = document.getElementById('avgDueTime');
+                if (avgDueElement) avgDueElement.textContent = `${Math.round(avgDueTime || 0)} Gün`;
+
+                const totalOverdueDaysElement = document.getElementById('totalOverdueDays');
+                if (totalOverdueDaysElement) totalOverdueDaysElement.textContent = `${totalOverdueDays || 0} Gün`;
+
+                const mostOverdueElement = document.getElementById('mostOverdueInfo');
+                if (mostOverdueElement && mostOverdue && mostOverdue.days > 0) {
+                    mostOverdueElement.textContent = `${mostOverdue.clientName} - ${mostOverdue.days} gün`;
+                } else if (mostOverdueElement) {
+                    mostOverdueElement.textContent = '- (Veri Yok)';
+                }
+
+                // Para Birimi Karşılaştırması
+                const tryCountElement = document.getElementById('tryTransactionCount');
+                if (tryCountElement) tryCountElement.textContent = currencyTotals.TL.transactions || 0;
+
+                const usdCountElement = document.getElementById('usdTransactionCount');
+                if (usdCountElement) usdCountElement.textContent = currencyTotals.USD.transactions || 0;
+
+                const eurCountElement = document.getElementById('eurTransactionCount');
+                if (eurCountElement) eurCountElement.textContent = currencyTotals.EUR.transactions || 0;
+
+                const mostUsedElement = document.getElementById('mostUsedCurrency');
+                if (mostUsedElement) mostUsedElement.textContent = mostUsedCurrency || '-';
+
+                // Müvekkil Başına Ödeme
+                const avgPerClientElement = document.getElementById('avgPerClient');
+                if (avgPerClientElement) avgPerClientElement.textContent = `${formatCurrency(avgPerClient || 0)} TL`;
+
+                const highestClientValueElement = document.getElementById('highestClientValue');
+                if (highestClientValueElement && highestClient && highestClient.id) {
+                    highestClientValueElement.textContent = `${formatCurrency(highestClient.amount)} ${highestClient.currency}`;
+                } else if (highestClientValueElement) {
+                    highestClientValueElement.textContent = '0 TL';
+                }
+
+                const highestClientNameElement = document.getElementById('highestClientName');
+                if (highestClientNameElement && highestClient && highestClient.id) {
+                    highestClientNameElement.textContent = highestClient.name;
+                } else if (highestClientNameElement) {
+                    highestClientNameElement.textContent = '-';
+                }
+
+                const lowestClientValueElement = document.getElementById('lowestClientValue');
+                if (lowestClientValueElement && lowestClient && lowestClient.id && lowestClient.amount < Infinity) {
+                    lowestClientValueElement.textContent = `${formatCurrency(lowestClient.amount)} ${lowestClient.currency}`;
+                } else if (lowestClientValueElement) {
+                    lowestClientValueElement.textContent = '0 TL';
+                }
+
+                const lowestClientNameElement = document.getElementById('lowestClientName');
+                if (lowestClientNameElement && lowestClient && lowestClient.id && lowestClient.amount < Infinity) {
+                    lowestClientNameElement.textContent = lowestClient.name;
+                } else if (lowestClientNameElement) {
+                    lowestClientNameElement.textContent = '-';
+                }
+
+                const clientVariationElement = document.getElementById('clientVariation');
+                if (clientVariationElement) clientVariationElement.textContent = `${Math.round(clientVariation || 0)}%`;
+
+                // Ödeme Durumu Dağılımı
+                const paidPercentageElement = document.getElementById('paidPercentage');
+                if (paidPercentageElement) paidPercentageElement.textContent = `${Math.round(paidPercentage || 0)}%`;
+
+                const unpaidPercentageElement = document.getElementById('unpaidPercentage');
+                if (unpaidPercentageElement) unpaidPercentageElement.textContent = `${Math.round(unpaidPercentage || 0)}%`;
+
+                const overduePercentageElement = document.getElementById('overduePercentage');
+                if (overduePercentageElement) overduePercentageElement.textContent = `${Math.round(overduePercentage || 0)}%`;
+
+                const paidClientsElement = document.getElementById('paidClients');
+                if (paidClientsElement) paidClientsElement.textContent = `${paidCount || 0} Müvekkil`;
+
+                const unpaidClientsElement = document.getElementById('unpaidClients');
+                if (unpaidClientsElement) unpaidClientsElement.textContent = `${unpaidCount || 0} Müvekkil`;
+
+                const overdueAmountElement = document.getElementById('overdueAmount');
+                if (overdueAmountElement) overdueAmountElement.textContent = `${formatCurrency(totalOverdueAmountTL || 0)} TL`;
+
+                // Tahminler
+                if (predictions) {
+                    const pred30Element = document.getElementById('prediction30Days');
+                    if (pred30Element) pred30Element.textContent = `${formatCurrency(predictions.days30 || 0)} TL`;
+
+                    const pred90Element = document.getElementById('prediction90Days');
+                    if (pred90Element) pred90Element.textContent = `${formatCurrency(predictions.days90 || 0)} TL`;
+
+                    const pred180Element = document.getElementById('prediction180Days');
+                    if (pred180Element) pred180Element.textContent = `${formatCurrency(predictions.days180 || 0)} TL`;
+
+                    const pred365Element = document.getElementById('prediction365Days');
+                    if (pred365Element) pred365Element.textContent = `${formatCurrency(predictions.days365 || 0)} TL`;
+                }
+
+                // Ödeme İstatistikleri (Durum sekmesi için)
+                const paidTransCountElement = document.getElementById('paidTransCount');
+                if (paidTransCountElement) paidTransCountElement.textContent = paidCount || 0;
+
+                const unpaidTransCountElement = document.getElementById('unpaidTransCount');
+                if (unpaidTransCountElement) unpaidTransCountElement.textContent = unpaidCount || 0;
+
+                const overdueTransCountElement = document.getElementById('overdueTransCount');
+                if (overdueTransCountElement) overdueTransCountElement.textContent = overdueCount || 0;
+
+                const paidTransPercentageElement = document.getElementById('paidTransPercentage');
+                if (paidTransPercentageElement) paidTransPercentageElement.textContent = `${Math.round(paidPercentage || 0)}%`;
+
+                const unpaidTransPercentageElement = document.getElementById('unpaidTransPercentage');
+                if (unpaidTransPercentageElement) unpaidTransPercentageElement.textContent = `${Math.round(unpaidPercentage || 0)}%`;
+
+                const overdueTransPercentageElement = document.getElementById('overdueTransPercentage');
+                if (overdueTransPercentageElement) overdueTransPercentageElement.textContent = `${Math.round(overduePercentage || 0)}%`;
+            }
         }
 
         // Yıllık Analiz Tablosunu Doldur
