@@ -2130,14 +2130,15 @@
             const getCellValue = (row, headerId) => {
                 let cellIndex;
                 switch (headerId) {
-                    case 'sort-name': cellIndex = 0; break;
-                    case 'sort-surname': cellIndex = 1; break;
-                    case 'sort-tc': cellIndex = 2; break;
-                    case 'sort-amount': cellIndex = 3; break;
-                    case 'sort-installments': cellIndex = 4; break;
-                    case 'sort-registration-date': cellIndex = 5; break;
-                    case 'sort-due-date': cellIndex = 6; break;
-                    case 'sort-status': cellIndex = 7; break;
+                    case 'sort-payment-type': cellIndex = 0; break;
+                    case 'sort-name': cellIndex = 1; break;
+                    case 'sort-surname': cellIndex = 2; break;
+                    case 'sort-tc': cellIndex = 3; break;
+                    case 'sort-amount': cellIndex = 4; break;
+                    case 'sort-installments': cellIndex = 5; break;
+                    case 'sort-registration-date': cellIndex = 6; break;
+                    case 'sort-due-date': cellIndex = 7; break;
+                    case 'sort-status': cellIndex = 8; break;
                     default: return '';
                 }
                 const cell = row.cells[cellIndex];
