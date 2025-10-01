@@ -3020,7 +3020,21 @@
                 if (usdNode && eurNode) {
                     exchangeRates.USD = parseFloat(usdNode.textContent).toFixed(2);
                     exchangeRates.EUR = parseFloat(eurNode.textContent).toFixed(2);
-                    exchangeRates.lastUpdate = dateNode ? dateNode.getAttribute('Tarih') : new Date().toISOString().split('T')[0];
+
+                    // TCMB'den gelen tarih formatı: "01.10.2025" (dd.MM.yyyy)
+                    if (dateNode && dateNode.getAttribute('Tarih')) {
+                        const tcmbDate = dateNode.getAttribute('Tarih');
+                        // dd.MM.yyyy formatını yyyy-MM-dd formatına çevir
+                        const parts = tcmbDate.split('.');
+                        if (parts.length === 3) {
+                            exchangeRates.lastUpdate = `${parts[2]}-${parts[1]}-${parts[0]}`; // yyyy-MM-dd
+                        } else {
+                            exchangeRates.lastUpdate = new Date().toISOString().split('T')[0];
+                        }
+                    } else {
+                        exchangeRates.lastUpdate = new Date().toISOString().split('T')[0];
+                    }
+
                     exchangeRates.apiSource = 'TCMB';
                     console.log('✅ TCMB API - Güncel kurlar:', exchangeRates, 'Tarih:', exchangeRates.lastUpdate);
                     return; // Başarılı, diğer API'leri deneme
@@ -3038,9 +3052,12 @@
                     // 'satis' (satış) fiyatını kullan
                     exchangeRates.USD = parseFloat(data2.USD.satis).toFixed(2);
                     exchangeRates.EUR = parseFloat(data2.EUR.satis).toFixed(2);
-                    exchangeRates.lastUpdate = new Date().toISOString().split('T')[0];
+
+                    // GenelPara API'si tarih döndürmüyor, bugünün tarihini kullan
+                    const today = new Date();
+                    exchangeRates.lastUpdate = today.toISOString().split('T')[0]; // yyyy-MM-dd
                     exchangeRates.apiSource = 'GenelPara';
-                    console.log('✅ GenelPara API - Güncel kurlar:', exchangeRates);
+                    console.log('✅ GenelPara API - Güncel kurlar:', exchangeRates, 'Tarih:', exchangeRates.lastUpdate);
                     return;
                 }
             } catch (error2) {
