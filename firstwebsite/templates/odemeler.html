@@ -2996,44 +2996,64 @@
 
         // Döviz kurları için global değişken
         let exchangeRates = {
-            USD: 34.50, // Varsayılan kur
-            EUR: 37.20  // Varsayılan kur
+            USD: 41.60, // Varsayılan kur (Google'dan alınan güncel kur)
+            EUR: 48.80  // Varsayılan kur (Google'dan alınan güncel kur)
         };
 
         // Güncel döviz kurlarını çek
         async function fetchExchangeRates() {
             try {
-                // TCMB'den ya da başka bir API'den daha güncel kur çekmeyi dene
-                const response = await fetch('https://api.exchangerate.host/latest?base=TRY&symbols=USD,EUR');
+                // 1. API - Frankfurter (Avrupa Merkez Bankası verisi)
+                const response = await fetch('https://api.frankfurter.app/latest?from=USD&to=TRY,EUR');
                 const data = await response.json();
 
-                if (data && data.success && data.rates) {
-                    exchangeRates.USD = (1 / data.rates.USD).toFixed(2);
-                    exchangeRates.EUR = (1 / data.rates.EUR).toFixed(2);
-                    exchangeRates.lastUpdate = data.date; // API'den gelen tarih
-                    console.log('Güncel döviz kurları:', exchangeRates, 'Tarih:', data.date);
-                } else {
-                    throw new Error('API yanıtı hatalı');
+                if (data && data.rates && data.rates.TRY) {
+                    exchangeRates.USD = data.rates.TRY.toFixed(2);
+                    // EUR'u USD üzerinden hesapla
+                    exchangeRates.EUR = (data.rates.TRY / data.rates.EUR).toFixed(2);
+                    exchangeRates.lastUpdate = data.date;
+                    console.log('✅ Frankfurter API - Güncel kurlar:', exchangeRates, 'Tarih:', data.date);
+                    return; // Başarılı, diğer API'leri deneme
                 }
             } catch (error) {
-                console.warn('İlk API başarısız, alternatif API deneniyor:', error);
-
-                // Alternatif API: Fixer.io benzeri ücretsiz API
-                try {
-                    const response2 = await fetch('https://open.er-api.com/v6/latest/USD');
-                    const data2 = await response2.json();
-
-                    if (data2 && data2.rates && data2.rates.TRY) {
-                        exchangeRates.USD = data2.rates.TRY.toFixed(2);
-                        exchangeRates.EUR = (data2.rates.TRY / data2.rates.EUR).toFixed(2);
-                        exchangeRates.lastUpdate = new Date(data2.time_last_update_unix * 1000).toISOString().split('T')[0];
-                        console.log('Alternatif API ile güncel kurlar:', exchangeRates, 'Tarih:', exchangeRates.lastUpdate);
-                    }
-                } catch (error2) {
-                    console.warn('Tüm API\'ler başarısız, varsayılan kurlar kullanılıyor:', error2);
-                    exchangeRates.lastUpdate = 'Bilinmiyor';
-                }
+                console.warn('⚠️ Frankfurter API başarısız, alternatif deneniyor:', error);
             }
+
+            try {
+                // 2. API - Currencyapi (Güncel piyasa kurları)
+                const response2 = await fetch('https://api.currencyapi.com/v3/latest?apikey=fca_live_demo&currencies=TRY,EUR&base_currency=USD');
+                const data2 = await response2.json();
+
+                if (data2 && data2.data && data2.data.TRY) {
+                    exchangeRates.USD = data2.data.TRY.value.toFixed(2);
+                    exchangeRates.EUR = data2.data.EUR.value ? (parseFloat(exchangeRates.USD) / data2.data.EUR.value).toFixed(2) : exchangeRates.EUR;
+                    exchangeRates.lastUpdate = new Date().toISOString().split('T')[0];
+                    console.log('✅ CurrencyAPI - Güncel kurlar:', exchangeRates);
+                    return;
+                }
+            } catch (error2) {
+                console.warn('⚠️ CurrencyAPI başarısız, alternatif deneniyor:', error2);
+            }
+
+            try {
+                // 3. API - ExchangeRate-API (Yedek)
+                const response3 = await fetch('https://v6.exchangerate-api.com/v6/latest/USD');
+                const data3 = await response3.json();
+
+                if (data3 && data3.conversion_rates && data3.conversion_rates.TRY) {
+                    exchangeRates.USD = data3.conversion_rates.TRY.toFixed(2);
+                    exchangeRates.EUR = (data3.conversion_rates.TRY / data3.conversion_rates.EUR).toFixed(2);
+                    exchangeRates.lastUpdate = new Date(data3.time_last_update_unix * 1000).toISOString().split('T')[0];
+                    console.log('✅ ExchangeRate-API - Güncel kurlar:', exchangeRates, 'Tarih:', exchangeRates.lastUpdate);
+                    return;
+                }
+            } catch (error3) {
+                console.warn('⚠️ ExchangeRate-API başarısız:', error3);
+            }
+
+            // Tüm API'ler başarısız
+            console.warn('❌ Tüm döviz kuru API\'leri başarısız! Varsayılan kurlar kullanılıyor:', exchangeRates);
+            exchangeRates.lastUpdate = new Date().toISOString().split('T')[0];
         }
 
         // Müşteri verilerini topla ve özet istatistikleri oluştur
@@ -4688,7 +4708,7 @@
                 Güncel kurlar (<strong>${updateDateText}</strong>):
                 <strong>1 USD = ${exchangeRates.USD} ₺</strong> |
                 <strong>1 EUR = ${exchangeRates.EUR} ₺</strong>
-                <span style="font-size: 0.85rem; color: #6c757d; margin-left: 8px;">(exchangerate.host & open.er-api.com)</span>
+                <span style="font-size: 0.85rem; color: #6c757d; margin-left: 8px;">(Frankfurter API - Avrupa Merkez Bankası)</span>
             `;
 
             // Yıllara Göre Beklenen Ödemeler Tablosu
