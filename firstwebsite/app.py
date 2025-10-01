@@ -6548,6 +6548,99 @@ def ucret_tarifeleri_page():
     
     return render_template('ucret_tarifeleri.html', title="Ücret Tarifeleri", profile_image_url=profile_image_url, current_user=current_user)
 
+@app.route('/api/doviz_kurlari')
+@login_required
+def get_doviz_kurlari():
+    """
+    Döviz kurlarını çekmek için backend proxy endpoint.
+    CORS sorununu çözmek için frontend yerine backend'den API çağrısı yapılır.
+    """
+    import xml.etree.ElementTree as ET
+
+    # Varsayılan kurlar
+    default_rates = {
+        'USD': 41.60,
+        'EUR': 48.80,
+        'lastUpdate': datetime.now().strftime('%Y-%m-%d'),
+        'apiSource': 'Varsayılan'
+    }
+
+    try:
+        # 1. TCMB API dene (XML)
+        response = requests.get('https://www.tcmb.gov.tr/kurlar/today.xml', timeout=5)
+        if response.status_code == 200:
+            root = ET.fromstring(response.content)
+
+            # USD ve EUR kurlarını al
+            usd_node = root.find(".//Currency[@CurrencyCode='USD']/ForexSelling")
+            eur_node = root.find(".//Currency[@CurrencyCode='EUR']/ForexSelling")
+            date_attr = root.attrib.get('Tarih', '')
+
+            if usd_node is not None and eur_node is not None:
+                usd_rate = float(usd_node.text.replace(',', '.'))
+                eur_rate = float(eur_node.text.replace(',', '.'))
+
+                # Tarihi parse et (dd.MM.yyyy -> yyyy-MM-dd)
+                if date_attr:
+                    parts = date_attr.split('.')
+                    if len(parts) == 3:
+                        last_update = f"{parts[2]}-{parts[1]}-{parts[0]}"
+                    else:
+                        last_update = datetime.now().strftime('%Y-%m-%d')
+                else:
+                    last_update = datetime.now().strftime('%Y-%m-%d')
+
+                return jsonify({
+                    'USD': round(usd_rate, 2),
+                    'EUR': round(eur_rate, 2),
+                    'lastUpdate': last_update,
+                    'apiSource': 'TCMB'
+                })
+    except Exception as e:
+        print(f"TCMB API hatası: {e}")
+
+    try:
+        # 2. GenelPara API dene
+        response = requests.get('https://api.genelpara.com/embed/doviz.json', timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            usd_rate = float(data.get('USD', {}).get('satis', 0))
+            eur_rate = float(data.get('EUR', {}).get('satis', 0))
+
+            if usd_rate > 0 and eur_rate > 0:
+                return jsonify({
+                    'USD': round(usd_rate, 2),
+                    'EUR': round(eur_rate, 2),
+                    'lastUpdate': datetime.now().strftime('%Y-%m-%d'),
+                    'apiSource': 'GenelPara'
+                })
+    except Exception as e:
+        print(f"GenelPara API hatası: {e}")
+
+    try:
+        # 3. Vakıfbank API dene
+        response = requests.get('https://www.vakifbank.com.tr/HttpHandlers/DovizKurlariHandler.ashx?_=' + str(int(datetime.now().timestamp() * 1000)), timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            for currency in data:
+                if currency.get('Kisa_Kod') == 'USD':
+                    usd_rate = float(currency.get('Efektif_Satis', '0').replace(',', '.'))
+                if currency.get('Kisa_Kod') == 'EUR':
+                    eur_rate = float(currency.get('Efektif_Satis', '0').replace(',', '.'))
+
+            if usd_rate > 0 and eur_rate > 0:
+                return jsonify({
+                    'USD': round(usd_rate, 2),
+                    'EUR': round(eur_rate, 2),
+                    'lastUpdate': datetime.now().strftime('%Y-%m-%d'),
+                    'apiSource': 'Vakıfbank'
+                })
+    except Exception as e:
+        print(f"Vakıfbank API hatası: {e}")
+
+    # Hiçbir API çalışmazsa varsayılan kurları döndür
+    return jsonify(default_rates)
+
 @app.route('/api/odeme_detay/<int:client_id>')
 @login_required
 def get_odeme_detay(client_id):
@@ -6558,13 +6651,13 @@ def get_odeme_detay(client_id):
     # Payment modelindeki doğru alan adlarını kullanıyoruz:
     # Tarih için: date
     # Tutar için: amount
-    taksitler = Payment.query.filter_by(client_id=client.id).order_by(Payment.date.asc()).all() 
-    
+    taksitler = Payment.query.filter_by(client_id=client.id).order_by(Payment.date.asc()).all()
+
     odeme_gecmisi_data = []
     for taksit in taksitler:
         odeme_gecmisi_data.append({
             'tarih': taksit.date.strftime('%Y-%m-%d') if taksit.date else None,
-            'tutar': taksit.amount, 
+            'tutar': taksit.amount,
             'aciklama': "Ödeme Kaydı" # Payment modelinde özel bir açıklama alanı olmadığı için genel bir ifade
         })
 

@@ -3001,126 +3001,27 @@
             apiSource: 'Varsayılan'
         };
 
-        // Güncel döviz kurlarını çek - TÜRKİYE KAYNAKLARI ÖNCELİKLİ
+        // Güncel döviz kurlarını çek - Backend proxy üzerinden (CORS sorunu çözümü)
         async function fetchExchangeRates() {
             try {
-                // 1. API - TCMB (Türkiye Cumhuriyet Merkez Bankası) - EN GÜVENİLİR
-                const response = await fetch('https://www.tcmb.gov.tr/kurlar/today.xml');
-                const text = await response.text();
+                // Backend proxy endpoint'ini kullan (CORS sorununu çözer)
+                const response = await fetch('/api/doviz_kurlari');
+                if (response.ok) {
+                    const data = await response.json();
 
-                // XML'den döviz kurlarını parse et
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(text, 'text/xml');
+                    exchangeRates.USD = parseFloat(data.USD);
+                    exchangeRates.EUR = parseFloat(data.EUR);
+                    exchangeRates.lastUpdate = data.lastUpdate;
+                    exchangeRates.apiSource = data.apiSource;
 
-                // USD ve EUR için ForexSelling (Döviz Satış) değerlerini al
-                const usdNode = xmlDoc.querySelector('Currency[CurrencyCode="USD"] ForexSelling');
-                const eurNode = xmlDoc.querySelector('Currency[CurrencyCode="EUR"] ForexSelling');
-                const dateNode = xmlDoc.querySelector('Tarih_Date');
-
-                if (usdNode && eurNode) {
-                    exchangeRates.USD = parseFloat(usdNode.textContent).toFixed(2);
-                    exchangeRates.EUR = parseFloat(eurNode.textContent).toFixed(2);
-
-                    // TCMB'den gelen tarih formatı: "01.10.2025" (dd.MM.yyyy)
-                    if (dateNode && dateNode.getAttribute('Tarih')) {
-                        const tcmbDate = dateNode.getAttribute('Tarih');
-                        // dd.MM.yyyy formatını yyyy-MM-dd formatına çevir
-                        const parts = tcmbDate.split('.');
-                        if (parts.length === 3) {
-                            exchangeRates.lastUpdate = `${parts[2]}-${parts[1]}-${parts[0]}`; // yyyy-MM-dd
-                        } else {
-                            exchangeRates.lastUpdate = new Date().toISOString().split('T')[0];
-                        }
-                    } else {
-                        exchangeRates.lastUpdate = new Date().toISOString().split('T')[0];
-                    }
-
-                    exchangeRates.apiSource = 'TCMB';
-                    console.log('✅ TCMB API - Güncel kurlar:', exchangeRates, 'Tarih:', exchangeRates.lastUpdate);
-                    return; // Başarılı, diğer API'leri deneme
-                }
-            } catch (error) {
-                console.warn('⚠️ TCMB API başarısız, alternatif deneniyor:', error);
-            }
-
-            try {
-                // 2. API - GenelPara (Türk finans portalı - Gerçek zamanlı)
-                const response2 = await fetch('https://api.genelpara.com/embed/doviz.json');
-                const data2 = await response2.json();
-
-                if (data2 && data2.USD && data2.EUR) {
-                    // 'satis' (satış) fiyatını kullan
-                    exchangeRates.USD = parseFloat(data2.USD.satis).toFixed(2);
-                    exchangeRates.EUR = parseFloat(data2.EUR.satis).toFixed(2);
-
-                    // GenelPara API'si tarih döndürmüyor, bugünün tarihini kullan
-                    const today = new Date();
-                    exchangeRates.lastUpdate = today.toISOString().split('T')[0]; // yyyy-MM-dd
-                    exchangeRates.apiSource = 'GenelPara';
-                    console.log('✅ GenelPara API - Güncel kurlar:', exchangeRates, 'Tarih:', exchangeRates.lastUpdate);
+                    console.log('✅ Döviz kurları güncellendi:', exchangeRates);
                     return;
                 }
-            } catch (error2) {
-                console.warn('⚠️ GenelPara API başarısız, alternatif deneniyor:', error2);
+            } catch (error) {
+                console.warn('⚠️ Döviz kuru API başarısız, varsayılan kurlar kullanılıyor:', error);
+                exchangeRates.lastUpdate = new Date().toISOString().split('T')[0];
+                exchangeRates.apiSource = 'Varsayılan';
             }
-
-            try {
-                // 3. API - Vakıfbank API (Türk bankası - Resmi kurlar)
-                const response3 = await fetch('https://api.vakifbank.com.tr/api/open/currency/rates', {
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                });
-                const data3 = await response3.json();
-
-                if (data3 && data3.data && Array.isArray(data3.data)) {
-                    const usdData = data3.data.find(item => item.code === 'USD');
-                    const eurData = data3.data.find(item => item.code === 'EUR');
-
-                    if (usdData && eurData) {
-                        exchangeRates.USD = parseFloat(usdData.sellingPrice).toFixed(2);
-                        exchangeRates.EUR = parseFloat(eurData.sellingPrice).toFixed(2);
-                        exchangeRates.lastUpdate = new Date().toISOString().split('T')[0];
-                        exchangeRates.apiSource = 'Vakıfbank';
-                        console.log('✅ Vakıfbank API - Güncel kurlar:', exchangeRates);
-                        return;
-                    }
-                }
-            } catch (error3) {
-                console.warn('⚠️ Vakıfbank API başarısız, alternatif deneniyor:', error3);
-            }
-
-            try {
-                // 4. API - Collecting API (Türk - TCMB verisi tabanlı)
-                const response4 = await fetch('https://api.collectapi.com/economy/currencyToTry?tag=USD,EUR', {
-                    headers: {
-                        'authorization': 'apikey 3SYE8zNlolshch04auVAOs:1234567890', // Demo key
-                        'content-type': 'application/json'
-                    }
-                });
-                const data4 = await response4.json();
-
-                if (data4 && data4.result && Array.isArray(data4.result)) {
-                    const usdData = data4.result.find(item => item.name === 'USD');
-                    const eurData = data4.result.find(item => item.name === 'EUR');
-
-                    if (usdData && eurData) {
-                        exchangeRates.USD = parseFloat(usdData.selling).toFixed(2);
-                        exchangeRates.EUR = parseFloat(eurData.selling).toFixed(2);
-                        exchangeRates.lastUpdate = new Date().toISOString().split('T')[0];
-                        exchangeRates.apiSource = 'CollectAPI';
-                        console.log('✅ CollectAPI - Güncel kurlar:', exchangeRates);
-                        return;
-                    }
-                }
-            } catch (error4) {
-                console.warn('⚠️ CollectAPI başarısız:', error4);
-            }
-
-            // Tüm API'ler başarısız
-            console.warn('❌ Tüm döviz kuru API\'leri başarısız! Varsayılan kurlar kullanılıyor:', exchangeRates);
-            exchangeRates.lastUpdate = new Date().toISOString().split('T')[0];
-            exchangeRates.apiSource = 'Varsayılan (Google)';
         }
 
         // Müşteri verilerini topla ve özet istatistikleri oluştur
