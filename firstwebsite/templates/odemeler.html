@@ -398,86 +398,138 @@
                 <div class="stats-content">
                     <!-- ÖZET SEKMESİ -->
                     <div class="stats-tab-content active" id="summary-tab">
-                        <div class="stats-summary-grid">
-                            <!-- Ana Kartlar -->
-                            <div class="summary-main-cards">
-                                <div class="summary-card total-amount">
-                                    <div class="card-icon"><i class="material-icons">payments</i></div>
-                                    <div class="card-content">
-                                        <h3>Toplam Alacak (TL)</h3>
-                                        <p id="totalAmount">0 TL</p>
+                        <!-- Ana İstatistik Kartları (Büyük) -->
+                        <div class="modern-stats-grid">
+                            <div class="modern-stat-card primary">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-wrapper primary-bg">
+                                        <i class="material-icons">account_balance_wallet</i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Toplam Alacak</span>
+                                        <span class="stat-badge">TL Bazlı</span>
                                     </div>
                                 </div>
-                                <div class="summary-card total-paid">
-                                    <div class="card-icon"><i class="material-icons">check_circle</i></div>
-                                    <div class="card-content">
-                                        <h3>Ödenen Tutar (TL)</h3>
-                                        <p id="totalPaid">0 TL</p>
-                                    </div>
-                                </div>
-                                <div class="summary-card total-unpaid">
-                                    <div class="card-icon"><i class="material-icons">error</i></div>
-                                    <div class="card-content">
-                                        <h3>Ödenmemiş Tutar (TL)</h3>
-                                        <p id="totalUnpaid">0 TL</p>
-                                    </div>
-                                </div>
-                                <div class="summary-card client-count">
-                                    <div class="card-icon"><i class="material-icons">people</i></div>
-                                    <div class="card-content">
-                                        <h3>Toplam Müvekkil</h3>
-                                        <p id="clientCount">0</p>
-                                    </div>
+                                <div class="stat-value primary-text" id="totalAmount">0 TL</div>
+                                <div class="stat-footer">
+                                    <i class="material-icons tiny">info</i>
+                                    <span>Tüm ödeme kayıtlarının toplamı</span>
                                 </div>
                             </div>
 
-                            <!-- Detay Kartları -->
-                            <div class="summary-detail-cards">
-                                <div class="summary-card detail-card expected-next-year">
-                                    <div class="card-icon"><i class="material-icons">event_available</i></div>
-                                    <div class="card-content">
-                                        <h4>Gelecek Yıl Beklenen (TL)</h4>
-                                        <p id="expectedNextYear">0 TL</p>
+                            <div class="modern-stat-card success">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-wrapper success-bg">
+                                        <i class="material-icons">check_circle</i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Tahsil Edilen</span>
+                                        <span class="stat-badge">Ödendi</span>
                                     </div>
                                 </div>
-                                <div class="summary-card detail-card highest-payment">
-                                    <div class="card-icon"><i class="material-icons">star</i></div>
-                                    <div class="card-content">
-                                        <h4>En Yüksek Ödeme</h4>
-                                        <p id="highestPaymentInfo">-</p>
+                                <div class="stat-value success-text" id="totalPaid">0 TL</div>
+                                <div class="stat-footer">
+                                    <i class="material-icons tiny">trending_up</i>
+                                    <span id="paidPercentageText">%0</span>
+                                </div>
+                            </div>
+
+                            <div class="modern-stat-card warning">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-wrapper warning-bg">
+                                        <i class="material-icons">pending</i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Bekleyen Tahsilat</span>
+                                        <span class="stat-badge">Ödenmedi</span>
                                     </div>
                                 </div>
-                                <div class="summary-card detail-card overdue-payments">
-                                    <div class="card-icon"><i class="material-icons">warning</i></div>
-                                    <div class="card-content">
-                                        <h4>Vadesi Geçmiş Ödeme Sayısı</h4>
-                                        <p id="overdueCount">0</p>
+                                <div class="stat-value warning-text" id="totalUnpaid">0 TL</div>
+                                <div class="stat-footer">
+                                    <i class="material-icons tiny">schedule</i>
+                                    <span id="unpaidPercentageText">%0</span>
+                                </div>
+                            </div>
+
+                            <div class="modern-stat-card info">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-wrapper info-bg">
+                                        <i class="material-icons">groups</i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Toplam Müvekkil</span>
+                                        <span class="stat-badge">Aktif</span>
                                     </div>
                                 </div>
-                                <div class="summary-card detail-card avg-installments">
-                                    <div class="card-icon"><i class="material-icons">format_list_numbered</i></div>
-                                    <div class="card-content">
-                                        <h4>Ort. Taksit Sayısı / Ödenen</h4>
-                                        <p id="avgInstallmentInfo">0 / 0</p>
-                                    </div>
+                                <div class="stat-value info-text" id="clientCount">0</div>
+                                <div class="stat-footer">
+                                    <i class="material-icons tiny">person_add</i>
+                                    <span>Kayıtlı müvekkil sayısı</span>
                                 </div>
-                                <div class="summary-card detail-card currency-breakdown-usd">
-                                    <div class="card-icon"><i class="material-icons">attach_money</i></div>
-                                    <div class="card-content">
-                                        <h4>USD İşlem Özeti</h4>
-                                        <p id="totalAmountUSD">Toplam: 0 USD</p>
-                                        <p id="totalPaidUSD">Ödenen: 0 USD</p>
-                                        <p id="totalUnpaidUSD">Beklenen: 0 USD</p>
-                                    </div>
+                            </div>
+                        </div>
+
+                        <!-- Detay Kartları (Küçük - 3 Sütun) -->
+                        <div class="detail-stats-grid">
+                            <div class="detail-stat-card">
+                                <div class="detail-icon purple-bg">
+                                    <i class="material-icons">event_available</i>
                                 </div>
-                                <div class="summary-card detail-card currency-breakdown-eur">
-                                    <div class="card-icon"><i class="material-icons">euro_symbol</i></div>
-                                    <div class="card-content">
-                                        <h4>EUR İşlem Özeti</h4>
-                                        <p id="totalAmountEUR">Toplam: 0 EUR</p>
-                                        <p id="totalPaidEUR">Ödenen: 0 EUR</p>
-                                        <p id="totalUnpaidEUR">Beklenen: 0 EUR</p>
-                                    </div>
+                                <div class="detail-content">
+                                    <span class="detail-label">Gelecek Yıl Beklenen</span>
+                                    <span class="detail-value" id="expectedNextYear">0 TL</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-stat-card">
+                                <div class="detail-icon orange-bg">
+                                    <i class="material-icons">star</i>
+                                </div>
+                                <div class="detail-content">
+                                    <span class="detail-label">En Yüksek Ödeme</span>
+                                    <span class="detail-value" id="highestPaymentInfo">-</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-stat-card">
+                                <div class="detail-icon red-bg">
+                                    <i class="material-icons">warning</i>
+                                </div>
+                                <div class="detail-content">
+                                    <span class="detail-label">Vadesi Geçmiş</span>
+                                    <span class="detail-value" id="overdueCount">0</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-stat-card">
+                                <div class="detail-icon teal-bg">
+                                    <i class="material-icons">format_list_numbered</i>
+                                </div>
+                                <div class="detail-content">
+                                    <span class="detail-label">Ort. Taksit Sayısı</span>
+                                    <span class="detail-value" id="avgInstallmentInfo">0 / 0</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-stat-card">
+                                <div class="detail-icon indigo-bg">
+                                    <i class="material-icons">attach_money</i>
+                                </div>
+                                <div class="detail-content">
+                                    <span class="detail-label">USD Bakiye</span>
+                                    <span class="detail-value" id="totalAmountUSD">0 USD</span>
+                                    <span class="detail-subvalue" id="totalAmountUSDinTL">≈ 0 TL</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-stat-card">
+                                <div class="detail-icon blue-bg">
+                                    <i class="material-icons">euro_symbol</i>
+                                </div>
+                                <div class="detail-content">
+                                    <span class="detail-label">EUR Bakiye</span>
+                                    <span class="detail-value" id="totalAmountEUR">0 EUR</span>
+                                    <span class="detail-subvalue" id="totalAmountEURinTL">≈ 0 TL</span>
                                 </div>
                             </div>
                         </div>
@@ -1589,87 +1641,203 @@
             }
         }
 
-        .summary-main-cards, 
-        .summary-detail-cards {
+        /* Modern İstatistik Kartları - Ana Grid */
+        .modern-stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
         }
 
-        .summary-card {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-            padding: 16px;
+        .modern-stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #f0f0f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modern-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .modern-stat-card.primary::before { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .modern-stat-card.success::before { background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); }
+        .modern-stat-card.warning::before { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
+        .modern-stat-card.info::before { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); }
+
+        .modern-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        }
+
+        .modern-stat-card:hover::before {
+            width: 6px;
+        }
+
+        .stat-card-header {
             display: flex;
             align-items: center;
-            transition: transform 0.2s, box-shadow 0.2s;
+            gap: 16px;
+            margin-bottom: 20px;
         }
 
-        .summary-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-        }
-
-        .summary-card .card-icon {
+        .stat-icon-wrapper {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            margin-right: 15px;
             flex-shrink: 0;
         }
 
-        .summary-card .card-icon i {
+        .stat-icon-wrapper.primary-bg { background: linear-gradient(135deg, #667eea22 0%, #764ba222 100%); }
+        .stat-icon-wrapper.success-bg { background: linear-gradient(135deg, #4caf5022 0%, #45a04922 100%); }
+        .stat-icon-wrapper.warning-bg { background: linear-gradient(135deg, #ff980022 0%, #f57c0022 100%); }
+        .stat-icon-wrapper.info-bg { background: linear-gradient(135deg, #2196f322 0%, #1976d222 100%); }
+
+        .stat-icon-wrapper i {
             font-size: 28px;
-            color: white;
         }
 
-        .summary-card .card-content {
-            flex-grow: 1;
+        .stat-icon-wrapper.primary-bg i { color: #667eea; }
+        .stat-icon-wrapper.success-bg i { color: #4caf50; }
+        .stat-icon-wrapper.warning-bg i { color: #ff9800; }
+        .stat-icon-wrapper.info-bg i { color: #2196f3; }
+
+        .stat-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
-        .summary-card h3, .summary-card h4 {
-            margin: 0 0 5px 0;
-            font-weight: 600;
-            color: #343a40;
-        }
-
-        .summary-card h3 {
+        .stat-label {
             font-size: 0.9rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .summary-card h4 {
+        .stat-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: #f1f5f9;
+            color: #475569;
+            width: fit-content;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            line-height: 1;
+        }
+
+        .stat-value.primary-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat-value.success-text { color: #4caf50; }
+        .stat-value.warning-text { color: #ff9800; }
+        .stat-value.info-text { color: #2196f3; }
+
+        .stat-footer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-top: 12px;
+            border-top: 1px solid #f1f5f9;
+            color: #94a3b8;
             font-size: 0.85rem;
         }
 
-        .summary-card p {
-            margin: 0;
-            font-size: 1.1rem;
+        .stat-footer i.tiny {
+            font-size: 16px;
+        }
+
+        /* Detay Kartları Grid */
+        .detail-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .detail-stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+        }
+
+        .detail-stat-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .detail-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .detail-icon i {
+            font-size: 24px;
+            color: white;
+        }
+
+        .detail-icon.purple-bg { background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); }
+        .detail-icon.orange-bg { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
+        .detail-icon.red-bg { background: linear-gradient(135deg, #f44336 0%, #e53935 100%); }
+        .detail-icon.teal-bg { background: linear-gradient(135deg, #009688 0%, #00796b 100%); }
+        .detail-icon.indigo-bg { background: linear-gradient(135deg, #3f51b5 0%, #303f9f 100%); }
+        .detail-icon.blue-bg { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); }
+
+        .detail-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-size: 1.3rem;
             font-weight: 700;
-            color: #212529;
+            color: #1e293b;
         }
 
-        .detail-card p {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 2px;
-            color: #495057;
+        .detail-subvalue {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
         }
-
-        /* Kart özel stilleri */
-        .summary-card.total-amount .card-icon { background-color: #4361ee; }
-        .summary-card.total-paid .card-icon { background-color: #4caf50; }
-        .summary-card.total-unpaid .card-icon { background-color: #f44336; }
-        .summary-card.client-count .card-icon { background-color: #2196f3; }
-        .summary-card.detail-card.expected-next-year .card-icon { background-color: #3f51b5; }
-        .summary-card.detail-card.highest-payment .card-icon { background-color: #ff9800; }
-        .summary-card.detail-card.overdue-payments .card-icon { background-color: #e91e63; }
-        .summary-card.detail-card.avg-installments .card-icon { background-color: #009688; }
-        .summary-card.detail-card.currency-breakdown-usd .card-icon { background-color: #9c27b0; }
-        .summary-card.detail-card.currency-breakdown-eur .card-icon { background-color: #673ab7; }
 
         /* Tablolar için stil */
         .summary-extra-info {
@@ -2758,9 +2926,34 @@
         window.openEditModal = openEditModal;
         window.deletePayment = deletePayment;
 
+        // Döviz kurları için global değişken
+        let exchangeRates = {
+            USD: 34.50, // Varsayılan kur
+            EUR: 37.20  // Varsayılan kur
+        };
+
+        // Güncel döviz kurlarını çek
+        async function fetchExchangeRates() {
+            try {
+                const response = await fetch('https://api.exchangerate-api.com/v4/latest/TRY');
+                const data = await response.json();
+                if (data && data.rates) {
+                    exchangeRates.USD = (1 / data.rates.USD).toFixed(2);
+                    exchangeRates.EUR = (1 / data.rates.EUR).toFixed(2);
+                    console.log('Güncel döviz kurları:', exchangeRates);
+                }
+            } catch (error) {
+                console.warn('Döviz kuru çekilemedi, varsayılan kurlar kullanılıyor:', error);
+            }
+        }
+
         // Müşteri verilerini topla ve özet istatistikleri oluştur
-        function generateStats() {
+        async function generateStats() {
             console.log("İstatistikler hesaplanıyor...");
+
+            // İlk önce döviz kurlarını çek
+            await fetchExchangeRates();
+
             const clients = Array.from(document.querySelectorAll('.data-table tbody tr'));
             
             // Temel değişkenleri başlat
@@ -4349,24 +4542,42 @@
         function populateSummaryTab(data) {
             if (!data) return;
 
-            const { currencyTotals, highestPayment, overdueCount, expectedPaymentsByYear, totalInstallments, paidInstallments, clientCount, paidCount } = data; // paidCount eklendi
+            const { currencyTotals, highestPayment, overdueCount, expectedPaymentsByYear, totalInstallments, paidInstallments, clientCount, paidCount, unpaidCount } = data;
 
-            // Ana TL kartları zaten generateStats içinde güncelleniyor.
-            document.getElementById('expectedNextYear').textContent = `${formatCurrency(currencyTotals.TL.expectedNextYear)} TL`; // TRY -> TL olarak düzeltildi
-            document.getElementById('highestPaymentInfo').textContent = `${highestPayment.clientName} - ${formatCurrency(highestPayment.amount)} ${highestPayment.currency} (${highestPayment.date})`;
-            document.getElementById('overdueCount').textContent = overdueCount;
+            // Ana kartlar
+            document.getElementById('totalAmount').textContent = `${formatCurrency(currencyTotals.TL.total)} TL`;
+            document.getElementById('totalPaid').textContent = `${formatCurrency(currencyTotals.TL.paid)} TL`;
+            document.getElementById('totalUnpaid').textContent = `${formatCurrency(currencyTotals.TL.unpaid)} TL`;
+            document.getElementById('clientCount').textContent = clientCount || 0;
+
+            // Yüzdelik hesaplamalar
+            const totalAmount = currencyTotals.TL.total;
+            const paidPercentage = totalAmount > 0 ? ((currencyTotals.TL.paid / totalAmount) * 100).toFixed(1) : 0;
+            const unpaidPercentage = totalAmount > 0 ? ((currencyTotals.TL.unpaid / totalAmount) * 100).toFixed(1) : 0;
+
+            document.getElementById('paidPercentageText').textContent = `%${paidPercentage} tahsil edildi`;
+            document.getElementById('unpaidPercentageText').textContent = `%${unpaidPercentage} beklemede`;
+
+            // Detay kartları
+            document.getElementById('expectedNextYear').textContent = `${formatCurrency(currencyTotals.TL.expectedNextYear)} TL`;
+            document.getElementById('highestPaymentInfo').textContent = `${formatCurrency(highestPayment.amount)} ${highestPayment.currency}`;
+            document.getElementById('overdueCount').textContent = `${overdueCount} Ödeme`;
+
             const avgInstallments = clientCount > 0 ? (totalInstallments / clientCount).toFixed(1) : 0;
             const avgPaidInstallments = paidCount > 0 ? (paidInstallments / paidCount).toFixed(1) : 0;
             document.getElementById('avgInstallmentInfo').textContent = `${avgInstallments} / ${avgPaidInstallments}`;
 
-            // Diğer para birimleri için özetler
-            document.getElementById('totalAmountUSD').textContent = `Toplam: ${formatCurrency(currencyTotals.USD.total)} USD`;
-            document.getElementById('totalPaidUSD').textContent = `Ödenen: ${formatCurrency(currencyTotals.USD.paid)} USD`;
-            document.getElementById('totalUnpaidUSD').textContent = `Beklenen: ${formatCurrency(currencyTotals.USD.unpaid)} USD`;
+            // USD ve EUR bakiyeleri (TL karşılığı ile)
+            const usdTotal = currencyTotals.USD.total;
+            const eurTotal = currencyTotals.EUR.total;
+            const usdInTL = usdTotal * parseFloat(exchangeRates.USD);
+            const eurInTL = eurTotal * parseFloat(exchangeRates.EUR);
 
-            document.getElementById('totalAmountEUR').textContent = `Toplam: ${formatCurrency(currencyTotals.EUR.total)} EUR`;
-            document.getElementById('totalPaidEUR').textContent = `Ödenen: ${formatCurrency(currencyTotals.EUR.paid)} EUR`;
-            document.getElementById('totalUnpaidEUR').textContent = `Beklenen: ${formatCurrency(currencyTotals.EUR.unpaid)} EUR`;
+            document.getElementById('totalAmountUSD').textContent = `${formatCurrency(usdTotal)} USD`;
+            document.getElementById('totalAmountUSDinTL').textContent = `≈ ${formatCurrency(usdInTL)} TL (${exchangeRates.USD} ₺/USD)`;
+
+            document.getElementById('totalAmountEUR').textContent = `${formatCurrency(eurTotal)} EUR`;
+            document.getElementById('totalAmountEURinTL').textContent = `≈ ${formatCurrency(eurInTL)} TL (${exchangeRates.EUR} ₺/EUR)`;
 
             // Yıllara Göre Beklenen Ödemeler Tablosu
             const tableContainer = document.getElementById('expectedPaymentsByYearTableContainer');
