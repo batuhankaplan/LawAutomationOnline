@@ -398,6 +398,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function handleAddNewCategory() {
+        // Yetki kontrolü
+        if (!hasPermission('ucret_tarifeleri')) {
+            showToast('Yetkisiz İşlem', 'Kategori eklemek için yetkiniz yok.', 'danger');
+            return;
+        }
+
         const newCategoryId = 'kategori_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
         const newCategory = {
             id: newCategoryId,
@@ -410,6 +416,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function handleDeleteCategory(kategoriIndex, kategoriId) {
+        // Yetki kontrolü
+        if (!hasPermission('ucret_tarifeleri')) {
+            showToast('Yetkisiz İşlem', 'Kategori silmek için yetkiniz yok.', 'danger');
+            return;
+        }
+
         const kategoriAdi = kaplanDanismanlikTarifeData.kategoriler[kategoriIndex].kategoriAdi || 'Bu';
         if (confirm(`"${kategoriAdi}" kategorisini ve içindeki tüm hizmetleri silmek istediğinizden emin misiniz?`)) {
             kaplanDanismanlikTarifeData.kategoriler.splice(kategoriIndex, 1);
@@ -429,6 +441,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     function handleAddNewService(kategoriIndex, kategoriId) {
+        // Yetki kontrolü
+        if (!hasPermission('ucret_tarifeleri')) {
+            showToast('Yetkisiz İşlem', 'Hizmet eklemek için yetkiniz yok.', 'danger');
+            return;
+        }
+
         const kategori = kaplanDanismanlikTarifeData.kategoriler[kategoriIndex];
         if (!kategori) return;
         if (!kategori.hizmetler) kategori.hizmetler = [];
@@ -447,6 +465,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function handleDeleteService(kategoriId, hizmetIndex, hizmetId) {
+        // Yetki kontrolü
+        if (!hasPermission('ucret_tarifeleri')) {
+            showToast('Yetkisiz İşlem', 'Hizmet silmek için yetkiniz yok.', 'danger');
+            return;
+        }
+
          const kategori = kaplanDanismanlikTarifeData.kategoriler.find(k => k.id === kategoriId);
          if (!kategori || !kategori.hizmetler) return;
          const hizmetAdi = kategori.hizmetler[hizmetIndex].hizmetAdi || 'Bu hizmet';
@@ -607,6 +631,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function handleSaveKaplanDanismanlikTarife() {
         if (!kaydetKaplanDanismanlikTarifeBtn) return;
+
+        // Yetki kontrolü
+        if (!hasPermission('ucret_tarifeleri')) {
+            showToast('Yetkisiz İşlem', 'Ücret tarifelerini kaydetmek için yetkiniz yok.', 'danger');
+            return;
+        }
+
         kaydetKaplanDanismanlikTarifeBtn.disabled = true;
         kaydetKaplanDanismanlikTarifeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Kaydediliyor...';
 
@@ -644,6 +675,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Event Listeners for Kaplan Section Buttons
     if (kaplanDuzenleBtn) {
         kaplanDuzenleBtn.addEventListener('click', () => {
+            // Yetki kontrolü
+            if (!hasPermission('ucret_tarifeleri')) {
+                showToast('Yetkisiz İşlem', 'Ücret tarifelerini düzenlemek için yetkiniz yok.', 'danger');
+                return;
+            }
             isKaplanEditModeActive = true; // Düzenleme moduna geç
             renderKaplanDanismanlikSection();
         });
@@ -675,22 +711,28 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function handleAddNewExtra(kategoriId, hizmetIndex, hizmetId) {
+        // Yetki kontrolü
+        if (!hasPermission('ucret_tarifeleri')) {
+            showToast('Yetkisiz İşlem', 'Ekstra eklemek için yetkiniz yok.', 'danger');
+            return;
+        }
+
         const kategori = kaplanDanismanlikTarifeData.kategoriler.find(k => k.id === kategoriId);
         if (!kategori || !kategori.hizmetler) {
             console.error("Ekstra eklenirken kategori bulunamadı veya kategoride hizmetler dizisi yok:", kategoriId);
             return;
         }
-    
+
         const hizmet = kategori.hizmetler[hizmetIndex];
         if (!hizmet || hizmet.id !== hizmetId) {
             console.error("Ekstra eklenirken hizmet bulunamadı veya hizmet ID eşleşmedi:", kategoriId, hizmetIndex, hizmetId);
-            if (!hizmet) return; 
+            if (!hizmet) return;
         }
-    
+
         if (!hizmet.ekstralar) {
             hizmet.ekstralar = [];
         }
-    
+
         const newExtraId = 'ekstra_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         const newExtra = {
             id: newExtraId,
@@ -702,26 +744,32 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function handleDeleteExtra(hizmetId, ekstraIndex, ekstraId) {
+        // Yetki kontrolü
+        if (!hasPermission('ucret_tarifeleri')) {
+            showToast('Yetkisiz İşlem', 'Ekstra silmek için yetkiniz yok.', 'danger');
+            return;
+        }
+
         let hizmetBulundu = null;
         // Kategori ve hizmeti bulmak için daha basit bir yol:
-        const kategori = kaplanDanismanlikTarifeData.kategoriler.find(kat => 
+        const kategori = kaplanDanismanlikTarifeData.kategoriler.find(kat =>
             kat.hizmetler && kat.hizmetler.some(h => h.id === hizmetId)
         );
         if (kategori) {
             hizmetBulundu = kategori.hizmetler.find(h => h.id === hizmetId);
         }
-    
+
         if (!hizmetBulundu || !hizmetBulundu.ekstralar) {
             console.error("Ekstra silinirken hizmet bulunamadı veya ekstralar dizisi yok:", hizmetId);
             return;
         }
-    
+
         const ekstra = hizmetBulundu.ekstralar[ekstraIndex];
         if (!ekstra || ekstra.id !== ekstraId) {
             console.error("Ekstra silinirken ID eşleşmedi veya ekstra bulunamadı", hizmetId, ekstraIndex, ekstraId);
             if(!ekstra) return;
         }
-        
+
         const ekstraAciklamasi = ekstra.aciklama || 'Bu ekstra';
         if (confirm(`"${ekstraAciklamasi}" ekstrasını silmek istediğinizden emin misiniz?`)) {
             hizmetBulundu.ekstralar.splice(ekstraIndex, 1);
