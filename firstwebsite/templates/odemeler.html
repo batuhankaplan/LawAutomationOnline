@@ -4761,32 +4761,65 @@
                     }
                     
                     if (row) {
-                        row.querySelector('td:nth-child(1)').textContent = data.name;
-                        row.querySelector('td:nth-child(2)').textContent = data.surname;
-                        row.querySelector('td:nth-child(3)').textContent = data.tc;
-                        
+                        // Ödeme Türü güncelleme (1. sütun - nth-child(1))
+                        const paymentTypeCell = row.querySelector('td:nth-child(1)');
+                        if (paymentTypeCell && data.payment_type) {
+                            // Ödeme türüne göre renk sınıfını belirle
+                            let typeClass = '';
+                            if (data.payment_type.includes('Danışma')) typeClass = 'payment-type-danisma';
+                            else if (data.payment_type.includes('İhtarname')) typeClass = 'payment-type-ihtarname';
+                            else if (data.payment_type.includes('Dilekçe')) typeClass = 'payment-type-dilekce';
+                            else if (data.payment_type.includes('Dosya')) typeClass = 'payment-type-dosya';
+                            else if (data.payment_type.includes('Sözleşme')) typeClass = 'payment-type-sozlesme';
+                            else if (data.payment_type.includes('Mahkeme')) typeClass = 'payment-type-mahkeme';
+                            else if (data.payment_type.includes('Diğer')) typeClass = 'payment-type-diger';
+
+                            paymentTypeCell.innerHTML = `<span class="payment-type-badge ${typeClass}">${data.payment_type}</span>`;
+                        }
+
+                        // Diğer alanları güncelle (sütun sıralaması: 0=payment_type, 1=name, 2=surname, 3=tc, 4=amount, 5=installments, 6=reg_date, 7=due_date, 8=status)
+                        row.querySelector('td:nth-child(2)').textContent = data.name;
+                        row.querySelector('td:nth-child(3)').textContent = data.surname;
+                        row.querySelector('td:nth-child(4)').textContent = data.tc;
+
                         // Para birimini belirle
                         let currencySymbol = '';
                         if (data.currency === 'TL') currencySymbol = 'TL';
                         else if (data.currency === 'USD') currencySymbol = 'USD';
                         else if (data.currency === 'EUR') currencySymbol = 'EUR';
-                        
-                        row.querySelector('td:nth-child(4)').textContent = `${parseFloat(data.amount).toFixed(1)} ${currencySymbol}`;
-                        row.querySelector('td:nth-child(5)').textContent = data.installments;
-                        
-                        // Durum güncelleme
-                        const statusCell = row.querySelector('td:nth-child(8)');
+
+                        row.querySelector('td:nth-child(5)').textContent = `${parseFloat(data.amount).toFixed(1)} ${currencySymbol}`;
+                        row.querySelector('td:nth-child(6)').textContent = data.installments;
+
+                        // Tarih güncellemeleri
+                        if (data.registration_date) {
+                            row.querySelector('td:nth-child(7)').textContent = data.registration_date;
+                        }
+                        if (data.due_date) {
+                            row.querySelector('td:nth-child(8)').textContent = data.due_date;
+                        }
+
+                        // Durum güncelleme (9. sütun)
+                        const statusCell = row.querySelector('td:nth-child(9)');
                         if (statusCell) {
-                            const statusButton = statusCell.querySelector('button');
-                            if (statusButton) {
+                            const statusBadge = statusCell.querySelector('.status-badge');
+                            if (statusBadge) {
                                 if (data.status === 'Ödendi') {
-                                    statusButton.className = 'odendi-btn';
-                                    statusButton.textContent = 'Ödendi';
+                                    statusBadge.className = 'status-badge status-paid';
+                                    statusBadge.textContent = 'Ödendi';
                                 } else {
-                                    statusButton.className = 'odenmedi-btn';
-                                    statusButton.textContent = 'Ödenmedi';
+                                    statusBadge.className = 'status-badge status-unpaid';
+                                    statusBadge.textContent = 'Ödenmedi';
                                 }
                             }
+                        }
+
+                        // Açıklama ve ödeme türü data attribute'lerini güncelle
+                        if (data.description) {
+                            row.setAttribute('data-description', data.description);
+                        }
+                        if (data.payment_type) {
+                            row.setAttribute('data-payment-type', data.payment_type);
                         }
                     }
                     
