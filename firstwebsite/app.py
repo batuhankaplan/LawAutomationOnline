@@ -1180,9 +1180,13 @@ def odemeler():
         if request.form.get('due_date'):
             due_date = datetime.strptime(request.form.get('due_date'), '%Y-%m-%d').date()
         
-        # Ödeme türünü ve açıklamayı al
+        # Ödeme türünü, durumunu ve açıklamayı al
         payment_type = request.form.get('payment_type')
         description = request.form.get('description')
+        status = request.form.get('status', 'unpaid')  # Frontend'den 'paid' veya 'unpaid' gelir
+
+        # Status değerini Türkçe karşılığına çevir
+        status_tr = 'Ödendi' if status == 'paid' else 'Ödenmedi'
 
         # Yeni client oluştur
         new_client = Client(
@@ -1195,7 +1199,8 @@ def odemeler():
             registration_date=registration_date,
             due_date=due_date,
             payment_type=payment_type,
-            description=description
+            description=description,
+            status=status_tr
         )
         
         # Kaydet
