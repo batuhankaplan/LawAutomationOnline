@@ -3379,90 +3379,12 @@
             const overduePercentage = unpaidCount > 0 ? (overdueCount / unpaidCount) * 100 : 0;
             
             const avgDueTime = overdueCount > 0 ? totalOverdueDays / overdueCount : 0;
-            
-            // HTML elementlerine verileri aktar
-            document.getElementById('totalAmount').textContent = `${formatCurrency(currencyTotals.TL.total)} TL`;
-            document.getElementById('totalPaid').textContent = `${formatCurrency(currencyTotals.TL.paid)} TL`;
-            document.getElementById('totalUnpaid').textContent = `${formatCurrency(currencyTotals.TL.unpaid)} TL`;
-            document.getElementById('clientCount').textContent = clients.length;
-            
-            // Ekstra detay alanları
-            document.getElementById('expectedNextYear').textContent = `${formatCurrency(currencyTotals.TL.expectedNextYear)} TL`;
-            document.getElementById('highestPaymentInfo').textContent = `${highestPayment.clientName} - ${formatCurrency(highestPayment.amount)} ${highestPayment.currency} (${highestPayment.date})`;
-            document.getElementById('overdueCount').textContent = overdueCount;
-            
             const avgInstallments = clients.length > 0 ? (totalInstallments / clients.length).toFixed(1) : 0;
             const avgPaidInstallments = paidCount > 0 ? (paidInstallments / paidCount).toFixed(1) : 0;
-            document.getElementById('avgInstallmentInfo').textContent = `${avgInstallments} / ${avgPaidInstallments}`;
-            
-            // Para birimi özetleri
-            document.getElementById('totalAmountUSD').textContent = `Toplam: ${formatCurrency(currencyTotals.USD.total)} USD`;
-            document.getElementById('totalPaidUSD').textContent = `Ödenen: ${formatCurrency(currencyTotals.USD.paid)} USD`;
-            document.getElementById('totalUnpaidUSD').textContent = `Beklenen: ${formatCurrency(currencyTotals.USD.unpaid)} USD`;
-            
-            document.getElementById('totalAmountEUR').textContent = `Toplam: ${formatCurrency(currencyTotals.EUR.total)} EUR`;
-            document.getElementById('totalPaidEUR').textContent = `Ödenen: ${formatCurrency(currencyTotals.EUR.paid)} EUR`;
-            document.getElementById('totalUnpaidEUR').textContent = `Beklenen: ${formatCurrency(currencyTotals.EUR.unpaid)} EUR`;
-            
-            // Durum kartları
-            document.getElementById('paidPercentage').textContent = `${Math.round(paidPercentage)}%`;
-            document.getElementById('unpaidPercentage').textContent = `${Math.round(unpaidPercentage)}%`;
-            document.getElementById('overduePercentage').textContent = `${Math.round(overduePercentage)}%`;
-            
-            document.getElementById('paidClients').textContent = `${paidCount} Müvekkil`;
-            document.getElementById('unpaidClients').textContent = `${unpaidCount} Müvekkil`;
-            // *** DÜZELTİLDİ: overdueAmount artık hesaplanan toplamı kullanıyor ***
-            document.getElementById('overdueAmount').textContent = `${typeof formatCurrency === 'function' ? formatCurrency(totalOverdueAmountTL) : totalOverdueAmountTL} TL`;
-            
-            // Ödeme durumu istatistikleri
-            document.getElementById('paidTransCount').textContent = paidCount;
-            document.getElementById('unpaidTransCount').textContent = unpaidCount;
-            document.getElementById('overdueTransCount').textContent = overdueCount;
-            
-            document.getElementById('paidTransPercentage').textContent = `${Math.round(paidPercentage)}%`;
-            document.getElementById('unpaidTransPercentage').textContent = `${Math.round(unpaidPercentage)}%`;
-            document.getElementById('overdueTransPercentage').textContent = `${Math.round(overduePercentage)}%`;
-            
-            // Vade durumu istatistikleri
-            document.getElementById('avgDueTime').textContent = `${Math.round(avgDueTime)} Gün`;
-            document.getElementById('totalOverdueDays').textContent = `${totalOverdueDays} Gün`;
-            
-            if (mostOverdue.days > 0) {
-                document.getElementById('mostOverdueInfo').textContent = 
-                    `${mostOverdue.clientName} - ${mostOverdue.days} gün`;
-            }
-            
-            // Para birimi analizi
-            document.getElementById('tryTransactionCount').textContent = currencyTotals.TL.transactions;
-            document.getElementById('usdTransactionCount').textContent = currencyTotals.USD.transactions;
-            document.getElementById('eurTransactionCount').textContent = currencyTotals.EUR.transactions;
-            
+
             // En çok kullanılan para birimi
-            const mostUsedCurrency = Object.keys(currencyTotals).reduce((a, b) => 
+            const mostUsedCurrency = Object.keys(currencyTotals).reduce((a, b) =>
                 currencyTotals[a].transactions > currencyTotals[b].transactions ? a : b);
-            document.getElementById('mostUsedCurrency').textContent = mostUsedCurrency;
-            
-            // Tahminler
-            document.getElementById('prediction30Days').textContent = `${formatCurrency(predictions.days30)} TL`;
-            document.getElementById('prediction90Days').textContent = `${formatCurrency(predictions.days90)} TL`;
-            document.getElementById('prediction180Days').textContent = `${formatCurrency(predictions.days180)} TL`;
-            document.getElementById('prediction365Days').textContent = `${formatCurrency(predictions.days365)} TL`;
-            
-            // Müvekkil analizi
-            document.getElementById('avgPerClient').textContent = `${formatCurrency(avgPerClient)} TL`;
-            document.getElementById('clientVariation').textContent = `${Math.round(clientVariation)}%`;
-            
-            if (highestClient.id) {
-                document.getElementById('highestClientValue').textContent = 
-                    `${formatCurrency(highestClient.amount)} ${highestClient.currency}`;
-                document.getElementById('highestClientName').textContent = highestClient.name;
-            }
-            
-            if (lowestClient.id && lowestClient.amount < Infinity) {
-                document.getElementById('lowestClientValue').textContent = 
-                    `${formatCurrency(lowestClient.amount)} ${lowestClient.currency}`;
-                document.getElementById('lowestClientName').textContent = lowestClient.name;
-            }
             
             // Yıl filtresi güncelle
             const yearFilter = document.getElementById('monthlyYearFilter');
@@ -3515,9 +3437,17 @@
                 lowestClient,
                 avgPerClient,
                 clientVariation,
-                totalOverdueAmountTL, // *** YENİ: Hesaplanan değeri ekle ***
+                totalOverdueAmountTL,
+                totalOverdueDays,
+                avgDueTime,
+                avgInstallments,
+                avgPaidInstallments,
+                mostUsedCurrency,
+                paidPercentage,
+                unpaidPercentage,
+                overduePercentage,
                 clients: clients.length,
-                paymentTypeStats // Ödeme türü istatistikleri
+                paymentTypeStats
             };
             
             // Aktif sekmeye göre ilgili grafik ve tabloyu oluştur
@@ -4619,13 +4549,13 @@
         function populateSummaryTab(data) {
             if (!data) return;
 
-            const { currencyTotals, highestPayment, overdueCount, expectedPaymentsByYear, totalInstallments, paidInstallments, clientCount, paidCount, unpaidCount } = data;
+            const { currencyTotals, highestPayment, overdueCount, expectedPaymentsByYear, totalInstallments, paidInstallments, clients, paidCount, unpaidCount } = data;
 
             // Ana kartlar
             document.getElementById('totalAmount').textContent = `${formatCurrency(currencyTotals.TL.total)} TL`;
             document.getElementById('totalPaid').textContent = `${formatCurrency(currencyTotals.TL.paid)} TL`;
             document.getElementById('totalUnpaid').textContent = `${formatCurrency(currencyTotals.TL.unpaid)} TL`;
-            document.getElementById('clientCount').textContent = clientCount || 0;
+            document.getElementById('clientCount').textContent = clients || 0;
 
             // Yüzdelik hesaplamalar
             const totalAmount = currencyTotals.TL.total;
@@ -4640,7 +4570,7 @@
             document.getElementById('highestPaymentInfo').textContent = `${formatCurrency(highestPayment.amount)} ${highestPayment.currency}`;
             document.getElementById('overdueCount').textContent = `${overdueCount} Ödeme`;
 
-            const avgInstallments = clientCount > 0 ? (totalInstallments / clientCount).toFixed(1) : 0;
+            const avgInstallments = clients > 0 ? (totalInstallments / clients).toFixed(1) : 0;
             const avgPaidInstallments = paidCount > 0 ? (paidInstallments / paidCount).toFixed(1) : 0;
             document.getElementById('avgInstallmentInfo').textContent = `${avgInstallments} / ${avgPaidInstallments}`;
 
