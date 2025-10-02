@@ -675,6 +675,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Event Listeners for Kaplan Section Buttons
     if (kaplanDuzenleBtn) {
         kaplanDuzenleBtn.addEventListener('click', () => {
+            // Debug için yetki kontrolü - geçici
+            console.log('=== YETKİ KONTROL DEBUG ===');
+            console.log('Tüm yetkiler:', USER_PERMISSIONS);
+            console.log('ucret_tarifeleri değeri:', USER_PERMISSIONS['ucret_tarifeleri']);
+            console.log('hasPermission sonucu:', hasPermission('ucret_tarifeleri'));
+            console.log('========================');
+
             // Yetki kontrolü
             if (!hasPermission('ucret_tarifeleri')) {
                 showToast('Yetkisiz İşlem', 'Ücret tarifelerini düzenlemek için yetkiniz yok.', 'danger');
