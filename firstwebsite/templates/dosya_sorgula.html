@@ -8160,7 +8160,7 @@ function createDocumentItemHTML(doc) {
     return `
         <div class="document-item" data-doc-id="${doc.id}">
             <div class="document-content">
-                <div class="document-main" onclick="${hasAttachments ? `toggleAttachments(${doc.id})` : ''}">
+                <div class="document-main" ${hasAttachments ? `onclick="event.stopPropagation(); toggleAttachments(${doc.id})"` : ''}>
                     <div class="document-info">
                         ${hasAttachments ? `<i class="material-icons expand-icon" id="expand-icon-${doc.id}" style="cursor: pointer; color: #6c757d; margin-right: 5px;">expand_more</i>` : ''}
                         <i class="material-icons">${getFileIcon(doc.filename || '')}</i>
