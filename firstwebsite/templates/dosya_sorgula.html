@@ -8070,7 +8070,7 @@ function displayDocumentsByType(documents) {
                     <span class="dropdown-arrow">▶</span>
                 </div>
                 <div class="document-type-content" id="${typeId}" style="display: none;">
-                    ${typeDocs.map(doc => createDocumentItemHTML(doc)).join('')}
+                    ${typeDocs.map(doc => createDocumentItemHTML(doc, type)).join('')}
                 </div>
             </div>
         `;
@@ -8093,9 +8093,9 @@ function toggleDocumentType(typeId) {
 }
 
 // Belge eklerini göster/gizle
-function toggleAttachments(docId) {
-    const attachmentsDiv = document.getElementById(`attachments-${docId}`);
-    const expandIcon = document.getElementById(`expand-icon-${docId}`);
+function toggleAttachments(uniqueId) {
+    const attachmentsDiv = document.getElementById(`attachments-${uniqueId}`);
+    const expandIcon = document.getElementById(`expand-icon-${uniqueId}`);
 
     if (attachmentsDiv) {
         if (attachmentsDiv.style.display === 'none') {
@@ -8109,15 +8109,18 @@ function toggleAttachments(docId) {
 }
 
 // Belge item HTML'ini oluştur
-function createDocumentItemHTML(doc) {
+function createDocumentItemHTML(doc, category = '') {
     const fileNameParts = doc.filename ? doc.filename.split('.') : ['', ''];
     const fileName = fileNameParts.slice(0, -1).join('.');
     const originalName = doc.filepath ? doc.filepath.split('_').slice(2).join('_') : '';
 
+    // Benzersiz ID için kategori ekle
+    const uniqueId = category ? `${category.replace(/\s+/g, '-')}-${doc.id}` : doc.id;
+
     // Ekleri varsa dropdown oluştur
     const hasAttachments = doc.attachments && doc.attachments.length > 0;
     const attachmentsHTML = hasAttachments ? `
-        <div class="document-attachments" id="attachments-${doc.id}" style="display: none; margin-top: 10px; padding-left: 40px; border-left: 3px solid #dee2e6;">
+        <div class="document-attachments" id="attachments-${uniqueId}" style="display: none; margin-top: 10px; padding-left: 40px; border-left: 3px solid #dee2e6;">
             ${doc.attachments.map(att => {
                 const attFileNameParts = att.filename ? att.filename.split('.') : ['', ''];
                 const attFileName = attFileNameParts.slice(0, -1).join('.');
@@ -8160,9 +8163,9 @@ function createDocumentItemHTML(doc) {
     return `
         <div class="document-item" data-doc-id="${doc.id}">
             <div class="document-content">
-                <div class="document-main" ${hasAttachments ? `onclick="event.stopPropagation(); toggleAttachments(${doc.id})"` : ''}>
+                <div class="document-main" ${hasAttachments ? `onclick="event.stopPropagation(); toggleAttachments('${uniqueId}')"` : ''}>
                     <div class="document-info">
-                        ${hasAttachments ? `<i class="material-icons expand-icon" id="expand-icon-${doc.id}" style="cursor: pointer; color: #6c757d; margin-right: 5px;">expand_more</i>` : ''}
+                        ${hasAttachments ? `<i class="material-icons expand-icon" id="expand-icon-${uniqueId}" style="cursor: pointer; color: #6c757d; margin-right: 5px;">expand_more</i>` : ''}
                         <i class="material-icons">${getFileIcon(doc.filename || '')}</i>
                         <div class="document-details">
                             <span class="document-name">${fileName} ${hasAttachments ? `<span style="font-size: 11px; color: #6c757d;">(${doc.attachments.length} ek)</span>` : ''}</span>
