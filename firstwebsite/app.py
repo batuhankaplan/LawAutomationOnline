@@ -2687,7 +2687,7 @@ def upload_document(case_id):
         parent_document_id = request.form.get('parent_document_id')  # Ek belge için ana belge ID
         document_date = request.form.get('document_date')  # Opsiyonel belge tarihi
 
-        print(f"DEBUG: upload_document called - parent_document_id={parent_document_id}, type={type(parent_document_id)}")
+        logger.info(f"DEBUG: upload_document called - parent_document_id={parent_document_id}, type={type(parent_document_id)}")
 
         if not document_type:
             return jsonify(success=False, message="Belge türü seçilmedi")
@@ -2813,7 +2813,7 @@ def upload_document(case_id):
 
             # Parent document ID'yi integer'a çevir
             parent_id = int(parent_document_id) if parent_document_id else None
-            print(f"DEBUG: Creating document with parent_id={parent_id}")
+            logger.info(f"DEBUG: Creating document with parent_id={parent_id}")
 
             new_document = Document(
                 case_id=case_id,
@@ -2829,7 +2829,7 @@ def upload_document(case_id):
             db.session.add(new_document)
             db.session.commit()
 
-            print(f"DEBUG: Document saved with ID={new_document.id}, parent_document_id={new_document.parent_document_id}")
+            logger.info(f"DEBUG: Document saved with ID={new_document.id}, parent_document_id={new_document.parent_document_id}")
 
             # İşlem logu ekle
             case_file = CaseFile.query.get(case_id)
@@ -2853,12 +2853,12 @@ def upload_document(case_id):
 def get_documents(case_id):
     # Sadece ana belgeleri getir (ekleri değil)
     documents = Document.query.filter_by(case_id=case_id, parent_document_id=None).all()
-    print(f"DEBUG: get_documents called for case_id={case_id}, found {len(documents)} main documents")
+    logger.info(f"DEBUG: get_documents called for case_id={case_id}, found {len(documents)} main documents")
 
     result_docs = []
     for doc in documents:
         attachments_list = doc.attachments.all()
-        print(f"DEBUG: Document ID={doc.id}, filename={doc.filename}, attachments count={len(attachments_list)}")
+        logger.info(f"DEBUG: Document ID={doc.id}, filename={doc.filename}, attachments count={len(attachments_list)}")
 
         result_docs.append({
             'id': doc.id,
@@ -2876,7 +2876,7 @@ def get_documents(case_id):
             } for att in attachments_list]
         })
 
-    print(f"DEBUG: Returning {len(result_docs)} documents with attachments")
+    logger.info(f"DEBUG: Returning {len(result_docs)} documents with attachments")
     return jsonify(success=True, documents=result_docs)
 
 @app.route('/download_document/<int:document_id>')
