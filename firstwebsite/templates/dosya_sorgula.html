@@ -83,6 +83,9 @@
                         <option value="">Tümü</option>
                         <option value="Aktif" {{ 'selected' if request.args.get('status') == 'Aktif' else '' }}>Aktif</option>
                         <option value="Kapalı" {{ 'selected' if request.args.get('status') == 'Kapalı' else '' }}>Kapalı</option>
+                        <option value="İstinafta" {{ 'selected' if request.args.get('status') == 'İstinafta' else '' }}>İstinafta</option>
+                        <option value="Temyizde" {{ 'selected' if request.args.get('status') == 'Temyizde' else '' }}>Temyizde</option>
+                        <option value="Karara Çıkmış" {{ 'selected' if request.args.get('status') == 'Karara Çıkmış' else '' }}>Karara Çıkmış</option>
                     </select>
                 </div>
             </div>
@@ -150,7 +153,14 @@
                 {% endif %}
             </td>
             <td>
-                <span class="case-status status-text {% if case_file.status == 'Aktif' %}status-active{% else %}status-closed{% endif %}">
+                <span class="case-status status-text
+                    {% if case_file.status == 'Aktif' %}status-active
+                    {% elif case_file.status == 'Kapalı' %}status-closed
+                    {% elif case_file.status == 'İstinafta' %}status-istinaf
+                    {% elif case_file.status == 'Temyizde' %}status-temyiz
+                    {% elif case_file.status == 'Karara Çıkmış' %}status-karar
+                    {% else %}status-beklemede
+                    {% endif %}">
                     {{ case_file.status }}
                 </span>
             </td>
@@ -303,6 +313,9 @@
                                     <option value="Aktif">Aktif</option>
                                     <option value="Kapalı">Kapalı</option>
                                     <option value="Beklemede">Beklemede</option>
+                                    <option value="İstinafta">İstinafta</option>
+                                    <option value="Temyizde">Temyizde</option>
+                                    <option value="Karara Çıkmış">Karara Çıkmış</option>
                                 </select>
                             </div>
                         </div>
@@ -811,6 +824,26 @@
 .file-status.closed {
     background-color: #ffebee;
     color: #c62828;
+}
+
+.file-status.beklemede {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.file-status.istinaf {
+    background-color: #cfe2ff;
+    color: #084298;
+}
+
+.file-status.temyiz {
+    background-color: #ffe5d0;
+    color: #cc5200;
+}
+
+.file-status.karar {
+    background-color: #d1e7ff;
+    color: #003d82;
 }
 
 /* Bölüm başlıkları */
@@ -2152,6 +2185,26 @@
 .status-closed {
     background: #fee2e2;
     color: #991b1b;
+}
+
+.status-beklemede {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-istinaf {
+    background: #cfe2ff;
+    color: #084298;
+}
+
+.status-temyiz {
+    background: #ffe5d0;
+    color: #cc5200;
+}
+
+.status-karar {
+    background: #d1e7ff;
+    color: #003d82;
 }
 
 .action-btn {
@@ -3719,7 +3772,32 @@ function showDetails(caseId) {
             // Durum bilgisini doldur
             const statusElement = document.getElementById('detailStatus');
             statusElement.textContent = data.status || 'Aktif';
-            statusElement.className = 'file-status ' + (data.status === 'Aktif' ? 'active' : 'closed');
+
+            // Duruma göre CSS sınıfı ata
+            let statusClass = 'file-status ';
+            switch(data.status) {
+                case 'Aktif':
+                    statusClass += 'active';
+                    break;
+                case 'Kapalı':
+                    statusClass += 'closed';
+                    break;
+                case 'İstinafta':
+                    statusClass += 'istinaf';
+                    break;
+                case 'Temyizde':
+                    statusClass += 'temyiz';
+                    break;
+                case 'Karara Çıkmış':
+                    statusClass += 'karar';
+                    break;
+                case 'Beklemede':
+                    statusClass += 'beklemede';
+                    break;
+                default:
+                    statusClass += 'active';
+            }
+            statusElement.className = statusClass;
             
             // Tarih bilgilerini doldur
             document.getElementById('detailOpenDate').textContent = data.open_date || '-';
@@ -4316,6 +4394,10 @@ function editCase(caseId) {
                                     <select id="editStatusModal">
                                         <option value="Aktif" ${data.status === 'Aktif' ? 'selected' : ''}>Aktif</option>
                                         <option value="Kapalı" ${data.status === 'Kapalı' ? 'selected' : ''}>Kapalı</option>
+                                        <option value="Beklemede" ${data.status === 'Beklemede' ? 'selected' : ''}>Beklemede</option>
+                                        <option value="İstinafta" ${data.status === 'İstinafta' ? 'selected' : ''}>İstinafta</option>
+                                        <option value="Temyizde" ${data.status === 'Temyizde' ? 'selected' : ''}>Temyizde</option>
+                                        <option value="Karara Çıkmış" ${data.status === 'Karara Çıkmış' ? 'selected' : ''}>Karara Çıkmış</option>
                                     </select>
                                 </div>
                                 <div class="detail-group">

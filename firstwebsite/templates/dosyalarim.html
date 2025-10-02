@@ -34,6 +34,10 @@
                         <option value="">Tümü</option>
                         <option value="Aktif" {% if selected_status == 'Aktif' %}selected{% endif %}>Aktif</option>
                         <option value="Kapalı" {% if selected_status == 'Kapalı' %}selected{% endif %}>Kapalı</option>
+                        <option value="Beklemede" {% if selected_status == 'Beklemede' %}selected{% endif %}>Beklemede</option>
+                        <option value="İstinafta" {% if selected_status == 'İstinafta' %}selected{% endif %}>İstinafta</option>
+                        <option value="Temyizde" {% if selected_status == 'Temyizde' %}selected{% endif %}>Temyizde</option>
+                        <option value="Karara Çıkmış" {% if selected_status == 'Karara Çıkmış' %}selected{% endif %}>Karara Çıkmış</option>
                     </select>
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
@@ -65,7 +69,14 @@
                     <td>{{ case.department }}</td>
                     <td>{{ case.client_name }}</td>
                     <td>
-                        <span class="badge {% if case.status == 'Aktif' %}bg-success{% else %}bg-secondary{% endif %}">
+                        <span class="badge
+                            {% if case.status == 'Aktif' %}bg-success
+                            {% elif case.status == 'Kapalı' %}bg-secondary
+                            {% elif case.status == 'İstinafta' %}bg-info
+                            {% elif case.status == 'Temyizde' %}bg-warning
+                            {% elif case.status == 'Karara Çıkmış' %}bg-primary
+                            {% else %}bg-warning
+                            {% endif %}">
                             {{ case.status }}
                         </span>
                     </td>
