@@ -6425,7 +6425,16 @@ def api_tarifeler():
 @app.route('/api/kaydet_kaplan_danismanlik_tarife', methods=['POST'])
 @login_required
 def kaydet_kaplan_danismanlik_tarife():
-    if not current_user.has_permission('ucret_tarifeleri'): 
+    # DEBUG: Yetki kontrolü detayları
+    logging.info(f"=== YETKİ DEBUG ===")
+    logging.info(f"Kullanıcı: {current_user.username}")
+    logging.info(f"is_admin: {current_user.is_admin}")
+    logging.info(f"permissions: {current_user.permissions}")
+    logging.info(f"ucret_tarifeleri yetkisi: {current_user.permissions.get('ucret_tarifeleri', 'YOK')}")
+    logging.info(f"has_permission('ucret_tarifeleri'): {current_user.has_permission('ucret_tarifeleri')}")
+    logging.info(f"==================")
+
+    if not current_user.has_permission('ucret_tarifeleri'):
         return jsonify({"success": False, "error": "Ücret tarifelerine erişim yetkiniz yok."}), 403
 
     try:
