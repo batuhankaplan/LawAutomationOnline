@@ -15,16 +15,33 @@ def migrate():
         try:
             print('Creating parent_document_id column...')
 
-            # Önce kolonun var olup olmadığını kontrol et
+            # Veritabanı tipini tespit et
+            db_type = db.engine.dialect.name
+            print(f'Detected database type: {db_type}')
+
             with db.engine.connect() as conn:
-                result = conn.execute(text("PRAGMA table_info(document)"))
-                columns = [row[1] for row in result]
+                # Kolonun var olup olmadığını kontrol et
+                if db_type == 'sqlite':
+                    # SQLite için PRAGMA kullan
+                    result = conn.execute(text("PRAGMA table_info(document)"))
+                    columns = [row[1] for row in result]
+                elif db_type == 'postgresql':
+                    # PostgreSQL için information_schema kullan
+                    result = conn.execute(text(
+                        "SELECT column_name FROM information_schema.columns "
+                        "WHERE table_name='document'"
+                    ))
+                    columns = [row[0] for row in result]
+                else:
+                    print(f'Unsupported database type: {db_type}')
+                    return
 
                 if 'parent_document_id' in columns:
                     print('Column parent_document_id already exists!')
                     return
 
-                # SQLite için kolon ekle (IF NOT EXISTS yok)
+                # Kolonu ekle
+                print(f'Adding column to {db_type} database...')
                 conn.execute(text(
                     'ALTER TABLE document ADD COLUMN parent_document_id INTEGER REFERENCES document(id)'
                 ))
