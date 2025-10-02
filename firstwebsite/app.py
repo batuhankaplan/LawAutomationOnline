@@ -1518,13 +1518,22 @@ def case_details(case_id):
     try:
         case_file = CaseFile.query.get_or_404(case_id)
         
-        # Belgeleri hazırla
-        documents = [{
-            'id': doc.id,
-            'filename': doc.filename,
-            'document_type': doc.document_type,
-            'upload_date': doc.upload_date.strftime('%d.%m.%Y')
-        } for doc in case_file.documents]
+        # Belgeleri hazırla - sadece ana belgeleri (ekleri değil)
+        documents = []
+        for doc in case_file.documents:
+            if doc.parent_document_id is None:  # Sadece ana belgeler
+                documents.append({
+                    'id': doc.id,
+                    'filename': doc.filename,
+                    'document_type': doc.document_type,
+                    'upload_date': doc.upload_date.strftime('%d.%m.%Y'),
+                    'attachments': [{
+                        'id': att.id,
+                        'filename': att.filename,
+                        'document_type': att.document_type,
+                        'upload_date': att.upload_date.strftime('%d.%m.%Y')
+                    } for att in doc.attachments.all()]
+                })
         
         # Dosya numarasını yıl/esas no formatında hazırla
         formatted_case_number = f"{case_file.year}/{case_file.case_number}"
