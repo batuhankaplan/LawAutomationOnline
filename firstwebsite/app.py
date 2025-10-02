@@ -6303,17 +6303,20 @@ def direct_view_udf_dilekce(dilekce_id):
         return f"UDF dosyası görüntülenirken hata oluştu: {str(e)}", 500
 
 def parse_tarifeler():
-    # Dosya yolunu güvenli şekilde ayarla - önce firstwebsite klasörü içinde dene
+    # Dosya yolunu güvenli şekilde ayarla
+    tmp_filepath = '/tmp/tarifeler.txt'
     firstwebsite_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tarifeler.txt')
     parent_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tarifeler.txt')
-    
-    # Önce firstwebsite klasöründe dosya var mı kontrol et
+
+    # Dosya öncelik sırası: firstwebsite > parent > /tmp
     if os.path.exists(firstwebsite_filepath):
         filepath = firstwebsite_filepath
     elif os.path.exists(parent_filepath):
-        filepath = parent_filepath  
+        filepath = parent_filepath
+    elif os.path.exists(tmp_filepath):
+        filepath = tmp_filepath
     else:
-        # Dosya hiç yoksa varsayılan parent yolunu kullan
+        # Hiçbir dosya yoksa varsayılan olarak parent kullan
         filepath = parent_filepath
     
     # Varsayılan olarak boş ve geçerli bir yapı
@@ -6425,25 +6428,8 @@ def api_tarifeler():
 @app.route('/api/kaydet_kaplan_danismanlik_tarife', methods=['POST'])
 @login_required
 def kaydet_kaplan_danismanlik_tarife():
-    # DEBUG: Yetki kontrolü detayları
-    debug_info = {
-        "kullanici": current_user.username,
-        "is_admin": current_user.is_admin,
-        "permissions": current_user.permissions,
-        "ucret_tarifeleri_yetkisi": current_user.permissions.get('ucret_tarifeleri', 'YOK') if current_user.permissions else 'PERMISSIONS_NONE',
-        "has_permission_sonucu": current_user.has_permission('ucret_tarifeleri')
-    }
-
-    logging.info(f"=== YETKİ DEBUG ===")
-    logging.info(f"Debug bilgileri: {debug_info}")
-    logging.info(f"==================")
-
     if not current_user.has_permission('ucret_tarifeleri'):
-        return jsonify({
-            "success": False,
-            "error": "Ücret tarifelerine erişim yetkiniz yok.",
-            "debug": debug_info  # Debug bilgilerini response'a ekle
-        }), 403
+        return jsonify({"success": False, "error": "Ücret tarifelerine erişim yetkiniz yok."}), 403
 
     try:
         new_kaplan_data = request.get_json()
@@ -6451,18 +6437,24 @@ def kaydet_kaplan_danismanlik_tarife():
             logging.error(f"Geçersiz Kaplan Danışmanlık tarife verisi alındı: {new_kaplan_data}")
             return jsonify({"success": False, "error": "Geçersiz veri formatı. 'kategoriler' listesi içeren bir JSON objesi bekleniyor."}), 400
 
-        # Dosya yolunu güvenli şekilde ayarla - önce firstwebsite klasörü içinde dene
+        # Dosya yolunu güvenli şekilde ayarla
+        # Öncelik sırası: 1) /tmp (her zaman yazılabilir) 2) firstwebsite 3) parent
+        tmp_filepath = '/tmp/tarifeler.txt'
         firstwebsite_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tarifeler.txt')
         parent_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tarifeler.txt')
-        
-        # Önce firstwebsite klasöründe dosya var mı kontrol et
+
+        # Mevcut dosyayı bul
         if os.path.exists(firstwebsite_filepath):
             filepath = firstwebsite_filepath
         elif os.path.exists(parent_filepath):
             filepath = parent_filepath
+        elif os.path.exists(tmp_filepath):
+            filepath = tmp_filepath
         else:
-            # Dosya hiç yoksa firstwebsite içinde oluştur (yazma yetkisi daha muhtemel)
-            filepath = firstwebsite_filepath
+            # Hiçbir dosya yoksa, yazılabilir bir konum seç
+            # Önce /tmp'yi dene (Linux'ta her zaman yazılabilir)
+            filepath = tmp_filepath
+            logging.info(f"Tarife dosyası için /tmp kullanılacak: {filepath}")
         
         raw_lines = []
         if os.path.exists(filepath):
@@ -6531,17 +6523,34 @@ def kaydet_kaplan_danismanlik_tarife():
             logging.error(f"Dizin yazma yetkisi yok: {dir_path}")
             return jsonify({"success": False, "error": f"Dizin yazma yetkisi yok: {dir_path}"}), 403
             
-        # Dosya yazma işlemi
+        # Dosya yazma işlemi - önce orijinal konuma dene, hata olursa /tmp'ye yaz
+        write_success = False
+        final_filepath = filepath
+
         try:
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.writelines(output_lines)
             logging.info(f"Tarife dosyası başarıyla kaydedildi: {filepath}")
-        except PermissionError as perm_error:
-            logging.error(f"Dosya yazma yetkisi hatası: {filepath}, Hata: {perm_error}")
-            return jsonify({"success": False, "error": f"Dosya yazma yetkisi yok: {str(perm_error)}"}), 403
+            write_success = True
+        except (PermissionError, OSError) as perm_error:
+            logging.warning(f"İlk yazma denemesi başarısız ({filepath}): {perm_error}. /tmp klasörüne yazılacak...")
+            # /tmp klasörüne yazma denemesi
+            try:
+                tmp_fallback = '/tmp/tarifeler.txt'
+                with open(tmp_fallback, 'w', encoding='utf-8') as f:
+                    f.writelines(output_lines)
+                logging.info(f"Tarife dosyası /tmp klasörüne kaydedildi: {tmp_fallback}")
+                final_filepath = tmp_fallback
+                write_success = True
+            except Exception as tmp_error:
+                logging.error(f"/tmp yazma da başarısız: {tmp_error}")
+                return jsonify({"success": False, "error": f"Dosya yazılamadı. Sistem yöneticisine başvurun."}), 500
         except Exception as write_error:
-            logging.error(f"Dosya yazma hatası: {filepath}, Hata: {write_error}")
+            logging.error(f"Beklenmeyen dosya yazma hatası: {filepath}, Hata: {write_error}")
             return jsonify({"success": False, "error": f"Dosya yazma hatası: {str(write_error)}"}), 500
+
+        if not write_success:
+            return jsonify({"success": False, "error": "Dosya yazma işlemi tamamlanamadı."}), 500
 
         log_activity("Tarife Güncelleme", f"Kaplan Hukuk Danışmanlık Ücret Tarifesi güncellendi.", current_user.id)
         return jsonify({"success": True, "message": "Kaplan Hukuk Danışmanlık Tarifesi başarıyla güncellendi."})

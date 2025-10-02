@@ -661,16 +661,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 isKaplanEditModeActive = false;
                 await fetchTarifeler(); // Sadece fetchTarifeler çağrılacak, o zaten UI'ı güncelleyecek.
             } else {
-                // Debug bilgilerini console'a yazdır
-                if (result.debug) {
-                    console.log('=== BACKEND YETKİ DEBUG ===');
-                    console.log('Kullanıcı:', result.debug.kullanici);
-                    console.log('Admin mi:', result.debug.is_admin);
-                    console.log('Permissions:', result.debug.permissions);
-                    console.log('ucret_tarifeleri yetkisi:', result.debug.ucret_tarifeleri_yetkisi);
-                    console.log('has_permission sonucu:', result.debug.has_permission_sonucu);
-                    console.log('===========================');
-                }
                 showToast('Hata!', `Tarife kaydedilemedi: ${result.error || 'Bilinmeyen bir hata oluştu.'}`, 'danger');
             }
         } catch (error) {
@@ -685,13 +675,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Event Listeners for Kaplan Section Buttons
     if (kaplanDuzenleBtn) {
         kaplanDuzenleBtn.addEventListener('click', () => {
-            // Debug için yetki kontrolü - geçici
-            console.log('=== YETKİ KONTROL DEBUG ===');
-            console.log('Tüm yetkiler:', USER_PERMISSIONS);
-            console.log('ucret_tarifeleri değeri:', USER_PERMISSIONS['ucret_tarifeleri']);
-            console.log('hasPermission sonucu:', hasPermission('ucret_tarifeleri'));
-            console.log('========================');
-
             // Yetki kontrolü
             if (!hasPermission('ucret_tarifeleri')) {
                 showToast('Yetkisiz İşlem', 'Ücret tarifelerini düzenlemek için yetkiniz yok.', 'danger');
