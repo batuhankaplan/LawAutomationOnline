@@ -197,22 +197,7 @@ KAPLAN HUKUK DANIŞMANLIK ÜCRET TARİFESİ START
 {
   "kategoriler": [
     {
-      "hizmetler": [
-        {
-          "ekNot": "",
-          "ekstralar": [
-            {
-              "id": "ekstra_1758120922930_49qwpiq6a",
-              "aciklama": "deneme",
-              "tutar": "1"
-            }
-          ],
-          "hizmetAdi": "teset",
-          "id": "hizmet_1757591895340_1k994",
-          "sira": 1,
-          "temelUcret": "100"
-        }
-      ],
+      "hizmetler": [],
       "id": "kategori_1757591890196_a5g82",
       "kategoriAdi": "deneme",
       "sira": 1

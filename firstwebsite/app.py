@@ -6426,16 +6426,24 @@ def api_tarifeler():
 @login_required
 def kaydet_kaplan_danismanlik_tarife():
     # DEBUG: Yetki kontrolü detayları
+    debug_info = {
+        "kullanici": current_user.username,
+        "is_admin": current_user.is_admin,
+        "permissions": current_user.permissions,
+        "ucret_tarifeleri_yetkisi": current_user.permissions.get('ucret_tarifeleri', 'YOK') if current_user.permissions else 'PERMISSIONS_NONE',
+        "has_permission_sonucu": current_user.has_permission('ucret_tarifeleri')
+    }
+
     logging.info(f"=== YETKİ DEBUG ===")
-    logging.info(f"Kullanıcı: {current_user.username}")
-    logging.info(f"is_admin: {current_user.is_admin}")
-    logging.info(f"permissions: {current_user.permissions}")
-    logging.info(f"ucret_tarifeleri yetkisi: {current_user.permissions.get('ucret_tarifeleri', 'YOK')}")
-    logging.info(f"has_permission('ucret_tarifeleri'): {current_user.has_permission('ucret_tarifeleri')}")
+    logging.info(f"Debug bilgileri: {debug_info}")
     logging.info(f"==================")
 
     if not current_user.has_permission('ucret_tarifeleri'):
-        return jsonify({"success": False, "error": "Ücret tarifelerine erişim yetkiniz yok."}), 403
+        return jsonify({
+            "success": False,
+            "error": "Ücret tarifelerine erişim yetkiniz yok.",
+            "debug": debug_info  # Debug bilgilerini response'a ekle
+        }), 403
 
     try:
         new_kaplan_data = request.get_json()

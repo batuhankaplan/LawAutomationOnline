@@ -658,9 +658,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (response.ok && result.success) {
                 showToast('Başarılı!', 'Kaplan Hukuk Danışmanlık tarifesi başarıyla kaydedildi.', 'success');
-                isKaplanEditModeActive = false; 
+                isKaplanEditModeActive = false;
                 await fetchTarifeler(); // Sadece fetchTarifeler çağrılacak, o zaten UI'ı güncelleyecek.
             } else {
+                // Debug bilgilerini console'a yazdır
+                if (result.debug) {
+                    console.log('=== BACKEND YETKİ DEBUG ===');
+                    console.log('Kullanıcı:', result.debug.kullanici);
+                    console.log('Admin mi:', result.debug.is_admin);
+                    console.log('Permissions:', result.debug.permissions);
+                    console.log('ucret_tarifeleri yetkisi:', result.debug.ucret_tarifeleri_yetkisi);
+                    console.log('has_permission sonucu:', result.debug.has_permission_sonucu);
+                    console.log('===========================');
+                }
                 showToast('Hata!', `Tarife kaydedilemedi: ${result.error || 'Bilinmeyen bir hata oluştu.'}`, 'danger');
             }
         } catch (error) {
