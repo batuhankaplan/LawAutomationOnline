@@ -1988,6 +1988,52 @@
     background: #e3f2fd;
 }
 
+/* Ek belgeler için stil */
+.document-attachments {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 500px;
+    }
+}
+
+.attachment-item {
+    cursor: default;
+    transition: all 0.2s ease;
+}
+
+.attachment-item:hover {
+    background: #e9ecef !important;
+    transform: translateX(5px);
+}
+
+.expand-icon {
+    transition: transform 0.3s ease;
+}
+
+.document-main[onclick] {
+    cursor: pointer;
+}
+
+/* Dark theme için ek belge stilleri */
+[data-theme="dark"] .document-attachments {
+    border-left-color: #404040;
+}
+
+[data-theme="dark"] .attachment-item {
+    background: #2d2d2d !important;
+}
+
+[data-theme="dark"] .attachment-item:hover {
+    background: #3a3a3a !important;
+}
 
 .document-content {
     padding: 15px;
@@ -3998,28 +4044,19 @@ function editCase(caseId) {
                                 </div>
                                 <div class="detail-group">
                                     <label>Şehir</label>
-                                    <select id="editCity" onchange="updateEditCourthouses(); populateEditDepartments(document.getElementById('editFileType').value, document.getElementById('editDepartment'), null, document.getElementById('editCourthouse').value);" ${['ARABULUCULUK', 'AİHM', 'AYM'].includes(data.file_type) ? 'disabled' : ''}>
+                                    <select id="editCity" ${['ARABULUCULUK', 'AİHM', 'AYM'].includes(data.file_type) ? 'disabled' : ''}>
                                         <option value="">Seçiniz</option>
                                     </select>
                                 </div>
                                 <div class="detail-group">
                                     <label>Adliye</label>
-                                    <select id="editCourthouse" onchange="populateEditDepartments(document.getElementById('editFileType').value, document.getElementById('editDepartment'), null, this.value);" ${['ARABULUCULUK', 'AİHM', 'AYM'].includes(data.file_type) ? 'disabled' : ''}>
+                                    <select id="editCourthouse" ${['ARABULUCULUK', 'AİHM', 'AYM'].includes(data.file_type) ? 'disabled' : ''}>
                                         <option value="">Seçiniz</option>
-                                        ${city === 'İstanbul' ? 
-                                            istanbulSpecificCourthouses.map(courthouse => 
-                                                `<option value="${courthouse}" ${data.courthouse === courthouse ? 'selected' : ''}>${courthouse}</option>`
-                                            ).join('') : 
-                                            (city && allCourthousesData[city] ? 
-                                                allCourthousesData[city].map(courthouse => 
-                                                    `<option value="${courthouse}" ${data.courthouse === courthouse ? 'selected' : ''}>${courthouse}</option>`
-                                                ).join('') : '')
-                                        }
                                     </select>
                                 </div>
                                 <div class="detail-group">
                                     <label>Mahkeme</label>
-                                    <select id="editDepartment" ${['ARABULUCULUK', 'AİHM', 'AYM', 'savcilik'].includes(data.file_type) ? 'disabled' : ''} onchange="updateEditNumberedDepartments(this.value, document.getElementById('editCity').value, document.getElementById('editCourthouse').value)">
+                                    <select id="editDepartment" ${['ARABULUCULUK', 'AİHM', 'AYM', 'savcilik'].includes(data.file_type) ? 'disabled' : ''}>
                                         <option value="">Seçiniz</option>
                                     </select>
                                 </div>
@@ -5568,8 +5605,12 @@ function saveExpense() {
     });
 }
 
+// Global değişken: ek belge sayacı
+let attachmentCount = 0;
+
 // Belge yükle butonu için fonksiyon
 function showUploadModal() {
+    attachmentCount = 0; // Sıfırla
     const uploadHtml = `
         <div class="modal-content upload-modal">
             <div class="modal-header">
@@ -5584,7 +5625,7 @@ function showUploadModal() {
                         <label>Belge Türü</label>
                         <select id="documentType" required>
                             <option value="">Seçiniz</option>
-                            ${documentTypes.map(type => 
+                            ${documentTypes.map(type =>
                                 `<option value="${type}">${type}</option>`
                             ).join('')}
                         </select>
@@ -5597,6 +5638,17 @@ function showUploadModal() {
                         <label>Belge Adı (Opsiyonel)</label>
                         <input type="text" id="documentName" placeholder="Belgeye özel bir isim verin">
                     </div>
+
+                    <!-- Ek Belgeler Bölümü -->
+                    <div class="detail-group" style="margin-top: 20px; border-top: 2px solid #e9ecef; padding-top: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <label style="margin: 0;">Ek Belgeler (Opsiyonel)</label>
+                            <button type="button" class="btn small primary" onclick="addAttachmentField()" id="addAttachmentBtn">
+                                <i class="material-icons" style="font-size: 16px;">add</i> Ek Ekle
+                            </button>
+                        </div>
+                        <div id="attachmentsContainer"></div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -5605,7 +5657,7 @@ function showUploadModal() {
             </div>
         </div>
     `;
-    
+
     const uploadModal = document.createElement('div');
     uploadModal.id = 'uploadModal';
     uploadModal.className = 'file-detail-modal';
@@ -5614,8 +5666,57 @@ function showUploadModal() {
     uploadModal.style.display = 'flex';
 }
 
+// Ek belge alanı ekle
+function addAttachmentField() {
+    if (attachmentCount >= 10) {
+        showGlobalNotification('Maksimum 10 ek belge ekleyebilirsiniz.', 'warning');
+        return;
+    }
+
+    attachmentCount++;
+    const container = document.getElementById('attachmentsContainer');
+    const attachmentDiv = document.createElement('div');
+    attachmentDiv.className = 'attachment-field';
+    attachmentDiv.id = `attachment-${attachmentCount}`;
+    attachmentDiv.innerHTML = `
+        <div class="detail-group" style="border: 1px solid #dee2e6; padding: 10px; border-radius: 4px; margin-bottom: 10px; background: #f8f9fa;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="margin: 0; font-weight: 600;">Ek ${attachmentCount}</label>
+                <button type="button" class="btn danger small" onclick="removeAttachmentField(${attachmentCount})" title="Sil">
+                    <i class="material-icons" style="font-size: 16px;">delete</i>
+                </button>
+            </div>
+            <input type="file" id="attachmentFile${attachmentCount}" class="attachment-file" style="margin-bottom: 8px;">
+            <input type="text" id="attachmentName${attachmentCount}" class="attachment-name" placeholder="Ek belge adı (opsiyonel)" style="font-size: 0.9rem;">
+        </div>
+    `;
+    container.appendChild(attachmentDiv);
+
+    // Eğer 10'a ulaştıysa butonu devre dışı bırak
+    if (attachmentCount >= 10) {
+        document.getElementById('addAttachmentBtn').disabled = true;
+        document.getElementById('addAttachmentBtn').style.opacity = '0.5';
+    }
+}
+
+// Ek belge alanını kaldır
+function removeAttachmentField(id) {
+    const field = document.getElementById(`attachment-${id}`);
+    if (field) {
+        field.remove();
+        attachmentCount--;
+
+        // Buton tekrar aktif
+        const addBtn = document.getElementById('addAttachmentBtn');
+        if (addBtn) {
+            addBtn.disabled = false;
+            addBtn.style.opacity = '1';
+        }
+    }
+}
+
 // Belge yükleme fonksiyonunu güncelle
-function uploadDocument() {
+async function uploadDocument() {
     const documentType = document.getElementById('documentType');
     const fileInput = document.getElementById('documentFile');
     const documentName = document.getElementById('documentName');
@@ -5636,55 +5737,86 @@ function uploadDocument() {
     uploadButton.textContent = 'Yükleniyor...';
     uploadButton.disabled = true;
 
-    const formData = new FormData();
-    formData.append('document', fileInput.files[0]);
-    formData.append('document_type', documentType.value);
-    formData.append('csrf_token', csrfToken);
-    if (documentName.value) {
-        formData.append('document_name', documentName.value);
-    }
+    try {
+        // 1. Ana belgeyi yükle
+        const formData = new FormData();
+        formData.append('document', fileInput.files[0]);
+        formData.append('document_type', documentType.value);
+        formData.append('csrf_token', csrfToken);
+        if (documentName.value) {
+            formData.append('document_name', documentName.value);
+        }
 
-    fetch(`/upload_document/${parseInt(currentCaseId)}`, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
+        const response = await fetch(`/upload_document/${parseInt(currentCaseId)}`, {
+            method: 'POST',
+            body: formData
+        });
+
         if (response.status === 403) {
             throw new Error('Bu işlemi yapmak için gerekli yetkiye sahip değilsiniz.');
         }
-
         if (response.status === 413) {
             throw new Error('Dosya çok büyük. Lütfen daha küçük bir dosya seçin.');
         }
-
         if (response.status === 500) {
             throw new Error('Sunucu hatası - Lütfen yöneticinizle iletişime geçin');
         }
-
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        return response.json();
-    })
-    .then(result => {
-        if (result.success) {
-            showGlobalNotification('Belge başarıyla yüklendi!', 'success');
-            closeUploadModal();
-            showDetails(currentCaseId);
-        } else {
+        const result = await response.json();
+
+        if (!result.success) {
             throw new Error(result.message || 'Belge yüklenirken bir hata oluştu');
         }
-    })
-    .catch(error => {
+
+        // Ana belge ID'sini al
+        const parentDocId = result.document_id;
+
+        // 2. Ek belgeleri yükle
+        const attachmentPromises = [];
+        for (let i = 1; i <= attachmentCount; i++) {
+            const attachmentFile = document.getElementById(`attachmentFile${i}`);
+            const attachmentName = document.getElementById(`attachmentName${i}`);
+
+            if (attachmentFile && attachmentFile.files.length > 0) {
+                const attachFormData = new FormData();
+                attachFormData.append('document', attachmentFile.files[0]);
+                attachFormData.append('document_type', documentType.value); // Aynı tür
+                attachFormData.append('csrf_token', csrfToken);
+                attachFormData.append('parent_document_id', parentDocId); // Ana belge ID
+                if (attachmentName && attachmentName.value) {
+                    attachFormData.append('document_name', attachmentName.value);
+                }
+
+                attachmentPromises.push(
+                    fetch(`/upload_document/${parseInt(currentCaseId)}`, {
+                        method: 'POST',
+                        body: attachFormData
+                    }).then(r => r.json())
+                );
+            }
+        }
+
+        // Tüm ek belgelerin yüklenmesini bekle
+        if (attachmentPromises.length > 0) {
+            uploadButton.textContent = `Ekler yükleniyor (${attachmentPromises.length})...`;
+            await Promise.all(attachmentPromises);
+        }
+
+        showGlobalNotification(`Belge${attachmentPromises.length > 0 ? ' ve '+attachmentPromises.length+' eki' : ''} başarıyla yüklendi!`, 'success');
+        closeUploadModal();
+        showDetails(currentCaseId);
+
+    } catch (error) {
         console.error('Hata:', error);
         showGlobalNotification('Belge yüklenirken bir hata oluştu: ' + error.message, 'error');
-    })
-    .finally(() => {
+    } finally {
         // Butonu eski haline döndür
         uploadButton.textContent = originalButtonText;
         uploadButton.disabled = false;
-    });
+    }
 }
 
 // Belge önizleme fonksiyonu
@@ -7932,24 +8064,84 @@ function toggleDocumentType(typeId) {
     }
 }
 
+// Belge eklerini göster/gizle
+function toggleAttachments(docId) {
+    const attachmentsDiv = document.getElementById(`attachments-${docId}`);
+    const expandIcon = document.getElementById(`expand-icon-${docId}`);
+
+    if (attachmentsDiv) {
+        if (attachmentsDiv.style.display === 'none') {
+            attachmentsDiv.style.display = 'block';
+            if (expandIcon) expandIcon.textContent = 'expand_less';
+        } else {
+            attachmentsDiv.style.display = 'none';
+            if (expandIcon) expandIcon.textContent = 'expand_more';
+        }
+    }
+}
+
 // Belge item HTML'ini oluştur
 function createDocumentItemHTML(doc) {
     const fileNameParts = doc.filename ? doc.filename.split('.') : ['', ''];
     const fileName = fileNameParts.slice(0, -1).join('.');
     const originalName = doc.filepath ? doc.filepath.split('_').slice(2).join('_') : '';
 
+    // Ekleri varsa dropdown oluştur
+    const hasAttachments = doc.attachments && doc.attachments.length > 0;
+    const attachmentsHTML = hasAttachments ? `
+        <div class="document-attachments" id="attachments-${doc.id}" style="display: none; margin-top: 10px; padding-left: 40px; border-left: 3px solid #dee2e6;">
+            ${doc.attachments.map(att => {
+                const attFileNameParts = att.filename ? att.filename.split('.') : ['', ''];
+                const attFileName = attFileNameParts.slice(0, -1).join('.');
+                const attOriginalName = att.filepath ? att.filepath.split('_').slice(2).join('_') : '';
+                return `
+                    <div class="document-item attachment-item" data-doc-id="${att.id}" style="margin-bottom: 8px; background: #f8f9fa;">
+                        <div class="document-content">
+                            <div class="document-main" style="padding: 8px 12px;">
+                                <div class="document-info">
+                                    <i class="material-icons" style="font-size: 18px; color: #6c757d;">attach_file</i>
+                                    <div class="document-details">
+                                        <span class="document-name" style="font-size: 13px;">${attFileName}</span>
+                                        <span class="document-original-name" style="font-size: 11px;">${attOriginalName}</span>
+                                    </div>
+                                </div>
+                                <div class="document-right-section">
+                                    <span class="document-date" style="font-size: 12px;">${att.upload_date}</span>
+                                    <div class="document-actions">
+                                        <button class="btn small" onclick="previewDocument(${att.id}, '${att.filename || ''}')" title="Önizle" style="padding: 4px 8px;">
+                                            <i class="material-icons" style="font-size: 16px;">visibility</i>
+                                        </button>
+                                        <button class="btn small" onclick="downloadDocument(${att.id})" title="İndir" style="padding: 4px 8px;">
+                                            <i class="material-icons" style="font-size: 16px;">download</i>
+                                        </button>
+                                        ${hasFileDeletePermission ? `
+                                        <button class="btn danger small" onclick="deleteDocument(${att.id})" title="Sil" style="padding: 4px 8px;">
+                                            <i class="material-icons" style="font-size: 16px;">delete</i>
+                                        </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    ` : '';
+
     return `
         <div class="document-item" data-doc-id="${doc.id}">
             <div class="document-content">
-                <div class="document-main">
+                <div class="document-main" onclick="${hasAttachments ? `toggleAttachments(${doc.id})` : ''}">
                     <div class="document-info">
+                        ${hasAttachments ? `<i class="material-icons expand-icon" id="expand-icon-${doc.id}" style="cursor: pointer; color: #6c757d; margin-right: 5px;">expand_more</i>` : ''}
                         <i class="material-icons">${getFileIcon(doc.filename || '')}</i>
                         <div class="document-details">
-                            <span class="document-name">${fileName}</span>
+                            <span class="document-name">${fileName} ${hasAttachments ? `<span style="font-size: 11px; color: #6c757d;">(${doc.attachments.length} ek)</span>` : ''}</span>
                             <span class="document-original-name">${originalName}</span>
                         </div>
                     </div>
-                    <div class="document-right-section">
+                    <div class="document-right-section" onclick="event.stopPropagation()">
                         <span class="document-date">${doc.upload_date}</span>
                         <div class="document-actions">
                             <button class="btn small" onclick="previewDocument(${doc.id}, '${doc.filename || ''}')" title="Önizle">
@@ -7966,6 +8158,7 @@ function createDocumentItemHTML(doc) {
                         </div>
                     </div>
                 </div>
+                ${attachmentsHTML}
             </div>
         </div>
     `;

@@ -331,6 +331,10 @@ class Document(db.Model):
     upload_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     pdf_version = db.Column(db.String(255), nullable=True)  # PDF dönüşümü varsa dosya yolu
+    parent_document_id = db.Column(db.Integer, db.ForeignKey('document.id'), nullable=True)  # Ana belgenin ID'si (ekler için)
+
+    # İlişkiler
+    attachments = db.relationship('Document', backref=db.backref('parent', remote_side=[id]), lazy='dynamic', cascade='all, delete-orphan')
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)

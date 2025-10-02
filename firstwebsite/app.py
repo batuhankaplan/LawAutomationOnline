@@ -2683,7 +2683,8 @@ def upload_document(case_id):
         file = request.files['document']
         document_type = request.form.get('document_type')
         custom_name = request.form.get('document_name')
-        
+        parent_document_id = request.form.get('parent_document_id')  # Ek belge için ana belge ID
+
         if not document_type:
             return jsonify(success=False, message="Belge türü seçilmedi")
 
@@ -2805,22 +2806,24 @@ def upload_document(case_id):
                 filepath=db_filepath,  # Veritabanında saklanacak göreceli yol
                 upload_date=datetime.now(),
                 user_id=current_user.id if current_user.is_authenticated else 1,
-                pdf_version=pdf_path  # PDF versiyonu varsa kaydet
+                pdf_version=pdf_path,  # PDF versiyonu varsa kaydet
+                parent_document_id=int(parent_document_id) if parent_document_id else None  # Ek belge ise ana belge ID
             )
-            
+
             db.session.add(new_document)
             db.session.commit()
-            
+
             # İşlem logu ekle
             case_file = CaseFile.query.get(case_id)
+            is_attachment = parent_document_id is not None
             log_activity(
                 activity_type='belge_yukleme',
-                description=f"Yeni belge yüklendi: {case_file.client_name} - {document_type} ({custom_name or file.filename})",
+                description=f"Yeni {'ek ' if is_attachment else ''}belge yüklendi: {case_file.client_name} - {document_type} ({custom_name or file.filename})",
                 user_id=current_user.id if current_user.is_authenticated else 1,
                 case_id=case_id
             )
-            
-            return jsonify(success=True)
+
+            return jsonify(success=True, document_id=new_document.id)
             
         return jsonify(success=False, message="Geçersiz dosya türü")
     except Exception as e:
@@ -2830,14 +2833,22 @@ def upload_document(case_id):
 
 @app.route('/get_documents/<int:case_id>')
 def get_documents(case_id):
-    documents = Document.query.filter_by(case_id=case_id).all()
+    # Sadece ana belgeleri getir (ekleri değil)
+    documents = Document.query.filter_by(case_id=case_id, parent_document_id=None).all()
     return jsonify(success=True, documents=[{
         'id': doc.id,
         'filename': doc.filename,
         'filepath': doc.filepath,
         'document_type': doc.document_type,
         'upload_date': doc.upload_date.strftime('%d.%m.%Y'),
-        'upload_datetime': doc.upload_date.isoformat()  # Tam tarih/saat bilgisi
+        'upload_datetime': doc.upload_date.isoformat(),
+        'attachments': [{
+            'id': att.id,
+            'filename': att.filename,
+            'filepath': att.filepath,
+            'document_type': att.document_type,
+            'upload_date': att.upload_date.strftime('%d.%m.%Y')
+        } for att in doc.attachments.all()]
     } for doc in documents])
 
 @app.route('/download_document/<int:document_id>')
