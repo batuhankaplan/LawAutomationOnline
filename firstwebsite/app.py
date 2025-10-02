@@ -2853,21 +2853,31 @@ def upload_document(case_id):
 def get_documents(case_id):
     # Sadece ana belgeleri getir (ekleri değil)
     documents = Document.query.filter_by(case_id=case_id, parent_document_id=None).all()
-    return jsonify(success=True, documents=[{
-        'id': doc.id,
-        'filename': doc.filename,
-        'filepath': doc.filepath,
-        'document_type': doc.document_type,
-        'upload_date': doc.upload_date.strftime('%d.%m.%Y'),
-        'upload_datetime': doc.upload_date.isoformat(),
-        'attachments': [{
-            'id': att.id,
-            'filename': att.filename,
-            'filepath': att.filepath,
-            'document_type': att.document_type,
-            'upload_date': att.upload_date.strftime('%d.%m.%Y')
-        } for att in doc.attachments.all()]
-    } for doc in documents])
+    print(f"DEBUG: get_documents called for case_id={case_id}, found {len(documents)} main documents")
+
+    result_docs = []
+    for doc in documents:
+        attachments_list = doc.attachments.all()
+        print(f"DEBUG: Document ID={doc.id}, filename={doc.filename}, attachments count={len(attachments_list)}")
+
+        result_docs.append({
+            'id': doc.id,
+            'filename': doc.filename,
+            'filepath': doc.filepath,
+            'document_type': doc.document_type,
+            'upload_date': doc.upload_date.strftime('%d.%m.%Y'),
+            'upload_datetime': doc.upload_date.isoformat(),
+            'attachments': [{
+                'id': att.id,
+                'filename': att.filename,
+                'filepath': att.filepath,
+                'document_type': att.document_type,
+                'upload_date': att.upload_date.strftime('%d.%m.%Y')
+            } for att in attachments_list]
+        })
+
+    print(f"DEBUG: Returning {len(result_docs)} documents with attachments")
+    return jsonify(success=True, documents=result_docs)
 
 @app.route('/download_document/<int:document_id>')
 def download_document(document_id):
