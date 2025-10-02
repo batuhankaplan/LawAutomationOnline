@@ -2687,6 +2687,8 @@ def upload_document(case_id):
         parent_document_id = request.form.get('parent_document_id')  # Ek belge için ana belge ID
         document_date = request.form.get('document_date')  # Opsiyonel belge tarihi
 
+        print(f"DEBUG: upload_document called - parent_document_id={parent_document_id}, type={type(parent_document_id)}")
+
         if not document_type:
             return jsonify(success=False, message="Belge türü seçilmedi")
 
@@ -2809,6 +2811,10 @@ def upload_document(case_id):
                 except ValueError:
                     pass  # Geçersiz tarih formatı varsa bugünün tarihini kullan
 
+            # Parent document ID'yi integer'a çevir
+            parent_id = int(parent_document_id) if parent_document_id else None
+            print(f"DEBUG: Creating document with parent_id={parent_id}")
+
             new_document = Document(
                 case_id=case_id,
                 document_type=document_type,
@@ -2817,11 +2823,13 @@ def upload_document(case_id):
                 upload_date=upload_date,  # Kullanıcı tarafından seçilen veya bugünün tarihi
                 user_id=current_user.id if current_user.is_authenticated else 1,
                 pdf_version=pdf_path,  # PDF versiyonu varsa kaydet
-                parent_document_id=int(parent_document_id) if parent_document_id else None  # Ek belge ise ana belge ID
+                parent_document_id=parent_id  # Ek belge ise ana belge ID
             )
 
             db.session.add(new_document)
             db.session.commit()
+
+            print(f"DEBUG: Document saved with ID={new_document.id}, parent_document_id={new_document.parent_document_id}")
 
             # İşlem logu ekle
             case_file = CaseFile.query.get(case_id)
