@@ -2685,6 +2685,7 @@ def upload_document(case_id):
         document_type = request.form.get('document_type')
         custom_name = request.form.get('document_name')
         parent_document_id = request.form.get('parent_document_id')  # Ek belge için ana belge ID
+        document_date = request.form.get('document_date')  # Opsiyonel belge tarihi
 
         if not document_type:
             return jsonify(success=False, message="Belge türü seçilmedi")
@@ -2800,12 +2801,20 @@ def upload_document(case_id):
                 except Exception as e:
                     print(f"PDF dönüştürme hatası: {str(e)}")
             
+            # Belge tarihini parse et
+            upload_date = datetime.now()
+            if document_date:
+                try:
+                    upload_date = datetime.strptime(document_date, '%Y-%m-%d')
+                except ValueError:
+                    pass  # Geçersiz tarih formatı varsa bugünün tarihini kullan
+
             new_document = Document(
                 case_id=case_id,
                 document_type=document_type,
                 filename=f"{display_name}.{file_ext}",  # Görünen isim
                 filepath=db_filepath,  # Veritabanında saklanacak göreceli yol
-                upload_date=datetime.now(),
+                upload_date=upload_date,  # Kullanıcı tarafından seçilen veya bugünün tarihi
                 user_id=current_user.id if current_user.is_authenticated else 1,
                 pdf_version=pdf_path,  # PDF versiyonu varsa kaydet
                 parent_document_id=int(parent_document_id) if parent_document_id else None  # Ek belge ise ana belge ID

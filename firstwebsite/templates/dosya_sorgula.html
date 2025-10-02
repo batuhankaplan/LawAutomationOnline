@@ -5638,6 +5638,10 @@ function showUploadModal() {
                         <label>Belge Adı (Opsiyonel)</label>
                         <input type="text" id="documentName" placeholder="Belgeye özel bir isim verin">
                     </div>
+                    <div class="detail-group">
+                        <label>Belge Tarihi (Opsiyonel)</label>
+                        <input type="date" id="documentDate" value="${new Date().toISOString().split('T')[0]}">
+                    </div>
 
                     <!-- Ek Belgeler Bölümü -->
                     <div class="detail-group" style="margin-top: 20px; border-top: 2px solid #e9ecef; padding-top: 15px;">
@@ -5739,12 +5743,16 @@ async function uploadDocument() {
 
     try {
         // 1. Ana belgeyi yükle
+        const documentDate = document.getElementById('documentDate');
         const formData = new FormData();
         formData.append('document', fileInput.files[0]);
         formData.append('document_type', documentType.value);
         formData.append('csrf_token', csrfToken);
         if (documentName.value) {
             formData.append('document_name', documentName.value);
+        }
+        if (documentDate && documentDate.value) {
+            formData.append('document_date', documentDate.value);
         }
 
         const response = await fetch(`/upload_document/${parseInt(currentCaseId)}`, {
@@ -5788,6 +5796,10 @@ async function uploadDocument() {
                 attachFormData.append('parent_document_id', parentDocId); // Ana belge ID
                 if (attachmentName && attachmentName.value) {
                     attachFormData.append('document_name', attachmentName.value);
+                }
+                // Ek belgeler ana belge ile aynı tarihi kullanır
+                if (documentDate && documentDate.value) {
+                    attachFormData.append('document_date', documentDate.value);
                 }
 
                 attachmentPromises.push(
