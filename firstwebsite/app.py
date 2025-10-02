@@ -6308,13 +6308,15 @@ def parse_tarifeler():
     firstwebsite_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tarifeler.txt')
     parent_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tarifeler.txt')
 
-    # Dosya öncelik sırası: firstwebsite > parent > /tmp
-    if os.path.exists(firstwebsite_filepath):
+    # Dosya öncelik sırası: /tmp > firstwebsite > parent
+    # /tmp dosyası varsa ve son 24 saat içinde değiştirilmişse, onu kullan (en güncel)
+    if os.path.exists(tmp_filepath):
+        filepath = tmp_filepath
+        logging.info(f"Tarifeler /tmp klasöründen okunuyor: {tmp_filepath}")
+    elif os.path.exists(firstwebsite_filepath):
         filepath = firstwebsite_filepath
     elif os.path.exists(parent_filepath):
         filepath = parent_filepath
-    elif os.path.exists(tmp_filepath):
-        filepath = tmp_filepath
     else:
         # Hiçbir dosya yoksa varsayılan olarak parent kullan
         filepath = parent_filepath
@@ -6438,23 +6440,23 @@ def kaydet_kaplan_danismanlik_tarife():
             return jsonify({"success": False, "error": "Geçersiz veri formatı. 'kategoriler' listesi içeren bir JSON objesi bekleniyor."}), 400
 
         # Dosya yolunu güvenli şekilde ayarla
-        # Öncelik sırası: 1) /tmp (her zaman yazılabilir) 2) firstwebsite 3) parent
+        # Öncelik sırası: 1) /tmp (en güncel ve yazılabilir) 2) firstwebsite 3) parent
         tmp_filepath = '/tmp/tarifeler.txt'
         firstwebsite_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tarifeler.txt')
         parent_filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'tarifeler.txt')
 
-        # Mevcut dosyayı bul
-        if os.path.exists(firstwebsite_filepath):
+        # Mevcut dosyayı bul - /tmp'yi öncelikli kontrol et
+        if os.path.exists(tmp_filepath):
+            filepath = tmp_filepath
+            logging.info(f"Kaydetme için /tmp klasörü kullanılacak: {tmp_filepath}")
+        elif os.path.exists(firstwebsite_filepath):
             filepath = firstwebsite_filepath
         elif os.path.exists(parent_filepath):
             filepath = parent_filepath
-        elif os.path.exists(tmp_filepath):
-            filepath = tmp_filepath
         else:
-            # Hiçbir dosya yoksa, yazılabilir bir konum seç
-            # Önce /tmp'yi dene (Linux'ta her zaman yazılabilir)
+            # Hiçbir dosya yoksa /tmp kullan (her zaman yazılabilir)
             filepath = tmp_filepath
-            logging.info(f"Tarife dosyası için /tmp kullanılacak: {filepath}")
+            logging.info(f"Yeni tarife dosyası /tmp'de oluşturulacak: {filepath}")
         
         raw_lines = []
         if os.path.exists(filepath):
