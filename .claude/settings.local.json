@@ -31,7 +31,9 @@
       "Bash(cat:*)",
       "Bash(dir:*)",
       "Bash(git stash push:*)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Bash(git stash show:*)",
+      "Bash(git stash pop:*)"
     ],
     "deny": []
   }

@@ -107,24 +107,20 @@
                 <h2>Görünüm</h2>
             </div>
                 
-                <div class="setting-item disabled-setting">
+                <div class="setting-item">
                     <div class="setting-info">
                         <h3>Tema</h3>
                         <p>Aydınlık veya karanlık tema seçin</p>
-                        <div class="feature-notice">
-                            <i class="fas fa-info-circle"></i>
-                            <span>Bu özellik şuan kullanım dışıdır. Yakın zamanda kullanıma açılacaktır.</span>
-                        </div>
                     </div>
-                    <div class="theme-selector disabled">
-                        <div class="theme-option active disabled" data-theme="light">
+                    <div class="theme-selector">
+                        <div class="theme-option active" data-theme="light" onclick="changeTheme('light')">
                             <div class="theme-preview light-theme">
                                 <div class="preview-bar"></div>
                                 <div class="preview-content"></div>
                             </div>
                             <span>Aydınlık</span>
                         </div>
-                        <div class="theme-option disabled" data-theme="dark">
+                        <div class="theme-option" data-theme="dark" onclick="changeTheme('dark')">
                             <div class="theme-preview dark-theme">
                                 <div class="preview-bar"></div>
                                 <div class="preview-content"></div>
