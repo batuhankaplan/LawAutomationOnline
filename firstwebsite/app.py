@@ -1439,6 +1439,7 @@ def dosya_ekle():
 
             new_case_file = CaseFile(
                 file_type=file_type,
+                city=data.get('city'),  # Şehir bilgisini kaydet
                 courthouse=courthouse,
                 department=department,
                 year=int(data['year']),
@@ -9314,12 +9315,9 @@ def update_case_basic_info():
         case.hearing_type = hearing_type if hearing_type else 'durusma'
         
         # Şehir ve adliye bilgilerini güncelle
-        # Not: Şehri ayrı alanda saklıyoruz; adliye alanında ise mevcut davranışı koruyoruz
+        # Şehir ayrı kolonda, adliye de ayrı kolonda saklanır
         case.city = city if city else None
-        if city and courthouse:
-            case.courthouse = f"{city} - {courthouse}"
-        elif courthouse:
-            case.courthouse = courthouse
+        case.courthouse = courthouse if courthouse else None
         
         case.department = department if department else None
         
