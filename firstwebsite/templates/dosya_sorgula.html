@@ -5726,6 +5726,8 @@ async function uploadDocument() {
     const documentName = document.getElementById('documentName');
     const uploadButton = document.querySelector('#uploadModal .btn.primary');
 
+    console.log('DEBUG: uploadDocument called, attachmentCount:', attachmentCount);
+
     if (!documentType.value) {
         showGlobalNotification('Lütfen belge türünü seçiniz.', 'error');
         return;
@@ -5755,6 +5757,8 @@ async function uploadDocument() {
             formData.append('document_date', documentDate.value);
         }
 
+        console.log('DEBUG: Uploading main document...');
+
         const response = await fetch(`/upload_document/${parseInt(currentCaseId)}`, {
             method: 'POST',
             body: formData
@@ -5781,14 +5785,19 @@ async function uploadDocument() {
 
         // Ana belge ID'sini al
         const parentDocId = result.document_id;
+        console.log('DEBUG: Main document uploaded, ID:', parentDocId);
 
         // 2. Ek belgeleri yükle
         const attachmentPromises = [];
+        console.log('DEBUG: Checking for attachments, count:', attachmentCount);
         for (let i = 1; i <= attachmentCount; i++) {
             const attachmentFile = document.getElementById(`attachmentFile${i}`);
             const attachmentName = document.getElementById(`attachmentName${i}`);
 
+            console.log(`DEBUG: Attachment ${i} - File element:`, attachmentFile, 'Has files:', attachmentFile?.files.length);
+
             if (attachmentFile && attachmentFile.files.length > 0) {
+                console.log(`DEBUG: Uploading attachment ${i} with parent_document_id:`, parentDocId);
                 const attachFormData = new FormData();
                 attachFormData.append('document', attachmentFile.files[0]);
                 attachFormData.append('document_type', documentType.value); // Aynı tür
