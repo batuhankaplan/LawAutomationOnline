@@ -3883,6 +3883,13 @@ function showDetails(caseId) {
 
             // Belgeleri göster
             if (data.documents) {
+                console.log('DEBUG: Documents from backend:', data.documents);
+                console.log('DEBUG: Documents with attachments:', data.documents.map(doc => ({
+                    id: doc.id,
+                    filename: doc.filename,
+                    hasAttachments: doc.attachments && doc.attachments.length > 0,
+                    attachmentsCount: doc.attachments ? doc.attachments.length : 0
+                })));
                 currentDocuments = data.documents;
                 displaySortedDocuments();
             } else {
