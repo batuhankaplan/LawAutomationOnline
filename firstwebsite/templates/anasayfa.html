@@ -37,7 +37,7 @@
                 {% for activity in activities %}
                 <div class="activity-item" data-activity-id="{{ activity.id }}">
                     <div class="activity-icon">
-                        <img src="{{ url_for('static', filename='images/pp.png') }}" alt="Profil">
+                        <img src="{{ url_for('static', filename=(activity.user.profile_image if activity.user and activity.user.profile_image else 'images/default_avatar.svg')) }}" alt="Profil" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
                     </div>
                     <div class="activity-content">
                         <div class="activity-header">

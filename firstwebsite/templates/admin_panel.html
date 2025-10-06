@@ -75,7 +75,7 @@
                         <td><input type="checkbox" name="selectedUsers" value="{{ user.id }}" title="Kullanıcıyı seç"></td>
                         <td>
                             <div class="user-cell">
-                                <img src="{{ url_for('static', filename='images/pp.png') }}" class="user-avatar" alt="Kullanıcı profil resmi">
+                                <img src="{{ url_for('static', filename=(user.profile_image or 'images/default_avatar.svg')) }}" class="user-avatar" alt="Kullanıcı profil resmi">
                                 <div>
                                     <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
                                     <div class="user-username">@{{ user.username }}</div>
@@ -133,7 +133,7 @@
                         <td><input type="checkbox" name="selectedPendingUsers" value="{{ user.id }}" title="Kullanıcıyı seç"></td>
                         <td>
                             <div class="user-cell">
-                                <img src="{{ url_for('static', filename='images/pp.png') }}" class="user-avatar" alt="Kullanıcı profil resmi">
+                                <img src="{{ url_for('static', filename=(user.profile_image or 'images/default_avatar.svg')) }}" class="user-avatar" alt="Kullanıcı profil resmi">
                                 <div>
                                     <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
                                     <div class="user-username">@{{ user.username }}</div>
