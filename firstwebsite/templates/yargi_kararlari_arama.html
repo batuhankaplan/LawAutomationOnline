@@ -9,7 +9,7 @@
 <!-- Modern CSS Stilleri -->
 <style>
 .search-engine-container {
-    background: var(--background-secondary, #f8f9fa);
+    background: #f8f9fa;
     min-height: 100vh;
     padding: 2rem 0;
 }
@@ -38,7 +38,7 @@
 
 .search-body {
     padding: 2.5rem;
-    background: var(--card-bg, white);
+    background: white;
 }
 
 .modern-input {
@@ -47,13 +47,13 @@
     padding: 15px 20px;
     font-size: 1.1rem;
     transition: all 0.3s ease;
-    background: var(--background-secondary, #f8f9fa);
+    background: #f8f9fa;
 }
 
 .modern-input:focus {
     border-color: #667eea;
     box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    background: var(--card-bg, white);
+    background: white;
 }
 
 .modern-select {
@@ -61,14 +61,14 @@
     border-radius: 12px;
     padding: 15px 20px;
     font-size: 1rem;
-    background: var(--background-secondary, #f8f9fa);
+    background: #f8f9fa;
     transition: all 0.3s ease;
 }
 
 .modern-select:focus {
     border-color: #667eea;
     box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    background: var(--card-bg, white);
+    background: white;
 }
 
 .search-btn {
@@ -107,7 +107,7 @@
 }
 
 .results-container {
-    background: var(--card-bg, white);
+    background: white;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     overflow: hidden;
@@ -156,7 +156,7 @@
     border-radius: 8px;
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
-    color: var(--text-color, #2c3e50);
+    color: #2c3e50;
     min-width: 180px;
 }
 
@@ -178,7 +178,7 @@
 
 .court-title h5 {
     margin: 0;
-    color: var(--text-color, #2c3e50);
+    color: #2c3e50;
     font-weight: 600;
 }
 
@@ -188,7 +188,7 @@
     padding: 1.5rem;
     margin-bottom: 1rem;
     transition: all 0.3s ease;
-    background: var(--card-bg, white);
+    background: white;
 }
 
 .decision-card:hover {
@@ -200,7 +200,7 @@
 .decision-title {
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--text-color, #2c3e50);
+    color: #2c3e50;
     margin-bottom: 1rem;
     line-height: 1.4;
 }
@@ -234,7 +234,7 @@
     font-size: 0.95rem;
     line-height: 1.5;
     margin-bottom: 1rem;
-    background: var(--background-secondary, #f8f9fa);
+    background: #f8f9fa;
     padding: 1rem;
     border-radius: 8px;
     border-left: 3px solid #667eea;
@@ -299,7 +299,7 @@
 }
 
 .advanced-search {
-    background: var(--background-secondary, #f8f9fa);
+    background: #f8f9fa;
     border-radius: 12px;
     padding: 1.5rem;
     margin-top: 1rem;
@@ -312,7 +312,7 @@
     align-items: center;
     gap: 1rem;
     padding: 2rem;
-    background: var(--background-secondary, #f8f9fa);
+    background: #f8f9fa;
     border-radius: 0 0 15px 15px;
     border-top: 1px solid #e9ecef;
 }
@@ -333,7 +333,7 @@
     margin: 0 2px;
     padding: 0.5rem 0.75rem;
     color: #667eea;
-    background: var(--card-bg, white);
+    background: white;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
 }
@@ -353,7 +353,7 @@
 }
 
 .page-item.disabled .page-link {
-    background: var(--background-secondary, #f8f9fa);
+    background: #f8f9fa;
     color: #6c757d;
     cursor: not-allowed;
 }
@@ -594,7 +594,7 @@
 #decisionModal .modal-content {
     z-index: 10001 !important;
     position: relative;
-    background: var(--card-bg, white);
+    background: white;
     border: none;
     border-radius: 8px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -612,11 +612,11 @@
     padding: 2rem;
     max-height: calc(100vh - 200px);
     overflow-y: auto;
-    background: var(--card-bg, white);
+    background: white;
 }
 
 #decisionModal .modal-footer {
-    background: var(--background-secondary, #f8f9fa);
+    background: #f8f9fa;
     border-top: 1px solid #dee2e6;
     border-radius: 0 0 8px 8px;
 }
@@ -1176,8 +1176,8 @@ $(document).ready(function() {
                                 <br>
                                 <small class="text-muted">Kaynak: ${response.source_url || documentUrl}</small>
                             </div>
-                            <div class="decision-text-content" style="max-height: 70vh; overflow-y: auto; background: var(--background-secondary, #f8f9fa); padding: 25px; border-radius: 8px; border: 1px solid #e9ecef;">
-                                <div style="white-space: pre-wrap; font-family: 'Times New Roman', serif; font-size: 15px; line-height: 1.7; color: var(--text-color, #333); text-align: justify;">
+                            <div class="decision-text-content" style="max-height: 70vh; overflow-y: auto; background: #f8f9fa; padding: 25px; border-radius: 8px; border: 1px solid #e9ecef;">
+                                <div style="white-space: pre-wrap; font-family: 'Times New Roman', serif; font-size: 15px; line-height: 1.7; color: #333; text-align: justify;">
                                     ${response.content.replace(/\n/g, '<br>')}
                                 </div>
                             </div>

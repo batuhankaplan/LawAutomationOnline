@@ -498,9 +498,7 @@ def update_profile():
                         
                         # Yeni resmi kaydet
                         filename = secure_filename(file.filename)
-                        # Canlıda uzantı / mime uyumsuzluk ve cache sorunlarını önlemek için jpg olarak sabitle
-                        base_name, _ = os.path.splitext(filename)
-                        unique_filename = f"images/profile_{user.id}_{int(pytime.time())}_{base_name}.jpg"
+                        unique_filename = f"images/profile_{user.id}_{int(pytime.time())}_{filename}"
                         filepath = os.path.join(app.static_folder, unique_filename)
                         
                         # Resmi boyutlandır ve kaydet

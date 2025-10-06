@@ -110,7 +110,7 @@
                 <div class="setting-item">
                     <div class="setting-info">
                         <h3>Tema</h3>
-                        <p>Şimdilik yalnızca aydınlık tema kullanılabilir</p>
+                        <p>Aydınlık veya karanlık tema seçin</p>
                     </div>
                     <div class="theme-selector">
                         <div class="theme-option active" data-theme="light" onclick="changeTheme('light')">
@@ -120,7 +120,7 @@
                             </div>
                             <span>Aydınlık</span>
                         </div>
-                        <div class="theme-option disabled" data-theme="dark">
+                        <div class="theme-option" data-theme="dark" onclick="changeTheme('dark')">
                             <div class="theme-preview dark-theme">
                                 <div class="preview-bar"></div>
                                 <div class="preview-content"></div>
@@ -299,9 +299,31 @@
 </div>
 
 <style>
-/* CSS Variables - Settings Page Specific */
-/* Not: Ana tema değişkenleri style.css'de global olarak tanımlı */
-/* Bu sayfa için ek değişkenler burada */
+/* CSS Variables for Theme Support */
+:root {
+    --primary-color: #2d313b;
+    --primary-dark: #2d313b;
+    --bg-color: #ffffff;
+    --bg-secondary: #f8fafc;
+    --text-color: #2d3748;
+    --text-secondary: #718096;
+    --border-color: #e2e8f0;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --danger-color: #e53e3e;
+    --success-color: #38a169;
+}
+
+/* Dark Theme Variables */
+[data-theme="dark"] {
+    --bg-color: #1a202c;
+    --bg-secondary: #2d3748;
+    --text-color: #ffffff;
+    --text-secondary: #a0aec0;
+    --border-color: #4a5568;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
 
 /* Base Styles */
 .settings-page {
@@ -536,7 +558,7 @@
     left: 2px;
     width: 20px;
     height: 20px;
-    background-color: var(--card-bg, white);
+    background-color: white;
     border-radius: 50%;
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -582,7 +604,7 @@
 }
 
 .light-theme {
-    background-color: var(--card-bg, #ffffff);
+    background-color: #ffffff;
 }
 
 .dark-theme {
@@ -1044,11 +1066,6 @@
 // Sayfa yüklendiğinde kullanıcının ayarlarını getir
 document.addEventListener('DOMContentLoaded', function() {
     loadUserSettings();
-    // Temayı zorunlu olarak aydınlık yap
-    try {
-        applyTheme('light');
-        localStorage.setItem('theme', 'light');
-    } catch (e) { console.error('Tema zorlaması hatası:', e); }
     initializeTheme();
 });
 
@@ -1088,20 +1105,16 @@ async function loadUserSettings() {
 
 // Tema sistemi
 function initializeTheme() {
-    // Koyu tema geçici olarak devre dışı: her zaman light uygula
-    applyTheme('light');
-    localStorage.setItem('theme', 'light');
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
 }
 
 function changeTheme(theme) {
-    // Koyu tema seçimi yok sayılır, her zaman light uygulanır
-    applyTheme('light');
-    updateSetting('theme', 'light');
+    applyTheme(theme);
+    updateSetting('theme', theme);
 }
 
 function applyTheme(theme) {
-    // Güvenlik için dark gelirse light'a zorla
-    if (theme !== 'light') { theme = 'light'; }
     // HTML root elementine tema attribute'unu ekle - bu global olarak tüm sayfalarda çalışır
     document.documentElement.setAttribute('data-theme', theme);
     document.body.setAttribute('data-theme', theme);
@@ -1256,7 +1269,7 @@ function show2FAModal(qrCode, secret) {
     console.log('Modal oluşturuldu:', modal);
     modal.innerHTML = `
         <div style="
-            background: var(--card-bg, white); 
+            background: white; 
             padding: 20px; 
             border-radius: 10px; 
             width: 90%; 
@@ -1264,16 +1277,16 @@ function show2FAModal(qrCode, secret) {
             position: relative;
             z-index: 10000;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            color: var(--text-color, #333);
+            color: #333;
             font-family: Arial, sans-serif;
         ">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color, #eee); padding-bottom: 15px;">
-                <h3 style="margin: 0; color: var(--text-color, #333);">🔐 İki Faktörlü Doğrulama</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                <h3 style="margin: 0; color: #333;">🔐 İki Faktörlü Doğrulama</h3>
                 <button onclick="closeQRModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
             </div>
             
             <div style="text-align: center; margin-bottom: 20px;">
-                <h4 style="color: var(--text-color, #333); margin-bottom: 15px;">1. QR Kodu Tarayın:</h4>
+                <h4 style="color: #333; margin-bottom: 15px;">1. QR Kodu Tarayın:</h4>
                 <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; display: inline-block; border: 2px solid #ddd;">
                     <img src="data:image/png;base64,${qrCode}" style="width: 200px; height: 200px; display: block;">
                 </div>
@@ -1284,7 +1297,7 @@ function show2FAModal(qrCode, secret) {
             </div>
             
             <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; color: var(--text-color, #333); font-weight: bold;">2. Doğrulama Kodunu Girin:</label>
+                <label style="display: block; margin-bottom: 8px; color: #333; font-weight: bold;">2. Doğrulama Kodunu Girin:</label>
                 <input type="text" id="verification_code" placeholder="123456" maxlength="6" style="
                     width: 100%; 
                     padding: 15px; 
@@ -1293,8 +1306,8 @@ function show2FAModal(qrCode, secret) {
                     text-align: center; 
                     font-size: 18px; 
                     letter-spacing: 5px;
-                    background: var(--card-bg, white);
-                    color: var(--text-color, #333);
+                    background: white;
+                    color: #333;
                     box-sizing: border-box;
                     font-family: monospace;
                 ">

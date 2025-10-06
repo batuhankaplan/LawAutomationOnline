@@ -228,7 +228,7 @@
 }
 
 .control-panel {
-    background: var(--card-bg, white);
+    background: white;
     padding: 1.5rem 3rem;
     display: flex;
     justify-content: space-between;
@@ -274,7 +274,7 @@
     padding: 0.75rem 1rem;
     border: 1px solid #e1e8ed;
     border-radius: 8px;
-    background: var(--card-bg, white);
+    background: white;
     font-size: 0.95rem;
     min-width: 150px;
 }
@@ -309,7 +309,7 @@
 
 .data-section {
     margin: 2rem 3rem;
-    background: var(--card-bg, white);
+    background: white;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -726,7 +726,7 @@ function createAdvancedModal(user, userPermissions = {}) {
             padding: 2rem;
         ">
             <div style="
-                background: var(--card-bg, white);
+                background: white;
                 border-radius: 20px;
                 padding: 2.5rem;
                 width: 100%;
@@ -756,7 +756,7 @@ function createAdvancedModal(user, userPermissions = {}) {
                 <form id="editUserForm">
                     <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: 2rem;">
                         <!-- Sol Kolon: Kullanıcı Bilgileri -->
-                        <div style="background: var(--background-secondary, #f8f9fa); padding: 1.5rem; border-radius: 12px;">
+                        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px;">
                             <h3 style="margin: 0 0 1rem 0; color: #2d3748; display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem;">
                                 <i class="material-icons">person</i> Kullanıcı Bilgileri
                             </h3>
@@ -768,7 +768,7 @@ function createAdvancedModal(user, userPermissions = {}) {
                                     padding: 0.75rem;
                                     border: 1px solid #e9ecef;
                                     border-radius: 8px;
-                                    background: var(--background-secondary, #f8f9fa);
+                                    background: #f8f9fa;
                                     color: #6c757d;
                                     font-size: 0.9rem;
                                 ">
@@ -781,7 +781,7 @@ function createAdvancedModal(user, userPermissions = {}) {
                                     padding: 0.75rem;
                                     border: 1px solid #e9ecef;
                                     border-radius: 8px;
-                                    background: var(--background-secondary, #f8f9fa);
+                                    background: #f8f9fa;
                                     color: #6c757d;
                                     font-size: 0.9rem;
                                 ">
@@ -795,7 +795,7 @@ function createAdvancedModal(user, userPermissions = {}) {
                                     border: 2px solid #e9ecef;
                                     border-radius: 10px;
                                     font-size: 0.95rem;
-                                    background: var(--card-bg, white);
+                                    background: white;
                                 ">
                                     <option value="Sekreter" ${user.role === 'Sekreter' ? 'selected' : ''}>📋 Sekreter</option>
                                     <option value="Takip Elemanı" ${user.role === 'Takip Elemanı' ? 'selected' : ''}>📊 Takip Elemanı</option>
@@ -808,7 +808,7 @@ function createAdvancedModal(user, userPermissions = {}) {
                             </div>
 
                             <div style="margin-bottom: 1rem;">
-                                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 0.75rem; background: var(--background-secondary, #f8f9fa); border-radius: 10px;">
+                                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 0.75rem; background: #f8f9fa; border-radius: 10px;">
                                     <input type="checkbox" id="isAdmin" ${user.is_admin ? 'checked' : ''} style="
                                         width: 20px;
                                         height: 20px;
@@ -1029,8 +1029,8 @@ function createPermissionsHTML(userPermissions) {
                             align-items: flex-start;
                             gap: 0.75rem;
                             padding: 0.75rem;
-                            background: var(--card-bg, white);
-                            border: 1px solid var(--border-color, #dee2e6);
+                            background: white;
+                            border: 1px solid #dee2e6;
                             border-radius: 10px;
                             cursor: pointer;
                             transition: all 0.2s ease;

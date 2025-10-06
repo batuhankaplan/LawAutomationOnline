@@ -210,9 +210,7 @@ main {
     color: var(--danger-color);
 }
 
-/* Dark Mode - Settings Page Specific Variables */
-/* Not: Ana CSS değişkenleri style.css'de global olarak tanımlı */
-
+/* Dark Mode */
 :root {
     --bg-color: #ffffff;
     --bg-secondary: #f8f9fa;
@@ -226,15 +224,15 @@ main {
 }
 
 [data-theme="dark"] {
-    --bg-color: #0f172a;
-    --bg-secondary: #1e293b;
-    --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --border-color: #334155;
-    --primary-color: #6366f1;
-    --danger-color: #ef4444;
-    --danger-bg: #1e293b;
-    --danger-border: #334155;
+    --bg-color: #1a1a1a;
+    --bg-secondary: #2d2d2d;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --border-color: #404040;
+    --primary-color: #2d313c;
+    --danger-color: #ff4d4d;
+    --danger-bg: #2d1f1f;
+    --danger-border: #4d2c2c;
 }
 
 /* Responsive */
