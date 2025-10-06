@@ -2656,6 +2656,25 @@ def find_document_file(filepath):
     # Mümkün dosya yollarını oluştur
     possible_paths = []
 
+    # 1) Normalize: 'static/uploads/...' veya 'firstwebsite/static/uploads/...' gibi
+    try:
+        norm = filepath.replace('\\', '/')
+        # static/ ön eki varsa kırp
+        if norm.startswith('static/'):
+            norm = norm[len('static/'):]
+        if norm.startswith('firstwebsite/static/'):
+            norm = norm[len('firstwebsite/static/'):]
+        # uploads/ ile başlıyorsa doğrudan UPLOAD_FOLDER ile birleştir
+        if norm.startswith('uploads/'):
+            possible_paths.append(os.path.join(app.config['UPLOAD_FOLDER'], norm[len('uploads/'):]))
+        # uploads/documents/... tam yolu da dene
+        if 'uploads/' in norm:
+            idx = norm.find('uploads/')
+            tail = norm[idx + len('uploads/'):]
+            possible_paths.append(os.path.join(app.config['UPLOAD_FOLDER'], tail))
+    except Exception:
+        pass
+
     # Eğer filepath zaten mutlak yolsa, direkt onu dene
     if os.path.isabs(filepath):
         possible_paths.append(filepath)
