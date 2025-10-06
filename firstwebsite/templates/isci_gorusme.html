@@ -17,7 +17,7 @@
     display: flex;
     gap: 2rem;
     padding: 2rem;
-    background: #f8f9fa;
+    background: var(--background-secondary, #f8f9fa);
     min-height: calc(100vh - 100px);
 }
 
@@ -25,7 +25,7 @@
 .saved-forms-section {
     flex: 1;
     max-width: 400px;
-    background: white;
+    background: var(--card-bg, white);
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -40,7 +40,7 @@
 
 .section-header h2 {
     font-size: 1.2rem;
-    color: #2c3e50;
+    color: var(--text-color, #2c3e50);
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -77,8 +77,8 @@
     position: relative;
     display: flex;
     align-items: center;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background: var(--background-secondary, #f8f9fa);
+    border: 1px solid var(--border-color, #dee2e6);
     border-radius: 6px;
     padding: 0.5rem;
     transition: all 0.3s ease;
@@ -119,7 +119,7 @@
 }
 
 .clear-search-btn:hover {
-    background: #e9ecef;
+    background: var(--background-tertiary, #e9ecef);
     color: #495057;
 }
 
@@ -134,7 +134,7 @@
     justify-content: space-between;
     align-items: flex-start;
     padding: 1rem;
-    background: #f8f9fa;
+    background: var(--background-secondary, #f8f9fa);
     border-radius: 8px;
     transition: all 0.3s ease;
     min-height: auto;
@@ -143,14 +143,14 @@
 }
 
 .saved-form-item:hover {
-    background: #e9ecef;
+    background: var(--background-tertiary, #e9ecef);
     transform: translateY(-2px);
 }
 
 .form-info h3 {
     margin: 0;
     font-size: 1rem;
-    color: #2c3e50;
+    color: var(--text-color, #2c3e50);
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
@@ -210,7 +210,7 @@
 /* Sağ Bölüm - Form */
 .form-section {
     flex: 3;
-    background: white;
+    background: var(--card-bg, white);
     border-radius: 12px;
     padding: 2rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -231,7 +231,7 @@
 
 .form-header h1 {
     font-size: 1.5rem;
-    color: #2c3e50;
+    color: var(--text-color, #2c3e50);
     margin: 0;
     width: 100%;
     text-align: center;
@@ -280,17 +280,17 @@
 .form-group {
     margin-bottom: 0.8rem;
     padding: 0.8rem;
-    background: #f8f9fa;
+    background: var(--background-secondary, #f8f9fa);
     border-radius: 8px;
     border: 1px solid #eee;
 }
 
 .form-group h3 {
     font-size: 0.9rem;
-    color: #2c3e50;
+    color: var(--text-color, #2c3e50);
     margin: 0 0 0.4rem 0;
     padding-bottom: 0.4rem;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border-color, #eee);
 }
 
 .input-grid {
@@ -317,7 +317,7 @@
 
 .input-item input {
     padding: 0.6rem;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border-color, #dee2e6);
     border-radius: 6px;
     font-size: 0.85rem;
     transition: all 0.3s ease;
@@ -329,7 +329,7 @@
 
 .input-item textarea {
     padding: 0.6rem;
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--border-color, #dee2e6);
     border-radius: 6px;
     font-size: 0.85rem;
     transition: all 0.3s ease;
@@ -384,7 +384,7 @@
 .signature-text p {
     margin: 0.2rem 0;
     font-weight: 500;
-    color: #2c3e50;
+    color: var(--text-color, #2c3e50);
     font-size: 0.85rem;
 }
 
@@ -440,7 +440,7 @@
         width: 100% !important;
         margin: 0 !important;
         padding: 5mm !important;
-        background: white !important;
+        background: var(--card-bg, white) !important;
         font-family: Arial, sans-serif !important;
         font-size: 9pt !important;
         line-height: 1.2 !important;
@@ -498,7 +498,7 @@
     .input-item label {
         display: block;
         font-weight: bold;
-        color: black;
+        color: var(--text-color, black);
         margin-bottom: 0.02cm;
         font-size: 5pt;
     }
@@ -508,7 +508,7 @@
         line-height: 1.0;
         border: none;
         background: none;
-        color: black;
+        color: var(--text-color, black);
         padding: 0.02cm;
         word-wrap: break-word;
         overflow-wrap: break-word;
@@ -563,7 +563,7 @@
     .signature-text p {
         margin: 0.02cm 0;
         font-size: 5pt;
-        color: black;
+        color: var(--text-color, black);
     }
     
     .signature-line {
@@ -705,7 +705,7 @@
     min-height: auto !important;
     margin: 0 auto !important;
     padding: 0 !important; /* Tüm padding'ler sıfır - margin sıfır için */
-    background-color: white !important;
+    background-color: var(--card-bg, white) !important;
     box-shadow: none !important;
     font-family: Arial, sans-serif !important;
     font-size: 9pt !important;
@@ -735,7 +735,7 @@
     padding: 2mm !important;
     border: 1pt solid #333 !important;
     page-break-inside: auto !important;
-    background-color: white !important;
+    background-color: var(--card-bg, white) !important;
     height: auto !important;
     min-height: auto !important;
     width: auto !important;

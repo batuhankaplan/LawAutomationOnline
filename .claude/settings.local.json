@@ -5,37 +5,15 @@
   },
   "permissions": {
     "allow": [
-      "Bash(find:*)",
-      "Bash(python test:*)",
-      "Bash(python3:*)",
-      "Bash(ss:*)",
-      "Bash(lsof:*)",
-      "Bash(curl:*)",
-      "Bash(python:*)",
-      "Bash(pkill:*)",
-      "Bash(git add:*)",
-      "Bash(git push:*)",
-      "Bash(git commit:*)",
-      "Bash(grep:*)",
-      "Bash(git remote set-url:*)",
-      "Bash(git pull:*)",
-      "Bash(journalctl:*)",
-      "Bash(git fetch:*)",
-      "mcp__ide__executeCode",
-      "Bash(taskkill:*)",
-      "Bash(netstat:*)",
-      "Bash(findstr:*)",
-      "Bash(cmd /c:*)",
-      "Bash(sqlite3:*)",
-      "Bash(timeout:*)",
-      "Bash(cat:*)",
-      "Bash(dir:*)",
-      "Bash(git stash push:*)",
-      "Bash(ssh:*)",
-      "Bash(git stash show:*)",
-      "Bash(git stash pop:*)",
-      "Bash(awk:*)"
+      "Bash(do sed -i 's/color: #212529;/color: var(--text-color, #212529);/g' \"$file\")",
+      "Bash(do sed -i 's/border: 1px solid #dee2e6/border: 1px solid var(--border-color, #dee2e6)/g' \"$file\")",
+      "Bash(del temp_dark_mode_fixer.py)",
+      "Bash(for file in faiz_hesaplama.html harc_hesaplama.html isci_alacagi_hesaplama.html vekalet_hesaplama.html)",
+      "Bash(do sed -i 's/background:\\s*white/background: var(--card-bg, white)/g; s/background:\\s*#ffffff/background: var(--card-bg, #ffffff)/g; s/background:\\s*#fff[^0-9a-f]/background: var(--card-bg, #fff)\\1/g; s/background-color:\\s*white/background-color: var(--card-bg, white)/g; s/background-color:\\s*#ffffff/background-color: var(--card-bg, #ffffff)/g' \"$file\")",
+      "Bash(do sed -i 's/background:\\s*white/background: var(--card-bg, white)/g; s/background:\\s*#ffffff/background: var(--card-bg, #ffffff)/g; s/background-color:\\s*white/background-color: var(--card-bg, white)/g; s/background-color:\\s*#ffffff/background-color: var(--card-bg, #ffffff)/g; s/background:\\s*#f8f9fa/background: var(--background-secondary, #f8f9fa)/g; s/background-color:\\s*#f8f9fa/background-color: var(--background-secondary, #f8f9fa)/g' \"$file\")",
+      "Bash(echo:*)"
     ],
-    "deny": []
+    "deny": [],
+    "ask": []
   }
 }

@@ -216,7 +216,7 @@ header {
 .ai-chat-container {
     display: flex;
     height: calc(100vh - 200px);
-    background: #f8f9fa;
+    background: var(--background-secondary, #f8f9fa);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -351,12 +351,12 @@ header {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: white;
+    background: var(--card-bg, white);
 }
 
 .chat-header {
     padding: 1.5rem 2rem;
-    background: white;
+    background: var(--card-bg, white);
     border-bottom: 1px solid #e2e8f0;
     display: flex;
     justify-content: space-between;
@@ -446,7 +446,7 @@ header {
     flex: 1;
     overflow-y: auto;
     padding: 2rem;
-    background: #f8f9fa;
+    background: var(--background-secondary, #f8f9fa);
 }
 
 .ai-message, .user-message {
@@ -498,7 +498,7 @@ header {
 }
 
 .message-text {
-    background: white;
+    background: var(--card-bg, white);
     padding: 1.25rem 1.5rem;
     border-radius: 18px;
     line-height: 1.6;
@@ -534,7 +534,7 @@ header {
 }
 
 .chat-input-area {
-    background: white;
+    background: var(--card-bg, white);
     padding: 1.5rem 2rem;
     border-top: 1px solid #e2e8f0;
 }
@@ -580,7 +580,7 @@ header {
 .message-input-wrapper {
     border: 2px solid #e2e8f0;
     border-radius: 12px;
-    background: white;
+    background: var(--card-bg, white);
     transition: all 0.3s ease;
 }
 
@@ -657,7 +657,7 @@ header {
     align-items: center;
     gap: 1rem;
     padding: 1rem 2rem;
-    background: white;
+    background: var(--card-bg, white);
     border-top: 1px solid #e2e8f0;
 }
 

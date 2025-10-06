@@ -33,7 +33,7 @@
                     </div>
                 </div>
 
-                <div id="genelEditor" contenteditable="false" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; min-height: 400px;">
+                <div id="genelEditor" contenteditable="false" style="background: var(--card-bg, #ffffff); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; min-height: 400px;">
                     <p style="text-align: center; font-weight: 700; text-decoration: underline;">AHZU KABZA SULH VE İBRAYA DAVADAN İSTİNAFTAN, TEMYİZDEN VE DİĞER KANUN YOLLARINDAN FERAGATE ARABULUCULUĞA BAŞVURMAYA DİLEDİĞİNDE DAVA DURUŞMALARINA MESLEKİ MAZERET GÖSTERMEYE , DİLEDİĞİ AVUKATA YETKİLENDİRME YETKİSİNİ TAŞIR GENEL VEKALETNAME VERİLECEK</p>
 
                     <p style="text-align: center; font-weight: 700; margin-top: 24px;">KAPLAN HUKUK BÜROSU<br>Av.Mustafa KAPLAN<br>Güneşli VD: 68884068806</p>
@@ -65,7 +65,7 @@
                     </div>
                 </div>
 
-                <div id="bosanmaEditor" contenteditable="false" style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; min-height: 400px;">
+                <div id="bosanmaEditor" contenteditable="false" style="background: var(--card-bg, #ffffff); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; min-height: 400px;">
                     <p style="text-align: center; font-weight: 700; text-decoration: underline; font-size: 14px; line-height: 1.4; margin-bottom: 20px;">AHZU KABZA SULH VE İBRAYA DAVADAN,İSTİNAFTAN TEMYİZDEN VE DİĞER KANUN YOLLARINDAN FERAGATE DİLEDİĞİNDE DAVA DURUŞMALARINA MESLEKİ MAZERET GÖSTERMEYE YETKİSİNİ TAŞIR<br>BOŞANMA İÇİN FOTOĞRAFLI ÖZEL VEKALETNAME VERİLECEK.</p>
 
                     <p style="text-align: center; font-weight: 700; margin-top: 30px; font-size: 16px;">KAPLAN HUKUK BÜROSU<br>Av.Mustafa KAPLAN<br>Güneşli VD: 68884068806</p>
@@ -109,7 +109,7 @@
 .nav-tabs .nav-link:hover {
     border-color: transparent;
     color: #495057;
-    background-color: #f8f9fa;
+    background-color: var(--background-secondary, #f8f9fa);
 }
 
 .nav-tabs .nav-link.active {
@@ -141,7 +141,7 @@
         padding: 0 !important;
         border: none !important;
         box-shadow: none !important;
-        background: #fff !important;
+        background: var(--card-bg, #fff) !important;
     }
 
     /* Sayfayı tek sayfada doldur */
@@ -153,7 +153,7 @@
     #genelEditor, #bosanmaEditor {
         width: 297mm; height: 210mm;
         padding: 10mm; box-sizing: border-box;
-        background: #fff !important; border: none !important; border-radius: 0 !important;
+        background: var(--card-bg, #fff) !important; border: none !important; border-radius: 0 !important;
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
         font-size: 12pt;
         overflow: hidden;
