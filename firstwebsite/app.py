@@ -491,7 +491,7 @@ def update_profile():
                 if file and allowed_file(file.filename):
                     try:
                         # Eski profil resmini sil (varsayılan resim hariç)
-                        if user.profile_image and user.profile_image != 'images/pp.png':
+                        if user.profile_image and user.profile_image not in ['images/pp.png', 'images/default_avatar.svg']:
                             old_image_path = os.path.join(app.static_folder, user.profile_image)
                             if os.path.exists(old_image_path):
                                 os.remove(old_image_path)

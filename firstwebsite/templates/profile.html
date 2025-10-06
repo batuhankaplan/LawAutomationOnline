@@ -14,7 +14,7 @@
         <div class="profile-content">
             <div class="profile-image-section">
                 <div class="profile-photo-container">
-                    <img id="preview-image" src="{{ url_for('static', filename=current_user.profile_image or 'images/pp.png') }}" alt="Profil">
+                    <img id="preview-image" src="{{ url_for('static', filename=current_user.profile_image or 'images/default_avatar.svg') }}" alt="Profil">
                     <div class="profile-image-overlay">
                         <label for="profile_image" class="profile-upload-btn">
                             <i class="fas fa-camera"></i>

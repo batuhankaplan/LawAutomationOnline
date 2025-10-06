@@ -1191,7 +1191,7 @@
                         <div class="profile-menu">
                             <div class="profile-trigger" onclick="toggleProfileMenu()">
                                 <div class="profile-image-container">
-                                    <img src="{{ url_for('static', filename=current_user.profile_image or 'images/pp.png') }}" alt="Profil" class="profile-image">
+                                    <img src="{{ url_for('static', filename=current_user.profile_image or 'images/default_avatar.svg') }}" alt="Profil" class="profile-image">
                                 </div>
                                 {% set unvan = '' %}
                                 {% if current_user.role == 'Yönetici Avukat' %}
