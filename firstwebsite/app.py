@@ -5846,14 +5846,14 @@ def preview_udf(document_id):
         return f"UDF dosyasını açarken bir hata oluştu: {str(e)}", 500
 
 def parse_udf_content(input_path):
-    """UDF dosyasını ayrıştırıp içeriği çıkarır"""
+    """UDF dosyasını ayrıştırıp içeriği çıkarır - resimler ve formatlar dahil"""
     try:
         print(f"UDF dosyası ayrıştırılıyor: {input_path}")
-        
+
         # UDF dosyasını ikili modda aç
         with open(input_path, 'rb') as f:
             content = f.read()
-        
+
         # UDF formatını analiz et
         # 1. Magic bytes kontrolü
         if content.startswith(b'PK'):
@@ -5861,89 +5861,252 @@ def parse_udf_content(input_path):
             import zipfile
             from io import BytesIO
             import re
-            
+            import base64
+
             print("UDF ZIP formatında olabilir, ZIP olarak açılıyor...")
-            
+
             try:
+                # Geçici dizin oluştur
+                temp_dir = tempfile.mkdtemp()
+
                 with zipfile.ZipFile(BytesIO(content)) as zip_ref:
                     file_list = zip_ref.namelist()
                     print(f"ZIP içerisindeki dosyalar: {file_list}")
-                    
-                    # Sadece content.xml dosyasını ara ve içeriğini al
-                    actual_content = ""
-                    
+
+                    # Tüm dosyaları geçici dizine çıkar
+                    zip_ref.extractall(temp_dir)
+
+                    # content.xml içeriğini oku
+                    content_xml = None
+                    styles_xml = None
+
                     for file_name in file_list:
                         if file_name == 'content.xml' or file_name.endswith('/content.xml'):
                             content_xml = zip_ref.read(file_name).decode('utf-8', errors='ignore')
-                            
-                            # CDATA içeriğini çıkar
-                            cdata_match = re.search(r'<!\[CDATA\[(.*?)\]\]>', content_xml, re.DOTALL)
-                            if cdata_match:
-                                # CDATA içeriğini direkt kullan
-                                actual_content = cdata_match.group(1)
+                        elif file_name == 'styles.xml' or file_name.endswith('/styles.xml'):
+                            styles_xml = zip_ref.read(file_name).decode('utf-8', errors='ignore')
+
+                    # Resimleri base64'e dönüştür
+                    images_dict = {}
+                    for file_name in file_list:
+                        if file_name.startswith('Pictures/') or '/Pictures/' in file_name:
+                            img_data = zip_ref.read(file_name)
+                            # Dosya uzantısına göre MIME type belirle
+                            ext = os.path.splitext(file_name)[1].lower()
+                            mime_type = {
+                                '.png': 'image/png',
+                                '.jpg': 'image/jpeg',
+                                '.jpeg': 'image/jpeg',
+                                '.gif': 'image/gif',
+                                '.bmp': 'image/bmp',
+                                '.svg': 'image/svg+xml'
+                            }.get(ext, 'image/png')
+
+                            img_base64 = base64.b64encode(img_data).decode('utf-8')
+                            images_dict[file_name] = f"data:{mime_type};base64,{img_base64}"
+                            print(f"Resim dönüştürüldü: {file_name}")
+
+                    # HTML içeriği oluştur
+                    html_parts = []
+
+                    if content_xml:
+                        # CDATA içeriğini çıkar
+                        cdata_match = re.search(r'<!\[CDATA\[(.*?)\]\]>', content_xml, re.DOTALL)
+                        if cdata_match:
+                            # CDATA içeriği var - basitçe göster
+                            import html as html_module
+                            actual_content = cdata_match.group(1)
+
+                            # İçeriği satırlara böl
+                            lines = actual_content.split('\n')
+
+                            # Baştaki boş satırları atla
+                            start_index = 0
+                            for i, line in enumerate(lines):
+                                if line.strip():
+                                    start_index = i
+                                    break
+
+                            # Her satırı OLDUĞU GİBİ göster - formatlamaya kalkışma
+                            for line in lines[start_index:]:
+                                # Boş satır kontrolü
+                                if not line.strip():
+                                    html_parts.append('<div class="empty-line"></div>')
+                                    continue
+
+                                # Satır başı boşluk sayısı
+                                leading_spaces = len(line) - len(line.lstrip())
+
+                                # Satırı escape et
+                                escaped = html_module.escape(line.strip())
+
+                                # Tab'ları boşluğa çevir
+                                escaped = escaped.replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
+
+                                # Satır başı boşlukları ekle
+                                full_line = '&nbsp;' * leading_spaces + escaped
+
+                                # Basitçe göster
+                                html_parts.append(f'<div class="line">{full_line}</div>')
+                        else:
+                            # OpenDocument XML'ini HTML'e dönüştür
+                            # office:text veya office:body içeriğini bul
+                            body_match = re.search(r'<office:body>(.*?)</office:body>', content_xml, re.DOTALL)
+                            if body_match:
+                                body_content = body_match.group(1)
                             else:
-                                # Eğer CDATA yoksa, metin içeriğini çıkar
-                                actual_content = re.sub(r'<[^>]+>', ' ', content_xml)
-                                actual_content = re.sub(r'\s+', ' ', actual_content).strip()
-                    
-                    # İçerik bulunamadıysa boş dönme, ham içeriği temizleyerek göster
-                    if not actual_content:
+                                body_content = content_xml
+
+                            # Resimleri işle (draw:frame ve draw:image)
+                            image_refs = re.findall(r'<draw:image[^>]*xlink:href="([^"]+)"', body_content)
+                            for img_ref in image_refs:
+                                if img_ref in images_dict:
+                                    html_parts.append(f'<img src="{images_dict[img_ref]}" alt="Image" />')
+                                else:
+                                    # Tam yolu dene
+                                    for img_path, img_url in images_dict.items():
+                                        if img_ref in img_path or os.path.basename(img_path) == os.path.basename(img_ref):
+                                            html_parts.append(f'<img src="{img_url}" alt="Image" />')
+                                            break
+
+                            # Başlıkları çıkar
+                            headings = re.findall(r'<text:h[^>]*>(.*?)</text:h>', body_content, re.DOTALL)
+                            for heading in headings:
+                                # XML etiketlerini temizle ama içeriği koru
+                                clean_heading = re.sub(r'<[^>]+>', '', heading)
+                                if clean_heading.strip():
+                                    html_parts.append(f"<h2>{escape(clean_heading)}</h2>")
+
+                            # Paragrafları çıkar
+                            paragraphs = re.findall(r'<text:p[^>]*>(.*?)</text:p>', body_content, re.DOTALL)
+                            for para in paragraphs:
+                                # Paragraf içindeki resimleri kontrol et
+                                if '<draw:image' in para or '<draw:frame' in para:
+                                    # Resim referanslarını bul
+                                    img_matches = re.findall(r'<draw:image[^>]*xlink:href="([^"]+)"', para)
+                                    for img_ref in img_matches:
+                                        for img_path, img_url in images_dict.items():
+                                            if img_ref in img_path or os.path.basename(img_path) == os.path.basename(img_ref):
+                                                html_parts.append(f'<img src="{img_url}" alt="Image" />')
+                                                break
+
+                                # Metin içeriğini temizle
+                                clean_para = re.sub(r'<[^>]+>', '', para)
+                                if clean_para.strip():
+                                    html_parts.append(f"<p>{escape(clean_para)}</p>")
+
+                    # Eğer hiç içerik bulunamadıysa basit metin çıkarma yap
+                    if not html_parts:
                         for file_name in file_list:
-                            if file_name.endswith('.xml') and not file_name.startswith('document'):
+                            if file_name.endswith('.xml'):
                                 try:
                                     file_content = zip_ref.read(file_name).decode('utf-8', errors='ignore')
-                                    # XML etiketlerini kaldır
                                     text_only = re.sub(r'<[^>]+>', ' ', file_content)
-                                    # Gereksiz boşlukları temizle
                                     text_only = re.sub(r'\s+', ' ', text_only).strip()
-                                    
-                                    if len(text_only) > 100:  # Anlamlı içerik kontrolü
-                                        actual_content = text_only
+
+                                    if len(text_only) > 100:
+                                        html_parts.append(f"<p>{escape(text_only)}</p>")
                                         break
                                 except:
                                     pass
-                
-                # Daha temiz bir HTML gösterim
-                html_content = f"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>UDF Dosya İçeriği</title>
-                    <style>
-                        body {{ 
-                            font-family: Arial, sans-serif; 
-                            margin: 0; 
-                            padding: 0;
-                            line-height: 1.6;
-                            color: #333;
-                        }}
-                        .content {{ 
-                            background: #fff; 
-                            padding: 30px; 
-                            border-radius: 8px; 
-                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                            white-space: pre-wrap;
-                            max-width: 100%;
-                            margin: 0;
-                            text-align: left;
-                        }}
-                    </style>
-                </head>
-                <body>
-                    <div class="content">{escape(actual_content)}</div>
-                </body>
-                </html>
-                """
-                
+
+                    # Resim referanslarını base64 data URL'leriyle değiştir
+                    content_html = '\n'.join(html_parts)
+                    for img_path, img_data_url in images_dict.items():
+                        # Farklı olası referans formatlarını dene
+                        img_name = os.path.basename(img_path)
+                        content_html = content_html.replace(img_path, img_data_url)
+                        content_html = content_html.replace(img_name, img_data_url)
+
+                # HTML şablonu - UDF içeriğini formatla
+                html_content = f"""<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UDF Dosya İçeriği</title>
+    <style>
+        body {{
+            font-family: 'Times New Roman', Times, serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            font-size: 12pt;
+        }}
+        .content {{
+            background: #fff;
+            padding: 40px 60px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+        }}
+
+        /* Her satır için */
+        .line {{
+            white-space: pre-wrap;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+        }}
+
+        /* Hizalamalar */
+        .centered {{
+            text-align: center;
+        }}
+        .center-align {{
+            text-align: center;
+        }}
+        .right-align {{
+            text-align: right;
+        }}
+
+        /* Boş satırlar */
+        .empty-line {{
+            height: 1.4em;
+            margin: 0;
+            padding: 0;
+        }}
+
+        /* Resimler */
+        .content img {{
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 10px auto;
+        }}
+
+        /* Koyu ve altı çizili */
+        strong {{
+            font-weight: bold;
+        }}
+        u {{
+            text-decoration: underline;
+        }}
+    </style>
+</head>
+<body>
+    <div class="content">{content_html}</div>
+</body>
+</html>"""
+
                 # HTML içeriğini geçici dosyaya kaydet
-                with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as tmp_html:
-                    tmp_html.write(html_content.encode('utf-8'))
+                with tempfile.NamedTemporaryFile(suffix='.html', delete=False, mode='w', encoding='utf-8') as tmp_html:
+                    tmp_html.write(html_content)
                     html_path = tmp_html.name
-                
+
+                # Geçici dizini temizle
+                try:
+                    shutil.rmtree(temp_dir)
+                except:
+                    pass
+
                 print(f"UDF içeriği HTML olarak kaydedildi: {html_path}")
                 return html_path
-                
+
             except zipfile.BadZipFile:
                 print("UDF dosyası geçerli bir ZIP formatında değil")
         
