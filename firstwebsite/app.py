@@ -2637,8 +2637,13 @@ def delete_expense(expense_id):
         db.session.rollback()
         return jsonify(success=False, message=str(e))
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads')
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'udf', 'tiff', 'tif'}
+
+# Mutlak/bağıl yolları normalize et
+if not os.path.isabs(UPLOAD_FOLDER):
+    # Proje köküne göre bağıl 'uploads' dizini
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), UPLOAD_FOLDER)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -2681,7 +2686,8 @@ def find_document_file(filepath):
     else:
         # Göreceli yollar için çeşitli kombinasyonlar
         base_paths = [
-            app.config['UPLOAD_FOLDER'],  # uploads/
+            app.config['UPLOAD_FOLDER'],  # normalized uploads kökü
+            os.path.join(app.config['UPLOAD_FOLDER'], 'documents'),
             os.getcwd(),  # proje kökü
             os.path.join(os.getcwd(), 'firstwebsite'),  # firstwebsite/
             os.path.join(os.getcwd(), 'firstwebsite', 'static'),  # firstwebsite/static/
