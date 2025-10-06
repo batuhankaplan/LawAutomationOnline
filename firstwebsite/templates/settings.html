@@ -110,7 +110,7 @@
                 <div class="setting-item">
                     <div class="setting-info">
                         <h3>Tema</h3>
-                        <p>Aydınlık veya karanlık tema seçin</p>
+                        <p>Şimdilik yalnızca aydınlık tema kullanılabilir</p>
                     </div>
                     <div class="theme-selector">
                         <div class="theme-option active" data-theme="light" onclick="changeTheme('light')">
@@ -120,7 +120,7 @@
                             </div>
                             <span>Aydınlık</span>
                         </div>
-                        <div class="theme-option" data-theme="dark" onclick="changeTheme('dark')">
+                        <div class="theme-option disabled" data-theme="dark">
                             <div class="theme-preview dark-theme">
                                 <div class="preview-bar"></div>
                                 <div class="preview-content"></div>
@@ -1066,6 +1066,11 @@
 // Sayfa yüklendiğinde kullanıcının ayarlarını getir
 document.addEventListener('DOMContentLoaded', function() {
     loadUserSettings();
+    // Temayı zorunlu olarak aydınlık yap
+    try {
+        applyTheme('light');
+        localStorage.setItem('theme', 'light');
+    } catch (e) { console.error('Tema zorlaması hatası:', e); }
     initializeTheme();
 });
 
@@ -1105,16 +1110,20 @@ async function loadUserSettings() {
 
 // Tema sistemi
 function initializeTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    applyTheme(savedTheme);
+    // Koyu tema geçici olarak devre dışı: her zaman light uygula
+    applyTheme('light');
+    localStorage.setItem('theme', 'light');
 }
 
 function changeTheme(theme) {
-    applyTheme(theme);
-    updateSetting('theme', theme);
+    // Koyu tema seçimi yok sayılır, her zaman light uygulanır
+    applyTheme('light');
+    updateSetting('theme', 'light');
 }
 
 function applyTheme(theme) {
+    // Güvenlik için dark gelirse light'a zorla
+    if (theme !== 'light') { theme = 'light'; }
     // HTML root elementine tema attribute'unu ekle - bu global olarak tüm sayfalarda çalışır
     document.documentElement.setAttribute('data-theme', theme);
     document.body.setAttribute('data-theme', theme);
