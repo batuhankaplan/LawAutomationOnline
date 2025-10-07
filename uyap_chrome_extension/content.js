@@ -1,5 +1,5 @@
-// UYAP Content Script - DOM'dan veri çekme v2.0.6 (findLabelValue fix)
-console.log('🔧 UYAP Extension v2.0.6 - findLabelValue Optimized');
+// UYAP Content Script - DOM'dan veri çekme v2.1.0 (major fixes)
+console.log('🔧 UYAP Extension v2.1.0 - Vekil Bazlı Müvekkil Seçimi + Çoklu Dosya');
 
 // UYAP Dosya Sorgulama sayfasını algılama
 function isUyapCaseListPage() {
@@ -110,36 +110,55 @@ async function extractCaseDetails() {
 function extractBasicCaseInfo() {
     const info = {};
 
+    // Sayfa başlığından mahkeme ve esas no bilgilerini çek
+    // Örnek: "2025/88 Bakırköy 8. İş Mahkemesi–Hukuk Dava Dosyası"
+    const pageTitle = document.querySelector('h1, .page-title, [class*="title"]')?.textContent?.trim() || document.title;
+    console.log('📄 Sayfa başlığı:', pageTitle);
+
+    // Esas No ve Mahkeme adını parse et
+    const titleMatch = pageTitle.match(/(\d{4})\/(\d+)\s+(.+?)(?:–|—|-|$)/);
+    if (titleMatch) {
+        info.year = titleMatch[1];
+        info.caseNumber = titleMatch[2];
+        info.courthouse = titleMatch[3].trim();
+        console.log('✅ Başlıktan çıkarılan: Yıl=' + info.year + ', Esas=' + info.caseNumber + ', Mahkeme=' + info.courthouse);
+
+        // Şehir ve adliye bilgisini mahkeme adından çıkar
+        const cityInfo = extractCityFromCourthouse(info.courthouse);
+        info.city = cityInfo.city;
+        info.adliye = cityInfo.adliye;
+    } else {
+        // Fallback: Label-value çiftlerinden çek
+        const esasNo = findLabelValue('Esas No', 'Dosya No', 'Esas Numarası', 'ESAS NO');
+        if (esasNo) {
+            const match = esasNo.match(/(\d{4})\/(\d+)/);
+            if (match) {
+                info.year = match[1];
+                info.caseNumber = match[2];
+            }
+        }
+
+        const mahkeme = findLabelValue('Mahkeme', 'Birim', 'Yargı Birimi');
+        if (mahkeme) info.courthouse = mahkeme;
+    }
+
     // Yargı türü
     const yargiTuru = findLabelValue('Yargı Türü', 'Yargı Birimi');
     if (yargiTuru) info.fileType = yargiTuru;
 
-    // Mahkeme/Birim
-    const mahkeme = findLabelValue('Mahkeme', 'Birim', 'Yargı Birimi');
-    if (mahkeme) info.courthouse = mahkeme;
-
-    // Esas No
-    const esasNo = findLabelValue('Esas No', 'Dosya No', 'Esas Numarası');
-    if (esasNo) {
-        const match = esasNo.match(/(\d{4})\/(\d+)/);
-        if (match) {
-            info.year = match[1];
-            info.caseNumber = match[2];
-        }
-    }
-
     // Açılış Tarihi
-    const acilisTarihi = findLabelValue('Açılış Tarihi', 'Dava Açılış Tarihi');
+    const acilisTarihi = findLabelValue('Açılış Tarihi', 'Dava Açılış Tarihi', 'AÇILIŞ TARİHİ');
     if (acilisTarihi) info.openDate = parseUyapDate(acilisTarihi);
 
     // Dosya Durumu
-    const durum = findLabelValue('Durum', 'Dosya Durumu');
+    const durum = findLabelValue('Durum', 'Dosya Durumu', 'DURUM');
     if (durum) info.status = durum;
 
-    // Şehir
-    const sehir = findLabelValue('İl', 'Şehir');
-    if (sehir) info.city = sehir;
+    // Sonraki Duruşma
+    const durusmaTarihi = findLabelValue('Sonraki Duruşma', 'Duruşma Tarihi', 'SONRAKI DURUŞMA');
+    if (durusmaTarihi) info.nextHearing = parseUyapDate(durusmaTarihi);
 
+    console.log('📋 extractBasicCaseInfo sonuç:', info);
     return info;
 }
 
@@ -469,23 +488,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     else if (request.action === 'clickDetailButton') {
         const rowId = request.rowId;
-        console.log('🖱️ Dosya görüntüle butonuna tıklanıyor, rowId:', rowId);
+        const dosyaNo = request.dosyaNo;
+        console.log('🖱️ Dosya görüntüle butonuna tıklanıyor, dosyaNo:', dosyaNo, 'rowId:', rowId);
 
-        // rowId ile satırı bul
-        const rows = document.querySelectorAll('table tbody tr.dx-data-row');
+        // Tüm satırları ve butonları bul
+        const rows = document.querySelectorAll('table tbody tr.dx-data-row, table tbody tr');
         let found = false;
 
-        for (const row of rows) {
-            const currentRowId = row.dataset.id || Array.from(row.querySelectorAll('td')).map(c => c.textContent.trim()).join('|');
-
-            // Her satırdan detay butonu bul ve tıkla (rowId eşleşmese bile index'e göre)
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
             const cells = row.querySelectorAll('td');
-            const dosyaNo = cells[1]?.textContent.trim();
 
-            if (currentRowId === rowId || dosyaNo === request.dosyaNo) {
-                const detailBtn = row.querySelector('#dosya-goruntule');
+            // Dosya numarasını kontrol et (genelde 2. sütun)
+            const currentDosyaNo = cells[1]?.textContent.trim();
+
+            if (currentDosyaNo === dosyaNo) {
+                // Bu satırdaki butonu bul (son sütunda veya içinde)
+                const detailBtn = row.querySelector('button[id*="goruntule"], button[title*="Görüntüle"], a[href*="detay"], #dosya-goruntule');
                 if (detailBtn) {
-                    console.log('✅ Buton bulundu, tıklanıyor...');
+                    console.log(`✅ ${dosyaNo} için buton bulundu (satır ${i}), tıklanıyor...`);
                     detailBtn.click();
                     found = true;
                     sendResponse({ success: true, message: 'Buton tıklandı' });
@@ -495,15 +516,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
 
         if (!found) {
-            // Bulunamazsa ilk satırın butonuna tıkla (fallback)
-            console.warn('⚠️ rowId ile satır bulunamadı, ilk satıra tıklanıyor');
-            const firstBtn = document.querySelector('#dosya-goruntule');
-            if (firstBtn) {
-                firstBtn.click();
-                sendResponse({ success: true, message: 'İlk butona tıklandı (fallback)' });
-            } else {
-                sendResponse({ success: false, message: 'Buton bulunamadı' });
-            }
+            console.error('❌ Dosya bulunamadı:', dosyaNo);
+            sendResponse({ success: false, message: `Dosya ${dosyaNo} için buton bulunamadı` });
         }
     }
     else if (request.action === 'goBack') {
@@ -566,6 +580,62 @@ function addImportButton() {
 // Helper: Sleep fonksiyonu
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Helper: Mahkeme adından şehir ve adliye bilgisi çıkar
+function extractCityFromCourthouse(courthouse) {
+    if (!courthouse) return { city: '', adliye: '' };
+
+    // İlçe adlarını içeren mahkeme isimlerinden şehir çıkar
+    const istanbulDistricts = ['Bakırköy', 'Kadıköy', 'Beşiktaş', 'Beyoğlu', 'Üsküdar', 'Şişli', 'Fatih', 'Zeytinburnu', 'Esenler', 'Güngören', 'Bahçelievler', 'Bağcılar', 'Küçükçekmece', 'Avcılar', 'Esenyurt', 'Başakşehir', 'Beylikdüzü', 'Çatalca', 'Silivri', 'Kartal', 'Maltepe', 'Pendik', 'Tuzla', 'Sultanbeyli', 'Sancaktepe', 'Ümraniye', 'Ataşehir', 'Çekmeköy', 'Sultangazi', 'Arnavutköy', 'Eyüpsultan'];
+    const ankaraDistricts = ['Çankaya', 'Keçiören', 'Yenimahalle', 'Mamak', 'Sincan', 'Altındağ', 'Etimesgut', 'Pursaklar', 'Gölbaşı'];
+    const izmirDistricts = ['Konak', 'Bornova', 'Karşıyaka', 'Buca', 'Bayraklı', 'Çiğli', 'Gaziemir', 'Balçova', 'Narlıdere'];
+
+    let city = '';
+    let district = '';
+
+    // İstanbul ilçelerini kontrol et
+    for (const dist of istanbulDistricts) {
+        if (courthouse.includes(dist)) {
+            city = 'İstanbul';
+            district = dist;
+            break;
+        }
+    }
+
+    // Ankara ilçelerini kontrol et
+    if (!city) {
+        for (const dist of ankaraDistricts) {
+            if (courthouse.includes(dist)) {
+                city = 'Ankara';
+                district = dist;
+                break;
+            }
+        }
+    }
+
+    // İzmir ilçelerini kontrol et
+    if (!city) {
+        for (const dist of izmirDistricts) {
+            if (courthouse.includes(dist)) {
+                city = 'İzmir';
+                district = dist;
+                break;
+            }
+        }
+    }
+
+    // Eğer ilçe bulunamadıysa, mahkeme adının başındaki kelimeyi şehir olarak al
+    if (!city) {
+        const firstWord = courthouse.split(' ')[0];
+        city = firstWord;
+        district = firstWord;
+    }
+
+    // Adliye adını oluştur
+    const adliye = district ? `${district} Adliyesi` : '';
+
+    return { city, adliye };
 }
 
 // Helper: Sekmeye/Tab'a tıklama (varsa)

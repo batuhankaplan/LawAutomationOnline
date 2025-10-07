@@ -8,20 +8,26 @@
 function mapUyapToSystem(uyapData) {
     console.log('UYAP verisi dönüştürülüyor:', uyapData);
 
+    // Bizim vekiller listesi (bu vekillerden biri varsa o taraf müvekkil)
+    const ourLawyers = ['BATUHAN KAPLAN', 'MUSTAFA KAPLAN', 'PERİZE KAPLAN', 'SELVİ DERTLİ'];
+
+    // Tarafları analiz et ve müvekkil/karşı taraf ata
+    const parties = identifyClientAndOpponent(uyapData.parties || {}, ourLawyers);
+
     const mapped = {
         // Dosya bilgileri
         fileInfo: mapFileInfo(uyapData.caseInfo || {}),
 
         // Müvekkil bilgileri
-        client: mapClient(uyapData.parties?.clients?.[0] || {}),
-        additionalClients: mapAdditionalClients(uyapData.parties?.clients?.slice(1) || []),
+        client: mapClient(parties.client || {}),
+        additionalClients: mapAdditionalClients(parties.additionalClients || []),
 
         // Karşı taraf bilgileri
-        opponent: mapOpponent(uyapData.parties?.opponents?.[0] || {}),
-        additionalOpponents: mapAdditionalOpponents(uyapData.parties?.opponents?.slice(1) || []),
+        opponent: mapOpponent(parties.opponent || {}, parties.opponentLawyers || []),
+        additionalOpponents: mapAdditionalOpponents(parties.additionalOpponents || []),
 
-        // Vekil bilgileri
-        lawyer: mapLawyer(uyapData.lawyers || []),
+        // Vekil bilgileri (müvekkilimizin vekilleri)
+        lawyer: mapLawyer(parties.clientLawyers || []),
 
         // Belgeler
         documents: mapDocuments(uyapData.documents || []),
@@ -44,11 +50,13 @@ function mapFileInfo(caseInfo) {
     return {
         'file-type': fileType,
         'city': caseInfo.city || '',
+        'adliye': caseInfo.adliye || '',
         'courthouse': caseInfo.courthouse || '',
-        'department': caseInfo.department || caseInfo.courthouse || '',
+        'department': caseInfo.courthouse || '',  // Mahkeme adı
         'year': caseInfo.year || new Date().getFullYear(),
         'case-number': caseInfo.caseNumber || '',
         'open-date': caseInfo.openDate || formatDateToISO(new Date()),
+        'next-hearing': caseInfo.nextHearing || '',
         'status': mapStatus(caseInfo.status || 'Açık')
     };
 }
@@ -89,8 +97,11 @@ function mapAdditionalClients(clients) {
 /**
  * Ana karşı taraf bilgilerini dönüştür
  */
-function mapOpponent(opponent) {
+function mapOpponent(opponent, opponentLawyers) {
     if (!opponent || !opponent.name) return {};
+
+    // Karşı tarafın vekil bilgilerini ekle
+    const opponentLawyerName = opponentLawyers && opponentLawyers.length > 0 ? opponentLawyers[0] : '';
 
     return {
         'opponent-entity-type': opponent.entityType || 'person',
@@ -98,7 +109,8 @@ function mapOpponent(opponent) {
         'opponent-capacity': opponent.capacity || '',
         'opponent-id': opponent.identityNumber || '',
         'opponent-phone': cleanPhoneNumber(opponent.phone || ''),
-        'opponent-address': opponent.address || ''
+        'opponent-address': opponent.address || '',
+        'opponent-lawyer-name': opponentLawyerName
     };
 }
 
@@ -279,6 +291,64 @@ function prepareJSON(mappedData) {
             JSON.stringify(mappedData.additionalOpponents) : '',
         documents: mappedData.documents,
         hearings: mappedData.hearings
+    };
+}
+
+/**
+ * Tarafları analiz et ve vekil bazında müvekkil/karşı taraf belirle
+ * @param {Object} parties - UYAP'tan gelen taraflar (clients, opponents)
+ * @param {Array} ourLawyers - Bizim vekillerimizin isimleri
+ * @returns {Object} - Düzenlenmiş taraf bilgileri
+ */
+function identifyClientAndOpponent(parties, ourLawyers) {
+    const allParties = [
+        ...(parties.clients || []).map(p => ({ ...p, originalRole: 'Davacı' })),
+        ...(parties.opponents || []).map(p => ({ ...p, originalRole: 'Davalı' }))
+    ];
+
+    console.log('🔍 Taraflar analiz ediliyor:', allParties);
+    console.log('👨‍⚖️ Bizim vekiller:', ourLawyers);
+
+    let clientSide = [];
+    let opponentSide = [];
+
+    // Her tarafın vekilini kontrol et
+    for (const party of allParties) {
+        const lawyerNames = party.lawyer ? party.lawyer.toUpperCase().split(',').map(n => n.trim()) : [];
+        const hasOurLawyer = lawyerNames.some(lawyerName =>
+            ourLawyers.some(ourLawyer => lawyerName.includes(ourLawyer.toUpperCase()))
+        );
+
+        if (hasOurLawyer) {
+            console.log(`✅ Müvekkil bulundu: ${party.name} (Vekil: ${party.lawyer})`);
+            clientSide.push(party);
+        } else {
+            console.log(`⚖️ Karşı taraf: ${party.name} (Vekil: ${party.lawyer})`);
+            opponentSide.push(party);
+        }
+    }
+
+    // Eğer hiçbir tarafta bizim vekilimiz yoksa, davacı=müvekkil olarak varsayalım
+    if (clientSide.length === 0 && opponentSide.length > 0) {
+        console.warn('⚠️ Bizim vekil bulunamadı, Davacı tarafı müvekkil olarak atanıyor');
+        clientSide = allParties.filter(p => p.originalRole === 'Davacı');
+        opponentSide = allParties.filter(p => p.originalRole === 'Davalı');
+    }
+
+    // Vekilleri ayır
+    const clientLawyers = clientSide.length > 0 && clientSide[0].lawyer ?
+        clientSide[0].lawyer.split(',').map(l => l.trim().replace(/[\[\]]/g, '')) : [];
+
+    const opponentLawyers = opponentSide.length > 0 && opponentSide[0].lawyer ?
+        opponentSide[0].lawyer.split(',').map(l => l.trim().replace(/[\[\]]/g, '')) : [];
+
+    return {
+        client: clientSide[0] || null,
+        additionalClients: clientSide.slice(1),
+        opponent: opponentSide[0] || null,
+        additionalOpponents: opponentSide.slice(1),
+        clientLawyers: clientLawyers,
+        opponentLawyers: opponentLawyers
     };
 }
 
