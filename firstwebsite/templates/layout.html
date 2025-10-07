@@ -10,6 +10,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dark-theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dark-theme-extras.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-responsive.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-fix-critical.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/universalviewer@4.0.0/dist/uv.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/universalviewer@4.0.0/dist/uv.css">
     <!-- pdfMake kütüphanesi -->
@@ -1095,8 +1099,16 @@
     }
     </style>
     
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-toggle" onclick="toggleMobileMenu(event)" aria-label="Menüyü Aç/Kapat" type="button">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" onclick="toggleMobileMenu()"></div>
+    
     <div class="app-container">
-        <nav class="sidebar">
+        <nav class="sidebar" id="mobileSidebar">
             <div class="logo">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kaplan Hukuk">
             </div>
@@ -1724,6 +1736,103 @@
             weekdayElements[2].textContent = `${gun}.${ay}.${yil}`;
         }
     }
+    
+    // Mobile Menu Toggle Function
+    function toggleMobileMenu(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
+        const sidebar = document.getElementById('mobileSidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
+        const menuBtn = document.querySelector('.mobile-menu-toggle');
+        
+        console.log('Toggle menu clicked', {sidebar, overlay, menuBtn});
+        
+        if (sidebar && overlay) {
+            const isActive = sidebar.classList.contains('active');
+            
+            if (isActive) {
+                // Kapat
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                sidebar.style.left = '-100%';
+                overlay.style.display = 'none';
+                console.log('Menu kapatıldı');
+            } else {
+                // Aç
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+                sidebar.style.left = '0';
+                overlay.style.display = 'block';
+                console.log('Menu açıldı');
+            }
+            
+            // Icon değiştir
+            if (menuBtn) {
+                const icon = menuBtn.querySelector('i');
+                if (icon) {
+                    if (sidebar.classList.contains('active')) {
+                        icon.classList.remove('fa-bars');
+                        icon.classList.add('fa-times');
+                    } else {
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-bars');
+                    }
+                }
+            }
+        } else {
+            console.error('Sidebar veya overlay bulunamadı!', {sidebar, overlay});
+        }
+    }
+    
+    // Tablolara otomatik responsive wrapper ekle
+    function makeTablesResponsive() {
+        const tables = document.querySelectorAll('table:not(.table-responsive table)');
+        tables.forEach(table => {
+            if (!table.parentElement.classList.contains('table-responsive')) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'table-responsive';
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
+            }
+        });
+    }
+    
+    // Sidebar link'lerine tıklanınca mobilde menü kapansın
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tabloları responsive yap
+        makeTablesResponsive();
+        
+        const sidebarLinks = document.querySelectorAll('.sidebar a');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    toggleMobileMenu();
+                }
+            });
+        });
+        
+        // Ekran boyutu değiştiğinde kontrol et
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                const sidebar = document.getElementById('mobileSidebar');
+                const overlay = document.querySelector('.sidebar-overlay');
+                const menuBtn = document.querySelector('.mobile-menu-toggle');
+                
+                if (sidebar) sidebar.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+                if (menuBtn) {
+                    const icon = menuBtn.querySelector('i');
+                    if (icon) {
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-bars');
+                    }
+                }
+            }
+        });
+    });
     </script>
     {% block scripts %}{% endblock %}
 </body>

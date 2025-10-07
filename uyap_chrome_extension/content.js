@@ -63,7 +63,10 @@ function extractCaseListFromTable() {
                 rawCells: cellTexts
             };
 
-            cases.push(caseData);
+            // Boş satırları filtrele (dosyaNo boş olanlar)
+            if (caseData.dosyaNo && caseData.dosyaNo.trim() !== '') {
+                cases.push(caseData);
+            }
         });
     });
 
@@ -145,8 +148,10 @@ function extractBasicCaseInfo() {
         const cityInfo = extractCityFromCourthouse(info.courthouse);
         info.city = cityInfo.city;
         info.adliye = cityInfo.adliye;
-    } else {
-        // Fallback: Label-value çiftlerinden çek
+    }
+
+    // Başlıktan Esas No çıkarılamazsa fallback
+    if (!info.year || !info.caseNumber) {
         const esasNo = findLabelValue('Esas No', 'Dosya No', 'Esas Numarası', 'ESAS NO');
         if (esasNo) {
             const match = esasNo.match(/(\d{4})\/(\d+)/);
@@ -155,26 +160,51 @@ function extractBasicCaseInfo() {
                 info.caseNumber = match[2];
             }
         }
+    }
 
+    // Başlıktan mahkeme çıkarılamazsa fallback
+    if (!info.courthouse) {
         const mahkeme = findLabelValue('Mahkeme', 'Birim', 'Yargı Birimi');
         if (mahkeme) info.courthouse = mahkeme;
     }
 
-    // Yargı türü
-    const yargiTuru = findLabelValue('Yargı Türü', 'Yargı Birimi');
-    if (yargiTuru) info.fileType = yargiTuru;
+    // Dosya türünü başlıktan çıkar (Ceza/Hukuk Dava Dosyası)
+    if (pageTitle.toLowerCase().includes('ceza')) {
+        info.fileType = 'Ceza';
+        console.log('✅ Dosya türü başlıktan belirlendi: Ceza');
+    } else if (pageTitle.toLowerCase().includes('hukuk')) {
+        info.fileType = 'Hukuk';
+        console.log('✅ Dosya türü başlıktan belirlendi: Hukuk');
+    } else {
+        // Yargı türü fallback
+        const yargiTuru = findLabelValue('Yargı Türü', 'Yargı Birimi');
+        if (yargiTuru) info.fileType = yargiTuru;
+    }
 
     // Açılış Tarihi
     const acilisTarihi = findLabelValue('Açılış Tarihi', 'Dava Açılış Tarihi', 'AÇILIŞ TARİHİ');
-    if (acilisTarihi) info.openDate = parseUyapDate(acilisTarihi);
+    if (acilisTarihi) {
+        const parsed = parseUyapDate(acilisTarihi);
+        info.openDate = parsed ? parsed.date : acilisTarihi;
+    }
 
     // Dosya Durumu
     const durum = findLabelValue('Durum', 'Dosya Durumu', 'DURUM');
     if (durum) info.status = durum;
 
-    // Sonraki Duruşma
-    const durusmaTarihi = findLabelValue('Sonraki Duruşma', 'Duruşma Tarihi', 'SONRAKI DURUŞMA');
-    if (durusmaTarihi) info.nextHearing = parseUyapDate(durusmaTarihi);
+    // Sonraki Duruşma (tarih + saat)
+    const durusmaTarihi = findLabelValue('Sonraki Duruşma', 'Duruşma Tarihi', 'SONRAKI DURUŞMA', 'DURUşMA TARİHİ');
+    console.log('🗓️ Duruşma tarihi arama sonucu:', durusmaTarihi);
+    if (durusmaTarihi) {
+        const parsed = parseUyapDate(durusmaTarihi);
+        if (parsed) {
+            info.nextHearing = parsed.date;
+            info.hearingTime = parsed.time || '09:00'; // Varsayılan saat
+            console.log('✅ Duruşma tarihi parse edildi:', parsed);
+        }
+    } else {
+        console.warn('⚠️ Duruşma tarihi bulunamadı');
+    }
 
     console.log('📋 extractBasicCaseInfo sonuç:', info);
     return info;
@@ -248,13 +278,18 @@ async function extractParties() {
             address: ''
         };
 
-        // Davacı = Client, Davalı = Opponent
-        if (rol.toLowerCase().includes('davacı')) {
+        // Taraf rollerine göre kategorize et
+        // Hukuk: Davacı/Davalı
+        // Ceza: Sanık (bizim taraf), Müşteki/Katılan (karşı taraf)
+        const rolLower = rol.toLowerCase();
+        if (rolLower.includes('davacı') || rolLower.includes('sanık')) {
             parties.clients.push(party);
-            console.log('👤 Davacı (Client) eklendi:', party);
-        } else if (rol.toLowerCase().includes('davalı')) {
+            console.log('👤 Davacı/Sanık (Client) eklendi:', party);
+        } else if (rolLower.includes('davalı') || rolLower.includes('müşteki') || rolLower.includes('katılan')) {
             parties.opponents.push(party);
-            console.log('⚖️ Davalı (Opponent) eklendi:', party);
+            console.log('⚖️ Davalı/Müşteki/Katılan (Opponent) eklendi:', party);
+        } else {
+            console.warn('⚠️ Tanınmayan rol:', rol);
         }
     });
 
@@ -470,16 +505,29 @@ function findSection(titles) {
     return null;
 }
 
-// UYAP tarih formatını parse et (DD.MM.YYYY -> YYYY-MM-DD)
+// UYAP tarih formatını parse et (DD.MM.YYYY veya DD/MM/YYYY HH:MM -> {date, time})
 function parseUyapDate(dateStr) {
     if (!dateStr) return null;
 
-    const match = dateStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+    // Format 1: DD.MM.YYYY
+    let match = dateStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
     if (match) {
-        return `${match[3]}-${match[2]}-${match[1]}`;
+        return {
+            date: `${match[3]}-${match[2]}-${match[1]}`,
+            time: null
+        };
     }
 
-    return dateStr;
+    // Format 2: DD/MM/YYYY HH:MM
+    match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+    if (match) {
+        return {
+            date: `${match[3]}-${match[2]}-${match[1]}`,
+            time: `${match[4]}:${match[5]}`
+        };
+    }
+
+    return { date: dateStr, time: null };
 }
 
 // Extension'a mesaj dinleyicisi
@@ -523,8 +571,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             console.log(`Satır ${i}: dosyaNo="${currentDosyaNo}", aranan="${dosyaNo}"`);
 
             if (currentDosyaNo === dosyaNo) {
-                // Bu satırdaki butonu bul (son sütunda veya içinde)
-                const detailBtn = row.querySelector('button[id*="goruntule"], button[title*="Görüntüle"], a[href*="detay"], #dosya-goruntule, button');
+                // Bu satırdaki butonu bul (son sütunda veya içinde) - ERİŞİLEBİLİRLİK BUTONUNU ATLA
+                const detailBtn = row.querySelector('button[id*="goruntule"], button[title*="Görüntüle"], button[title*="Detay"], a[href*="detay"], #dosya-goruntule, button.dx-button:not([aria-label*="Erişilebilirlik"]):not([title*="Erişilebilirlik"])');
                 if (detailBtn) {
                     console.log(`✅ ${dosyaNo} için buton bulundu (satır ${i}), tıklanıyor...`);
                     detailBtn.click();
@@ -544,9 +592,37 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
     }
     else if (request.action === 'goBack') {
-        console.log('🔙 Geri gidiliyor...');
-        window.history.back();
-        sendResponse({ success: true, message: 'Geri gidildi' });
+        console.log('🔙 Modal kapatılıyor...');
+
+        // Modal kapatma yöntemleri (sırayla dene)
+        const closeSelectors = [
+            '.dx-closebutton',
+            'button[aria-label="Close"]',
+            'button[title*="Kapat"]',
+            '.dx-popup-title .dx-icon-close',
+            '.close',
+            '[class*="close"]'
+        ];
+
+        let closed = false;
+        for (const selector of closeSelectors) {
+            const closeBtn = document.querySelector(selector);
+            if (closeBtn) {
+                console.log(`✅ Kapat butonu bulundu: ${selector}`);
+                closeBtn.click();
+                closed = true;
+                break;
+            }
+        }
+
+        // Alternatif: ESC tuşu
+        if (!closed) {
+            console.log('⌨️ ESC tuşu gönderiliyor...');
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true }));
+            document.dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape', keyCode: 27, bubbles: true }));
+        }
+
+        sendResponse({ success: true, message: 'Modal kapatıldı' });
     }
     else if (request.action === 'ping') {
         sendResponse({ success: true, message: 'Content script aktif' });

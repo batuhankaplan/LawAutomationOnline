@@ -1,0 +1,120 @@
+/* ========================================
+   EXTRA DARK THEME FIXES
+   Son dakika düzeltmeleri
+   ======================================== */
+
+/* Takvim altındaki beyaz alan düzeltmesi */
+[data-theme="dark"] .fc,
+[data-theme="dark"] .fc-view,
+[data-theme="dark"] .fc-view > table {
+    background-color: transparent !important;
+}
+
+[data-theme="dark"] .fc .fc-bg {
+    background-color: transparent !important;
+}
+
+/* Dosya Sorgula sayfası - liste düzeltmesi */
+[data-theme="dark"] .case-card,
+[data-theme="dark"] .file-card,
+[data-theme="dark"] [class*="case-"],
+[data-theme="dark"] [class*="file-"] {
+    background-color: var(--bg-secondary, #22252b) !important;
+    color: var(--text-primary, #e8eaed) !important;
+}
+
+/* Modal içi input düzeltmesi */
+[data-theme="dark"] .modal input,
+[data-theme="dark"] .modal select,
+[data-theme="dark"] .modal textarea {
+    background-color: var(--input-bg, #2a2d35) !important;
+    color: var(--input-text, #e8eaed) !important;
+    border-color: var(--input-border, #3f4349) !important;
+}
+
+/* Duyurular sayfası düzeltmesi */
+[data-theme="dark"] .announcement-item,
+[data-theme="dark"] .notification-item {
+    background-color: var(--bg-secondary, #22252b) !important;
+}
+
+/* Vekaletname modal düzeltmesi */
+[data-theme="dark"] #vekaletModal .modal-body,
+[data-theme="dark"] #vekaletModal .modal-content {
+    background-color: var(--modal-bg, #22252b) !important;
+}
+
+/* Yargı Kararları arama kutusu */
+[data-theme="dark"] #searchBox,
+[data-theme="dark"] .search-field {
+    background-color: var(--input-bg, #2a2d35) !important;
+    color: var(--input-text, #e8eaed) !important;
+}
+
+/* Ödemeler modal kartları */
+[data-theme="dark"] #paymentModal .card,
+[data-theme="dark"] #statsModal .card {
+    background-color: var(--bg-tertiary, #2a2d35) !important;
+}
+
+/* İletişim kartları text fix */
+[data-theme="dark"] .contact-card h4,
+[data-theme="dark"] .contact-card h5,
+[data-theme="dark"] .contact-info h4,
+[data-theme="dark"] .contact-info h5 {
+    color: var(--text-primary, #e8eaed) !important;
+}
+
+/* Admin panel filter input */
+[data-theme="dark"] #userFilter,
+[data-theme="dark"] #roleFilter {
+    background-color: var(--input-bg, #2a2d35) !important;
+    color: var(--input-text, #e8eaed) !important;
+}
+
+/* Veritabanı yönetimi - renkli kartları koru ama text fix */
+[data-theme="dark"] .stats-card h3,
+[data-theme="dark"] .stats-card p,
+[data-theme="dark"] .stats-card span {
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Profil dropdown düzeltmesi */
+[data-theme="dark"] .dropdown-menu.show {
+    background-color: var(--dropdown-bg, #2a2d35) !important;
+}
+
+/* Tüm text input'ları force dark */
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="tel"],
+[data-theme="dark"] input[type="url"],
+[data-theme="dark"] input[type="search"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="datetime-local"],
+[data-theme="dark"] input[type="time"] {
+    background-color: var(--input-bg, #2a2d35) !important;
+    color: var(--input-text, #e8eaed) !important;
+    border-color: var(--input-border, #3f4349) !important;
+}
+
+/* Liste item hover states */
+[data-theme="dark"] .list-group-item:hover,
+[data-theme="dark"] .dropdown-item:hover,
+[data-theme="dark"] [class*="item"]:hover {
+    background-color: var(--bg-hover, #32353d) !important;
+}
+
+/* Canvas ve svg düzeltmeleri */
+[data-theme="dark"] canvas {
+    filter: brightness(0.9) contrast(1.1);
+}
+
+/* İframe dark mode */
+[data-theme="dark"] iframe {
+    border: 1px solid var(--border-color, #3f4349);
+}
+

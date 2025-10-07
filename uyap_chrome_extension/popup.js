@@ -464,8 +464,8 @@ async function importSelectedCases() {
                 console.log('🔙 Liste sayfasına geri dönülüyor...');
                 await chrome.tabs.sendMessage(tab.id, { action: 'goBack' });
 
-                // Liste sayfası yüklenene kadar bekle
-                await sleep(1500);
+                // Modal kapanması ve liste sayfası yeniden yüklenmesi için bekle
+                await sleep(2500);
 
             } catch (detailError) {
                 console.warn('⚠️ Detay sayfası açılamadı:', detailError);

@@ -41,6 +41,38 @@ function mapUyapToSystem(uyapData) {
 }
 
 /**
+ * Mahkeme adından sadece mahkeme kısmını çıkar
+ * Örnek: "Bakırköy 8. İş Mahkemesi" -> "8. İş Mahkemesi"
+ */
+function extractCourtName(fullCourtName) {
+    if (!fullCourtName) return '';
+
+    // İstanbul ilçeleri
+    const districts = [
+        'Bakırköy', 'Kadıköy', 'Beşiktaş', 'Şişli', 'Ümraniye', 'Kartal',
+        'Maltepe', 'Pendik', 'Ataşehir', 'Üsküdar', 'Beyoğlu', 'Fatih',
+        'Eyüpsultan', 'Güngören', 'Bahçelievler', 'Bağcılar', 'Esenler',
+        'Zeytinburnu', 'Avcılar', 'Küçükçekmece', 'Büyükçekmece',
+        // Ankara ilçeleri
+        'Çankaya', 'Keçiören', 'Mamak', 'Yenimahalle', 'Sincan', 'Etimesgut',
+        'Altındağ', 'Pursaklar', 'Gölbaşı',
+        // İzmir ilçeleri
+        'Konak', 'Bornova', 'Karşıyaka', 'Buca', 'Bayraklı', 'Gaziemir'
+    ];
+
+    // İlçe adını kaldır
+    let courtName = fullCourtName;
+    for (const district of districts) {
+        if (courtName.includes(district)) {
+            courtName = courtName.replace(district, '').trim();
+            break;
+        }
+    }
+
+    return courtName;
+}
+
+/**
  * Dosya bilgilerini dönüştür
  */
 function mapFileInfo(caseInfo) {
@@ -50,13 +82,14 @@ function mapFileInfo(caseInfo) {
     return {
         'file-type': fileType,
         'city': caseInfo.city || '',
-        'adliye': caseInfo.adliye || '',
-        'courthouse': caseInfo.courthouse || '',
-        'department': caseInfo.courthouse || '',  // Mahkeme adı
+        'courthouse': caseInfo.adliye || '',  // Backend'de courthouse = ADLİYE alanı
+        'department': extractCourtName(caseInfo.courthouse) || '',  // Sadece mahkeme kısmı
         'year': caseInfo.year || new Date().getFullYear(),
         'case-number': caseInfo.caseNumber || '',
         'open-date': caseInfo.openDate || formatDateToISO(new Date()),
         'next-hearing': caseInfo.nextHearing || '',
+        'hearing-time': caseInfo.hearingTime || '09:00',
+        'hearing-type': 'durusma',
         'status': mapStatus(caseInfo.status || 'Açık')
     };
 }
@@ -110,7 +143,7 @@ function mapOpponent(opponent, opponentLawyers) {
         'opponent-id': opponent.identityNumber || '',
         'opponent-phone': cleanPhoneNumber(opponent.phone || ''),
         'opponent-address': opponent.address || '',
-        'opponent-lawyer-name': opponentLawyerName
+        'opponent-lawyer': opponentLawyerName  // Backend 'opponent-lawyer' bekliyor
     };
 }
 
