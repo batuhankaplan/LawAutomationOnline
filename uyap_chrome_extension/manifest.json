@@ -11,8 +11,7 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://vatandas.uyap.gov.tr/*",
-    "https://avukat.uyap.gov.tr/*",
+    "https://*.uyap.gov.tr/*",
     "http://localhost:5000/*",
     "http://127.0.0.1:5000/*"
   ],
@@ -22,8 +21,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://vatandas.uyap.gov.tr/*",
-        "https://avukat.uyap.gov.tr/*"
+        "https://*.uyap.gov.tr/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"
