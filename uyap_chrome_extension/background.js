@@ -1,326 +1,75 @@
-// Background Service Worker - API İletişimi ve State Yönetimi
+// Background Service Worker - Basit Versiyon
+console.log('🟢 Background Service Worker başlatıldı');
 
-console.log('UYAP Dosya Aktarıcı Background Service başlatıldı');
-
-// Global state
-let currentCases = [];
-let importProgress = {};
-
-// Chrome storage'dan ayarları yükle
+// Ayarları yükle
 async function loadSettings() {
     return new Promise((resolve) => {
-        chrome.storage.sync.get(['apiUrl', 'autoSync'], (result) => {
-            resolve({
-                apiUrl: result.apiUrl || 'http://localhost:5000',
-                autoSync: result.autoSync || false
-            });
+        chrome.storage.sync.get(['apiUrl'], (result) => {
+            resolve({ apiUrl: result.apiUrl || 'http://localhost:5000' });
         });
     });
 }
 
-// Ayarları kaydet
-async function saveSettings(settings) {
-    return new Promise((resolve) => {
-        chrome.storage.sync.set(settings, resolve);
-    });
-}
-
-// Mesaj dinleyicisi
+// Mesaj dinleyicisi  
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('Background mesaj aldı:', request);
-
-    if (request.action === 'openPopup') {
-        chrome.action.openPopup();
-        sendResponse({ success: true });
+    console.log('📨 Mesaj alındı:', request.action);
+    
+    if (request.action === 'checkAuth') {
+        checkAuth().then(sendResponse);
+        return true;
     }
-    else if (request.action === 'importCase') {
-        handleImportCase(request.data).then(sendResponse);
-        return true; // Async
+    
+    if (request.action === 'importCase') {
+        importCase(request.data).then(sendResponse);
+        return true;
     }
-    else if (request.action === 'importMultipleCases') {
-        handleImportMultipleCases(request.cases).then(sendResponse);
-        return true; // Async
-    }
-    else if (request.action === 'downloadDocument') {
-        handleDownloadDocument(request.url, request.filename).then(sendResponse);
-        return true; // Async
-    }
-    else if (request.action === 'checkAuth') {
-        checkBackendAuth().then(sendResponse);
-        return true; // Async
-    }
-    else if (request.action === 'getProgress') {
-        sendResponse({ progress: importProgress });
-    }
-
-    return true;
+    
+    sendResponse({ success: false, error: 'Unknown action' });
+    return false;
 });
 
-// Backend authentication kontrolü
-async function checkBackendAuth() {
+// Auth check
+async function checkAuth() {
     try {
         const settings = await loadSettings();
         const response = await fetch(`${settings.apiUrl}/api/check_auth`, {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            credentials: 'include'
         });
-
-        if (response.ok) {
-            const data = await response.json();
-            return { success: true, authenticated: data.authenticated, user: data.user };
-        }
-
-        return { success: false, authenticated: false };
+        const data = await response.json();
+        return { success: true, authenticated: data.authenticated, user: data.user };
     } catch (error) {
-        console.error('Auth check hatası:', error);
         return { success: false, error: error.message };
     }
 }
 
-// Tek dosya import
-async function handleImportCase(caseData) {
-    console.log('🔵 handleImportCase çağrıldı');
-    console.log('📦 Gelen veri:', caseData);
-
+// Import case
+async function importCase(caseData) {
+    console.log('📥 Import başladı');
     try {
         const settings = await loadSettings();
-        console.log('⚙️ Settings yüklendi:', settings);
-
-        // Import progress başlat
-        const importId = Date.now().toString();
-        importProgress[importId] = {
-            status: 'başlatılıyor',
-            progress: 0,
-            currentStep: 'Dosya bilgileri gönderiliyor...'
-        };
-
-        console.log(`🚀 Backend'e istek gönderiliyor: ${settings.apiUrl}/api/import_from_uyap`);
-        console.log('📤 Gönderilen data:', JSON.stringify(caseData, null, 2));
-
-        // Backend'e gönder
+        console.log('🚀 URL:', `${settings.apiUrl}/api/import_from_uyap`);
+        
         const response = await fetch(`${settings.apiUrl}/api/import_from_uyap`, {
             method: 'POST',
             credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(caseData)
         });
-
-        console.log('📥 Response alındı:', response.status, response.statusText);
-
+        
+        console.log('📡 Status:', response.status);
+        
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error('❌ Backend hatası:', errorData);
-            throw new Error(errorData.message || 'Import başarısız');
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
-
+        
         const result = await response.json();
-        console.log('✅ Backend başarılı yanıt:', result);
-
-        // Progress güncelle
-        importProgress[importId] = {
-            status: 'tamamlandı',
-            progress: 100,
-            currentStep: 'Dosya başarıyla eklendi',
-            caseId: result.case_id
-        };
-
-        // Belgeleri yükle (varsa)
-        if (caseData.documents && caseData.documents.length > 0) {
-            await handleDocumentUploads(result.case_id, caseData.documents, importId);
-        }
-
-        return {
-            success: true,
-            case_id: result.case_id,
-            message: 'Dosya başarıyla aktarıldı',
-            importId
-        };
-
+        console.log('✅ Başarılı:', result);
+        return { success: true, case_id: result.case_id, message: result.message };
     } catch (error) {
-        console.error('Import hatası:', error);
-        return {
-            success: false,
-            error: error.message
-        };
-    }
-}
-
-// Çoklu dosya import
-async function handleImportMultipleCases(cases) {
-    const results = [];
-    let successCount = 0;
-    let failCount = 0;
-
-    for (let i = 0; i < cases.length; i++) {
-        const caseData = cases[i];
-
-        try {
-            const result = await handleImportCase(caseData);
-
-            if (result.success) {
-                successCount++;
-            } else {
-                failCount++;
-            }
-
-            results.push({
-                caseNo: caseData.caseInfo?.caseNumber,
-                ...result
-            });
-
-            // Progress güncelle
-            const progress = ((i + 1) / cases.length) * 100;
-            chrome.runtime.sendMessage({
-                action: 'updateBulkProgress',
-                progress,
-                current: i + 1,
-                total: cases.length
-            });
-
-            // API'yi aşırı yüklememek için kısa bekleme
-            await sleep(500);
-
-        } catch (error) {
-            failCount++;
-            results.push({
-                caseNo: caseData.caseInfo?.caseNumber,
-                success: false,
-                error: error.message
-            });
-        }
-    }
-
-    return {
-        success: true,
-        summary: {
-            total: cases.length,
-            success: successCount,
-            failed: failCount
-        },
-        results
-    };
-}
-
-// Belge indirme ve yükleme
-async function handleDocumentUploads(caseId, documents, importId) {
-    const settings = await loadSettings();
-    let uploaded = 0;
-
-    for (const doc of documents) {
-        try {
-            // İlerlemeyi güncelle
-            importProgress[importId].currentStep = `Belge indiriliyor: ${doc.fileName}`;
-            importProgress[importId].progress = 50 + (uploaded / documents.length) * 50;
-
-            // Belgeyi indir
-            const blob = await downloadDocumentAsBlob(doc.downloadUrl);
-
-            if (!blob) {
-                console.error('Belge indirilemedi:', doc.fileName);
-                continue;
-            }
-
-            // FormData oluştur
-            const formData = new FormData();
-            formData.append('document', blob, doc.fileName);
-            formData.append('document_type', doc.documentType);
-            formData.append('document_date', doc.uploadDate);
-
-            // Backend'e yükle
-            const response = await fetch(
-                `${settings.apiUrl}/api/upload_uyap_document/${caseId}`,
-                {
-                    method: 'POST',
-                    credentials: 'include',
-                    body: formData
-                }
-            );
-
-            if (response.ok) {
-                uploaded++;
-            }
-
-        } catch (error) {
-            console.error('Belge yükleme hatası:', error);
-        }
-    }
-
-    return { uploaded, total: documents.length };
-}
-
-// Belgeyi blob olarak indir
-async function handleDownloadDocument(url, filename) {
-    try {
-        const blob = await downloadDocumentAsBlob(url);
-
-        if (blob) {
-            return {
-                success: true,
-                blob,
-                filename
-            };
-        }
-
-        return { success: false, error: 'İndirme başarısız' };
-
-    } catch (error) {
+        console.error('❌ Hata:', error);
         return { success: false, error: error.message };
     }
 }
 
-// Fetch ile blob indirme
-async function downloadDocumentAsBlob(url) {
-    try {
-        // UYAP URL'i ise cookie'li fetch
-        if (url.includes('uyap.gov.tr')) {
-            const response = await fetch(url, {
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                return await response.blob();
-            }
-        }
-
-        return null;
-    } catch (error) {
-        console.error('Blob indirme hatası:', error);
-        return null;
-    }
-}
-
-// Yardımcı fonksiyonlar
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// Extension yüklendiğinde
-chrome.runtime.onInstalled.addListener((details) => {
-    if (details.reason === 'install') {
-        console.log('UYAP Dosya Aktarıcı ilk kez yüklendi');
-
-        // Varsayılan ayarları kaydet
-        saveSettings({
-            apiUrl: 'http://localhost:5000',
-            autoSync: false
-        });
-
-        // Hoş geldin sayfasını aç
-        chrome.tabs.create({
-            url: 'welcome.html'
-        });
-    }
-});
-
-// Alarm'lar için (otomatik senkronizasyon - gelecekte)
-chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === 'autoSync') {
-        console.log('Otomatik senkronizasyon başlatılıyor...');
-        // Auto sync logic buraya
-    }
-});
+console.log('✅ Service Worker hazır');
