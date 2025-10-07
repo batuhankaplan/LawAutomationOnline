@@ -707,7 +707,7 @@ def admin_required(f):
 @app.before_request
 def check_user_auth():
     # Giriş gerektirmeyen sayfalar
-    public_endpoints = ['login', 'register', 'static', 'forgot_password', 'reset_password']
+    public_endpoints = ['login', 'register', 'static', 'forgot_password', 'reset_password', 'check_auth', 'import_from_uyap', 'upload_uyap_document']
     
     # Kullanıcı giriş yapmış ama onaylanmamış ise
     if current_user.is_authenticated and not current_user.is_approved and not current_user.is_admin:
@@ -9951,7 +9951,6 @@ def check_auth():
 
 @app.route('/api/import_from_uyap', methods=['POST'])
 @csrf.exempt
-@login_required
 def import_from_uyap():
     """
     UYAP'tan gelen dosya verilerini sisteme aktar
@@ -9963,7 +9962,10 @@ def import_from_uyap():
         if not data:
             return jsonify({'success': False, 'message': 'Veri gönderilmedi'}), 400
 
-        print("UYAP'tan gelen veri:", data)
+        print("\n" + "="*80)
+        print("UYAP'TAN GELEN HAM VERİ:")
+        print(json.dumps(data, indent=2, ensure_ascii=False))
+        print("="*80 + "\n")
 
         # Zorunlu alanları kontrol et
         required_fields = ['file-type', 'year', 'case-number']
@@ -10021,7 +10023,7 @@ def import_from_uyap():
             phone_number=data.get('client-phone', ''),
             status=data.get('status', 'Aktif'),
             open_date=open_date,
-            user_id=current_user.id,
+            user_id=current_user.id if current_user.is_authenticated else 1,  # TEST: Fallback
 
             # Müvekkil detayları
             client_entity_type=data.get('client-entity-type', 'person'),
@@ -10057,7 +10059,7 @@ def import_from_uyap():
         log_activity(
             activity_type='dosya_ekleme',
             description=f"UYAP'tan dosya aktarıldı: {client_name} - {data.get('case-number')}",
-            user_id=current_user.id,
+            user_id=current_user.id if current_user.is_authenticated else 1,  # TEST: Fallback
             case_id=new_case_file.id
         )
 

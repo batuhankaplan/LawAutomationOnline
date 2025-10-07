@@ -396,6 +396,15 @@ async function importSelectedCases() {
                 `${i + 1} / ${selectedCaseData.length}`
             );
 
+            // dosyaNo'yu parse et (örn: "2024/123" -> year: 2024, caseNumber: 123)
+            if (caseData.dosyaNo) {
+                const match = caseData.dosyaNo.match(/(\d{4})\/(\d+)/);
+                if (match) {
+                    caseData.year = match[1];
+                    caseData.caseNumber = match[2];
+                }
+            }
+
             // Mapper ile dönüştür
             console.log('Mapper çağrılıyor, caseData:', caseData);
             const mappedData = mapUyapToSystem({ caseInfo: caseData, parties: {}, lawyers: [], documents: [], hearings: [] });
