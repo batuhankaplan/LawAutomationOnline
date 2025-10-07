@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>İkon Oluşturucu</title>
+</head>
+<body>
+    <h2>UYAP Extension İkonları Oluşturuluyor...</h2>
+    <p id="status">İşlem başlatılıyor...</p>
+
+    <canvas id="canvas16" width="16" height="16" style="border:1px solid #ddd; margin:10px;"></canvas>
+    <canvas id="canvas48" width="48" height="48" style="border:1px solid #ddd; margin:10px;"></canvas>
+    <canvas id="canvas128" width="128" height="128" style="border:1px solid #ddd; margin:10px;"></canvas>
+
+    <div id="downloads"></div>
+
+    <script>
+        // İkon çizme fonksiyonu
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+
+            // Gradient arka plan
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Beyaz terazi simgesi (basitleştirilmiş)
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = size / 20;
+
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const scale = size / 128;
+
+            // Direk
+            ctx.fillRect(centerX - 2 * scale, centerY - 25 * scale, 4 * scale, 40 * scale);
+
+            // Taban
+            ctx.fillRect(centerX - 15 * scale, centerY + 15 * scale, 30 * scale, 5 * scale);
+
+            // Sol kefe
+            ctx.beginPath();
+            ctx.arc(centerX - 25 * scale, centerY - 10 * scale, 10 * scale, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Sağ kefe
+            ctx.beginPath();
+            ctx.arc(centerX + 25 * scale, centerY - 10 * scale, 10 * scale, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bağlantı çubukları
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - 25 * scale);
+            ctx.lineTo(centerX - 25 * scale, centerY - 10 * scale);
+            ctx.moveTo(centerX, centerY - 25 * scale);
+            ctx.lineTo(centerX + 25 * scale, centerY - 10 * scale);
+            ctx.stroke();
+        }
+
+        // Her boyut için ikon çiz
+        drawIcon(document.getElementById('canvas16'), 16);
+        drawIcon(document.getElementById('canvas48'), 48);
+        drawIcon(document.getElementById('canvas128'), 128);
+
+        // İndirme linkleri oluştur
+        function createDownloadLinks() {
+            const downloads = document.getElementById('downloads');
+            const sizes = [16, 48, 128];
+
+            sizes.forEach(size => {
+                const canvas = document.getElementById('canvas' + size);
+                const link = document.createElement('a');
+                link.download = `icon${size}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.textContent = `icon${size}.png dosyasını indir`;
+                link.style.display = 'block';
+                link.style.margin = '10px';
+                link.style.padding = '10px';
+                link.style.background = '#667eea';
+                link.style.color = 'white';
+                link.style.textDecoration = 'none';
+                link.style.borderRadius = '5px';
+                downloads.appendChild(link);
+            });
+
+            document.getElementById('status').textContent = 'İkonlar hazır! Her birini tıklayarak indirin ve icons/ klasörüne kaydedin.';
+        }
+
+        // Sayfa yüklendiğinde linkleri oluştur
+        window.onload = createDownloadLinks;
+    </script>
+
+    <hr>
+    <h3>Talimatlar:</h3>
+    <ol>
+        <li>Yukarıdaki 3 linke tıklayarak PNG dosyalarını indirin</li>
+        <li>İndirilen dosyaları <code>uyap_chrome_extension/icons/</code> klasörüne kopyalayın</li>
+        <li>Chrome extensions sayfasını yenileyin ve extension'ı tekrar yüklemeyi deneyin</li>
+    </ol>
+</body>
+</html>
