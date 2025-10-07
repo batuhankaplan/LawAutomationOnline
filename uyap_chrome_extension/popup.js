@@ -4,21 +4,31 @@ let currentCases = [];
 let selectedCases = new Set();
 let settings = {};
 
+console.log('Popup.js yükleniyor...');
+
 // DOM Yüklendikten sonra
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('Popup yüklendi');
+    console.log('DOMContentLoaded event tetiklendi');
 
-    // Ayarları yükle
-    await loadSettings();
+    try {
+        // Ayarları yükle
+        await loadSettings();
+        console.log('Ayarlar yüklendi:', settings);
 
-    // Auth kontrolü
-    await checkAuthentication();
+        // Event listener'lar
+        initializeEventListeners();
+        console.log('Event listeners başlatıldı');
 
-    // Event listener'lar
-    initializeEventListeners();
+        // Auth kontrolü
+        await checkAuthentication();
 
-    // UYAP sayfası kontrolü
-    checkUyapPage();
+        // UYAP sayfası kontrolü
+        await checkUyapPage();
+
+    } catch (error) {
+        console.error('Popup başlatma hatası:', error);
+        showError('Extension başlatılamadı: ' + error.message);
+    }
 });
 
 // Ayarları yükle
@@ -31,8 +41,11 @@ async function loadSettings() {
             };
 
             // Settings tab'ına doldur
-            document.getElementById('apiUrl').value = settings.apiUrl;
-            document.getElementById('autoSync').checked = settings.autoSync;
+            const apiUrlInput = document.getElementById('apiUrl');
+            const autoSyncCheckbox = document.getElementById('autoSync');
+
+            if (apiUrlInput) apiUrlInput.value = settings.apiUrl;
+            if (autoSyncCheckbox) autoSyncCheckbox.checked = settings.autoSync;
 
             resolve();
         });
@@ -44,7 +57,7 @@ async function checkAuthentication() {
     try {
         const response = await chrome.runtime.sendMessage({ action: 'checkAuth' });
 
-        if (response.success && response.authenticated) {
+        if (response && response.success && response.authenticated) {
             updateStatus('online', `Bağlı (${response.user?.name || 'Kullanıcı'})`);
             hideElement('authWarning');
         } else {
@@ -63,6 +76,11 @@ async function checkUyapPage() {
     try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
+        if (!tab || !tab.url) {
+            console.log('Aktif tab bulunamadı');
+            return false;
+        }
+
         if (!tab.url.includes('uyap.gov.tr')) {
             showElement('uyapWarning');
             return false;
@@ -78,47 +96,103 @@ async function checkUyapPage() {
 
 // Event Listeners
 function initializeEventListeners() {
+    console.log('Event listeners kuruluyor...');
+
     // Tab değiştirme
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            console.log('Tab tıklandı:', tab.dataset.tab);
+            switchTab(tab.dataset.tab);
+        });
     });
 
     // Sayfayı tara butonu
-    document.getElementById('scanPageBtn').addEventListener('click', scanCurrentPage);
+    const scanPageBtn = document.getElementById('scanPageBtn');
+    if (scanPageBtn) {
+        scanPageBtn.addEventListener('click', () => {
+            console.log('Sayfa tara butonuna tıklandı');
+            scanCurrentPage();
+        });
+    }
 
     // Yenile butonu
-    document.getElementById('refreshBtn').addEventListener('click', scanCurrentPage);
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            console.log('Yenile butonuna tıklandı');
+            scanCurrentPage();
+        });
+    }
 
     // Tümünü seç checkbox
-    document.getElementById('selectAllCheckbox').addEventListener('change', (e) => {
-        toggleSelectAll(e.target.checked);
-    });
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', (e) => {
+            console.log('Tümünü seç değişti:', e.target.checked);
+            toggleSelectAll(e.target.checked);
+        });
+    }
 
     // Seçili dosyaları aktar
-    document.getElementById('importSelectedBtn').addEventListener('click', importSelectedCases);
+    const importSelectedBtn = document.getElementById('importSelectedBtn');
+    if (importSelectedBtn) {
+        importSelectedBtn.addEventListener('click', () => {
+            console.log('Seçili dosyaları aktar butonuna tıklandı');
+            importSelectedCases();
+        });
+    }
 
     // Arama
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-        filterCases(e.target.value);
-    });
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            filterCases(e.target.value);
+        });
+    }
 
     // Sistemi aç butonu
-    document.getElementById('openSystemBtn').addEventListener('click', () => {
-        chrome.tabs.create({ url: settings.apiUrl });
-    });
+    const openSystemBtn = document.getElementById('openSystemBtn');
+    if (openSystemBtn) {
+        openSystemBtn.addEventListener('click', () => {
+            console.log('Sistemi aç butonuna tıklandı');
+            chrome.tabs.create({ url: settings.apiUrl });
+        });
+    }
 
-    // Ayarlar
-    document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
-    document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
+    // Ayarları kaydet
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', () => {
+            console.log('Ayarları kaydet butonuna tıklandı');
+            saveSettings();
+        });
+    }
+
+    // Bağlantıyı test et
+    const testConnectionBtn = document.getElementById('testConnectionBtn');
+    if (testConnectionBtn) {
+        testConnectionBtn.addEventListener('click', () => {
+            console.log('Bağlantı test butonuna tıklandı');
+            testConnection();
+        });
+    }
 
     // Sonuçları kapat
-    document.getElementById('closeResultsBtn').addEventListener('click', () => {
-        hideElement('resultsSection');
-    });
+    const closeResultsBtn = document.getElementById('closeResultsBtn');
+    if (closeResultsBtn) {
+        closeResultsBtn.addEventListener('click', () => {
+            hideElement('resultsSection');
+        });
+    }
+
+    console.log('Tüm event listeners kuruldu');
 }
 
 // Tab değiştirme
 function switchTab(tabName) {
+    console.log('Tab değiştiriliyor:', tabName);
+
     // Tab butonlarını güncelle
     document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.toggle('active', tab.dataset.tab === tabName);
@@ -133,15 +207,23 @@ function switchTab(tabName) {
 // Sayfayı tara
 async function scanCurrentPage() {
     try {
-        showLoading('Sayfa taranıyor...');
+        console.log('Sayfa taranıyor...');
+        updateStatus('online', 'Sayfa taranıyor...');
 
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+        if (!tab || !tab.id) {
+            throw new Error('Aktif tab bulunamadı');
+        }
 
         // Content script'e mesaj gönder
         const response = await chrome.tabs.sendMessage(tab.id, { action: 'getCaseList' });
 
-        if (response.success && response.data) {
+        console.log('Content script yanıtı:', response);
+
+        if (response && response.success && response.data) {
             currentCases = response.data;
+            console.log('Bulunan dosyalar:', currentCases.length);
             renderCaseList(currentCases);
 
             if (currentCases.length > 0) {
@@ -149,14 +231,14 @@ async function scanCurrentPage() {
                 showElement('actionButtons');
             }
 
-            hideLoading();
+            updateStatus('online', `${currentCases.length} dosya bulundu`);
         } else {
             throw new Error('Dosya bulunamadı');
         }
     } catch (error) {
         console.error('Tarama hatası:', error);
-        showError('Sayfa taranırken hata oluştu: ' + error.message);
-        hideLoading();
+        updateStatus('error', 'Tarama hatası');
+        alert('Sayfa taranırken hata oluştu: ' + error.message);
     }
 }
 
@@ -165,6 +247,11 @@ function renderCaseList(cases) {
     const caseList = document.getElementById('caseList');
     const caseCount = document.getElementById('totalCases');
 
+    if (!caseList || !caseCount) {
+        console.error('Case list elementleri bulunamadı');
+        return;
+    }
+
     caseCount.textContent = cases.length;
 
     if (cases.length === 0) {
@@ -172,11 +259,17 @@ function renderCaseList(cases) {
             <div class="empty-state">
                 <span class="icon">📂</span>
                 <p>Dosya bulunamadı</p>
-                <button class="btn btn-small btn-primary" id="scanPageBtn">
+                <button class="btn btn-small btn-primary" id="scanPageBtn2">
                     Sayfayı Tara
                 </button>
             </div>
         `;
+
+        // Yeni buton için event listener ekle
+        const scanBtn2 = document.getElementById('scanPageBtn2');
+        if (scanBtn2) {
+            scanBtn2.addEventListener('click', scanCurrentPage);
+        }
         return;
     }
 
@@ -200,16 +293,6 @@ function renderCaseList(cases) {
     // Checkbox event listeners
     document.querySelectorAll('.case-checkbox').forEach(checkbox => {
         checkbox.addEventListener('change', handleCaseSelection);
-    });
-
-    // Card click - detay getir
-    document.querySelectorAll('.case-card').forEach(card => {
-        card.addEventListener('click', async (e) => {
-            if (e.target.type !== 'checkbox') {
-                const index = card.dataset.index;
-                await fetchCaseDetails(currentCases[index]);
-            }
-        });
     });
 }
 
@@ -244,50 +327,26 @@ function toggleSelectAll(checked) {
 // Seçim UI güncelle
 function updateSelectionUI() {
     const selectedCount = document.getElementById('selectedCount');
-    selectedCount.textContent = `${selectedCases.size} seçili`;
+    if (selectedCount) {
+        selectedCount.textContent = `${selectedCases.size} seçili`;
+    }
 
     // Tümünü seç checkbox durumu
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    selectAllCheckbox.checked = selectedCases.size === currentCases.length && currentCases.length > 0;
-    selectAllCheckbox.indeterminate = selectedCases.size > 0 && selectedCases.size < currentCases.length;
-}
-
-// Dosya detaylarını getir
-async function fetchCaseDetails(caseData) {
-    try {
-        showLoading('Dosya detayları getiriliyor...');
-
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-        // Detay sayfasına git (eğer URL varsa)
-        if (caseData.detailUrl) {
-            await chrome.tabs.update(tab.id, { url: caseData.detailUrl });
-
-            // Sayfa yüklenene kadar bekle
-            await sleep(2000);
-        }
-
-        // Detayları çek
-        const response = await chrome.tabs.sendMessage(tab.id, { action: 'getCaseDetails' });
-
-        if (response.success && response.data) {
-            // Detayları case data'ya ekle
-            Object.assign(caseData, response.data);
-            hideLoading();
-        }
-
-    } catch (error) {
-        console.error('Detay getirme hatası:', error);
-        hideLoading();
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = selectedCases.size === currentCases.length && currentCases.length > 0;
+        selectAllCheckbox.indeterminate = selectedCases.size > 0 && selectedCases.size < currentCases.length;
     }
 }
 
 // Seçili dosyaları aktar
 async function importSelectedCases() {
     if (selectedCases.size === 0) {
-        showError('Lütfen en az bir dosya seçin');
+        alert('Lütfen en az bir dosya seçin');
         return;
     }
+
+    console.log('Seçili dosyalar aktarılıyor:', selectedCases.size);
 
     // İlerleme göster
     showElement('progressSection');
@@ -301,27 +360,30 @@ async function importSelectedCases() {
         const caseData = selectedCaseData[i];
 
         try {
-            updateProgress((i / selectedCaseData.length) * 100,
-                          `Dosya aktarılıyor: ${caseData.dosyaNo || (i+1)}`,
-                          `${i + 1} / ${selectedCaseData.length}`);
-
-            // Detayları çek
-            await fetchCaseDetails(caseData);
+            updateProgress(
+                (i / selectedCaseData.length) * 100,
+                `Dosya aktarılıyor: ${caseData.dosyaNo || (i + 1)}`,
+                `${i + 1} / ${selectedCaseData.length}`
+            );
 
             // Mapper ile dönüştür
-            const mappedData = mapUyapToSystem(caseData);
+            const mappedData = mapUyapToSystem({ caseInfo: caseData, parties: {}, lawyers: [], documents: [], hearings: [] });
+
+            // JSON formatında hazırla
+            const jsonData = prepareJSON(mappedData);
 
             // Backend'e gönder
             const response = await chrome.runtime.sendMessage({
                 action: 'importCase',
-                data: mappedData
+                data: jsonData
             });
 
-            if (response.success) {
+            if (response && response.success) {
                 imported++;
+                console.log('Dosya başarıyla aktarıldı:', caseData.dosyaNo);
             } else {
                 failed++;
-                console.error('Import hatası:', response.error);
+                console.error('Import hatası:', response?.error);
             }
 
             await sleep(500);
@@ -344,27 +406,33 @@ async function importSelectedCases() {
 
 // İlerleme güncelle
 function updateProgress(percent, text, detail) {
-    document.getElementById('progressFill').style.width = `${percent}%`;
-    document.getElementById('progressPercent').textContent = `${Math.round(percent)}%`;
-    document.getElementById('progressText').textContent = text;
-    document.getElementById('progressDetail').textContent = detail || '';
+    const progressFill = document.getElementById('progressFill');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressText = document.getElementById('progressText');
+    const progressDetail = document.getElementById('progressDetail');
+
+    if (progressFill) progressFill.style.width = `${percent}%`;
+    if (progressPercent) progressPercent.textContent = `${Math.round(percent)}%`;
+    if (progressText) progressText.textContent = text;
+    if (progressDetail) progressDetail.textContent = detail || '';
 }
 
 // Sonuçları göster
 function showResults(summary) {
-    const resultsSection = document.getElementById('resultsSection');
     const resultsSummary = document.getElementById('resultsSummary');
 
-    resultsSummary.innerHTML = `
-        <div class="summary-card success">
-            <span class="number">${summary.success}</span>
-            <span class="label">Başarılı</span>
-        </div>
-        <div class="summary-card error">
-            <span class="number">${summary.failed}</span>
-            <span class="label">Başarısız</span>
-        </div>
-    `;
+    if (resultsSummary) {
+        resultsSummary.innerHTML = `
+            <div class="summary-card success">
+                <span class="number">${summary.success}</span>
+                <span class="label">Başarılı</span>
+            </div>
+            <div class="summary-card error">
+                <span class="number">${summary.failed}</span>
+                <span class="label">Başarısız</span>
+            </div>
+        `;
+    }
 
     showElement('resultsSection');
     showElement('actionButtons');
@@ -389,19 +457,21 @@ async function saveSettings() {
 
     await chrome.storage.sync.set(settings);
 
-    showSuccess('Ayarlar kaydedildi');
+    alert('Ayarlar kaydedildi');
 }
 
 // Bağlantı testi
 async function testConnection() {
     const statusDiv = document.getElementById('connectionStatus');
+    if (!statusDiv) return;
+
     statusDiv.textContent = 'Test ediliyor...';
     statusDiv.className = 'connection-status';
 
     try {
         const response = await chrome.runtime.sendMessage({ action: 'checkAuth' });
 
-        if (response.success && response.authenticated) {
+        if (response && response.success && response.authenticated) {
             statusDiv.textContent = `✅ Bağlantı başarılı! (${response.user?.name || 'Kullanıcı'})`;
             statusDiv.className = 'connection-status alert-success';
         } else {
@@ -416,41 +486,34 @@ async function testConnection() {
 
 // UI Helper Functions
 function showElement(id) {
-    document.getElementById(id).style.display = 'block';
+    const element = document.getElementById(id);
+    if (element) element.style.display = 'block';
 }
 
 function hideElement(id) {
-    document.getElementById(id).style.display = 'none';
-}
-
-function showLoading(message) {
-    // TODO: Implement loading overlay
-    console.log('Loading:', message);
-}
-
-function hideLoading() {
-    // TODO: Hide loading overlay
-    console.log('Loading complete');
+    const element = document.getElementById(id);
+    if (element) element.style.display = 'none';
 }
 
 function showError(message) {
-    // TODO: Implement toast notification
+    console.error('Error:', message);
     alert('Hata: ' + message);
-}
-
-function showSuccess(message) {
-    // TODO: Implement toast notification
-    alert('Başarılı: ' + message);
 }
 
 function updateStatus(type, text) {
     const statusDot = document.querySelector('.status-dot');
     const statusText = document.getElementById('statusText');
 
-    statusDot.className = `status-dot ${type === 'error' ? 'error' : ''}`;
-    statusText.textContent = text;
+    if (statusDot) {
+        statusDot.className = `status-dot ${type === 'error' ? 'error' : ''}`;
+    }
+    if (statusText) {
+        statusText.textContent = text;
+    }
 }
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+console.log('Popup.js yüklendi');
