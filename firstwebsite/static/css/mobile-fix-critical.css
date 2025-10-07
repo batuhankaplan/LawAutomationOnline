@@ -18,6 +18,8 @@
         display: flex !important;
         flex-direction: column !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
     [data-theme="dark"] nav.sidebar,
@@ -32,9 +34,20 @@
     #mobileSidebar.active {
         left: 0 !important;
         box-shadow: 5px 0 20px rgba(0,0,0,0.5) !important;
+        z-index: 999999 !important;
+        pointer-events: auto !important;
     }
 
-    /* Overlay */
+    /* Sidebar linkleri tıklanabilir */
+    .sidebar a,
+    .sidebar ul,
+    .sidebar li,
+    .sidebar .nav-links {
+        pointer-events: auto !important;
+        z-index: 999999 !important;
+    }
+
+    /* Overlay - sidebar'ın ALTINDA */
     .sidebar-overlay {
         position: fixed !important;
         top: 0 !important;
@@ -52,6 +65,7 @@
         display: block !important;
         background: rgba(0,0,0,0.6) !important;
         pointer-events: auto !important;
+        z-index: 99998 !important;
     }
 
     /* Hamburger buton */
@@ -90,10 +104,91 @@
         height: 60px !important;
         z-index: 99900 !important;
         background: white !important;
+        display: flex !important;
+        align-items: center !important;
+        padding: 8px 10px !important;
+        gap: 8px !important;
     }
 
     [data-theme="dark"] .navbar {
         background: #22252b !important;
+    }
+
+    /* Search box mobilde gizle veya küçült */
+    .navbar .search-container,
+    .navbar .search-box,
+    .navbar input[type="search"],
+    .navbar input[placeholder*="Ara"] {
+        display: none !important;
+    }
+
+    /* Navbar brand - hamburger için yer bırak */
+    .navbar .navbar-brand,
+    .navbar h1,
+    .navbar .brand {
+        margin-left: 50px !important;
+        font-size: 14px !important;
+        flex: 1 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    /* User info ve profil - sağda görünür */
+    .navbar .user-info,
+    .navbar .dropdown {
+        display: flex !important;
+        align-items: center !important;
+        margin-left: auto !important;
+        z-index: 99901 !important;
+        pointer-events: auto !important;
+    }
+
+    /* Profil resmi büyük ve tıklanabilir */
+    .navbar .user-avatar,
+    .navbar img[alt*="User"],
+    .navbar .profile-image,
+    .navbar .dropdown img {
+        width: 40px !important;
+        height: 40px !important;
+        border-radius: 50% !important;
+        cursor: pointer !important;
+        border: 2px solid #007bff !important;
+        pointer-events: auto !important;
+    }
+
+    /* Dropdown toggle tıklanabilir */
+    .navbar .dropdown-toggle,
+    .navbar [data-bs-toggle="dropdown"] {
+        pointer-events: auto !important;
+        z-index: 99902 !important;
+    }
+
+    /* Dropdown menu görünür ve erişilebilir */
+    .navbar .dropdown-menu {
+        position: absolute !important;
+        top: 55px !important;
+        right: 0 !important;
+        z-index: 99903 !important;
+        min-width: 220px !important;
+        background: white !important;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3) !important;
+        pointer-events: auto !important;
+    }
+
+    [data-theme="dark"] .navbar .dropdown-menu {
+        background: #2a2d35 !important;
+    }
+
+    .navbar .dropdown-menu.show {
+        display: block !important;
+    }
+
+    .navbar .dropdown-item {
+        padding: 12px 20px !important;
+        font-size: 15px !important;
+        min-height: 44px !important;
+        pointer-events: auto !important;
     }
 }
 
