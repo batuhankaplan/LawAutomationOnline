@@ -9950,6 +9950,7 @@ def check_auth():
         return jsonify({'authenticated': False, 'error': str(e)}), 500
 
 @app.route('/api/import_from_uyap', methods=['POST'])
+@csrf.exempt
 @login_required
 def import_from_uyap():
     """
@@ -10091,6 +10092,7 @@ def import_from_uyap():
         }), 500
 
 @app.route('/api/upload_uyap_document/<int:case_id>', methods=['POST'])
+@csrf.exempt
 @login_required
 def upload_uyap_document(case_id):
     """
