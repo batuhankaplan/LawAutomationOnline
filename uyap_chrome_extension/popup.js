@@ -216,7 +216,37 @@ async function scanCurrentPage() {
             throw new Error('Aktif tab bulunamadı');
         }
 
+        // UYAP sayfasında olup olmadığını kontrol et
+        if (!tab.url || !tab.url.includes('uyap.gov.tr')) {
+            throw new Error('Bu sayfa UYAP sayfası değil. Lütfen UYAP Dosya Sorgulama sayfasına gidin.');
+        }
+
+        // Content script'in yüklü olup olmadığını kontrol et
+        try {
+            console.log('Content script ping gönderiliyor...');
+            const pingResponse = await chrome.tabs.sendMessage(tab.id, { action: 'ping' });
+            console.log('Ping yanıtı:', pingResponse);
+        } catch (pingError) {
+            console.log('Content script yüklü değil, inject ediliyor...');
+
+            // Content script'i manuel olarak inject et
+            try {
+                await chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    files: ['content.js']
+                });
+                console.log('Content script inject edildi');
+
+                // Script'in yüklenmesi için kısa bir bekleme
+                await sleep(500);
+            } catch (injectError) {
+                console.error('Content script inject hatası:', injectError);
+                throw new Error('Content script yüklenemedi. Sayfayı yenileyip tekrar deneyin (F5).');
+            }
+        }
+
         // Content script'e mesaj gönder
+        console.log('getCaseList mesajı gönderiliyor...');
         const response = await chrome.tabs.sendMessage(tab.id, { action: 'getCaseList' });
 
         console.log('Content script yanıtı:', response);
@@ -233,12 +263,12 @@ async function scanCurrentPage() {
 
             updateStatus('online', `${currentCases.length} dosya bulundu`);
         } else {
-            throw new Error('Dosya bulunamadı');
+            throw new Error('Dosya bulunamadı veya sayfada tablo yok');
         }
     } catch (error) {
         console.error('Tarama hatası:', error);
         updateStatus('error', 'Tarama hatası');
-        alert('Sayfa taranırken hata oluştu: ' + error.message);
+        alert('Sayfa taranırken hata oluştu:\n\n' + error.message + '\n\nYapmanız gerekenler:\n1. UYAP Dosya Sorgulama sayfasında olun\n2. Sayfayı yenileyin (F5)\n3. Tekrar deneyin');
     }
 }
 
