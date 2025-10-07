@@ -78,19 +78,35 @@ async function checkUyapPage() {
 
         if (!tab || !tab.url) {
             console.log('Aktif tab bulunamadı');
-            return false;
+            return { isUyap: false, isDetailPage: false };
         }
 
         if (!tab.url.includes('uyap.gov.tr')) {
             showElement('uyapWarning');
-            return false;
+            return { isUyap: false, isDetailPage: false };
         }
 
         hideElement('uyapWarning');
-        return true;
+
+        // Detay sayfası mı kontrol et
+        const response = await chrome.tabs.sendMessage(tab.id, { action: 'checkPageType' });
+        const isDetailPage = response && response.isDetailPage;
+
+        console.log('Sayfa tipi:', isDetailPage ? 'Detay Sayfası' : 'Liste Sayfası');
+
+        // UI'ı sayfa tipine göre ayarla
+        if (isDetailPage) {
+            showElement('detailPageSection');
+            hideElement('caseListSection');
+        } else {
+            hideElement('detailPageSection');
+            showElement('caseListSection');
+        }
+
+        return { isUyap: true, isDetailPage };
     } catch (error) {
         console.error('Page check error:', error);
-        return false;
+        return { isUyap: false, isDetailPage: false };
     }
 }
 
@@ -140,6 +156,15 @@ function initializeEventListeners() {
         importSelectedBtn.addEventListener('click', () => {
             console.log('Seçili dosyaları aktar butonuna tıklandı');
             importSelectedCases();
+        });
+    }
+
+    // Detay sayfasından bu dosyayı aktar
+    const importCurrentBtn = document.getElementById('importCurrentBtn');
+    if (importCurrentBtn) {
+        importCurrentBtn.addEventListener('click', () => {
+            console.log('Bu dosyayı aktar butonuna tıklandı');
+            importCurrentCase();
         });
     }
 
@@ -386,6 +411,9 @@ async function importSelectedCases() {
     let imported = 0;
     let failed = 0;
 
+    // Aktif sekmeyi al
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
     for (let i = 0; i < selectedCaseData.length; i++) {
         const caseData = selectedCaseData[i];
 
@@ -405,9 +433,47 @@ async function importSelectedCases() {
                 }
             }
 
+            // Detay sayfasını aç (butona tıklayarak)
+            console.log('📄 Dosya detayı açılıyor:', caseData.dosyaNo, 'rowId:', caseData.rowId);
+            let fullDetails = { caseInfo: caseData, parties: {}, lawyers: [], documents: [], hearings: [] };
+
+            try {
+                // Content script'e butona tıklama komutu gönder
+                console.log('🖱️ Dosya görüntüle butonuna tıklanıyor...');
+                await chrome.tabs.sendMessage(tab.id, {
+                    action: 'clickDetailButton',
+                    rowId: caseData.rowId,
+                    dosyaNo: caseData.dosyaNo
+                });
+
+                // Detay sayfası açılana kadar bekle (2 saniye)
+                await sleep(2000);
+
+                // Content script'e detay çekme komutu gönder
+                console.log('📥 getCaseDetails mesajı gönderiliyor...');
+                const detailResponse = await chrome.tabs.sendMessage(tab.id, { action: 'getCaseDetails' });
+                console.log('✅ Detay yanıtı:', detailResponse);
+
+                if (detailResponse && detailResponse.success) {
+                    fullDetails = detailResponse.data;
+                    // Liste sayfasından gelen bilgileri birleştir
+                    fullDetails.caseInfo = { ...caseData, ...fullDetails.caseInfo };
+                }
+
+                // Geri dön (liste sayfasına)
+                console.log('🔙 Liste sayfasına geri dönülüyor...');
+                await chrome.tabs.sendMessage(tab.id, { action: 'goBack' });
+
+                // Liste sayfası yüklenene kadar bekle
+                await sleep(1500);
+
+            } catch (detailError) {
+                console.warn('⚠️ Detay sayfası açılamadı:', detailError);
+            }
+
             // Mapper ile dönüştür
-            console.log('Mapper çağrılıyor, caseData:', caseData);
-            const mappedData = mapUyapToSystem({ caseInfo: caseData, parties: {}, lawyers: [], documents: [], hearings: [] });
+            console.log('Mapper çağrılıyor, fullDetails:', fullDetails);
+            const mappedData = mapUyapToSystem(fullDetails);
             console.log('Mapped data:', mappedData);
 
             // JSON formatında hazırla
@@ -556,6 +622,74 @@ function hideElement(id) {
 function showError(message) {
     console.error('Error:', message);
     alert('Hata: ' + message);
+}
+
+// Detay sayfasından mevcut dosyayı aktar
+async function importCurrentCase() {
+    try {
+        console.log('📥 Detay sayfasından dosya aktarımı başlıyor...');
+
+        // Progress göster
+        showElement('progressSection');
+        hideElement('detailPageSection');
+        updateProgress(10, 'Dosya detayları çekiliyor...', '');
+
+        // Aktif sekmeyi al
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+        // Content script'ten detay bilgilerini çek
+        console.log('📥 getCaseDetails mesajı gönderiliyor...');
+        const detailResponse = await chrome.tabs.sendMessage(tab.id, { action: 'getCaseDetails' });
+        console.log('✅ Detay yanıtı:', detailResponse);
+
+        if (!detailResponse || !detailResponse.success) {
+            throw new Error('Dosya detayları çekilemedi');
+        }
+
+        updateProgress(40, 'Veriler dönüştürülüyor...', '');
+
+        // Mapper ile dönüştür
+        const fullDetails = detailResponse.data;
+        console.log('Mapper çağrılıyor, fullDetails:', fullDetails);
+        const mappedData = mapUyapToSystem(fullDetails);
+        console.log('Mapped data:', mappedData);
+
+        updateProgress(60, 'Backend\'e gönderiliyor...', '');
+
+        // JSON formatında hazırla
+        const jsonData = prepareJSON(mappedData);
+        console.log('JSON data hazırlandı:', jsonData);
+
+        // Backend'e gönder
+        const response = await chrome.runtime.sendMessage({
+            action: 'importCase',
+            data: jsonData
+        });
+        console.log('Backend yanıtı:', response);
+
+        if (response && response.success) {
+            updateProgress(100, '✅ Dosya başarıyla aktarıldı!', '');
+            console.log('✅ Dosya başarıyla aktarıldı');
+
+            // 2 saniye sonra UI'ı sıfırla
+            setTimeout(() => {
+                hideElement('progressSection');
+                showElement('detailPageSection');
+            }, 2000);
+        } else {
+            throw new Error(response?.error || 'Bilinmeyen hata');
+        }
+
+    } catch (error) {
+        console.error('❌ Dosya aktarma hatası:', error);
+        updateProgress(0, '❌ Hata: ' + error.message, '');
+
+        // 3 saniye sonra UI'ı sıfırla
+        setTimeout(() => {
+            hideElement('progressSection');
+            showElement('detailPageSection');
+        }, 3000);
+    }
 }
 
 function updateStatus(type, text) {

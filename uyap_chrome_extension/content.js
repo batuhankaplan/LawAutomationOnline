@@ -1,5 +1,5 @@
-// UYAP Content Script - DOM'dan veri çekme
-console.log('UYAP Dosya Aktarıcı Extension yüklendi');
+// UYAP Content Script - DOM'dan veri çekme v2.0.4 (debug)
+console.log('🔧 UYAP Extension v2.0.4 - Debug Mode');
 
 // UYAP Dosya Sorgulama sayfasını algılama
 function isUyapCaseListPage() {
@@ -32,7 +32,23 @@ function extractCaseListFromTable() {
 
             // Checkbox veya seçim butonu bul
             const checkbox = row.querySelector('input[type="checkbox"]');
-            const detailButton = row.querySelector('button, a[href*="detay"]');
+
+            // Detay linkini bul - önce href içinde "detay" olanı, sonra satırdaki herhangi bir linki, en son onclick olan elementi ara
+            let detailUrl = null;
+            const detailLink = row.querySelector('a[href*="detay"]');
+            const anyLink = row.querySelector('a[href]');
+            const clickableElement = row.querySelector('[onclick]');
+
+            if (detailLink) {
+                detailUrl = detailLink.href;
+            } else if (anyLink) {
+                detailUrl = anyLink.href;
+            } else if (clickableElement) {
+                // onclick'ten URL çıkarmaya çalış
+                const onclick = clickableElement.getAttribute('onclick');
+                const urlMatch = onclick.match(/['"]([^'"]*)['"]/);
+                if (urlMatch) detailUrl = urlMatch[1];
+            }
 
             const caseData = {
                 rowId: row.dataset.id || Math.random().toString(36),
@@ -43,7 +59,7 @@ function extractCaseListFromTable() {
                 acilisTarihi: cellTexts[4] || '',
                 goruntule: cellTexts[5] || '',
                 selected: checkbox ? checkbox.checked : false,
-                detailUrl: detailButton ? detailButton.href : null,
+                detailUrl: detailUrl,
                 rawCells: cellTexts
             };
 
@@ -134,18 +150,72 @@ function extractParties() {
         opponents: []
     };
 
-    // Müvekkil tablosu/bölümü bul
-    const clientSection = findSection(['Müvekkil', 'Müvekkillerimiz', 'Temsil Edilenler']);
-    if (clientSection) {
-        parties.clients = parsePartyTable(clientSection);
+    console.log('🔍 extractParties çağrıldı');
+
+    // Tüm tabloları tara ve "Rol, Tipi, Adı, Vekil" başlıklı tabloyu bul
+    const allTables = document.querySelectorAll('table');
+    console.log(`📊 ${allTables.length} tablo taranıyor...`);
+
+    let partyTable = null;
+    let partyTableIndex = -1;
+
+    for (let i = 0; i < allTables.length; i++) {
+        const table = allTables[i];
+        const headerCells = Array.from(table.querySelectorAll('th, tr:first-child td')).map(cell => cell.textContent.trim());
+
+        // "Rol", "Tipi", "Adı" içeren tabloyu bul
+        if (headerCells.some(h => h === 'Rol') && headerCells.some(h => h === 'Tipi' || h === 'Adı')) {
+            console.log(`✅ Taraf tablosu bulundu (Tablo ${i}), başlıklar:`, headerCells);
+            partyTableIndex = i;
+            partyTable = allTables[i + 1]; // Bir sonraki tablo veri tablosu
+            break;
+        }
     }
 
-    // Karşı taraf tablosu/bölümü bul
-    const opponentSection = findSection(['Karşı Taraf', 'Karşı Taraflar', 'Diğer Taraflar']);
-    if (opponentSection) {
-        parties.opponents = parsePartyTable(opponentSection);
+    if (!partyTable) {
+        console.warn('⚠️ Taraf tablosu bulunamadı!');
+        return parties;
     }
 
+    // Veri tablosunu parse et
+    console.log('📋 Taraf verileri çekiliyor...');
+    const rows = partyTable.querySelectorAll('tr');
+
+    rows.forEach((row, index) => {
+        const cells = Array.from(row.querySelectorAll('td')).map(cell => cell.textContent.trim());
+
+        if (cells.length < 3 || !cells[0] || !cells[2]) {
+            return; // Boş satır
+        }
+
+        const rol = cells[0]; // Davacı/Davalı
+        const tipi = cells[1]; // Kişi/Kurum
+        const adi = cells[2]; // İsim
+        const vekil = cells[3] || ''; // Vekil
+
+        console.log(`Satır ${index}: Rol=${rol}, Tipi=${tipi}, Adı=${adi}, Vekil=${vekil}`);
+
+        const party = {
+            name: adi,
+            entityType: tipi.toLowerCase().includes('kurum') ? 'company' : 'person',
+            capacity: rol,
+            lawyer: vekil.replace(/[\[\]]/g, ''), // Köşeli parantezleri kaldır
+            identityNumber: '',
+            phone: '',
+            address: ''
+        };
+
+        // Davacı = Client, Davalı = Opponent
+        if (rol.toLowerCase().includes('davacı')) {
+            parties.clients.push(party);
+            console.log('👤 Davacı (Client) eklendi:', party);
+        } else if (rol.toLowerCase().includes('davalı')) {
+            parties.opponents.push(party);
+            console.log('⚖️ Davalı (Opponent) eklendi:', party);
+        }
+    });
+
+    console.log('📋 Final parties:', parties);
     return parties;
 }
 
@@ -362,6 +432,54 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     else if (request.action === 'getCaseDetails') {
         const details = extractCaseDetails();
         sendResponse({ success: true, data: details });
+    }
+    else if (request.action === 'checkPageType') {
+        const isDetailPage = isUyapCaseDetailPage();
+        sendResponse({ success: true, isDetailPage: isDetailPage });
+    }
+    else if (request.action === 'clickDetailButton') {
+        const rowId = request.rowId;
+        console.log('🖱️ Dosya görüntüle butonuna tıklanıyor, rowId:', rowId);
+
+        // rowId ile satırı bul
+        const rows = document.querySelectorAll('table tbody tr.dx-data-row');
+        let found = false;
+
+        for (const row of rows) {
+            const currentRowId = row.dataset.id || Array.from(row.querySelectorAll('td')).map(c => c.textContent.trim()).join('|');
+
+            // Her satırdan detay butonu bul ve tıkla (rowId eşleşmese bile index'e göre)
+            const cells = row.querySelectorAll('td');
+            const dosyaNo = cells[1]?.textContent.trim();
+
+            if (currentRowId === rowId || dosyaNo === request.dosyaNo) {
+                const detailBtn = row.querySelector('#dosya-goruntule');
+                if (detailBtn) {
+                    console.log('✅ Buton bulundu, tıklanıyor...');
+                    detailBtn.click();
+                    found = true;
+                    sendResponse({ success: true, message: 'Buton tıklandı' });
+                    return;
+                }
+            }
+        }
+
+        if (!found) {
+            // Bulunamazsa ilk satırın butonuna tıkla (fallback)
+            console.warn('⚠️ rowId ile satır bulunamadı, ilk satıra tıklanıyor');
+            const firstBtn = document.querySelector('#dosya-goruntule');
+            if (firstBtn) {
+                firstBtn.click();
+                sendResponse({ success: true, message: 'İlk butona tıklandı (fallback)' });
+            } else {
+                sendResponse({ success: false, message: 'Buton bulunamadı' });
+            }
+        }
+    }
+    else if (request.action === 'goBack') {
+        console.log('🔙 Geri gidiliyor...');
+        window.history.back();
+        sendResponse({ success: true, message: 'Geri gidildi' });
     }
     else if (request.action === 'ping') {
         sendResponse({ success: true, message: 'Content script aktif' });
