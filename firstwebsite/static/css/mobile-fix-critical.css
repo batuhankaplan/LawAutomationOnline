@@ -40,12 +40,56 @@
 
     /* Sidebar içerik - AÇIK TEMADA GÖRÜNÜR */
     .sidebar,
-    .sidebar * {
+    .sidebar *,
+    .sidebar a,
+    .sidebar li,
+    .sidebar ul,
+    .sidebar .submenu,
+    .sidebar .submenu *,
+    .sidebar .submenu a {
         color: #000 !important;
     }
 
     [data-theme="dark"] .sidebar,
-    [data-theme="dark"] .sidebar * {
+    [data-theme="dark"] .sidebar *,
+    [data-theme="dark"] .sidebar a,
+    [data-theme="dark"] .sidebar li,
+    [data-theme="dark"] .sidebar ul,
+    [data-theme="dark"] .sidebar .submenu,
+    [data-theme="dark"] .sidebar .submenu *,
+    [data-theme="dark"] .sidebar .submenu a {
+        color: #e8eaed !important;
+    }
+
+    /* Dropdown/Submenu MOBİLDE KAPALI */
+    .sidebar .submenu,
+    .sidebar ul ul,
+    .sidebar .dropdown-content {
+        display: none !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* Dropdown açıksa görünür */
+    .sidebar li.active .submenu,
+    .sidebar li.active ul ul,
+    .sidebar li.open .submenu,
+    .sidebar li.open ul ul {
+        display: block !important;
+        max-height: 500px !important;
+    }
+
+    /* Submenu item'ları okunabilir ve tıklanabilir */
+    .sidebar .submenu li,
+    .sidebar .submenu a {
+        background: rgba(0,0,0,0.05) !important;
+        padding: 8px 20px 8px 40px !important;
+        color: #000 !important;
+    }
+
+    [data-theme="dark"] .sidebar .submenu li,
+    [data-theme="dark"] .sidebar .submenu a {
+        background: rgba(255,255,255,0.05) !important;
         color: #e8eaed !important;
     }
 
@@ -122,7 +166,7 @@
         padding-top: 70px !important;
     }
 
-    /* Navbar */
+    /* Navbar - SADECE LOGO VE PROFİL */
     .navbar {
         position: fixed !important;
         top: 0 !important;
@@ -135,7 +179,8 @@
         display: flex !important;
         align-items: center !important;
         padding: 8px 10px !important;
-        gap: 8px !important;
+        gap: 5px !important;
+        justify-content: space-between !important;
     }
 
     [data-theme="dark"] .navbar {
@@ -150,29 +195,40 @@
     .navbar input[type="text"],
     .navbar input[placeholder*="Ara"],
     .navbar input[placeholder*="ara"],
+    .navbar input[placeholder="Ara"],
     .navbar form,
-    .navbar .search-form {
+    .navbar .search-form,
+    .navbar .form-control {
         display: none !important;
         visibility: hidden !important;
         width: 0 !important;
         height: 0 !important;
+        max-width: 0 !important;
+        min-width: 0 !important;
         opacity: 0 !important;
         pointer-events: none !important;
+        position: absolute !important;
+        left: -9999px !important;
     }
 
-    /* Navbar brand - hamburger için yer bırak */
+    /* Navbar brand - hamburger için yer bırak, KOMPAKT */
     .navbar .navbar-brand,
     .navbar h1,
     .navbar .brand {
         margin-left: 50px !important;
-        font-size: 14px !important;
+        font-size: 13px !important;
+        max-width: 140px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        flex-shrink: 1 !important;
         flex: 1 !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
     }
 
-    /* User info ve profil - sağda görünür */
+    /* User info ve profil - sağda görünür, flex-shrink önle */
     .navbar .user-info,
     .navbar .dropdown {
         display: flex !important;
@@ -180,6 +236,8 @@
         margin-left: auto !important;
         z-index: 99901 !important;
         pointer-events: auto !important;
+        flex-shrink: 0 !important;
+        min-width: 50px !important;
     }
 
     /* Profil resmi büyük ve tıklanabilir */
