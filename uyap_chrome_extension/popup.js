@@ -397,23 +397,28 @@ async function importSelectedCases() {
             );
 
             // Mapper ile dönüştür
+            console.log('Mapper çağrılıyor, caseData:', caseData);
             const mappedData = mapUyapToSystem({ caseInfo: caseData, parties: {}, lawyers: [], documents: [], hearings: [] });
+            console.log('Mapped data:', mappedData);
 
             // JSON formatında hazırla
             const jsonData = prepareJSON(mappedData);
+            console.log('JSON data hazırlandı:', jsonData);
 
             // Backend'e gönder
+            console.log('Backend\'e mesaj gönderiliyor...');
             const response = await chrome.runtime.sendMessage({
                 action: 'importCase',
                 data: jsonData
             });
+            console.log('Backend yanıtı:', response);
 
             if (response && response.success) {
                 imported++;
-                console.log('Dosya başarıyla aktarıldı:', caseData.dosyaNo);
+                console.log('✅ Dosya başarıyla aktarıldı:', caseData.dosyaNo);
             } else {
                 failed++;
-                console.error('Import hatası:', response?.error);
+                console.error('❌ Import hatası:', response?.error || 'Yanıt alınamadı');
             }
 
             await sleep(500);

@@ -82,8 +82,12 @@ async function checkBackendAuth() {
 
 // Tek dosya import
 async function handleImportCase(caseData) {
+    console.log('🔵 handleImportCase çağrıldı');
+    console.log('📦 Gelen veri:', caseData);
+
     try {
         const settings = await loadSettings();
+        console.log('⚙️ Settings yüklendi:', settings);
 
         // Import progress başlat
         const importId = Date.now().toString();
@@ -92,6 +96,9 @@ async function handleImportCase(caseData) {
             progress: 0,
             currentStep: 'Dosya bilgileri gönderiliyor...'
         };
+
+        console.log(`🚀 Backend'e istek gönderiliyor: ${settings.apiUrl}/api/import_from_uyap`);
+        console.log('📤 Gönderilen data:', JSON.stringify(caseData, null, 2));
 
         // Backend'e gönder
         const response = await fetch(`${settings.apiUrl}/api/import_from_uyap`, {
@@ -103,12 +110,16 @@ async function handleImportCase(caseData) {
             body: JSON.stringify(caseData)
         });
 
+        console.log('📥 Response alındı:', response.status, response.statusText);
+
         if (!response.ok) {
             const errorData = await response.json();
+            console.error('❌ Backend hatası:', errorData);
             throw new Error(errorData.message || 'Import başarısız');
         }
 
         const result = await response.json();
+        console.log('✅ Backend başarılı yanıt:', result);
 
         // Progress güncelle
         importProgress[importId] = {
