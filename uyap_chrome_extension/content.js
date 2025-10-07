@@ -1,5 +1,5 @@
-// UYAP Content Script - DOM'dan veri çekme v2.1.0 (major fixes)
-console.log('🔧 UYAP Extension v2.1.0 - Vekil Bazlı Müvekkil Seçimi + Çoklu Dosya');
+// UYAP Content Script - DOM'dan veri çekme v2.1.1 (modal title fix)
+console.log('🔧 UYAP Extension v2.1.1 - Modal Başlık ve Debug Logs');
 
 // UYAP Dosya Sorgulama sayfasını algılama
 function isUyapCaseListPage() {
@@ -111,9 +111,27 @@ function extractBasicCaseInfo() {
     const info = {};
 
     // Sayfa başlığından mahkeme ve esas no bilgilerini çek
-    // Örnek: "2025/88 Bakırköy 8. İş Mahkemesi–Hukuk Dava Dosyası"
-    const pageTitle = document.querySelector('h1, .page-title, [class*="title"]')?.textContent?.trim() || document.title;
-    console.log('📄 Sayfa başlığı:', pageTitle);
+    // Modal içindeki başlığı bul
+    const pageTitleSelectors = [
+        '.dx-popup-title',
+        '.dx-toolbar-label h2',
+        '[class*="modal"] h1',
+        '[class*="modal"] h2',
+        'h1',
+        'h2'
+    ];
+
+    let pageTitle = document.title;
+    for (const selector of pageTitleSelectors) {
+        const element = document.querySelector(selector);
+        if (element && element.textContent.includes('/')) {
+            pageTitle = element.textContent.trim();
+            console.log(`📄 Başlık bulundu (${selector}):`, pageTitle);
+            break;
+        }
+    }
+
+    console.log('📄 Final başlık:', pageTitle);
 
     // Esas No ve Mahkeme adını parse et
     const titleMatch = pageTitle.match(/(\d{4})\/(\d+)\s+(.+?)(?:–|—|-|$)/);
@@ -493,6 +511,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         // Tüm satırları ve butonları bul
         const rows = document.querySelectorAll('table tbody tr.dx-data-row, table tbody tr');
+        console.log(`📋 Toplam ${rows.length} satır bulundu`);
         let found = false;
 
         for (let i = 0; i < rows.length; i++) {
@@ -501,22 +520,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
             // Dosya numarasını kontrol et (genelde 2. sütun)
             const currentDosyaNo = cells[1]?.textContent.trim();
+            console.log(`Satır ${i}: dosyaNo="${currentDosyaNo}", aranan="${dosyaNo}"`);
 
             if (currentDosyaNo === dosyaNo) {
                 // Bu satırdaki butonu bul (son sütunda veya içinde)
-                const detailBtn = row.querySelector('button[id*="goruntule"], button[title*="Görüntüle"], a[href*="detay"], #dosya-goruntule');
+                const detailBtn = row.querySelector('button[id*="goruntule"], button[title*="Görüntüle"], a[href*="detay"], #dosya-goruntule, button');
                 if (detailBtn) {
                     console.log(`✅ ${dosyaNo} için buton bulundu (satır ${i}), tıklanıyor...`);
                     detailBtn.click();
                     found = true;
                     sendResponse({ success: true, message: 'Buton tıklandı' });
                     return;
+                } else {
+                    console.warn(`⚠️ Satır ${i}: dosya eşleşti ama buton bulunamadı`);
                 }
             }
         }
 
         if (!found) {
             console.error('❌ Dosya bulunamadı:', dosyaNo);
+            console.error('Mevcut dosyalar:', Array.from(rows).map((r, i) => `${i}: ${r.querySelectorAll('td')[1]?.textContent.trim()}`));
             sendResponse({ success: false, message: `Dosya ${dosyaNo} için buton bulunamadı` });
         }
     }
