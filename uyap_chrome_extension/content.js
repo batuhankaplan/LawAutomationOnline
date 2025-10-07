@@ -1,5 +1,5 @@
-// UYAP Content Script - DOM'dan veri çekme v2.0.4 (debug)
-console.log('🔧 UYAP Extension v2.0.4 - Debug Mode');
+// UYAP Content Script - DOM'dan veri çekme v2.0.6 (findLabelValue fix)
+console.log('🔧 UYAP Extension v2.0.6 - findLabelValue Optimized');
 
 // UYAP Dosya Sorgulama sayfasını algılama
 function isUyapCaseListPage() {
@@ -71,7 +71,7 @@ function extractCaseListFromTable() {
 }
 
 // Dosya detaylarını sayfadan çekme (detay sayfasında)
-function extractCaseDetails() {
+async function extractCaseDetails() {
     const details = {
         caseInfo: {},
         parties: {
@@ -87,8 +87,8 @@ function extractCaseDetails() {
         // Dosya bilgilerini çek
         details.caseInfo = extractBasicCaseInfo();
 
-        // Taraf bilgilerini çek
-        details.parties = extractParties();
+        // Taraf bilgilerini çek (async)
+        details.parties = await extractParties();
 
         // Vekil bilgilerini çek
         details.lawyers = extractLawyers();
@@ -144,13 +144,19 @@ function extractBasicCaseInfo() {
 }
 
 // Tarafları çıkar (Müvekkil ve Karşı Taraf)
-function extractParties() {
+async function extractParties() {
     const parties = {
         clients: [],
         opponents: []
     };
 
     console.log('🔍 extractParties çağrıldı');
+
+    // Önce "Taraf Bilgileri" sekmesine tıkla (varsa)
+    await clickTabIfNeeded('Taraf');
+
+    // Tablonun yüklenmesi için bekle
+    await sleep(1500);
 
     // Tüm tabloları tara ve "Rol, Tipi, Adı, Vekil" başlıklı tabloyu bul
     const allTables = document.querySelectorAll('table');
@@ -374,23 +380,41 @@ function extractHearings() {
 // Etiket-değer çifti bul
 function findLabelValue(...labels) {
     for (const label of labels) {
-        // Label elementleri ara
-        const labelElements = document.querySelectorAll('label, .label, dt, th');
+        // 1. Label elementleri ara (en güvenilir)
+        const labelElements = document.querySelectorAll('label, .label, dt, th, div[class*="label"], span[class*="label"]');
         for (const elem of labelElements) {
-            if (elem.textContent.includes(label)) {
+            const labelText = elem.textContent.trim();
+            if (labelText === label || labelText.includes(label + ':') || labelText.includes(label)) {
                 // Değeri bul (sonraki element, input, span vs)
-                const value = elem.nextElementSibling?.textContent.trim() ||
-                             elem.parentElement?.querySelector('input, select, .value, dd, td')?.value ||
-                             elem.parentElement?.querySelector('.value, dd, td')?.textContent.trim();
-                if (value) return value;
+                let value = elem.nextElementSibling?.textContent?.trim();
+                if (!value || value.length > 200) {
+                    value = elem.parentElement?.querySelector('input, select, .value, dd, td')?.value;
+                }
+                if (!value || value.length > 200) {
+                    value = elem.parentElement?.querySelector('.value, dd, td')?.textContent?.trim();
+                }
+
+                // Değer makul uzunlukta mı? (200 karakterden fazla ise muhtemelen tüm sayfayı çekmiştir)
+                if (value && value.length < 200) {
+                    return value;
+                }
             }
         }
 
-        // Tüm elementi tara (daha yavaş)
-        const allText = document.body.textContent;
-        const regex = new RegExp(`${label}\\s*:?\\s*([^\\n]+)`, 'i');
-        const match = allText.match(regex);
-        if (match) return match[1].trim();
+        // 2. Tablo satırlarını ara (tr > td yapısı)
+        const tableRows = document.querySelectorAll('tr');
+        for (const row of tableRows) {
+            const cells = row.querySelectorAll('td, th');
+            if (cells.length >= 2) {
+                const cellLabel = cells[0].textContent.trim();
+                if (cellLabel === label || cellLabel.includes(label)) {
+                    const value = cells[1].textContent.trim();
+                    if (value && value.length < 200) {
+                        return value;
+                    }
+                }
+            }
+        }
     }
 
     return null;
@@ -430,8 +454,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true, data: cases });
     }
     else if (request.action === 'getCaseDetails') {
-        const details = extractCaseDetails();
-        sendResponse({ success: true, data: details });
+        // Async fonksiyon, Promise ile handle et
+        extractCaseDetails().then(details => {
+            sendResponse({ success: true, data: details });
+        }).catch(error => {
+            console.error('getCaseDetails error:', error);
+            sendResponse({ success: false, error: error.message });
+        });
+        return true; // Async response için gerekli
     }
     else if (request.action === 'checkPageType') {
         const isDetailPage = isUyapCaseDetailPage();
@@ -531,4 +561,30 @@ function addImportButton() {
     });
 
     document.body.appendChild(button);
+}
+
+// Helper: Sleep fonksiyonu
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Helper: Sekmeye/Tab'a tıklama (varsa)
+async function clickTabIfNeeded(tabName) {
+    console.log(`🔍 "${tabName}" sekmesi aranıyor...`);
+
+    // Buton, link veya tab elementi ara
+    const buttons = document.querySelectorAll('button, a, div[role="tab"], div[role="button"]');
+
+    for (const btn of buttons) {
+        const text = btn.textContent.trim();
+        if (text.toLowerCase().includes(tabName.toLowerCase())) {
+            console.log(`✅ "${tabName}" sekmesi bulundu, tıklanıyor...`);
+            btn.click();
+            await sleep(500); // Tıklama sonrası kısa bekle
+            return true;
+        }
+    }
+
+    console.log(`⚠️ "${tabName}" sekmesi bulunamadı, devam ediliyor...`);
+    return false;
 }

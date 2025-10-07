@@ -9962,10 +9962,14 @@ def import_from_uyap():
         if not data:
             return jsonify({'success': False, 'message': 'Veri gönderilmedi'}), 400
 
-        print("\n" + "="*80)
-        print("UYAP'TAN GELEN HAM VERİ:")
-        print(json.dumps(data, indent=2, ensure_ascii=False))
-        print("="*80 + "\n")
+        # Debug log (emoji hatalarını önlemek için ensure_ascii=True)
+        try:
+            print("\n" + "="*80)
+            print("UYAP'TAN GELEN HAM VERİ:")
+            print(json.dumps(data, indent=2, ensure_ascii=True))
+            print("="*80 + "\n")
+        except Exception as e:
+            print(f"Debug log error: {e}")
 
         # Zorunlu alanları kontrol et
         required_fields = ['file-type', 'year', 'case-number']
