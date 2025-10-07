@@ -439,15 +439,25 @@
         left: 0 !important;
         width: 100% !important;
         margin: 0 !important;
-        padding: 5mm !important;
+        padding: 10mm !important;
         background: white !important;
         font-family: Arial, sans-serif !important;
-        font-size: 9pt !important;
-        line-height: 1.2 !important;
+        font-size: 8pt !important;
+        line-height: 1.1 !important;
     }
     
     #formSection * {
         visibility: visible !important;
+    }
+    
+    #formSection div,
+    #formSection p,
+    #formSection strong,
+    #formSection span {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     /* İmza bölümündeki tarih görünür olsun */
@@ -467,117 +477,98 @@
     }
     
     .form-header h1 {
-        font-size: 12pt !important;
-        margin: 0 !important;
-        padding: 2mm 0 !important;
+        font-size: 11pt;
+        margin: 0 0 2mm 0;
+        padding: 0;
         text-align: center;
         border-bottom: 1pt solid #000;
         font-weight: bold;
     }
     
     .form-group {
-        margin-bottom: 1mm !important;
-        padding: 2mm !important;
+        margin-bottom: 0.5mm;
+        padding: 1mm;
         border: 0.5pt solid #333;
         page-break-inside: avoid;
-        font-size: 9pt !important;
     }
     
     .form-group h3 {
-        font-size: 10pt !important;
-        margin: 0 !important;
-        padding-bottom: 1mm !important;
+        font-size: 9pt;
+        margin: 0 0 1mm 0;
+        padding: 0;
         border-bottom: 0.5pt solid #333;
         font-weight: bold;
     }
     
-    .input-item {
-        margin-bottom: 0.02cm;
-    }
     
-    .input-item label {
-        display: block;
-        font-weight: bold;
-        color: black;
-        margin-bottom: 0.02cm;
-        font-size: 5pt;
-    }
-    
-    input, select, textarea {
-        font-size: 5pt;
-        line-height: 1.0;
-        border: none;
-        background: none;
-        color: black;
-        padding: 0.02cm;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        max-width: 100%;
-        box-sizing: border-box;
-        height: auto !important;
-        min-height: auto !important;
-    }
-    
-    textarea {
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        height: auto !important;
-        overflow: visible !important;
-    }
-    
-    /* İşten ayrılma nedeni için özel stil */
-    #terminationReason {
-        font-size: 5pt;
-        line-height: 1.2;
-        min-height: 1cm !important;
-        height: auto !important;
-        padding: 0.05cm;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        overflow: visible !important;
+    .input-item div,
+    .input-item p,
+    .input-item strong {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
         max-width: 100% !important;
-        box-sizing: border-box !important;
-        border: 0.5pt solid #333 !important;
     }
+    
+    
+    /* Sadece textarea için white-space */
+    textarea {
+        white-space: pre-wrap !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+    
     
     .form-container {
         display: flex;
         flex-direction: column;
-        gap: 0.02cm;
+    }
+    
+    .form-container div,
+    .form-container p,
+    .form-container strong,
+    .form-container span {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        max-width: 100% !important;
     }
     
     .alacak-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 0.02cm;
+        gap: 0;
+    }
+    
+    .alacak-grid div {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
     }
     
     .signature-section {
-        margin-top: 0.05cm;
+        margin-top: 2mm;
         text-align: center;
-        background: none;
-        border: none;
-        padding: 0;
+        page-break-inside: avoid;
     }
     
     .signature-text p {
-        margin: 0.02cm 0;
-        font-size: 5pt;
-        color: black;
+        margin: 0;
+        font-size: 7pt;
     }
     
     .signature-line {
-        margin-top: 0.05cm;
+        margin: 2mm auto 0 auto;
         border-top: 1pt solid #000;
-        width: 2cm;
-        margin-left: auto;
-        margin-right: auto;
+        width: 3cm;
     }
     
     .input-grid {
-        gap: 0.02cm;
+        gap: 0;
         display: grid;
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .input-grid div {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
     }
     
     .input-item.full-width {
@@ -590,25 +581,37 @@
     
     /* Tanıklar bölümü için özel stil */
     .witness-group {
-        margin-top: 0.02cm;
-        margin-bottom: 0.02cm;
-        padding: 0.05cm;
-        page-break-before: avoid !important;
-        page-break-inside: auto !important;
+        margin: 0;
+        padding: 0;
+        page-break-before: avoid;
+        page-break-inside: auto;
+    }
+    
+    .witness-group div,
+    .witness-group p,
+    .witness-group strong {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        max-width: 100% !important;
     }
     
     /* Tanık alanlarını optimize et */
     .witness-container {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 0.02cm;
+        gap: 0;
+    }
+    
+    .witness-container div {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
     }
     
     /* Radio butonları için özel stil */
     .radio-group {
-        font-size: 5pt;
+        font-size: 7pt;
         display: flex;
-        gap: 0.1cm;
+        gap: 2mm;
     }
     
     /* Radio button durumlarını koru */
@@ -618,8 +621,8 @@
     }
     
     .radio-group label {
-        margin-right: 0.02cm;
-        font-size: 5pt;
+        margin-right: 1mm;
+        font-size: 7pt;
     }
 }
 
@@ -764,9 +767,26 @@
 .pdf-mode .input-item input,
 .pdf-mode .input-item textarea,
 .pdf-mode .input-item div {
-    max-width: 100% !important; /* Maksimum genişlik sınırlaması */
-    overflow-wrap: break-word !important; /* Uzun kelimelerin kırılması */
-    word-wrap: break-word !important; /* IE desteği */
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    white-space: pre-wrap !important;
+}
+
+/* Form-group içindeki tüm div'ler için */
+.pdf-mode .form-group div {
+    max-width: 100% !important;
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+}
+
+/* Strong ve text elementleri */
+.pdf-mode .form-group div strong {
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
 }
 
 /* PDF önizleme için özel stiller */
@@ -2096,10 +2116,18 @@ input[type="text"][name$="Date"] {
                 terminationParent.appendChild(terminationDiv);
             }
             
-            // PDF oluşturma seçenekleri - print media query'i kullan
+            // Form yüksekliğini ölç
+            const formHeight = element.offsetHeight;
+            console.log('Form yüksekliği (indirme):', formHeight, 'px');
+            
+            // Dosya adını oluştur: "Adı Soyadı İşçi Görüşme Formu.pdf"
+            const workerName = document.getElementById('name')?.value || 'İsim';
+            const fileName = `${workerName} İşçi Görüşme Formu.pdf`;
+            
+            // PDF oluşturma seçenekleri - basit ve çalışır şekilde
             const opt = {
                 margin: [3, 3, 3, 3], 
-                filename: 'isci_gorusme_tutanagi.pdf',
+                filename: fileName,
                 image: { type: 'jpeg', quality: 0.95 },
                 html2canvas: { 
                     scale: 2,
@@ -2109,43 +2137,21 @@ input[type="text"][name$="Date"] {
                     dpi: 300,
                     scrollX: 0,
                     scrollY: 0,
-                    width: 210 * 3.78, // A4 genişliği mm to px
-                    height: null, // Yüksekliği otomatik belirle
-                    windowWidth: 1280,
-                    windowHeight: 1024
+                    width: 210 * 3.78,
+                    windowHeight: formHeight + 100
                 },
                 jsPDF: { 
                     unit: 'mm', 
                     format: 'a4', 
                     orientation: 'portrait',
                     compress: true,
-                    putOnlyUsedFonts: true // Sadece kullanılan fontları ekle
-                },
-                pagebreak: { mode: ['avoid-all'], avoid: '.form-group' } // Form gruplarını bölme
+                    putOnlyUsedFonts: true
+                }
             };
             
-            // PDF oluştur ve indir
-            html2pdf().from(element).set(opt).toPdf().get('pdf').then((pdf) => {
-                // Boş sayfaları kontrol et ve kaldır
-                const pageCount = pdf.internal.getNumberOfPages();
-                console.log(`PDF ${pageCount} sayfa içeriyor.`);
-                
-                // Eğer birden fazla sayfa varsa, boş sayfaları kontrol et
-                if (pageCount > 1) {
-                    // Son sayfanın içeriğini kontrol et
-                    for (let i = pageCount; i > 1; i--) {
-                        pdf.setPage(i);
-                        const pageText = pdf.internal.getPageText(i);
-                        // Eğer sayfa boş veya sadece boşluk karakterleri içeriyorsa sil
-                        if (!pageText || pageText.trim().length === 0) {
-                            pdf.deletePage(i);
-                            console.log(`Boş sayfa ${i} silindi.`);
-                        }
-                    }
-                }
-                
-                // PDF'i indir
-                pdf.save('isci_gorusme_tutanagi.pdf');
+            // PDF oluştur ve güvenli şekilde indir
+            html2pdf().from(element).set(opt).save().then(() => {
+                console.log('PDF güvenli şekilde indirildi (Form İndir)');
                 
                 // PDF modunu kaldır
                 element.classList.remove('pdf-mode');
@@ -2272,6 +2278,19 @@ input[type="text"][name$="Date"] {
         const fieldsContainer = document.getElementById('witnessFieldsContainer');
         const simpleContainer = document.getElementById('witnessSimpleContainer');
         
+        // Mevcut tanık verilerini sakla
+        const savedWitnessData = {};
+        for (let i = 1; i <= 10; i++) {
+            const nameField = document.getElementById(`witness${i}Name`);
+            const infoField = document.getElementById(`witness${i}Info`);
+            if (nameField || infoField) {
+                savedWitnessData[i] = {
+                    name: nameField ? nameField.value : '',
+                    info: infoField ? infoField.value : ''
+                };
+            }
+        }
+        
         // Mevcut alanları temizle
         fieldsContainer.innerHTML = '';
         simpleContainer.innerHTML = '';
@@ -2299,11 +2318,11 @@ input[type="text"][name$="Date"] {
                     <div class="input-grid" style="grid-template-columns: repeat(2, 1fr);">
                         <div class="input-item">
                             <label for="witness${i}Name">Adı Soyadı:</label>
-                            <input type="text" id="witness${i}Name" name="witness${i}Name" placeholder="Tanık adı soyadı">
+                            <input type="text" id="witness${i}Name" name="witness${i}Name" placeholder="Tanık adı soyadı" value="${savedWitnessData[i] ? savedWitnessData[i].name : ''}">
                         </div>
                         <div class="input-item">
                             <label for="witness${i}Info">Tanık Bilgileri:</label>
-                            <textarea id="witness${i}Info" name="witness${i}Info" placeholder="Tanık hakkında bilgiler"></textarea>
+                            <textarea id="witness${i}Info" name="witness${i}Info" placeholder="Tanık hakkında bilgiler">${savedWitnessData[i] ? savedWitnessData[i].info : ''}</textarea>
                         </div>
                     </div>
                 `;
@@ -2550,28 +2569,36 @@ input[type="text"][name$="Date"] {
                 
                 // Geçmiş hatalara karşı önlem olarak az bekleyelim
                 setTimeout(() => {
-                    // PDF oluşturma seçenekleri - basitleştirilmiş ve güvenilir
+                    // Form yüksekliğini al
+                    const formHeight = tempForm.offsetHeight;
+                    console.log('Form yüksekliği (önizleme):', formHeight, 'px');
+                    
+                    // Dosya adını oluştur: "Adı Soyadı İşçi Görüşme Formu.pdf"
+                    const fileName = `${data.form.name || 'İsim'} İşçi Görüşme Formu.pdf`;
+                    
+                    // PDF oluşturma seçenekleri - basit ve çalışır şekilde
                     const opt = {
-                        margin: 0,
-                        filename: `isci_gorusme_${formId}.pdf`,
+                        margin: [3, 3, 3, 3],
+                        filename: fileName,
                         image: { 
                             type: 'jpeg', 
                             quality: 0.98 
                         },
                         html2canvas: { 
-                            scale: 1.5, // Scale azaltıldı daha fazla içerik için
+                            scale: 2,
                             useCORS: true,
                             allowTaint: false,
                             backgroundColor: '#ffffff',
                             logging: false,
-                            height: 1400, // Yükseklik artırıldı daha fazla içerik için
                             scrollY: 0,
-                            scrollX: 0
+                            scrollX: 0,
+                            windowHeight: formHeight + 100
                         },
                         jsPDF: { 
-                            unit: 'in', 
+                            unit: 'mm', 
                             format: 'a4', 
-                            orientation: 'portrait' 
+                            orientation: 'portrait',
+                            compress: true
                         }
                     };
                     
@@ -2585,69 +2612,47 @@ input[type="text"][name$="Date"] {
                     
                     try {
                         console.log('PDF oluşturma başlıyor...');
-                        html2pdf().from(tempForm).set(opt).toPdf().get('pdf').then((pdf) => {
-                            console.log('PDF başarıyla oluşturuldu:', pdf);
-                            // PDF'i base64 formatına çevir
-                            const pdfData = pdf.output('datauristring');
-                            console.log('PDF data oluşturuldu, boyut:', pdfData.length);
+                        loadingOverlay.querySelector('.loading-text').textContent = 'PDF oluşturuluyor...';
+                        
+                        html2pdf().from(tempForm).set(opt).toPdf().output('dataurlstring').then((pdfDataUrl) => {
+                            console.log('PDF oluşturuldu, backend\'e kaydediliyor...');
+                            loadingOverlay.querySelector('.loading-text').textContent = 'PDF kaydediliyor...';
                             
                             // Geçici formu kaldır
                             tempForm.remove();
                             
+                            // PDF'i backend'e gönder
+                            return fetch(`/save_worker_interview_pdf/${formId}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    pdf_data: pdfDataUrl
+                                })
+                            });
+                        }).then(response => response.json()).then(result => {
                             // Yükleme göstergesini gizle
                             loadingOverlay.style.display = 'none';
                             
-                            // PDF'i yeni bir sekmede aç
-                            const newWindow = window.open();
-                            newWindow.document.write(`
-                                <html>
-                                <head>
-                                    <title>İşçi Görüşme Tutanağı - Önizleme</title>
-                                    <style>
-                                        body, html {
-                                            margin: 0;
-                                            padding: 0;
-                                            height: 100%;
-                                            overflow: hidden;
-                                            display: flex;
-                                            justify-content: center;
-                                            align-items: center;
-                                            background-color: #f0f0f0;
-                                        }
-                                        iframe, embed {
-                                            width: 100%;
-                                            height: 100vh;
-                                            border: none;
-                                            box-sizing: border-box;
-                                            display: block;
-                                        }
-                                        .pdf-container {
-                                            width: 100%;
-                                            height: 100vh;
-                                            display: flex;
-                                            justify-content: center;
-                                            align-items: center;
-                                            position: absolute;
-                                            top: 0;
-                                            left: 0;
-                                            right: 0;
-                                            bottom: 0;
-                                        }
-                                    </style>
-                                </head>
-                                <body>
-                                    <div class="pdf-container">
-                                        <embed src="${pdfData}" type="application/pdf" width="100%" height="100%" />
-                                    </div>
-                                </body>
-                                </html>
-                            `);
-                            newWindow.document.close();
+                            if (result.success) {
+                                console.log('PDF başarıyla kaydedildi:', result.filename);
+                                
+                                // Kaydedilen PDF'i yeni sekmede aç
+                                const pdfUrl = result.file_url;
+                                const newWindow = window.open(pdfUrl, '_blank');
+                                if (!newWindow) {
+                                    alert('Pop-up engelleyici açık olabilir. Lütfen bu site için pop-up\'lara izin verin.');
+                                }
+                            } else {
+                                console.error('PDF kaydetme hatası:', result.error);
+                                alert('PDF kaydedilemedi: ' + result.error);
+                            }
                         }).catch(error => {
-                            console.error('PDF oluşturma hatası:', error);
+                            console.error('PDF işleme hatası:', error);
                             alert('PDF oluşturulurken bir hata oluştu: ' + error.message);
                             loadingOverlay.style.display = 'none';
-                            if (tempForm) tempForm.remove();
+                            if (tempForm && tempForm.parentNode) tempForm.remove();
                         });
                     } catch (error) {
                         console.error('PDF oluşturma işlemi başlatılırken hata:', error);

@@ -648,6 +648,9 @@ class IsciGorusmeTutanagi(db.Model):
     # Tanıklar (dinamik sayıda tanık için JSON formatında saklayacağız)
     witnesses = db.Column(db.Text)  # JSON string olarak saklayacağız
     
+    # PDF Dosya Yolu
+    pdf_path = db.Column(db.String(500))  # PDF dosyasının kaydedildiği yol
+    
     # Ek Bilgiler
     created_at = db.Column(db.DateTime, default=datetime.now)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
@@ -701,6 +704,7 @@ class OrnekSozlesme(db.Model):
     icerik_json = db.Column(db.Text, nullable=False)  # Sözleşmenin pdfmake formatındaki JSON içeriği
     olusturulma_tarihi = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    pdf_path = db.Column(db.String(500))  # PDF dosyasının kaydedildiği yol
 
     user = db.relationship('User', backref=db.backref('olusturdugu_ornek_sozlesmeler', lazy=True))
 

@@ -31,7 +31,8 @@ from bs4 import BeautifulSoup
 from email_utils import send_calendar_event_assignment_email, send_calendar_event_reminder_email
 import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from flask_wtf.csrf import CSRFProtect # CSRF Koruması için eklendi
+from flask_wtf.csrf import CSRFProtect, CSRFError # CSRF Koruması için eklendi
+from flask_wtf import csrf
 from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi, DilekceKategori, OrnekDilekce, OrnekSozlesme, ContractTemplate
 import uuid
 from PIL import Image
@@ -1919,6 +1920,11 @@ def delete_case(case_id):
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     return send_from_directory('static', filename)
+
+@app.route('/uploads/<path:filename>')
+def serve_uploads(filename):
+    """Uploads klasöründen dosya servisi"""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # Favicon route - 404 hatalarını önlemek için
 @app.route('/favicon.ico')
@@ -5452,6 +5458,70 @@ def delete_worker_interview(interview_id):
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/save_worker_interview_pdf/<int:interview_id>', methods=['POST'])
+@csrf.exempt
+@login_required
+def save_worker_interview_pdf(interview_id):
+    """PDF'i sunucuya kaydeder ve dosya yolunu döner"""
+    try:
+        from flask import request
+        import base64
+        
+        # İşçi görüşme kaydını bul
+        interview = IsciGorusmeTutanagi.query.get_or_404(interview_id)
+        
+        # Yetki kontrolü
+        if not current_user.has_permission('isci_gorusme_goruntule') and not current_user.is_admin:
+            return jsonify({'success': False, 'error': 'Yetkisiz erişim'}), 403
+        
+        # PDF verisini al (base64 encoded)
+        pdf_data = request.json.get('pdf_data')
+        if not pdf_data:
+            return jsonify({'success': False, 'error': 'PDF verisi bulunamadı'})
+        
+        # Base64 prefix'ini kaldır (data:application/pdf;base64,)
+        if 'base64,' in pdf_data:
+            pdf_data = pdf_data.split('base64,')[1]
+        
+        # PDF'i decode et
+        pdf_bytes = base64.b64decode(pdf_data)
+        
+        # Dosya adını oluştur: "Adı Soyadı İşçi Görüşme Formu.pdf"
+        worker_name = interview.name or 'Isim'
+        # Dosya adından geçersiz karakterleri temizle
+        safe_name = "".join(c for c in worker_name if c.isalnum() or c in (' ', '_', '-'))
+        filename = f"{safe_name} Isci Gorusme Formu.pdf"
+        
+        # PDF dosyalarını kaydetmek için klasör oluştur
+        pdf_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'worker_interviews')
+        if not os.path.exists(pdf_dir):
+            os.makedirs(pdf_dir)
+        
+        # Dosya yolu
+        filepath = os.path.join(pdf_dir, filename)
+        
+        # PDF'i kaydet
+        with open(filepath, 'wb') as f:
+            f.write(pdf_bytes)
+        
+        # Database'e dosya yolunu kaydet
+        interview.pdf_path = filepath
+        db.session.commit()
+        
+        # Dosya URL'ini oluştur
+        file_url = f"/uploads/worker_interviews/{filename}"
+        
+        return jsonify({
+            'success': True,
+            'file_url': file_url,
+            'filename': filename
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"PDF kaydetme hatası: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
 @app.route('/generate_worker_interview_pdf', methods=['POST'])
 @login_required
 def generate_worker_interview_pdf():
@@ -7214,6 +7284,68 @@ def api_kayitli_ornek_sozlesme_sil(sozlesme_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/save_ornek_sozlesme_pdf/<int:sozlesme_id>', methods=['POST'])
+@csrf.exempt
+@login_required
+def save_ornek_sozlesme_pdf(sozlesme_id):
+    """Sözleşme PDF'ini sunucuya kaydeder ve dosya yolunu döner"""
+    try:
+        import base64
+        
+        # Sözleşme kaydını bul
+        if current_user.has_permission('ornek_sozlesmeler') or current_user.is_admin:
+            sozlesme = OrnekSozlesme.query.get_or_404(sozlesme_id)
+        else:
+            sozlesme = OrnekSozlesme.query.filter_by(id=sozlesme_id, user_id=current_user.id).first_or_404()
+        
+        # PDF verisini al (base64 encoded)
+        pdf_data = request.json.get('pdf_data')
+        if not pdf_data:
+            return jsonify({'success': False, 'error': 'PDF verisi bulunamadı'})
+        
+        # Base64 prefix'ini kaldır (data:application/pdf;base64,)
+        if 'base64,' in pdf_data:
+            pdf_data = pdf_data.split('base64,')[1]
+        
+        # PDF'i decode et
+        pdf_bytes = base64.b64decode(pdf_data)
+        
+        # Dosya adını oluştur: "Müvekkil Adı Avukatlık Ücret Sözleşmesi.pdf"
+        muvekkil_adi = sozlesme.muvekkil_adi or 'Is Sahibi'
+        # Dosya adından geçersiz karakterleri temizle
+        safe_name = "".join(c for c in muvekkil_adi if c.isalnum() or c in (' ', '_', '-'))
+        filename = f"{safe_name} Avukatlik Ucret Sozlesmesi.pdf"
+        
+        # PDF dosyalarını kaydetmek için klasör oluştur
+        pdf_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'ornek_sozlesmeler')
+        if not os.path.exists(pdf_dir):
+            os.makedirs(pdf_dir)
+        
+        # Dosya yolu
+        filepath = os.path.join(pdf_dir, filename)
+        
+        # PDF'i kaydet
+        with open(filepath, 'wb') as f:
+            f.write(pdf_bytes)
+        
+        # Database'e dosya yolunu kaydet
+        sozlesme.pdf_path = filepath
+        db.session.commit()
+        
+        # Dosya URL'ini oluştur
+        file_url = f"/uploads/ornek_sozlesmeler/{filename}"
+        
+        return jsonify({
+            'success': True,
+            'file_url': file_url,
+            'filename': filename
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"PDF kaydetme hatası: {e}")
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/sozlesme_pdf/<int:sozlesme_id>')
 @login_required
@@ -10015,6 +10147,15 @@ def import_from_uyap():
         else:
             open_date = datetime.now().date()
 
+        # Sonraki duruşma tarihi
+        next_hearing_str = data.get('next-hearing', '')
+        next_hearing = None
+        if next_hearing_str:
+            try:
+                next_hearing = datetime.strptime(next_hearing_str, '%Y-%m-%d').date()
+            except ValueError:
+                next_hearing = None
+
         # Yeni dosya oluştur
         new_case_file = CaseFile(
             file_type=file_type,
@@ -10027,6 +10168,7 @@ def import_from_uyap():
             phone_number=data.get('client-phone', ''),
             status=data.get('status', 'Aktif'),
             open_date=open_date,
+            next_hearing=next_hearing,
             user_id=current_user.id if current_user.is_authenticated else 1,  # TEST: Fallback
 
             # Müvekkil detayları

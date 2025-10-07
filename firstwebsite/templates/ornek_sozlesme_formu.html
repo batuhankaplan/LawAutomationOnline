@@ -2417,52 +2417,64 @@ Bu ücret {avukatAdi}'a ait {bankaBilgisi} {ibanNo} İban nolu hesaba ödenecekt
                                     
                                     if (!dataUrl.startsWith('data:application/pdf')) {
                                         console.warn("PDF dataUrl beklenmeyen format (önizleme):", dataUrl.substring(0, 100));
-                                        // Yine de iframe'e yükle, belki çalışır
                                     }
                                     
-                                    try {
-                                        const iframe = document.createElement('iframe');
-                                        iframe.src = dataUrl;
-                                        iframe.style.width = '100%';
-                                        iframe.style.height = '100%';
-                                        iframe.style.border = 'none';
-                                        iframe.style.margin = '0';
-                                        iframe.style.padding = '0';
-                                        iframe.style.display = 'block';
-                                        iframe.title = 'PDF Önizleme';
-                                        
-                                        if (pdfGoruntuleyici) {
-                                            pdfGoruntuleyici.innerHTML = '';
-                                            pdfGoruntuleyici.appendChild(iframe);
-                                            console.log("PDF iframe'e başarıyla yerleştirildi (önizleme)");
+                                    // PDF'i backend'e gönder ve kaydet
+                                    console.log("PDF backend'e kaydediliyor...");
+                                    pdfGoruntuleyici.innerHTML = '<div class="loading-spinner-container h-100"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">PDF kaydediliyor...</p></div>';
+                                    
+                                    fetch(`/save_ornek_sozlesme_pdf/${sozlesme.id}`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({
+                                            pdf_data: dataUrl
+                                        })
+                                    })
+                                    .then(response => response.json())
+                                    .then(result => {
+                                        if (result.success) {
+                                            console.log('PDF başarıyla kaydedildi:', result.filename);
+                                            
+                                            // Kaydedilen PDF'i yeni sekmede aç
+                                            const pdfUrl = result.file_url;
+                                            const newWindow = window.open(pdfUrl, '_blank');
+                                            if (!newWindow) {
+                                                alert('Pop-up engelleyici açık olabilir. Lütfen bu site için pop-up\'lara izin verin.');
+                                            }
+                                            
+                                            // Modal'ı kapat
+                                            if (typeof window.closeFullscreenPdfModal === 'function') {
+                                                window.closeFullscreenPdfModal();
+                                            }
+                                        } else {
+                                            console.error('PDF kaydetme hatası:', result.error);
+                                            if (pdfGoruntuleyici) {
+                                                pdfGoruntuleyici.innerHTML = `
+                                                    <div class="d-flex flex-column align-items-center justify-content-center h-100 text-danger">
+                                                        <i class="material-icons" style="font-size: 48px;">error</i>
+                                                        <h4 class="mt-3">PDF Kaydetme Hatası</h4>
+                                                        <p>PDF kaydedilemedi: ${result.error}</p>
+                                                        <button class="btn btn-outline-secondary mt-3" onclick="window.closeFullscreenPdfModal()">Kapat</button>
+                                                    </div>
+                                                `;
+                                            }
                                         }
-                                        
-                                        // PDF indirme ve kaydetme butonlarını aktifleştir - önizlemede gerekmiyor
-                                        const pdfIndirBtn = document.getElementById('pdfIndirBtn');
-                                        const sozlesmeKaydetBtn = document.getElementById('sozlesmeKaydetBtn');
-                                        if (pdfIndirBtn) {
-                                            pdfIndirBtn.disabled = true; // Önizlemede indirme kapalı
-                                            console.log("PDF İndir butonu deaktif (önizleme modu)");
-                                        }
-                                        if (sozlesmeKaydetBtn) {
-                                            sozlesmeKaydetBtn.disabled = true; // Önizlemede kaydetme kapalı
-                                            console.log("Sözleşme Kaydet butonu deaktif (önizleme modu)");
-                                        }
-                                        
-                                        console.log("PDF önizleme başarıyla yüklendi");
-                                    } catch (iframeError) {
-                                        console.error('Iframe oluşturma hatası:', iframeError);
+                                    })
+                                    .catch(error => {
+                                        console.error('PDF kaydetme hatası:', error);
                                         if (pdfGoruntuleyici) {
                                             pdfGoruntuleyici.innerHTML = `
                                                 <div class="d-flex flex-column align-items-center justify-content-center h-100 text-danger">
                                                     <i class="material-icons" style="font-size: 48px;">error</i>
-                                                    <h4 class="mt-3">PDF Görüntüleme Hatası</h4>
-                                                    <p>PDF görüntülenirken bir hata oluştu: ${iframeError.message}</p>
+                                                    <h4 class="mt-3">PDF Kaydetme Hatası</h4>
+                                                    <p>PDF kaydedilirken bir hata oluştu: ${error.message}</p>
                                                     <button class="btn btn-outline-secondary mt-3" onclick="window.closeFullscreenPdfModal()">Kapat</button>
                                                 </div>
                                             `;
                                         }
-                                    }
+                                    });
                                 }).catch(function(pdfCreateError) {
                                     console.error('PDF dataUrl alma hatası (önizleme):', pdfCreateError);
                                     if (pdfGoruntuleyici) {
