@@ -9926,6 +9926,287 @@ def test_route():
     print("TEST ROUTE CALLED!!!")
     return "Test route works!"
 
+# ========================================
+# UYAP CHROME EXTENSION API ENDPOINTS
+# ========================================
+
+@app.route('/api/check_auth', methods=['GET'])
+def check_auth():
+    """Chrome Extension için authentication kontrolü"""
+    try:
+        if current_user.is_authenticated:
+            return jsonify({
+                'authenticated': True,
+                'user': {
+                    'id': current_user.id,
+                    'name': current_user.name,
+                    'email': current_user.email
+                }
+            }), 200
+        else:
+            return jsonify({'authenticated': False}), 200
+    except Exception as e:
+        print(f"Auth check error: {str(e)}")
+        return jsonify({'authenticated': False, 'error': str(e)}), 500
+
+@app.route('/api/import_from_uyap', methods=['POST'])
+@login_required
+def import_from_uyap():
+    """
+    UYAP'tan gelen dosya verilerini sisteme aktar
+    Chrome Extension tarafından çağrılır
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'success': False, 'message': 'Veri gönderilmedi'}), 400
+
+        print("UYAP'tan gelen veri:", data)
+
+        # Zorunlu alanları kontrol et
+        required_fields = ['file-type', 'year', 'case-number']
+        missing_fields = [field for field in required_fields if not data.get(field)]
+
+        if missing_fields:
+            return jsonify({
+                'success': False,
+                'message': f'Eksik alanlar: {", ".join(missing_fields)}'
+            }), 400
+
+        # Dosya türüne göre özel alanlar
+        file_type = data.get('file-type')
+        courthouse = data.get('courthouse', '')
+        department = data.get('department', '')
+
+        # Özel dosya türleri için courthouse ve department ayarla
+        if file_type.upper() == 'AİHM':
+            courthouse = "Avrupa İnsan Hakları Mahkemesi"
+            department = "AİHM"
+        elif file_type.upper() == 'AYM':
+            courthouse = "Anayasa Mahkemesi"
+            department = "AYM"
+        elif file_type.upper() == 'ARABULUCULUK':
+            courthouse = "Arabuluculuk Merkezi"
+            department = "Arabuluculuk"
+
+        # Müvekkil adı zorunlu
+        client_name = data.get('client-name', '')
+        if not client_name:
+            return jsonify({
+                'success': False,
+                'message': 'Müvekkil adı zorunludur'
+            }), 400
+
+        # Açılış tarihi
+        open_date_str = data.get('open-date', '')
+        if open_date_str:
+            try:
+                open_date = datetime.strptime(open_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                open_date = datetime.now().date()
+        else:
+            open_date = datetime.now().date()
+
+        # Yeni dosya oluştur
+        new_case_file = CaseFile(
+            file_type=file_type,
+            city=data.get('city', ''),
+            courthouse=courthouse,
+            department=department,
+            year=int(data.get('year')),
+            case_number=data.get('case-number', ''),
+            client_name=client_name,
+            phone_number=data.get('client-phone', ''),
+            status=data.get('status', 'Aktif'),
+            open_date=open_date,
+            user_id=current_user.id,
+
+            # Müvekkil detayları
+            client_entity_type=data.get('client-entity-type', 'person'),
+            client_identity_number=data.get('client-id', ''),
+            client_capacity=data.get('client-capacity', ''),
+            client_address=data.get('client-address', ''),
+
+            # Karşı taraf detayları
+            opponent_entity_type=data.get('opponent-entity-type', 'person'),
+            opponent_name=data.get('opponent-name', ''),
+            opponent_identity_number=data.get('opponent-id', ''),
+            opponent_capacity=data.get('opponent-capacity', ''),
+            opponent_phone=data.get('opponent-phone', ''),
+            opponent_address=data.get('opponent-address', ''),
+
+            # Vekil detayları
+            opponent_lawyer=data.get('opponent-lawyer', ''),
+            opponent_lawyer_bar=data.get('opponent-lawyer-bar', ''),
+            opponent_lawyer_bar_number=data.get('opponent-lawyer-bar-number', ''),
+            opponent_lawyer_phone=data.get('opponent-lawyer-phone', ''),
+            opponent_lawyer_address=data.get('opponent-lawyer-address', ''),
+
+            # Ek kişiler (JSON)
+            additional_clients_json=data.get('additional_clients_json', ''),
+            additional_opponents_json=data.get('additional_opponents_json', '')
+        )
+
+        # Veritabanına kaydet
+        db.session.add(new_case_file)
+        db.session.commit()
+
+        # Activity log
+        log_activity(
+            activity_type='dosya_ekleme',
+            description=f"UYAP'tan dosya aktarıldı: {client_name} - {data.get('case-number')}",
+            user_id=current_user.id,
+            case_id=new_case_file.id
+        )
+
+        # Duruşma bilgisi varsa ekle
+        hearings = data.get('hearings', [])
+        if hearings and len(hearings) > 0:
+            first_hearing = hearings[0]
+            if first_hearing.get('date'):
+                try:
+                    hearing_date = datetime.strptime(first_hearing['date'], '%Y-%m-%d').date()
+                    new_case_file.next_hearing = hearing_date
+                    new_case_file.hearing_time = first_hearing.get('time', '')
+                    new_case_file.hearing_type = first_hearing.get('type', 'durusma')
+                    db.session.commit()
+                except:
+                    pass
+
+        return jsonify({
+            'success': True,
+            'message': 'Dosya başarıyla aktarıldı',
+            'case_id': new_case_file.id
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"UYAP import error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Dosya aktarma hatası: {str(e)}'
+        }), 500
+
+@app.route('/api/upload_uyap_document/<int:case_id>', methods=['POST'])
+@login_required
+def upload_uyap_document(case_id):
+    """
+    UYAP'tan indirilen belgeleri dosyaya yükle
+    Chrome Extension tarafından çağrılır
+    """
+    try:
+        # Dosyayı kontrol et
+        case_file = CaseFile.query.get_or_404(case_id)
+
+        # Yetki kontrolü
+        if case_file.user_id != current_user.id:
+            return jsonify({
+                'success': False,
+                'message': 'Bu dosyaya erişim yetkiniz yok'
+            }), 403
+
+        # Belge dosyasını al
+        if 'document' not in request.files:
+            return jsonify({
+                'success': False,
+                'message': 'Belge dosyası gönderilmedi'
+            }), 400
+
+        file = request.files['document']
+
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'message': 'Dosya seçilmedi'
+            }), 400
+
+        # Belge türü
+        document_type = request.form.get('document_type', 'Diğer Belgeler')
+        document_date_str = request.form.get('document_date', '')
+
+        # Dosya adı ve uzantısı
+        original_filename = secure_filename(file.filename)
+        file_ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else 'pdf'
+
+        # Benzersiz dosya adı oluştur
+        unique_filename = f"{case_id}_{int(time.time())}_{original_filename}"
+
+        # Upload dizinleri (öncelik sırasıyla dene)
+        upload_attempts = [
+            {'path': 'uploads/documents/', 'db_path': 'documents/{filename}'},
+            {'path': 'firstwebsite/static/uploads/documents/', 'db_path': 'static/uploads/documents/{filename}'},
+            {'path': 'firstwebsite/uploads/documents/', 'db_path': 'uploads/documents/{filename}'}
+        ]
+
+        file_saved = False
+        db_filepath = None
+
+        for attempt in upload_attempts:
+            try:
+                upload_dir = attempt['path']
+                os.makedirs(upload_dir, exist_ok=True)
+
+                file_path = os.path.join(upload_dir, unique_filename)
+                file.save(file_path)
+
+                db_filepath = attempt['db_path'].format(filename=unique_filename)
+                file_saved = True
+                print(f"Belge kaydedildi: {file_path}")
+                break
+            except Exception as e:
+                print(f"Upload deneme hatası ({upload_dir}): {str(e)}")
+                continue
+
+        if not file_saved:
+            return jsonify({
+                'success': False,
+                'message': 'Belge kaydedilemedi'
+            }), 500
+
+        # Veritabanına kaydet
+        new_document = Document(
+            case_id=case_id,
+            document_type=document_type,
+            filename=original_filename,
+            filepath=db_filepath,
+            user_id=current_user.id,
+            upload_date=datetime.now()
+        )
+
+        db.session.add(new_document)
+        db.session.commit()
+
+        # Activity log
+        log_activity(
+            activity_type='belge_yukleme',
+            description=f"UYAP'tan belge yüklendi: {case_file.client_name} - {document_type}",
+            user_id=current_user.id,
+            case_id=case_id
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Belge başarıyla yüklendi',
+            'document_id': new_document.id
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Document upload error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Belge yükleme hatası: {str(e)}'
+        }), 500
+
+# ========================================
+# END UYAP CHROME EXTENSION API
+# ========================================
+
 if __name__ == '__main__':
     with app.app_context():
         # Veritabanı tablolarının var olup olmadığını kontrol et,

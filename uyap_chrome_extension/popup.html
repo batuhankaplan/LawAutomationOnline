@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UYAP Dosya Aktarıcı</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="icon">⚖️</span>
+                <h1>UYAP Aktarıcı</h1>
+            </div>
+            <div class="status" id="statusIndicator">
+                <span class="status-dot"></span>
+                <span id="statusText">Kontrol ediliyor...</span>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="import">📥 Dosya Aktar</button>
+            <button class="tab" data-tab="settings">⚙️ Ayarlar</button>
+        </div>
+
+        <!-- Import Tab -->
+        <div class="tab-content active" id="importTab">
+            <!-- Auth Warning -->
+            <div class="alert alert-warning" id="authWarning" style="display: none;">
+                <span>⚠️</span>
+                <p>Sisteme giriş yapmanız gerekiyor!</p>
+                <button class="btn btn-small" id="openSystemBtn">Sistemi Aç</button>
+            </div>
+
+            <!-- UYAP Page Check -->
+            <div class="alert alert-info" id="uyapWarning" style="display: none;">
+                <span>ℹ️</span>
+                <p>UYAP Dosya Sorgulama sayfasında olmalısınız</p>
+            </div>
+
+            <!-- Case List -->
+            <div class="section" id="caseListSection">
+                <div class="section-header">
+                    <h3>Bulunan Dosyalar</h3>
+                    <button class="btn btn-small btn-outline" id="refreshBtn">
+                        <span class="icon">🔄</span> Yenile
+                    </button>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Dosya numarası veya müvekkil adı ile ara...">
+                </div>
+
+                <div class="case-count" id="caseCount">
+                    <span id="totalCases">0</span> dosya bulundu
+                </div>
+
+                <div class="case-list" id="caseList">
+                    <div class="empty-state">
+                        <span class="icon">📂</span>
+                        <p>Dosya bulunamadı</p>
+                        <button class="btn btn-small btn-primary" id="scanPageBtn">
+                            Sayfayı Tara
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Select All -->
+                <div class="select-all-bar" id="selectAllBar" style="display: none;">
+                    <label>
+                        <input type="checkbox" id="selectAllCheckbox">
+                        <span>Tümünü Seç</span>
+                    </label>
+                    <span id="selectedCount">0 seçili</span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons" id="actionButtons" style="display: none;">
+                    <button class="btn btn-primary btn-full" id="importSelectedBtn">
+                        <span class="icon">⬇️</span> Seçili Dosyaları Aktar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-section" id="progressSection" style="display: none;">
+                <div class="progress-header">
+                    <h3>İçe Aktarma İlerlemesi</h3>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-info">
+                    <p id="progressText">Hazırlanıyor...</p>
+                    <p id="progressDetail"></p>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h3>Sonuçlar</h3>
+                    <button class="btn btn-small btn-outline" id="closeResultsBtn">Kapat</button>
+                </div>
+                <div class="results-summary" id="resultsSummary"></div>
+                <div class="results-list" id="resultsList"></div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div class="tab-content" id="settingsTab">
+            <div class="section">
+                <h3>Backend API Ayarları</h3>
+
+                <div class="form-group">
+                    <label for="apiUrl">API URL</label>
+                    <input type="text" id="apiUrl" placeholder="http://localhost:5000">
+                    <small>Sisteminizin API URL'ini girin</small>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="autoSync">
+                        <span>Otomatik Senkronizasyon</span>
+                    </label>
+                    <small>Her gün belirli saatte UYAP'tan dosyaları otomatik çek</small>
+                </div>
+
+                <button class="btn btn-primary btn-full" id="saveSettingsBtn">
+                    💾 Ayarları Kaydet
+                </button>
+
+                <hr>
+
+                <div class="form-group">
+                    <button class="btn btn-outline btn-full" id="testConnectionBtn">
+                        🔌 Bağlantıyı Test Et
+                    </button>
+                </div>
+
+                <div class="connection-status" id="connectionStatus"></div>
+
+                <hr>
+
+                <div class="about">
+                    <h4>Hakkında</h4>
+                    <p><strong>UYAP Dosya Aktarıcı</strong></p>
+                    <p>Versiyon: 1.0.0</p>
+                    <p>UYAP Avukat Bilgi Sistemi'nden dosyalarınızı otomatik olarak sisteminize aktarır.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="mapper.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>
