@@ -1807,7 +1807,20 @@
         
         const sidebarLinks = document.querySelectorAll('.sidebar a');
         sidebarLinks.forEach(link => {
-            link.addEventListener('click', function() {
+            link.addEventListener('click', function(e) {
+                // Dropdown parent'lara tıklayınca menü kapanmasın
+                const parentLi = link.closest('li');
+                const hasSubmenu = parentLi && parentLi.querySelector('.submenu');
+                
+                if (hasSubmenu) {
+                    // Dropdown toggle yap, menü kapanmasın
+                    e.preventDefault();
+                    parentLi.classList.toggle('active');
+                    parentLi.classList.toggle('open');
+                    return;
+                }
+                
+                // Normal link'lerde menü kapansın
                 if (window.innerWidth <= 768) {
                     toggleMobileMenu();
                 }

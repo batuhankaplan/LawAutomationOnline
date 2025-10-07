@@ -2,7 +2,7 @@
 
 /* Mobil için ULTRA agresif sidebar düzeltmesi */
 @media screen and (max-width: 768px) {
-    /* Sidebar başlangıç - GİZLİ */
+    /* Sidebar başlangıç - GİZLİ, KOYU ARKA PLAN */
     nav.sidebar,
     .sidebar,
     #mobileSidebar {
@@ -13,7 +13,7 @@
         max-width: 300px !important;
         height: 100vh !important;
         z-index: 99999 !important;
-        background: white !important;
+        background: rgba(45, 49, 60, 1) !important;
         transition: left 0.3s ease !important;
         display: flex !important;
         flex-direction: column !important;
@@ -25,7 +25,7 @@
     [data-theme="dark"] nav.sidebar,
     [data-theme="dark"] .sidebar,
     [data-theme="dark"] #mobileSidebar {
-        background: #22252b !important;
+        background: rgba(45, 49, 60, 1) !important;
     }
 
     /* Sidebar AÇIK durumu */
@@ -38,7 +38,7 @@
         pointer-events: auto !important;
     }
 
-    /* Sidebar içerik - AÇIK TEMADA GÖRÜNÜR */
+    /* Sidebar içerik - KOYU ARKA PLAN İÇİN AÇIK METİN */
     .sidebar,
     .sidebar *,
     .sidebar a,
@@ -47,7 +47,7 @@
     .sidebar .submenu,
     .sidebar .submenu *,
     .sidebar .submenu a {
-        color: #000 !important;
+        color: #e8eaed !important;
     }
 
     [data-theme="dark"] .sidebar,
@@ -82,14 +82,14 @@
     /* Submenu item'ları okunabilir ve tıklanabilir */
     .sidebar .submenu li,
     .sidebar .submenu a {
-        background: rgba(0,0,0,0.05) !important;
+        background: rgba(0,0,0,0.2) !important;
         padding: 8px 20px 8px 40px !important;
-        color: #000 !important;
+        color: #e8eaed !important;
     }
 
     [data-theme="dark"] .sidebar .submenu li,
     [data-theme="dark"] .sidebar .submenu a {
-        background: rgba(255,255,255,0.05) !important;
+        background: rgba(0,0,0,0.2) !important;
         color: #e8eaed !important;
     }
 
@@ -187,18 +187,20 @@
         background: #22252b !important;
     }
 
-    /* Search box ve gereksiz elemanları TAMAMEN gizle */
+    /* Search box ve gereksiz elemanları TAMAMEN EKRANDAN KALDIR */
     .navbar .search-container,
     .navbar .search-box,
     .navbar .search-wrapper,
+    .navbar .search-form,
+    .navbar form,
+    .navbar input,
     .navbar input[type="search"],
     .navbar input[type="text"],
-    .navbar input[placeholder*="Ara"],
-    .navbar input[placeholder*="ara"],
-    .navbar input[placeholder="Ara"],
-    .navbar form,
-    .navbar .search-form,
-    .navbar .form-control {
+    .navbar .form-control,
+    .navbar button[type="submit"],
+    .navbar .search-button,
+    .search-wrapper,
+    #search-input {
         display: none !important;
         visibility: hidden !important;
         width: 0 !important;
@@ -209,6 +211,7 @@
         pointer-events: none !important;
         position: absolute !important;
         left: -9999px !important;
+        z-index: -1 !important;
     }
 
     /* Navbar brand - hamburger için yer bırak, KOMPAKT */
@@ -285,6 +288,27 @@
         font-size: 15px !important;
         min-height: 44px !important;
         pointer-events: auto !important;
+    }
+
+    /* TAKVİM için yatay kaydırma */
+    .calendar-container,
+    .calendar,
+    .calendar-wrapper,
+    table.calendar,
+    #calendar,
+    .fc,
+    .fc-view-container,
+    .main-content {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-x pan-y !important;
+    }
+
+    /* Tablolar yatay kaydırılabilir */
+    .table-responsive,
+    table {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 }
 
