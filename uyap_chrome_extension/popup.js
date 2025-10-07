@@ -407,11 +407,25 @@ async function importSelectedCases() {
 
             // Backend'e gönder
             console.log('Backend\'e mesaj gönderiliyor...');
-            const response = await chrome.runtime.sendMessage({
-                action: 'importCase',
-                data: jsonData
-            });
-            console.log('Backend yanıtı:', response);
+
+            let response;
+            try {
+                // Timeout ile mesaj gönder (10 saniye)
+                response = await Promise.race([
+                    chrome.runtime.sendMessage({
+                        action: 'importCase',
+                        data: jsonData
+                    }),
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Timeout: Background yanıt vermedi')), 10000)
+                    )
+                ]);
+                console.log('Backend yanıtı:', response);
+            } catch (msgError) {
+                console.error('❌ Mesaj gönderme hatası:', msgError);
+                failed++;
+                continue;
+            }
 
             if (response && response.success) {
                 imported++;
