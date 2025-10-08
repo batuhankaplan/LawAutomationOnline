@@ -239,11 +239,11 @@
     <!-- Ödeme Kayıtları Dışa Aktarma Modalı -->
     <div id="exportModal" class="modal">
         <div class="modal-content modern-edit-modal" style="max-width: 650px; max-height: 90vh; overflow-y: auto;">
-            <div class="modal-header modern-edit-header" style="position: sticky; top: 0; z-index: 10; background: white;">
+            <div class="modal-header modern-edit-header" style="position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px 12px 0 0; padding: 20px 24px;">
                 <div class="modal-title-container">
-                    <h2>Ödeme Kayıtları Tablosu Oluştur</h2>
+                    <h2 style="color: white; margin: 0; font-size: 20px; font-weight: 600;">Ödeme Kayıtları Tablosu Oluştur</h2>
                 </div>
-                <span class="close" id="closeExportModal">&times;</span>
+                <span class="close" id="closeExportModal" style="color: white; font-size: 28px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">&times;</span>
             </div>
             <form id="exportForm" style="padding: 20px;">
                 <div class="form-row" style="margin-bottom: 16px;">
@@ -368,6 +368,7 @@
                         </div>
                     </div>
 
+                    <!-- Ödeme Türü - Her zaman görünür -->
                     <div class="form-row">
                         <div class="form-group full-width">
                             <label for="paymentType">Ödeme Türü</label>
@@ -385,17 +386,16 @@
                         </div>
                     </div>
 
-                    <!-- Yeni Müvekkil Formu -->
-                    <div id="newClientSection">
-                        <div class="form-row">
-                            <div class="form-group full-width">
-                                <label for="addEntityType">Kişi/Kurum</label>
-                                <select id="addEntityType" name="entity_type" class="form-control" required>
-                                    <option value="person">Kişi</option>
-                                    <option value="company">Kurum</option>
-                                </select>
-                            </div>
+                    <!-- Müvekkil Bilgileri - Kayıtlı müvekkil seçildiğinde disabled, yeni müvekkilde editable -->
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="addEntityType">Kişi/Kurum</label>
+                            <select id="addEntityType" name="entity_type" class="form-control" required>
+                                <option value="person">Kişi</option>
+                                <option value="company">Kurum</option>
+                            </select>
                         </div>
+                    </div>
                     <div class="form-row" id="addNameSurnameRow">
                         <div class="form-group" id="addNameGroup">
                             <label for="addName" id="addNameLabel">Ad</label>
@@ -412,6 +412,8 @@
                             <input type="text" id="addTc" name="tc" class="form-control" maxlength="20">
                         </div>
                     </div>
+
+                    <!-- Ödeme Detayları - Her zaman görünür -->
                     <div class="form-row">
                         <div class="form-group amount-group">
                             <label for="addAmount">Tutar</label>
@@ -471,14 +473,13 @@
                         </div>
                     </div>
 
-                    <!-- Kayıtlı Müvekkile Ekle Seçeneği -->
-                    <div class="form-row" style="margin-top: 16px;">
+                    <!-- Kayıtlı Müvekkile Ekle Seçeneği - Sadece Yeni Müvekkil modunda görünür -->
+                    <div id="saveToRegisteredSection" class="form-row" style="margin-top: 16px;">
                         <div class="form-group full-width" style="display: flex; align-items: center; gap: 8px;">
                             <input type="checkbox" id="saveToRegistered" name="save_to_registered" style="width: auto; margin: 0;">
                             <label for="saveToRegistered" style="margin: 0; font-weight: 500; cursor: pointer;">Bu müvekkili kayıtlı müvekkillere ekle</label>
                         </div>
                     </div>
-                    </div> <!-- newClientSection kapatma -->
                 </div>
                 <div class="modal-footer modern-edit-footer">
                     <button type="submit" class="btn modern-save-btn" id="saveAddPaymentBtn">
@@ -2678,6 +2679,7 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.12);
         }
 
+        .payment-type-card.type-aylik-danismanlik { border-left-color: #01579b; }
         .payment-type-card.type-danisma { border-left-color: #2e7d32; }
         .payment-type-card.type-ihtarname { border-left-color: #e65100; }
         .payment-type-card.type-dilekce { border-left-color: #1565c0; }
@@ -2704,6 +2706,7 @@
             color: white;
         }
 
+        .type-aylik-danismanlik .payment-type-card-icon { background-color: #01579b; }
         .type-danisma .payment-type-card-icon { background-color: #2e7d32; }
         .type-ihtarname .payment-type-card-icon { background-color: #e65100; }
         .type-dilekce .payment-type-card-icon { background-color: #1565c0; }
@@ -3758,15 +3761,25 @@
         // Yeni Müvekkil / Kayıtlı Müvekkil Toggle
         const newClientBtn = document.getElementById('newClientBtn');
         const registeredClientBtn = document.getElementById('registeredClientBtn');
-        const newClientSection = document.getElementById('newClientSection');
         const registeredClientSection = document.getElementById('registeredClientSection');
+        const saveToRegisteredSection = document.getElementById('saveToRegisteredSection');
 
         if (newClientBtn && registeredClientBtn) {
             newClientBtn.addEventListener('click', function() {
                 newClientBtn.classList.add('active');
                 registeredClientBtn.classList.remove('active');
-                newClientSection.style.display = 'block';
+
+                // Kayıtlı müvekkil dropdown'ını gizle
                 registeredClientSection.style.display = 'none';
+
+                // "Kayıtlı müvekkile ekle" checkbox'ını göster
+                saveToRegisteredSection.style.display = 'block';
+
+                // Müvekkil bilgilerini editable yap
+                document.getElementById('addEntityType').disabled = false;
+                document.getElementById('addName').disabled = false;
+                document.getElementById('addSurname').disabled = false;
+                document.getElementById('addTc').disabled = false;
 
                 // Form alanlarını temizle
                 document.getElementById('addEntityType').value = 'person';
@@ -3782,8 +3795,18 @@
             registeredClientBtn.addEventListener('click', function() {
                 registeredClientBtn.classList.add('active');
                 newClientBtn.classList.remove('active');
-                newClientSection.style.display = 'none';
+
+                // Kayıtlı müvekkil dropdown'ını göster
                 registeredClientSection.style.display = 'block';
+
+                // "Kayıtlı müvekkile ekle" checkbox'ını gizle
+                saveToRegisteredSection.style.display = 'none';
+
+                // Müvekkil bilgilerini disabled yap (kayıtlı müvekkil seçilince otomatik dolacak)
+                document.getElementById('addEntityType').disabled = true;
+                document.getElementById('addName').disabled = true;
+                document.getElementById('addSurname').disabled = true;
+                document.getElementById('addTc').disabled = true;
 
                 // Required attribute'ları kaldır (kayıtlı müvekkil seçilecek)
                 document.getElementById('addName').required = false;
@@ -7442,7 +7465,8 @@
 
         function getPaymentTypeClass(typeName) {
             if (!typeName) return 'type-diger';
-            if (typeName.includes('Danışma')) return 'type-danisma';
+            if (typeName === 'Aylık Danışmanlık Ücreti') return 'type-aylik-danismanlik'; // Aylık Danışmanlık Ücreti
+            if (typeName.includes('Danışma')) return 'type-danisma'; // Danışma Ücreti
             if (typeName.includes('İhtarname')) return 'type-ihtarname';
             if (typeName.includes('Dilekçe')) return 'type-dilekce';
             if (typeName.includes('Dosya')) return 'type-dosya';
@@ -7464,13 +7488,14 @@
 
         function getPaymentTypeColor(typeName) {
             if (!typeName) return '#f57f17';
-            if (typeName.includes('Danışma')) return '#2e7d32';
+            if (typeName === 'Aylık Danışmanlık Ücreti') return '#01579b'; // Aylık Danışmanlık Ücreti
+            if (typeName.includes('Danışma')) return '#2e7d32'; // Danışma Ücreti
             if (typeName.includes('İhtarname')) return '#e65100';
             if (typeName.includes('Dilekçe')) return '#1565c0';
             if (typeName.includes('Dosya')) return '#6a1b9a';
             if (typeName.includes('Sözleşme')) return '#c2185b';
             if (typeName.includes('Mahkeme')) return '#00695c';
-            return '#f57f17';
+            return '#f57f17'; // Diğer
         }
 
         function populatePaymentTypeCards() {
