@@ -17,8 +17,13 @@
                 </button>
                 {% endif %}
             {% if current_user.has_permission('odeme_istatistik_goruntule') %}
-            <button id="statsButton" class="stats-btn" title="İstatistikleri Görüntüle">
+            <button id="statsButton" class="stats-btn" title="İstatistikleri Görüntüle" style="background-color: #1565C0;">
                 <i class="material-icons">insert_chart</i>
+            </button>
+            {% endif %}
+            {% if current_user.has_permission('odeme_goruntule') %}
+            <button id="exportButton" class="stats-btn" title="Ödeme Kayıtlarını Dışa Aktar" style="background-color: #4CAF50;">
+                <i class="material-icons">file_download</i>
             </button>
             {% endif %}
             </div>
@@ -82,6 +87,13 @@
                             <i class="material-icons sort-icon">unfold_more</i>
                         </div>
                     </th>
+                    <th id="sort-payment-date" class="sortable-header">
+                        <div class="header-content">
+                            <i class="material-icons text-secondary me-1">event_available</i>
+                            <span>Ödeme Tarihi</span>
+                            <i class="material-icons sort-icon">unfold_more</i>
+                        </div>
+                    </th>
                     <th id="sort-status" class="sortable-header">
                         <div class="header-content">
                             <i class="material-icons text-secondary me-1">info</i>
@@ -103,7 +115,9 @@
                     <td contenteditable="false">
                         {% if client.payment_type %}
                             {% set type_class = '' %}
-                            {% if 'Danışma' in client.payment_type %}
+                            {% if client.payment_type == 'Aylık Danışmanlık Ücreti' %}
+                                {% set type_class = 'payment-type-aylik-danismanlik' %}
+                            {% elif 'Danışma' in client.payment_type %}
                                 {% set type_class = 'payment-type-danisma' %}
                             {% elif 'İhtarname' in client.payment_type %}
                                 {% set type_class = 'payment-type-ihtarname' %}
@@ -124,12 +138,13 @@
                         {% endif %}
                     </td>
                     <td contenteditable="false">{{ client.name }}</td>
-                    <td contenteditable="false">{{ client.surname }}</td>
-                    <td contenteditable="false">{{ client.tc }}</td>
-                    <td contenteditable="false">{{ client.amount }} {{ client.currency }}</td>
-                    <td contenteditable="false">{{ client.installments }}</td>
+                    <td contenteditable="false">{{ client.surname if client.surname else '' }}</td>
+                    <td contenteditable="false">{{ client.tc if client.tc else '-' }}</td>
+                    <td contenteditable="false">{{ "{:,.2f}".format(client.amount).replace(',', 'X').replace('.', ',').replace('X', '.') }} {{ client.currency }}</td>
+                    <td contenteditable="false">{{ client.installments if client.installments and client.installments > 0 else '-' }}</td>
                     <td contenteditable="false">{{ client.registration_date.strftime('%d.%m.%Y') if client.registration_date else '-' }}</td>
                     <td contenteditable="false">{{ client.due_date.strftime('%d.%m.%Y') if client.due_date else '-' }}</td>
+                    <td contenteditable="false">{{ client.payment_date.strftime('%d.%m.%Y') if client.payment_date else '-' }}</td>
                     <td>
                         {% if client.status == 'Ödendi' %}
                             <span class="status-badge status-paid">Ödendi</span>
@@ -156,12 +171,107 @@
         </table>
     </div>
 
+    <!-- Ödeme Kayıtları Dışa Aktarma Modalı -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content modern-edit-modal" style="max-width: 600px;">
+            <div class="modal-header modern-edit-header">
+                <div class="modal-title-container">
+                    <h2>Ödeme Kayıtları Tablosu Oluştur</h2>
+                </div>
+                <span class="close" id="closeExportModal">&times;</span>
+            </div>
+            <form id="exportForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="exportFormat">Dosya Formatı</label>
+                        <select id="exportFormat" name="format" class="form-control" required>
+                            <option value="excel">Excel (.xlsx)</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="exportEntityFilter">Kişi/Kurum Filtresi</label>
+                        <select id="exportEntityFilter" name="entity_filter" class="form-control" required>
+                            <option value="all">Tümü (Kişi + Kurum)</option>
+                            <option value="person">Sadece Kişi</option>
+                            <option value="company">Sadece Kurum</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="exportFilterType">Filtreleme Tipi</label>
+                        <select id="exportFilterType" name="filter_type" class="form-control" required>
+                            <option value="date_range">Tarih Aralığı</option>
+                            <option value="specific_client">Belirli Müvekkil/Kurum</option>
+                            <option value="all_records">Tüm Kayıtlar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="exportDateRangeGroup" class="form-row">
+                    <div class="form-group half-width">
+                        <label for="exportStartDate">Başlangıç Tarihi</label>
+                        <input type="date" id="exportStartDate" name="start_date" class="form-control">
+                    </div>
+                    <div class="form-group half-width">
+                        <label for="exportEndDate">Bitiş Tarihi</label>
+                        <input type="date" id="exportEndDate" name="end_date" class="form-control">
+                    </div>
+                </div>
+
+                <div id="exportClientGroup" class="form-row" style="display: none;">
+                    <div class="form-group">
+                        <label for="exportClientSelect">Müvekkil/Kurum Seçin</label>
+                        <select id="exportClientSelect" name="client_id" class="form-control">
+                            <option value="">Seçiniz...</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">
+                                {{ client.name }} {% if client.surname and client.surname != '-' %}{{ client.surname }}{% endif %}
+                                {% if client.entity_type == 'company' %}(Kurum){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="exportIncludeInstallments" name="include_installments" checked>
+                            Taksit Detaylarını Dahil Et
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="exportIncludePaymentDates" name="include_payment_dates" checked>
+                            Ödeme Tarihlerini Dahil Et
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="material-icons">download</i> Oluştur ve İndir
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="cancelExportBtn">İptal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Yeni Ödeme Ekle Modalı -->
     <div id="addPaymentModal" class="modal">
         <div class="modal-content modern-edit-modal">
             <div class="modal-header modern-edit-header">
                 <div class="modal-title-container">
-                    <i class="material-icons modal-icon">add_circle</i>
                     <h2>Yeni Ödeme Ekle</h2>
                 </div>
                 <span class="close modern-edit-close" id="closeAddPaymentModal">&times;</span>
@@ -175,6 +285,7 @@
                             <select id="paymentType" name="payment_type" class="form-control" required>
                                 <option value="">Ödeme türü seçiniz</option>
                                 <option value="Danışma Ücreti">Danışma Ücreti</option>
+                                <option value="Aylık Danışmanlık Ücreti">Aylık Danışmanlık Ücreti</option>
                                 <option value="İhtarname Ücreti">İhtarname Ücreti</option>
                                 <option value="Dilekçe Ücreti">Dilekçe Ücreti</option>
                                 <option value="Dosya Masrafı">Dosya Masrafı</option>
@@ -185,26 +296,35 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="addName">Ad</label>
+                        <div class="form-group full-width">
+                            <label for="addEntityType">Kişi/Kurum</label>
+                            <select id="addEntityType" name="entity_type" class="form-control" required>
+                                <option value="person">Kişi</option>
+                                <option value="company">Kurum</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row" id="addNameSurnameRow">
+                        <div class="form-group" id="addNameGroup">
+                            <label for="addName" id="addNameLabel">Ad</label>
                             <input type="text" id="addName" name="name" class="form-control" required>
                         </div>
-                        <div class="form-group">
-                            <label for="addSurname">Soyad</label>
+                        <div class="form-group" id="addSurnameGroup">
+                            <label for="addSurname" id="addSurnameLabel">Soyad</label>
                             <input type="text" id="addSurname" name="surname" class="form-control" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group tc-group">
-                            <label for="addTc">TC Kimlik No (İsteğe Bağlı)</label>
-                            <input type="text" id="addTc" name="tc" class="form-control" maxlength="11">
+                            <label for="addTc" id="addTcLabel">TC Kimlik No (İsteğe Bağlı)</label>
+                            <input type="text" id="addTc" name="tc" class="form-control" maxlength="20">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group amount-group">
                             <label for="addAmount">Tutar</label>
                             <div class="amount-input">
-                                <input type="text" id="addAmount" name="amount" class="form-control" required placeholder="Örn: 1000.50">
+                                <input type="text" id="addAmount" name="amount" class="form-control amount-input-field" required placeholder="0,00">
                                 <select id="addCurrency" name="currency" class="form-control currency-select" required>
                                     <option value="TL">TL</option>
                                     <option value="USD">USD</option>
@@ -215,6 +335,7 @@
                         <div class="form-group">
                             <label for="addInstallments">Taksit Sayısı</label>
                             <select id="addInstallments" name="installments" class="form-control" required>
+                                <option value="0">Taksit Yok</option>
                                 {% for i in range(1, 13) %}
                                     <option value="{{ i }}">{{ i }}</option>
                                 {% endfor %}
@@ -227,7 +348,7 @@
                             <input type="date" id="addRegistrationDate" name="registration_date" class="form-control" value="{{ today_date if today_date else '' }}">
                         </div>
                         <div class="form-group date-group">
-                            <label for="addDueDate">Son Ödeme Tarihi</label>
+                            <label for="addDueDate">Son Ödeme Tarihi (İsteğe Bağlı)</label>
                             <input type="date" id="addDueDate" name="due_date" class="form-control">
                         </div>
                     </div>
@@ -241,6 +362,12 @@
                                 </div>
                                 <span class="status-text-add">Ödenmedi</span>
                             </div>
+                        </div>
+                    </div>
+                    <div class="form-row" id="addPaymentDateRow" style="display: none;">
+                        <div class="form-group date-group">
+                            <label for="addPaymentDate">Ödeme Tarihi</label>
+                            <input type="date" id="addPaymentDate" name="payment_date" class="form-control" value="{{ today_date if today_date else '' }}">
                         </div>
                     </div>
                     <div class="form-row">
@@ -271,7 +398,6 @@
         <div class="modal-content modern-edit-modal">
             <div class="modal-header modern-edit-header">
                 <div class="modal-title-container">
-                    <i class="material-icons modal-icon">edit</i>
                     <h2>Ödeme Düzenle</h2>
                 </div>
                 <span class="close modern-edit-close">&times;</span>
@@ -281,11 +407,12 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body modern-edit-body">
                     <div class="form-row">
-                        <div class="form-group">
+                        <div class="form-group full-width">
                             <label for="editPaymentType">Ödeme Türü</label>
                             <select id="editPaymentType" name="payment_type" class="form-control" required>
                                 <option value="">Ödeme türü seçiniz</option>
                                 <option value="Danışma Ücreti">Danışma Ücreti</option>
+                                <option value="Aylık Danışmanlık Ücreti">Aylık Danışmanlık Ücreti</option>
                                 <option value="İhtarname Ücreti">İhtarname Ücreti</option>
                                 <option value="Dilekçe Ücreti">Dilekçe Ücreti</option>
                                 <option value="Dosya Masrafı">Dosya Masrafı</option>
@@ -296,26 +423,35 @@
                         </div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="editName">Ad</label>
+                        <div class="form-group full-width">
+                            <label for="editEntityType">Kişi/Kurum</label>
+                            <select id="editEntityType" name="entity_type" class="form-control" required>
+                                <option value="person">Kişi</option>
+                                <option value="company">Kurum</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row" id="editNameSurnameRow">
+                        <div class="form-group" id="editNameGroup">
+                            <label for="editName" id="editNameLabel">Ad</label>
                             <input type="text" id="editName" name="name" class="form-control" required>
                         </div>
-                        <div class="form-group">
-                            <label for="editSurname">Soyad</label>
+                        <div class="form-group" id="editSurnameGroup">
+                            <label for="editSurname" id="editSurnameLabel">Soyad</label>
                             <input type="text" id="editSurname" name="surname" class="form-control" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group tc-group">
-                            <label for="editTc">TC Kimlik No</label>
-                            <input type="text" id="editTc" name="tc" class="form-control" maxlength="11">
+                            <label for="editTc" id="editTcLabel">TC Kimlik No (İsteğe Bağlı)</label>
+                            <input type="text" id="editTc" name="tc" class="form-control" maxlength="20">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group amount-group">
                             <label for="editAmount">Tutar</label>
                             <div class="amount-input">
-                                <input type="text" id="editAmount" name="amount" class="form-control" required placeholder="Örn: 1000.50">
+                                <input type="text" id="editAmount" name="amount" class="form-control amount-input-field" required placeholder="0,00">
                                 <select id="editCurrency" name="currency" class="form-control currency-select" required>
                                     <option value="TL">TL</option>
                                     <option value="USD">USD</option>
@@ -326,6 +462,7 @@
                         <div class="form-group">
                             <label for="editInstallments">Taksit Sayısı</label>
                             <select id="editInstallments" name="installments" class="form-control" required>
+                                <option value="0">Taksit Yok</option>
                                 {% for i in range(1, 13) %}
                                     <option value="{{ i }}">{{ i }}</option>
                                 {% endfor %}
@@ -338,7 +475,7 @@
                             <input type="date" id="editRegistrationDate" name="registration_date" class="form-control">
                         </div>
                         <div class="form-group date-group">
-                            <label for="editDueDate">Son Ödeme Tarihi</label>
+                            <label for="editDueDate">Son Ödeme Tarihi (İsteğe Bağlı)</label>
                             <input type="date" id="editDueDate" name="due_date" class="form-control">
                         </div>
                     </div>
@@ -352,6 +489,12 @@
                                 </div>
                                 <span class="status-text">Ödenmedi</span>
                             </div>
+                        </div>
+                    </div>
+                    <div class="form-row" id="editPaymentDateRow" style="display: none;">
+                        <div class="form-group date-group">
+                            <label for="editPaymentDate">Ödeme Tarihi</label>
+                            <input type="date" id="editPaymentDate" name="payment_date" class="form-control">
                         </div>
                     </div>
                     <div class="form-row">
@@ -387,6 +530,8 @@
             <div class="modal-body">
                 <div class="stats-tabs">
                     <button class="stats-tab-btn active" data-tab="summary"><i class="material-icons">dashboard</i> Özet</button>
+                    <button class="stats-tab-btn" data-tab="entity-type"><i class="material-icons">business</i> Kişi/Kurum Analizi</button>
+                    <button class="stats-tab-btn" data-tab="payment-dates"><i class="material-icons">event_available</i> Ödeme Tarih Analizi</button>
                     <button class="stats-tab-btn" data-tab="payment-type"><i class="material-icons">category</i> Ödeme Türü Analizi</button>
                     <button class="stats-tab-btn" data-tab="monthly"><i class="material-icons">date_range</i> Aylık Analiz</button>
                     <button class="stats-tab-btn" data-tab="yearly"><i class="material-icons">calendar_today</i> Yıllık Analiz</button>
@@ -584,6 +729,168 @@
                         </div>
                     </div>
 
+                    <!-- KİŞİ/KURUM ANALİZİ SEKMESİ -->
+                    <div class="stats-tab-content" id="entity-type-tab">
+                        <div class="analysis-header">
+                            <h3 class="analysis-title"><i class="material-icons">business</i> Kişi/Kurum Analizi</h3>
+                        </div>
+                        
+                        <div class="modern-stats-grid">
+                            <div class="modern-stat-card primary">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-wrapper primary-bg">
+                                        <i class="material-icons">person</i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Kişi Ödemeleri</span>
+                                        <span class="stat-badge">Toplam</span>
+                                    </div>
+                                </div>
+                                <div class="stat-value primary-text" id="personTotalAmount">0 TL</div>
+                                <div class="stat-footer">
+                                    <i class="material-icons tiny">people</i>
+                                    <span id="personCountText">0 kişi</span>
+                                </div>
+                            </div>
+
+                            <div class="modern-stat-card success">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-wrapper success-bg">
+                                        <i class="material-icons">business</i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Kurum Ödemeleri</span>
+                                        <span class="stat-badge">Toplam</span>
+                                    </div>
+                                </div>
+                                <div class="stat-value success-text" id="companyTotalAmount">0 TL</div>
+                                <div class="stat-footer">
+                                    <i class="material-icons tiny">domain</i>
+                                    <span id="companyCountText">0 kurum</span>
+                                </div>
+                            </div>
+
+                            <div class="modern-stat-card warning">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-wrapper warning-bg">
+                                        <i class="material-icons">check_circle</i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Kişi - Ödendi</span>
+                                        <span class="stat-badge">Tahsil</span>
+                                    </div>
+                                </div>
+                                <div class="stat-value warning-text" id="personPaidAmount">0 TL</div>
+                                <div class="stat-footer">
+                                    <i class="material-icons tiny">trending_up</i>
+                                    <span id="personPaidPercentageText">%0</span>
+                                </div>
+                            </div>
+
+                            <div class="modern-stat-card info">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-wrapper info-bg">
+                                        <i class="material-icons">verified</i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Kurum - Ödendi</span>
+                                        <span class="stat-badge">Tahsil</span>
+                                    </div>
+                                </div>
+                                <div class="stat-value info-text" id="companyPaidAmount">0 TL</div>
+                                <div class="stat-footer">
+                                    <i class="material-icons tiny">trending_up</i>
+                                    <span id="companyPaidPercentageText">%0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container" style="margin-top: 20px;">
+                            <canvas id="entityTypeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- ÖDEME TARİH ANALİZİ SEKMESİ -->
+                    <div class="stats-tab-content" id="payment-dates-tab">
+                        <div class="analysis-header">
+                            <h3 class="analysis-title"><i class="material-icons">event_available</i> Ödeme Tarihleri Analizi</h3>
+                        </div>
+                        
+                        <div class="modern-stats-grid">
+                            <div class="modern-stat-card primary">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-wrapper primary-bg">
+                                        <i class="material-icons">event_available</i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Bu Ay Yapılan Ödemeler</span>
+                                        <span class="stat-badge">Güncel</span>
+                                    </div>
+                                </div>
+                                <div class="stat-value primary-text" id="thisMonthPayments">0 TL</div>
+                                <div class="stat-footer">
+                                    <i class="material-icons tiny">calendar_today</i>
+                                    <span id="thisMonthCountText">0 ödeme</span>
+                                </div>
+                            </div>
+
+                            <div class="modern-stat-card success">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-wrapper success-bg">
+                                        <i class="material-icons">date_range</i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Bu Yıl Yapılan Ödemeler</span>
+                                        <span class="stat-badge">Yıllık</span>
+                                    </div>
+                                </div>
+                                <div class="stat-value success-text" id="thisYearPayments">0 TL</div>
+                                <div class="stat-footer">
+                                    <i class="material-icons tiny">event</i>
+                                    <span id="thisYearCountText">0 ödeme</span>
+                                </div>
+                            </div>
+
+                            <div class="modern-stat-card warning">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-wrapper warning-bg">
+                                        <i class="material-icons">history</i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Ortalama Ödeme Süresi</span>
+                                        <span class="stat-badge">Analiz</span>
+                                    </div>
+                                </div>
+                                <div class="stat-value warning-text" id="avgPaymentDuration">0 gün</div>
+                                <div class="stat-footer">
+                                    <i class="material-icons tiny">schedule</i>
+                                    <span>Kayıt - Ödeme arası</span>
+                                </div>
+                            </div>
+
+                            <div class="modern-stat-card info">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-wrapper info-bg">
+                                        <i class="material-icons">speed</i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">En Hızlı Ödeme</span>
+                                        <span class="stat-badge">Rekor</span>
+                                    </div>
+                                </div>
+                                <div class="stat-value info-text" id="fastestPayment">0 gün</div>
+                                <div class="stat-footer">
+                                    <i class="material-icons tiny">flash_on</i>
+                                    <span id="fastestPaymentClient">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container" style="margin-top: 20px;">
+                            <canvas id="paymentDatesChart"></canvas>
+                        </div>
+                    </div>
+
                     <!-- ÖDEME TÜRÜ ANALİZİ SEKMESİ -->
                     <div class="stats-tab-content" id="payment-type-tab">
                         <div class="analysis-header">
@@ -623,6 +930,16 @@
                         <div class="analysis-header">
                             <h3 class="analysis-title"><i class="material-icons">date_range</i> Aylık Ödeme Analizi</h3>
                             <div class="chart-filters">
+                                <div class="entity-filter-checkboxes">
+                                    <label class="filter-checkbox">
+                                        <input type="checkbox" id="monthlyPersonFilter" checked>
+                                        <span>Kişi</span>
+                                    </label>
+                                    <label class="filter-checkbox">
+                                        <input type="checkbox" id="monthlyCompanyFilter" checked>
+                                        <span>Kurum</span>
+                                    </label>
+                                </div>
                                 <select id="monthlyYearFilter" class="chart-filter">
                                     <!-- Yıllar JavaScript ile eklenecek -->
                                 </select>
@@ -670,6 +987,16 @@
                         <div class="analysis-header">
                             <h3 class="analysis-title"><i class="material-icons">calendar_today</i> Yıllık Ödeme Analizi</h3>
                             <div class="chart-filters">
+                                <div class="entity-filter-checkboxes">
+                                    <label class="filter-checkbox">
+                                        <input type="checkbox" id="yearlyPersonFilter" checked>
+                                        <span>Kişi</span>
+                                    </label>
+                                    <label class="filter-checkbox">
+                                        <input type="checkbox" id="yearlyCompanyFilter" checked>
+                                        <span>Kurum</span>
+                                    </label>
+                                </div>
                                 <select id="yearlyCurrencyFilter" class="chart-filter">
                                     <option value="TL">TL</option>
                                     <option value="USD">USD</option>
@@ -722,6 +1049,18 @@
                     <div class="stats-tab-content" id="status-tab">
                         <div class="analysis-header">
                             <h3 class="analysis-title"><i class="material-icons">assignment</i> Ödeme Durumu Analizi</h3>
+                            <div class="chart-filters">
+                                <div class="entity-filter-checkboxes">
+                                    <label class="filter-checkbox">
+                                        <input type="checkbox" id="statusPersonFilter" checked>
+                                        <span>Kişi</span>
+                                    </label>
+                                    <label class="filter-checkbox">
+                                        <input type="checkbox" id="statusCompanyFilter" checked>
+                                        <span>Kurum</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="analysis-section">
@@ -784,6 +1123,18 @@
                     <div class="stats-tab-content" id="currency-tab">
                         <div class="analysis-header">
                             <h3 class="analysis-title"><i class="material-icons">currency_exchange</i> Para Birimi Analizi</h3>
+                            <div class="chart-filters">
+                                <div class="entity-filter-checkboxes">
+                                    <label class="filter-checkbox">
+                                        <input type="checkbox" id="currencyPersonFilter" checked>
+                                        <span>Kişi</span>
+                                    </label>
+                                    <label class="filter-checkbox">
+                                        <input type="checkbox" id="currencyCompanyFilter" checked>
+                                        <span>Kurum</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="currency-distribution">
@@ -833,6 +1184,18 @@
                     <div class="stats-tab-content" id="predictions-tab">
                         <div class="analysis-header">
                             <h3 class="analysis-title"><i class="material-icons">analytics</i> Gelecek Tahminleri ve Analizler</h3>
+                            <div class="chart-filters">
+                                <div class="entity-filter-checkboxes">
+                                    <label class="filter-checkbox">
+                                        <input type="checkbox" id="predictionsPersonFilter" checked>
+                                        <span>Kişi</span>
+                                    </label>
+                                    <label class="filter-checkbox">
+                                        <input type="checkbox" id="predictionsCompanyFilter" checked>
+                                        <span>Kurum</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="payment-predictions">
@@ -975,12 +1338,16 @@
         .action-buttons {
             display: flex;
             gap: 5px;
+            position: relative;
+            z-index: 10;
         }
         .action-buttons button {
             background: none;
             border: none;
             cursor: pointer;
             padding: 5px;
+            position: relative;
+            z-index: 10;
         }
         .edit-btn i {
             color: #2196F3;
@@ -993,13 +1360,21 @@
         .modal {
             display: none;
             position: fixed;
-            /* z-index: 1000; */ /* Bootstrap'in kendi z-index'ini kullanmasına izin ver */
+            z-index: 1000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
             animation: fadeIn 0.3s ease;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        
+        .modal[style*="display: flex"],
+        .modal[style*="display: block"] {
+            pointer-events: auto;
         }
         
         @keyframes fadeIn {
@@ -1229,6 +1604,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
+            position: relative;
+            z-index: 10;
         }
 
         .table-header h2 {
@@ -1249,6 +1626,8 @@
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             transition: background-color 0.3s, box-shadow 0.3s;
+            position: relative;
+            z-index: 10;
         }
         .stats-btn:hover {
             background-color: #367c39; /* Hoverda koyu yeşil */
@@ -1266,6 +1645,8 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            position: relative;
+            z-index: 10;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 2px 5px rgba(44, 48, 60, 0.2);
@@ -1291,6 +1672,12 @@
         }
 
         /* Ödeme türlerine özel renkler */
+        .payment-type-aylik-danismanlik {
+            background-color: #e1f5fe;
+            color: #01579b;
+            border: 1px solid #0277bd;
+        }
+
         .payment-type-danisma {
             background-color: #e8f5e9;
             color: #2e7d32;
@@ -2000,6 +2387,42 @@
             color: #495057;
         }
 
+        .entity-filter-checkboxes {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            padding: 8px 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+            font-size: 0.9rem;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .filter-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #4472C4;
+        }
+
+        .filter-checkbox span {
+            line-height: 1;
+        }
+
+        .filter-checkbox:hover span {
+            color: #2196F3;
+        }
+
         /* Tab içerik stilleri */
         .stats-tab-content {
             display: none;
@@ -2617,12 +3040,127 @@
         const hasEditPermission = {{ 'true' if current_user.has_permission('odeme_duzenle') else 'false' }};
         const hasDeletePermission = {{ 'true' if current_user.has_permission('odeme_sil') else 'false' }};
         
+        // Global fonksiyonlar
+        window.deletePayment = function(button) {
+            if (!hasDeletePermission) {
+                alert('Ödeme silme yetkiniz bulunmamaktadır.');
+                return;
+            }
+            
+            if (confirm('Bu ödemeyi silmek istediğinizden emin misiniz?')) {
+                const row = button.closest('tr');
+                const clientId = row.getAttribute('data-client-id');
+                
+                const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || 
+                                document.querySelector('meta[name="csrf-token"]')?.content;
+                
+                if (!csrfToken) {
+                    alert('Güvenlik token\'ı bulunamadı. Sayfayı yenileyin.');
+                    return;
+                }
+                
+                fetch(`/delete_client/${clientId}`, {
+                    method: 'DELETE',  
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    }
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          alert('Ödeme başarıyla silindi!');
+                          row.remove();
+                      } else {
+                          alert('Silme işlemi başarısız: ' + (data.error || 'Bilinmeyen bir hata oluştu'));
+                      }
+                  })
+                  .catch(error => {
+                      alert('Silme işlemi sırasında bir hata oluştu: ' + error.message);
+                  });
+            }
+        };
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // Diğer özel modalları başlangıçta gizle (önlem olarak)
-            const editModalElement = document.getElementById('editModal');
-            if (editModalElement) editModalElement.style.display = 'none';
-            const statsModalElement = document.getElementById('statsModal');
-            if (statsModalElement) statsModalElement.style.display = 'none';
+            // Tablo sıralaması
+            // Tablo sıralaması için header'lara event listener ekle
+            const sortableHeaders = document.querySelectorAll('.sortable-header');
+            sortableHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const table = this.closest('table');
+                    const tbody = table.querySelector('tbody');
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+                    const columnIndex = Array.from(this.parentElement.children).indexOf(this);
+                    const sortIcon = this.querySelector('.sort-icon');
+                    
+                    // Mevcut sıralama durumunu kontrol et
+                    const currentSort = this.dataset.sort || 'none';
+                    let newSort = 'asc';
+                    
+                    if (currentSort === 'asc') {
+                        newSort = 'desc';
+                    } else if (currentSort === 'desc') {
+                        newSort = 'asc';
+                    }
+                    
+                    // Tüm header'ların sort durumunu sıfırla
+                    sortableHeaders.forEach(h => {
+                        h.dataset.sort = 'none';
+                        const icon = h.querySelector('.sort-icon');
+                        if (icon) icon.textContent = 'unfold_more';
+                    });
+                    
+                    // Şu anki header'ın sort durumunu güncelle
+                    this.dataset.sort = newSort;
+                    if (sortIcon) {
+                        sortIcon.textContent = newSort === 'asc' ? 'arrow_upward' : 'arrow_downward';
+                    }
+                    
+                    // Satırları sırala
+                    rows.sort((rowA, rowB) => {
+                        const cellA = rowA.children[columnIndex];
+                        const cellB = rowB.children[columnIndex];
+                        
+                        if (!cellA || !cellB) return 0;
+                        
+                        let valueA = cellA.textContent.trim();
+                        let valueB = cellB.textContent.trim();
+                        
+                        // Tarih kontrolü (DD.MM.YYYY formatı)
+                        const dateRegex = /^\d{2}\.\d{2}\.\d{4}$/;
+                        if (dateRegex.test(valueA) && dateRegex.test(valueB)) {
+                            const [dayA, monthA, yearA] = valueA.split('.');
+                            const [dayB, monthB, yearB] = valueB.split('.');
+                            const dateObjA = new Date(yearA, monthA - 1, dayA);
+                            const dateObjB = new Date(yearB, monthB - 1, dayB);
+                            return newSort === 'asc' ? dateObjA - dateObjB : dateObjB - dateObjA;
+                        }
+                        
+                        // Tutar kontrolü (1.234,56 TL formatı)
+                        const amountRegex = /^[\d.,]+\s*(TL|USD|EUR)$/;
+                        if (amountRegex.test(valueA) && amountRegex.test(valueB)) {
+                            const numA = parseFloat(valueA.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                            const numB = parseFloat(valueB.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+                            return newSort === 'asc' ? numA - numB : numB - numA;
+                        }
+                        
+                        // Sayı kontrolü
+                        const numA = parseFloat(valueA);
+                        const numB = parseFloat(valueB);
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return newSort === 'asc' ? numA - numB : numB - numA;
+                        }
+                        
+                        // Metin karşılaştırması
+                        return newSort === 'asc' 
+                            ? valueA.localeCompare(valueB, 'tr') 
+                            : valueB.localeCompare(valueA, 'tr');
+                    });
+                    
+                    // Sıralanmış satırları tabloya tekrar ekle
+                    rows.forEach(row => tbody.appendChild(row));
+                });
+            });
+            // ========== TABLO SIRALAMA FONKSİYONLARI SONU ==========
 
             // LocalStorage'dan açılması gereken bir müvekkil ID'si var mı kontrol et
             const clientIdToOpen = localStorage.getItem('openClientDetailId');
@@ -2659,6 +3197,7 @@
             }
             
             // Modal kapatma butonları için event listener'lar ekle
+            const editModalElement = document.getElementById('editModal');
             if (editModalElement) { 
                 const closeBtn = editModalElement.querySelector('.close');
                 const closeModalBtn = editModalElement.querySelector('.modern-cancel-btn');
@@ -2682,24 +3221,78 @@
                     }
                 });
 
+                // Düzenleme Modalı - Tutar formatlama
+                const editAmountInput = document.getElementById('editAmount');
+                if (editAmountInput) {
+                    // Sadece blur'da formatla - yazarken formatlamayın!
+                    editAmountInput.addEventListener('blur', function(e) {
+                        formatAmountInput(this);
+                    });
+                    
+                    editAmountInput.addEventListener('focus', function() {
+                        if (this.value === '' || this.value === '0,00') {
+                            this.value = '';
+                        }
+                    });
+                    
+                    editAmountInput.addEventListener('blur', function() {
+                        if (this.value === '') {
+                            this.value = '0,00';
+                        }
+                    });
+                }
+
+                // Düzenleme Modalı - Entity type değişikliği
+                const editEntityType = document.getElementById('editEntityType');
+                const editNameLabel = document.getElementById('editNameLabel');
+                const editSurnameLabel = document.getElementById('editSurnameLabel');
+                const editTcLabel = document.getElementById('editTcLabel');
+                const editName = document.getElementById('editName');
+                const editSurname = document.getElementById('editSurname');
+                const editNameGroup = document.getElementById('editNameGroup');
+                const editSurnameGroup = document.getElementById('editSurnameGroup');
+
+                if (editEntityType) {
+                    editEntityType.addEventListener('change', function() {
+                        if (this.value === 'company') {
+                            editNameLabel.textContent = 'Kurum Adı';
+                            editSurnameLabel.textContent = '';
+                            editSurnameGroup.style.display = 'none';
+                            editSurname.required = false;
+                            editNameGroup.classList.add('full-width');
+                            editTcLabel.textContent = 'Vergi/Mersis/Ticaret Sicil No (İsteğe Bağlı)';
+                        } else {
+                            editNameLabel.textContent = 'Ad';
+                            editSurnameLabel.textContent = 'Soyad';
+                            editSurnameGroup.style.display = 'block';
+                            editSurname.required = true;
+                            editNameGroup.classList.remove('full-width');
+                            editTcLabel.textContent = 'TC Kimlik No (İsteğe Bağlı)';
+                        }
+                    });
+                }
+
                 // Düzenleme Modalı içindeki Ödeme Durumu geçiş anahtarını dinle
                 const editStatusCheckbox = editModalElement.querySelector('#editStatus');
                 const statusTextSpan = editModalElement.querySelector('.status-text'); // Daha spesifik seçici
+                const editPaymentDateRow = document.getElementById('editPaymentDateRow');
                 
                 if (editStatusCheckbox && statusTextSpan) {
                     editStatusCheckbox.addEventListener('change', function() {
                         statusTextSpan.textContent = this.checked ? 'Ödendi' : 'Ödenmedi';
+                        if (editPaymentDateRow) {
+                            editPaymentDateRow.style.display = this.checked ? 'flex' : 'none';
+                        }
                     });
                 }
             }
             
-            // İstatistik butonuna tıklandığında modalı aç
-            const statsBtn = document.getElementById('statsButton');
+            // İstatistik butonuna tıklandığında modalı aç (statsBtn yukarıda zaten tanımlı)
             if (statsBtn) {
                 statsBtn.addEventListener('click', function() {
                     const statsModal = document.getElementById('statsModal');
                     if (statsModal) {
-                        statsModal.style.display = 'block';
+                        statsModal.style.display = 'flex';
                         generateStats();
                     }
                 });
@@ -2756,7 +3349,8 @@
                     case 'sort-installments': cellIndex = 5; break;
                     case 'sort-registration-date': cellIndex = 6; break;
                     case 'sort-due-date': cellIndex = 7; break;
-                    case 'sort-status': cellIndex = 8; break;
+                    case 'sort-payment-date': cellIndex = 8; break;
+                    case 'sort-status': cellIndex = 9; break;
                     default: return '';
                 }
                 const cell = row.cells[cellIndex];
@@ -2773,7 +3367,7 @@
                 if (headerId === 'sort-installments' || headerId === 'sort-tc') {
                     return parseInt(value, 10) || 0;
                 }
-                if (headerId === 'sort-registration-date' || headerId === 'sort-due-date') {
+                if (headerId === 'sort-registration-date' || headerId === 'sort-due-date' || headerId === 'sort-payment-date') {
                     if (value === '-' || !value) return null; // veya çok eski bir tarih
                     const parts = value.split('.'); // GG.AA.YYYY
                     return new Date(parts[2], parts[1] - 1, parts[0]);
@@ -2846,46 +3440,9 @@
             // }
         });
 
-        function deletePayment(button) {
-            // Yetki kontrolü
-            if (!hasDeletePermission) {
-                showGlobalNotification('Ödeme silme yetkiniz bulunmamaktadır.', 'error');
-                return;
-            }
-            
-            if (confirm('Bu ödemeyi silmek istediğinizden emin misiniz?')) {
-                const row = button.closest('tr');
-                const clientId = row.getAttribute('data-client-id');
-                
-                // CSRF token'ı al
-                const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || 
-                                document.querySelector('meta[name="csrf-token"]')?.content;
-                
-                if (!csrfToken) {
-                    showGlobalNotification('Güvenlik token\'ı bulunamadı. Sayfayı yenileyin.', 'error');
-                    return;
-                }
-                
-                fetch(`/delete_client/${clientId}`, {
-                    method: 'DELETE',  
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    }
-                }).then(response => response.json())
-                  .then(data => {
-                      if (data.success) {
-                          showGlobalNotification('Ödeme başarıyla silindi!', 'success');
-                          row.remove();
-                      } else {
-                          showGlobalNotification('Silme işlemi başarısız: ' + (data.error || 'Bilinmeyen bir hata oluştu'), 'error');
-                      }
-                  })
-                  .catch(error => {
-                      showGlobalNotification('Silme işlemi sırasında bir hata oluştu: ' + error.message, 'error');
-                  });
-            }
-        }
+        // deletePayment fonksiyonu ZATEN EN BAŞTA TANIMLANDI
+        // Bu kısım gereksiz olduğu için yorum satırına alındı
+        console.log('deletePayment zaten tanımlı:', typeof window.deletePayment);
 
         // Yeni Ödeme Ekle Modal İşlemleri
         const addPaymentBtn = document.getElementById('addPaymentBtn');
@@ -2894,20 +3451,132 @@
         const cancelAddPaymentBtn = document.getElementById('cancelAddPaymentBtn');
         const addPaymentForm = document.getElementById('addPaymentForm');
 
+        // Tutar formatlama fonksiyonu
+        function formatAmountInput(input) {
+            let value = input.value;
+            
+            // Boş ise çık
+            if (value === '') {
+                return;
+            }
+            
+            // Sadece rakam, nokta ve virgül bırak, diğer karakterleri temizle
+            value = value.replace(/[^\d.,]/g, '');
+            
+            // Eğer değer boş kaldıysa çık
+            if (value === '') {
+                input.value = '';
+                return;
+            }
+            
+            // Nokta ve virgülü standartlaştır (. ve , ikisi de ondalık ayraç olabilir)
+            // Önce tüm noktaları geçici olarak kaldır (binlik ayraç olabilir)
+            // Son nokta veya virgülü ondalık ayraç olarak kabul et
+            let lastDotIndex = value.lastIndexOf('.');
+            let lastCommaIndex = value.lastIndexOf(',');
+            
+            let decimalSeparatorIndex = Math.max(lastDotIndex, lastCommaIndex);
+            let integerPart = '';
+            let decimalPart = '';
+            
+            if (decimalSeparatorIndex > -1) {
+                integerPart = value.substring(0, decimalSeparatorIndex).replace(/[.,]/g, '');
+                decimalPart = value.substring(decimalSeparatorIndex + 1).replace(/[.,]/g, '');
+            } else {
+                integerPart = value.replace(/[.,]/g, '');
+            }
+            
+            // Decimal part'ı 2 karakterle sınırla
+            if (decimalPart.length > 2) {
+                decimalPart = decimalPart.substring(0, 2);
+            } else if (decimalPart.length === 0 && decimalSeparatorIndex === -1) {
+                decimalPart = '00';
+            } else {
+                decimalPart = decimalPart.padEnd(2, '0');
+            }
+            
+            // Integer part boşsa 0 yap
+            if (integerPart === '') {
+                integerPart = '0';
+            }
+            
+            // Binlik ayraç ekle
+            integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            
+            // Formatlanmış değeri input'a yaz
+            input.value = integerPart + ',' + decimalPart;
+        }
+
+        // Tutar input alanına event listener ekle
+        const addAmountInput = document.getElementById('addAmount');
+        if (addAmountInput) {
+            // Sadece blur'da (odak kaybolunca) formatla - yazarken formatlamayın!
+            addAmountInput.addEventListener('blur', function(e) {
+                formatAmountInput(this);
+            });
+            
+            addAmountInput.addEventListener('focus', function() {
+                if (this.value === '' || this.value === '0,00') {
+                    this.value = '';
+                }
+            });
+            
+            addAmountInput.addEventListener('blur', function() {
+                if (this.value === '') {
+                    this.value = '0,00';
+                }
+            });
+        }
+
+        // Entity type değişikliği için event listener
+        const addEntityType = document.getElementById('addEntityType');
+        const addNameLabel = document.getElementById('addNameLabel');
+        const addSurnameLabel = document.getElementById('addSurnameLabel');
+        const addTcLabel = document.getElementById('addTcLabel');
+        const addName = document.getElementById('addName');
+        const addSurname = document.getElementById('addSurname');
+        const addNameGroup = document.getElementById('addNameGroup');
+        const addSurnameGroup = document.getElementById('addSurnameGroup');
+
+        if (addEntityType) {
+            addEntityType.addEventListener('change', function() {
+                if (this.value === 'company') {
+                    addNameLabel.textContent = 'Kurum Adı';
+                    addSurnameLabel.textContent = '';
+                    addSurnameGroup.style.display = 'none';
+                    addSurname.required = false;
+                    addNameGroup.classList.add('full-width');
+                    addTcLabel.textContent = 'Vergi/Mersis/Ticaret Sicil No (İsteğe Bağlı)';
+                } else {
+                    addNameLabel.textContent = 'Ad';
+                    addSurnameLabel.textContent = 'Soyad';
+                    addSurnameGroup.style.display = 'block';
+                    addSurname.required = true;
+                    addNameGroup.classList.remove('full-width');
+                    addTcLabel.textContent = 'TC Kimlik No (İsteğe Bağlı)';
+                }
+            });
+        }
+
         // Status toggle için event listener
         const addStatusCheckbox = document.getElementById('addStatus');
         const statusTextAdd = document.querySelector('.status-text-add');
+        const addPaymentDateRow = document.getElementById('addPaymentDateRow');
 
         if (addStatusCheckbox && statusTextAdd) {
             addStatusCheckbox.addEventListener('change', function() {
                 statusTextAdd.textContent = this.checked ? 'Ödendi' : 'Ödenmedi';
+                // Ödeme tarihi satırını göster/gizle
+                if (addPaymentDateRow) {
+                    addPaymentDateRow.style.display = this.checked ? 'flex' : 'none';
+                }
             });
         }
 
         // Modal açma
         if (addPaymentBtn) {
             addPaymentBtn.addEventListener('click', function() {
-                addPaymentModal.style.display = 'block';
+                addPaymentModal.style.display = 'flex';
             });
         }
 
@@ -2926,13 +3595,13 @@
             });
         }
 
-        // Modal dışına tıklama
-        window.addEventListener('click', function(event) {
-            if (event.target == addPaymentModal) {
-                addPaymentModal.style.display = 'none';
-                addPaymentForm.reset();
-            }
-        });
+        // Modal dışına tıklama - devre dışı bırakıldı (kullanıcı isteği üzerine)
+        // window.addEventListener('click', function(event) {
+        //     if (event.target == addPaymentModal) {
+        //         addPaymentModal.style.display = 'none';
+        //         addPaymentForm.reset();
+        //     }
+        // });
 
         // Form submit
         if (addPaymentForm) {
@@ -2941,15 +3610,16 @@
 
                 // Tarih alanlarının dolu olup olmadığını kontrol et
                 const registrationDate = document.getElementById('addRegistrationDate').value;
-                const dueDate = document.getElementById('addDueDate').value;
 
-                if (!registrationDate || !dueDate) {
-                    alert('Lütfen tarih alanlarını doldurun.');
+                if (!registrationDate) {
+                    alert('Lütfen borç kayıt tarihini doldurun.');
                     return;
                 }
 
-                // Tutar kontrolü
-                const amountValue = document.getElementById('addAmount').value.trim();
+                // Tutar kontrolü ve formatlanmış değeri parse et
+                const amountFormatted = document.getElementById('addAmount').value.trim();
+                // Formatlanmış değeri sayıya çevir: 1.234,56 -> 1234.56
+                const amountValue = amountFormatted.replace(/\./g, '').replace(',', '.');
                 if (amountValue === '' || isNaN(parseFloat(amountValue))) {
                     alert('Lütfen geçerli bir sayı girin.');
                     return;
@@ -2967,18 +3637,34 @@
                 // Form verisini oluştur
                 const formData = new FormData();
                 formData.append('payment_type', document.getElementById('paymentType').value);
+                formData.append('entity_type', document.getElementById('addEntityType').value);
                 formData.append('name', document.getElementById('addName').value);
-                formData.append('surname', document.getElementById('addSurname').value);
+                // Kurum seçiliyse surname boş gönderilebilir
+                const surnameValue = document.getElementById('addSurname').value;
+                formData.append('surname', surnameValue || '');
                 formData.append('tc', document.getElementById('addTc').value);
-                formData.append('amount', document.getElementById('addAmount').value);
+                formData.append('amount', amountValue); // Parse edilmiş değeri gönder
                 formData.append('currency', document.getElementById('addCurrency').value);
                 formData.append('installments', document.getElementById('addInstallments').value);
                 formData.append('registration_date', document.getElementById('addRegistrationDate').value);
-                formData.append('due_date', document.getElementById('addDueDate').value);
+                
+                // Son ödeme tarihi isteğe bağlı
+                const dueDate = document.getElementById('addDueDate').value;
+                if (dueDate) {
+                    formData.append('due_date', dueDate);
+                }
 
                 // Ödeme durumunu ekle (checkbox işaretliyse 'paid', değilse 'unpaid')
                 const statusCheckbox = document.getElementById('addStatus');
                 formData.append('status', statusCheckbox.checked ? 'paid' : 'unpaid');
+
+                // Ödeme tarihi (ödeme durumu ödendi ise)
+                if (statusCheckbox.checked) {
+                    const paymentDate = document.getElementById('addPaymentDate').value;
+                    if (paymentDate) {
+                        formData.append('payment_date', paymentDate);
+                    }
+                }
 
                 const description = document.getElementById('addDescription').value;
                 if (description) {
@@ -3013,7 +3699,7 @@
         }
 
         // Yeni basitleştirilmiş ödeme kaydetme fonksiyonu (eski form için - artık kullanılmıyor ama uyumluluk için kalıyor)
-        function savePayment(event) {
+        window.savePayment = function(event) {
             event.preventDefault();
             
             // Tarih alanlarının dolu olup olmadığını kontrol et
@@ -3095,10 +3781,10 @@
                 console.error('Error:', error);
                 alert('Ödeme kaydedilemedi: ' + error.message);
             });
-        }
+        };
 
         // Önemli: Düzenleme modalını açma fonksiyonu - formatlamayı yeniden düzenleme
-        function openEditModal(button) {
+        window.openEditModal = function(button) {
             const modal = document.getElementById('editModal');
             if (!modal) {
                 console.error("Düzenleme modalı bulunamadı!");
@@ -3153,14 +3839,12 @@
             const descriptionArea = document.getElementById('editDescription');
             descriptionArea.value = description === 'None' ? '' : (description || '');
             
-            modal.style.display = 'block';
-        }
+            modal.style.display = 'flex';
+        };
         
-        // Global fonksiyonları tanımla
-        window.savePayment = savePayment;
-        window.updateClient = updateClient;
-        window.openEditModal = openEditModal;
-        window.deletePayment = deletePayment;
+        // Global fonksiyonlar zaten yukarıda window'a atandı
+        // savePayment, openEditModal ve deletePayment global olarak tanımlandı
+        // updateClient aşağıda tanımlanacak
 
         // Döviz kurları için global değişken
         let exchangeRates = {
@@ -3193,6 +3877,9 @@
         }
 
         // Müşteri verilerini topla ve özet istatistikleri oluştur
+        // Global clients data array (filtreleme için)
+        let globalClientsData = [];
+
         async function generateStats() {
             console.log("İstatistikler hesaplanıyor...");
 
@@ -3200,6 +3887,9 @@
             await fetchExchangeRates();
 
             const clients = Array.from(document.querySelectorAll('.data-table tbody tr'));
+            
+            // Global clients data'yı temizle ve yeniden doldur
+            globalClientsData = [];
             
             // Temel değişkenleri başlat
             const currencyTotals = {
@@ -3248,20 +3938,44 @@
             // Ödeme türü bazlı istatistikler
             const paymentTypeStats = {};
 
+            // Kişi/Kurum istatistikleri
+            const entityStats = {
+                person: { total: 0, paid: 0, unpaid: 0, count: 0, paidCount: 0 },
+                company: { total: 0, paid: 0, unpaid: 0, count: 0, paidCount: 0 }
+            };
+
+            // Ödeme tarihi istatistikleri
+            const paymentDateStats = {
+                thisMonth: { total: 0, count: 0 },
+                thisYear: { total: 0, count: 0 },
+                totalDuration: 0,
+                durationCount: 0,
+                fastestDuration: null,
+                fastestClient: '-'
+            };
+
             // Her bir müvekkil için verileri topla
             clients.forEach(client => {
                 const clientId = client.getAttribute('data-client-id');
-                // Sütun sıralaması: 0=payment_type, 1=name, 2=surname, 3=tc, 4=amount, 5=installments, 6=reg_date, 7=due_date, 8=status
+                // Sütun sıralaması: 0=payment_type, 1=name, 2=surname, 3=tc, 4=amount, 5=installments, 6=reg_date, 7=due_date, 8=payment_date, 9=status
                 const paymentType = client.querySelector('td:nth-child(1)').textContent.trim();
-                const clientName = client.querySelector('td:nth-child(2)').textContent.trim() + ' ' +
-                                client.querySelector('td:nth-child(3)').textContent.trim();
+                const name = client.querySelector('td:nth-child(2)').textContent.trim();
+                const surname = client.querySelector('td:nth-child(3)').textContent.trim();
+                const clientName = name + ' ' + surname;
                 const tcNo = client.querySelector('td:nth-child(4)').textContent.trim();
+
+                // Entity type belirleme: surname boş veya '-' ise company, değilse person
+                const entityType = (surname === '' || surname === '-') ? 'company' : 'person';
 
                 // Para bilgilerini al ve parse et
                 const amountText = client.querySelector('td:nth-child(5)').textContent.trim();
                 const parts = amountText.split(' ');
                 const amount = parseFloat(parts[0]);
                 const currency = parts[1] || 'TL';
+                
+                // Taksit sayısını al
+                const installmentsText = client.querySelector('td:nth-child(6)').textContent.trim();
+                const installments = (installmentsText === '-' || installmentsText === '') ? 0 : parseInt(installmentsText);
 
                 console.log(`[generateStats] İşlenen Kayıt: Ödeme Türü: ${paymentType}, Ad: ${clientName}, Tutar: ${amount} ${currency}`);
 
@@ -3290,20 +4004,21 @@
                     }
                 }
 
-                // Taksit bilgisini al
-                const installments = parseInt(client.querySelector('td:nth-child(6)').textContent.trim());
+                // Taksit bilgisini al (zaten yukarıda tanımlandı, tekrar kullan)
                 totalInstallments += installments;
 
                 // Ödeme durumu
-                const statusText = client.querySelector('td:nth-child(9)').textContent.trim();
+                const statusText = client.querySelector('td:nth-child(10)').textContent.trim();
                 const isPaid = statusText.includes('Ödendi');
 
                 // Tarih bilgilerini al
                 const registrationDateText = client.querySelector('td:nth-child(7)').textContent.trim();
                 const dueDateText = client.querySelector('td:nth-child(8)').textContent.trim();
+                const paymentDateText = client.querySelector('td:nth-child(9)').textContent.trim();
                 
                 let registrationDate = null;
                 let dueDate = null;
+                let paymentDate = null;
                 
                 if (registrationDateText !== '-') {
                     const [day, month, year] = registrationDateText.split('.').map(Number);
@@ -3313,6 +4028,70 @@
                 if (dueDateText !== '-') {
                     const [day, month, year] = dueDateText.split('.').map(Number);
                     dueDate = new Date(year, month - 1, day);
+                }
+                
+                if (paymentDateText !== '-') {
+                    const [day, month, year] = paymentDateText.split('.').map(Number);
+                    paymentDate = new Date(year, month - 1, day);
+                }
+
+                // Entity type bilgisini al (surname yukarıda zaten tanımlı)
+                // surname zaten yukarıda tanımlandı, tekrar tanımlamaya gerek yok
+
+                // Para birimini TL'ye çevir
+                let amountInTL = amount;
+                if (currency === 'USD') {
+                    amountInTL = amount * parseFloat(exchangeRates.USD);
+                } else if (currency === 'EUR') {
+                    amountInTL = amount * parseFloat(exchangeRates.EUR);
+                }
+
+                // Entity type istatistiklerini güncelle
+                if (!isNaN(amountInTL)) {
+                    entityStats[entityType].total += amountInTL;
+                    entityStats[entityType].count++;
+                    
+                    if (isPaid) {
+                        entityStats[entityType].paid += amountInTL;
+                        entityStats[entityType].paidCount++;
+                    } else {
+                        entityStats[entityType].unpaid += amountInTL;
+                    }
+                }
+
+                // Ödeme tarihi istatistiklerini güncelle
+                if (paymentDate && isPaid) {
+                    const paymentMonth = paymentDate.getMonth();
+                    const paymentYear = paymentDate.getFullYear();
+                    const currentMonth = currentDate.getMonth();
+                    const currentYear = currentDate.getFullYear();
+
+                    // Bu ay yapılan ödemeler
+                    if (paymentMonth === currentMonth && paymentYear === currentYear) {
+                        paymentDateStats.thisMonth.total += amountInTL;
+                        paymentDateStats.thisMonth.count++;
+                    }
+
+                    // Bu yıl yapılan ödemeler
+                    if (paymentYear === currentYear) {
+                        paymentDateStats.thisYear.total += amountInTL;
+                        paymentDateStats.thisYear.count++;
+                    }
+
+                    // Ödeme süresi hesapla (kayıt tarihinden ödeme tarihine)
+                    if (registrationDate) {
+                        const durationDays = Math.floor((paymentDate - registrationDate) / (1000 * 60 * 60 * 24));
+                        if (durationDays >= 0) {
+                            paymentDateStats.totalDuration += durationDays;
+                            paymentDateStats.durationCount++;
+
+                            // En hızlı ödemeyi bul
+                            if (paymentDateStats.fastestDuration === null || durationDays < paymentDateStats.fastestDuration) {
+                                paymentDateStats.fastestDuration = durationDays;
+                                paymentDateStats.fastestClient = clientName.trim();
+                            }
+                        }
+                    }
                 }
                 
                 // Müvekkil başına toplam hesapla
@@ -3528,6 +4307,25 @@
                         }
                     }
                 }
+                
+                // Global clients data'ya ekle (filtreleme için)
+                globalClientsData.push({
+                    id: clientId,
+                    name: name,
+                    surname: surname,
+                    clientName: clientName,
+                    entityType: entityType,
+                    paymentType: paymentType,
+                    amount: amount,
+                    currency: currency,
+                    amountInTL: amountInTL,
+                    installments: installments,
+                    registrationDate: registrationDate,
+                    dueDate: dueDate,
+                    paymentDate: paymentDate,
+                    isPaid: isPaid,
+                    statusText: statusText
+                });
             });
             
             // Müvekkil başına ortalama ve varyasyon hesapla
@@ -3649,7 +4447,322 @@
             // createExpectedPaymentsByYearChart(); // ÇAĞRI BURADAN KALDIRILDI
             createSummaryChart(window.statsData);
             
+            // Yeni grafikleri oluştur
+            createEntityTypeChart();
+            createPaymentDatesChart();
+            
             console.log("İstatistikler hesaplandı:", window.statsData);
+        }
+
+        // Kişi/Kurum analiz grafiği oluştur
+        function createEntityTypeChart() {
+            const canvas = document.getElementById('entityTypeChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Eski grafiği varsa yok et
+            if (window.entityTypeChartInstance) {
+                window.entityTypeChartInstance.destroy();
+            }
+
+            const entityStats = window.statsData.entityStats;
+            
+            window.entityTypeChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Kişi Ödemeleri', 'Kurum Ödemeleri'],
+                    datasets: [
+                        {
+                            label: 'Toplam',
+                            data: [entityStats.person.total, entityStats.company.total],
+                            backgroundColor: ['rgba(54, 162, 235, 0.6)', 'rgba(255, 159, 64, 0.6)'],
+                            borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 159, 64, 1)'],
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Ödendi',
+                            data: [entityStats.person.paid, entityStats.company.paid],
+                            backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(153, 102, 255, 0.6)'],
+                            borderColor: ['rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)'],
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Ödenmedi',
+                            data: [entityStats.person.unpaid, entityStats.company.unpaid],
+                            backgroundColor: ['rgba(255, 99, 132, 0.6)', 'rgba(255, 206, 86, 0.6)'],
+                            borderColor: ['rgba(255, 99, 132, 1)', 'rgba(255, 206, 86, 1)'],
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('tr-TR', {
+                                        style: 'currency',
+                                        currency: 'TRY'
+                                    });
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Kişi/Kurum Ödeme Analizi'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Ödeme tarihleri analiz grafiği oluştur
+        function createPaymentDatesChart() {
+            const canvas = document.getElementById('paymentDatesChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Eski grafiği varsa yok et
+            if (window.paymentDatesChartInstance) {
+                window.paymentDatesChartInstance.destroy();
+            }
+
+            const paymentDateStats = window.statsData.paymentDateStats;
+            
+            window.paymentDatesChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Bu Ay', 'Bu Yıl'],
+                    datasets: [{
+                        label: 'Yapılan Ödemeler (TL)',
+                        data: [paymentDateStats.thisMonth.total, paymentDateStats.thisYear.total],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(54, 162, 235, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(54, 162, 235, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('tr-TR', {
+                                        style: 'currency',
+                                        currency: 'TRY'
+                                    });
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Ödeme Tarihleri Analizi'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Para birimi dağılım grafiği oluştur
+        function createCurrencyDistributionChart(clients) {
+            const canvas = document.getElementById('currencyDistributionChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Eski grafiği varsa yok et
+            if (window.currencyDistributionChartInstance) {
+                window.currencyDistributionChartInstance.destroy();
+            }
+
+            // Para birimi dağılımını hesapla
+            const currencyData = { TL: 0, USD: 0, EUR: 0 };
+            clients.forEach(client => {
+                if (client.currency && currencyData.hasOwnProperty(client.currency)) {
+                    currencyData[client.currency] += parseFloat(client.amount) || 0;
+                }
+            });
+            
+            window.currencyDistributionChartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['TL', 'USD', 'EUR'],
+                    datasets: [{
+                        data: [currencyData.TL, currencyData.USD, currencyData.EUR],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Para Birimi Dağılımı'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    return label + ': ' + value.toLocaleString('tr-TR', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Para birimi durum grafiği oluştur
+        function createCurrencyStatusChart(clients) {
+            const canvas = document.getElementById('currencyStatusChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Eski grafiği varsa yok et
+            if (window.currencyStatusChartInstance) {
+                window.currencyStatusChartInstance.destroy();
+            }
+
+            // Para birimi ve durum dağılımını hesapla
+            const currencyStats = {
+                TL: { paid: 0, unpaid: 0 },
+                USD: { paid: 0, unpaid: 0 },
+                EUR: { paid: 0, unpaid: 0 }
+            };
+            
+            clients.forEach(client => {
+                const currency = client.currency || 'TL';
+                const amount = parseFloat(client.amount) || 0;
+                if (currencyStats[currency]) {
+                    if (client.status === 'Ödendi') {
+                        currencyStats[currency].paid += amount;
+                    } else {
+                        currencyStats[currency].unpaid += amount;
+                    }
+                }
+            });
+            
+            window.currencyStatusChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['TL', 'USD', 'EUR'],
+                    datasets: [
+                        {
+                            label: 'Ödendi',
+                            data: [currencyStats.TL.paid, currencyStats.USD.paid, currencyStats.EUR.paid],
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Ödenmedi',
+                            data: [currencyStats.TL.unpaid, currencyStats.USD.unpaid, currencyStats.EUR.unpaid],
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('tr-TR', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    });
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Para Birimi Ödeme Durumu'
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Para birimi grafiklerini güncelle
+        function updateCurrencyCharts() {
+            const filteredClients = getFilteredClients('currency');
+            createCurrencyDistributionChart(filteredClients);
+            createCurrencyStatusChart(filteredClients);
+            updateCurrencyStats(filteredClients);
+        }
+
+        // Para birimi istatistiklerini güncelle
+        function updateCurrencyStats(clients) {
+            const currencyData = { TL: 0, USD: 0, EUR: 0 };
+            clients.forEach(client => {
+                if (client.currency && currencyData.hasOwnProperty(client.currency)) {
+                    currencyData[client.currency] += 1;
+                }
+            });
+            
+            const mostUsed = Object.keys(currencyData).reduce((a, b) => 
+                currencyData[a] > currencyData[b] ? a : b
+            );
+            
+            document.getElementById('tryTransactionCount').textContent = currencyData.TL;
+            document.getElementById('usdTransactionCount').textContent = currencyData.USD;
+            document.getElementById('eurTransactionCount').textContent = currencyData.EUR;
+            document.getElementById('mostUsedCurrency').textContent = mostUsed;
         }
         
         // Aktif sekmeye göre ilgili içeriği güncelle
@@ -3746,12 +4859,11 @@
                     populateStatusTable();
                     break;
                 case 'currency':
-                    if (window.statsData && window.statsData.currencyTotals && Object.keys(window.statsData.currencyTotals).length > 0) {
-                        createCurrencyCharts();
-                        populateCurrencyTable();
+                    if (globalClientsData && globalClientsData.length > 0) {
+                        updateCurrencyCharts();
                     } else {
                         clearAndShowMessage(
-                            [currencyDistributionChartInstance, currencyStatusChartInstance],
+                            [window.currencyDistributionChartInstance, window.currencyStatusChartInstance],
                             ['currencyDistributionChart', 'currencyStatusChart'], 
                             'currencyTableContainer', 
                             'Para birimi verisi bulunamadı.'
@@ -3762,7 +4874,15 @@
                     }
                     break;
                 case 'predictions':
-                    createCollectionTrendChart();
+                    if (globalClientsData && globalClientsData.length > 0) {
+                        updatePredictionsData();
+                    }
+                    break;
+                case 'entity-type':
+                    createEntityTypeChart();
+                    break;
+                case 'payment-dates':
+                    createPaymentDatesChart();
                     break;
             }
         }
@@ -4658,7 +5778,7 @@
         }
 
         // Durum analizi grafiği oluştur
-        function createStatusChart() {
+        function createStatusChart(clients) {
             const ctx = document.getElementById('statusChart').getContext('2d');
             
             if (window.statusChart && typeof window.statusChart.destroy === 'function') {
@@ -4666,20 +5786,31 @@
                 window.statusChart = null;
             }
             
-            if (!window.statsData) {
-                console.warn("Durum analizi için istatistik verileri bulunamadı");
+            // Eğer clients parametresi verilmediyse globalClientsData kullan
+            if (!clients || !Array.isArray(clients)) {
+                clients = globalClientsData || [];
+            }
+            
+            if (clients.length === 0) {
+                console.warn("Durum analizi için veri bulunamadı");
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                 ctx.textAlign = 'center';
                 ctx.fillText('Durum analizi için veri bulunamadı.', ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
             
-            const paidCount = window.statsData.paidCount || 0;
-            const unpaidCount = window.statsData.unpaidCount || 0;
+            // Filtrelenmiş client'lardan ödeme durumu sayılarını hesapla
+            let paidCount = 0;
+            let unpaidCount = 0;
             
-            // Eğer her ikisi de 0 ise grafik boş görünecek, bu genelde istenen bir durumdur.
-            // Eğer 0 olduğunda bile bir şey göstermek isteniyorsa (örn: "Veri Yok" dilimi),
-            // `datasets.data` içine [0,0] yerine özel bir değer ve label eklenebilir.
+            clients.forEach(client => {
+                if (client.status === 'Ödendi') {
+                    paidCount++;
+                } else {
+                    unpaidCount++;
+                }
+            });
+            
             if (paidCount === 0 && unpaidCount === 0) {
                  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                  ctx.textAlign = 'center';
@@ -4692,7 +5823,7 @@
                 data: {
                     labels: ['Ödendi', 'Ödenmedi'],
                     datasets: [{
-                        data: [paidCount, unpaidCount], // Gerçek değerler
+                        data: [paidCount, unpaidCount],
                         backgroundColor: [
                             'rgba(76, 175, 80, 0.7)',
                             'rgba(239, 83, 80, 0.7)'
@@ -4739,7 +5870,7 @@
         function populateSummaryTab(data) {
             if (!data) return;
 
-            const { currencyTotals, highestPayment, overdueCount, expectedPaymentsByYear, totalInstallments, paidInstallments, clients, paidCount, unpaidCount } = data;
+            const { currencyTotals, highestPayment, overdueCount, expectedPaymentsByYear, totalInstallments, paidInstallments, clients, paidCount, unpaidCount, entityStats } = data;
 
             // Ana kartlar
             document.getElementById('totalAmount').textContent = `${formatCurrency(currencyTotals.TL.total)} TL`;
@@ -4817,6 +5948,56 @@
                 <strong>1 EUR = ${exchangeRates.EUR} ₺</strong>
                 <span style="font-size: 0.85rem; color: #6c757d; margin-left: 8px;">(${apiSourceText})</span>
             `;
+
+            // Kişi/Kurum istatistiklerini güncelle
+            const personPaidPercentage = entityStats.person.total > 0 
+                ? ((entityStats.person.paid / entityStats.person.total) * 100).toFixed(1) 
+                : 0;
+            const companyPaidPercentage = entityStats.company.total > 0 
+                ? ((entityStats.company.paid / entityStats.company.total) * 100).toFixed(1) 
+                : 0;
+
+            document.getElementById('personTotalAmount').textContent = entityStats.person.total.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            });
+            document.getElementById('personCountText').textContent = `${entityStats.person.count} kişi`;
+            document.getElementById('companyTotalAmount').textContent = entityStats.company.total.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            });
+            document.getElementById('companyCountText').textContent = `${entityStats.company.count} kurum`;
+            document.getElementById('personPaidAmount').textContent = entityStats.person.paid.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            });
+            document.getElementById('personPaidPercentageText').textContent = `%${personPaidPercentage}`;
+            document.getElementById('companyPaidAmount').textContent = entityStats.company.paid.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            });
+            document.getElementById('companyPaidPercentageText').textContent = `%${companyPaidPercentage}`;
+
+            // Ödeme tarihi istatistiklerini güncelle
+            const avgDuration = paymentDateStats.durationCount > 0 
+                ? Math.round(paymentDateStats.totalDuration / paymentDateStats.durationCount) 
+                : 0;
+            
+            document.getElementById('thisMonthPayments').textContent = paymentDateStats.thisMonth.total.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            });
+            document.getElementById('thisMonthCountText').textContent = `${paymentDateStats.thisMonth.count} ödeme`;
+            document.getElementById('thisYearPayments').textContent = paymentDateStats.thisYear.total.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            });
+            document.getElementById('thisYearCountText').textContent = `${paymentDateStats.thisYear.count} ödeme`;
+            document.getElementById('avgPaymentDuration').textContent = `${avgDuration} gün`;
+            document.getElementById('fastestPayment').textContent = paymentDateStats.fastestDuration !== null 
+                ? `${paymentDateStats.fastestDuration} gün` 
+                : '0 gün';
+            document.getElementById('fastestPaymentClient').textContent = paymentDateStats.fastestClient;
 
             // Yıllara Göre Beklenen Ödemeler Tablosu
             const tableContainer = document.getElementById('expectedPaymentsByYearTableContainer');
@@ -5454,15 +6635,12 @@
 
 
         // Diğer event listener'lar ve fonksiyonlar burada kalacak (savePayment, updateClient, openEditModal, deletePayment, generateStats vb.)
-        window.savePayment = savePayment;
-        window.updateClient = updateClient;
-        window.openEditModal = openEditModal;
-        window.deletePayment = deletePayment;
+        // Global fonksiyonlar zaten yukarıda window'a atandı
         // generateStats ve ilgili fonksiyonlar burada tanımlı olmalı
         // ...
 
         // Ödeme düzenlemesi tamamlandıktan sonra tekrar detay modalını açmak için
-        async function updateClient(client_id) {
+        window.updateClient = async function(client_id) {
             const form = document.getElementById('editForm');
             const formData = new FormData(form);
             
@@ -5499,10 +6677,10 @@
             const data = {};
             formData.forEach((value, key) => {
                 if (key === 'amount') {
-                    // Tutar alanında sadece sayısal değeri al - parseFloat ile güvenli parse
+                    // Tutar alanında sadece sayısal değeri al - formatlanmış değeri parse et
                     console.log('updateClient DEBUG - Orijinal amount value:', value);
-                    // Sadece harfleri ve sembolleri temizle, nokta ve virgülü koru
-                    let cleanValue = value.replace(/[^\d.,]/g, '').replace(',', '.');
+                    // 1.234,56 -> 1234.56 formatına çevir
+                    let cleanValue = value.replace(/\./g, '').replace(',', '.');
                     console.log('updateClient DEBUG - cleanValue after replace:', cleanValue);
                     // parseFloat ile sayıya çevir, sonra string'e geri çevir ki doğru format olsun
                     const finalAmount = parseFloat(cleanValue).toString() || '0';
@@ -5526,6 +6704,20 @@
             const editDescription = document.getElementById('editDescription');
             if (editDescription) {
                 data['description'] = editDescription.value || '';
+            }
+
+            // Entity type ekle
+            const editEntityType = document.getElementById('editEntityType');
+            if (editEntityType) {
+                data['entity_type'] = editEntityType.value;
+            }
+
+            // Payment date ekle (eğer ödeme durumu ödendi ise)
+            if (editStatusCheckbox && editStatusCheckbox.checked) {
+                const editPaymentDate = document.getElementById('editPaymentDate');
+                if (editPaymentDate && editPaymentDate.value) {
+                    data['payment_date'] = editPaymentDate.value;
+                }
             }
             
             console.log('Gönderilecek veri:', data);
@@ -5559,7 +6751,8 @@
                         if (paymentTypeCell && data.payment_type) {
                             // Ödeme türüne göre renk sınıfını belirle
                             let typeClass = '';
-                            if (data.payment_type.includes('Danışma')) typeClass = 'payment-type-danisma';
+                            if (data.payment_type === 'Aylık Danışmanlık Ücreti') typeClass = 'payment-type-aylik-danismanlik';
+                            else if (data.payment_type.includes('Danışma')) typeClass = 'payment-type-danisma';
                             else if (data.payment_type.includes('İhtarname')) typeClass = 'payment-type-ihtarname';
                             else if (data.payment_type.includes('Dilekçe')) typeClass = 'payment-type-dilekce';
                             else if (data.payment_type.includes('Dosya')) typeClass = 'payment-type-dosya';
@@ -5634,7 +6827,7 @@
                 console.error('Güncelleme hatası:', error);
                 alert('Hata: Sunucu iletişim hatası');
             }
-        }
+        };
 
         // Modal kapatma fonksiyonu
         function closeModal() {
@@ -5810,7 +7003,7 @@
 
             const editModalElement = document.getElementById('editModal');
             if (editModalElement) {
-                editModalElement.style.display = 'block';
+                editModalElement.style.display = 'flex';
                 let targetRow = document.querySelector(`tr[data-client-id="${paymentId}"]`);
                 if (!targetRow) {
                     targetRow = document.querySelector(`tr[data-id="${paymentId}"]`);
@@ -5823,32 +7016,64 @@
 
         function fillEditForm(targetRow, paymentId) {
             document.getElementById('editClientId').value = paymentId;
-            // Sütun sıralaması: 0=payment_type, 1=name, 2=surname, 3=tc, 4=amount, 5=installments, 6=reg_date, 7=due_date
+            // Sütun sıralaması: 0=payment_type, 1=name, 2=surname, 3=tc, 4=amount, 5=installments, 6=reg_date, 7=due_date, 8=payment_date, 9=status
 
             // Ödeme türünü doldur
             const paymentTypeText = targetRow.cells[0].textContent.trim();
             document.getElementById('editPaymentType').value = paymentTypeText;
 
-            document.getElementById('editName').value = targetRow.cells[1].textContent.trim();
-            document.getElementById('editSurname').value = targetRow.cells[2].textContent.trim();
+            const nameText = targetRow.cells[1].textContent.trim();
+            const surnameText = targetRow.cells[2].textContent.trim();
+            
+            document.getElementById('editName').value = nameText;
+            document.getElementById('editSurname').value = surnameText;
             document.getElementById('editTc').value = targetRow.cells[3].textContent.trim();
+
+            // Entity type'ı belirle (surname boş ise kurum)
+            const editEntityType = document.getElementById('editEntityType');
+            const editNameLabel = document.getElementById('editNameLabel');
+            const editSurnameLabel = document.getElementById('editSurnameLabel');
+            const editTcLabel = document.getElementById('editTcLabel');
+            const editSurnameGroup = document.getElementById('editSurnameGroup');
+            const editNameGroup = document.getElementById('editNameGroup');
+            
+            const editSurnameInput = document.getElementById('editSurname');
+            
+            if (surnameText === '' || surnameText === '-') {
+                editEntityType.value = 'company';
+                editNameLabel.textContent = 'Kurum Adı';
+                editSurnameLabel.textContent = '';
+                editSurnameGroup.style.display = 'none';
+                editSurnameInput.required = false;
+                editNameGroup.classList.add('full-width');
+                editTcLabel.textContent = 'Vergi/Mersis/Ticaret Sicil No (İsteğe Bağlı)';
+            } else {
+                editEntityType.value = 'person';
+                editNameLabel.textContent = 'Ad';
+                editSurnameLabel.textContent = 'Soyad';
+                editSurnameGroup.style.display = 'block';
+                editSurnameInput.required = true;
+                editNameGroup.classList.remove('full-width');
+                editTcLabel.textContent = 'TC Kimlik No (İsteğe Bağlı)';
+            }
 
             const amountText = targetRow.cells[4].textContent.trim();
             const amountParts = amountText.split(' ');
-            // Tutar alanından sadece sayısal değeri al - formatı temizle
-            let rawAmount = amountParts[0] || '';
-            console.log('fillEditForm DEBUG - Orijinal amountText:', amountText);
-            console.log('fillEditForm DEBUG - amountParts[0]:', rawAmount);
-            // Ondalık noktasını koru - sadece gereksiz formatları temizle
-            console.log('fillEditForm DEBUG - Temizlenmiş rawAmount:', rawAmount);
-            const finalAmount = parseFloat(rawAmount).toString() || '0';
-            console.log('fillEditForm DEBUG - Final amount:', finalAmount);
-            document.getElementById('editAmount').value = finalAmount;
+            // Tutarı formatlanmış olarak göster: 1234.56 -> 1.234,56
+            let rawAmount = amountParts[0] || '0';
+            let amountValue = parseFloat(rawAmount) || 0;
+            // Formatlanmış tutar: tam kısım ve ondalık kısım
+            let integerPart = Math.floor(amountValue).toString();
+            let decimalPart = Math.round((amountValue - Math.floor(amountValue)) * 100).toString().padStart(2, '0');
+            integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            document.getElementById('editAmount').value = integerPart + ',' + decimalPart;
+            
             if (amountParts.length > 1) {
                 document.getElementById('editCurrency').value = amountParts[amountParts.length - 1];
             }
 
-            document.getElementById('editInstallments').value = targetRow.cells[5].textContent.trim();
+            const installmentsText = targetRow.cells[5].textContent.trim();
+            document.getElementById('editInstallments').value = installmentsText === '-' ? '0' : installmentsText;
 
             const regDateText = targetRow.cells[6].textContent.trim();
             if (regDateText && regDateText !== '-') {
@@ -5866,14 +7091,36 @@
                     document.getElementById('editDueDate').value = 
                         `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
                 }
+            } else {
+                document.getElementById('editDueDate').value = '';
             }
 
-            const isPaid = targetRow.cells[8].textContent.trim().includes('Ödendi');
+            // Payment date
+            const paymentDateText = targetRow.cells[8].textContent.trim();
+            const editPaymentDateRow = document.getElementById('editPaymentDateRow');
+            if (paymentDateText && paymentDateText !== '-') {
+                const dateParts = paymentDateText.split('.');
+                if (dateParts.length === 3) {
+                    document.getElementById('editPaymentDate').value = 
+                        `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+                    editPaymentDateRow.style.display = 'flex';
+                }
+            } else {
+                document.getElementById('editPaymentDate').value = '';
+                editPaymentDateRow.style.display = 'none';
+            }
+
+            const isPaid = targetRow.cells[9].textContent.trim().includes('Ödendi');
             const editStatusCheckbox = document.getElementById('editStatus');
             const statusTextSpan = document.querySelector('.status-text');
             
             if (editStatusCheckbox) editStatusCheckbox.checked = isPaid;
             if (statusTextSpan) statusTextSpan.textContent = isPaid ? 'Ödendi' : 'Ödenmedi';
+            
+            // Ödendi ise payment date row'u göster
+            if (isPaid && editPaymentDateRow) {
+                editPaymentDateRow.style.display = 'flex';
+            }
 
             const description = targetRow.getAttribute('data-description');
             document.getElementById('editDescription').value =
@@ -6168,6 +7415,353 @@
         }
 
         // ========== ÖDEME TÜRÜ ANALİZİ FONKSİYONLARI SONU ==========
+
+        // ========== EXPORT MODAL FONKSİYONLARI ==========
+
+        // Export modal elementleri
+        const exportButton = document.getElementById('exportButton');
+        const exportModal = document.getElementById('exportModal');
+        const closeExportModal = document.getElementById('closeExportModal');
+        const cancelExportBtn = document.getElementById('cancelExportBtn');
+        const exportForm = document.getElementById('exportForm');
+        const exportFilterType = document.getElementById('exportFilterType');
+        const exportDateRangeGroup = document.getElementById('exportDateRangeGroup');
+        const exportClientGroup = document.getElementById('exportClientGroup');
+        const exportStartDate = document.getElementById('exportStartDate');
+        const exportEndDate = document.getElementById('exportEndDate');
+
+        // Export modal aç
+        if (exportButton) {
+            exportButton.onclick = function() {
+                exportModal.style.display = 'flex';
+                // Bugünün tarihini varsayılan olarak ayarla
+                const today = new Date().toISOString().split('T')[0];
+                exportEndDate.value = today;
+                // Başlangıç tarihini 1 yıl öncesi yap
+                const lastYear = new Date();
+                lastYear.setFullYear(lastYear.getFullYear() - 1);
+                exportStartDate.value = lastYear.toISOString().split('T')[0];
+            };
+        }
+
+        // Export modal kapat
+        if (closeExportModal) {
+            closeExportModal.onclick = function() {
+                exportModal.style.display = 'none';
+            };
+        }
+
+        if (cancelExportBtn) {
+            cancelExportBtn.onclick = function() {
+                exportModal.style.display = 'none';
+            };
+        }
+
+        // Filtreleme tipine göre alanları göster/gizle
+        if (exportFilterType) {
+            exportFilterType.addEventListener('change', function() {
+                if (this.value === 'date_range') {
+                    exportDateRangeGroup.style.display = 'flex';
+                    exportClientGroup.style.display = 'none';
+                    exportStartDate.required = true;
+                    exportEndDate.required = true;
+                    document.getElementById('exportClientSelect').required = false;
+                } else if (this.value === 'specific_client') {
+                    exportDateRangeGroup.style.display = 'none';
+                    exportClientGroup.style.display = 'block';
+                    exportStartDate.required = false;
+                    exportEndDate.required = false;
+                    document.getElementById('exportClientSelect').required = true;
+                } else { // all_records
+                    exportDateRangeGroup.style.display = 'none';
+                    exportClientGroup.style.display = 'none';
+                    exportStartDate.required = false;
+                    exportEndDate.required = false;
+                    document.getElementById('exportClientSelect').required = false;
+                }
+            });
+        }
+
+        // Export form submit
+        if (exportForm) {
+            exportForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // Form verilerini topla
+                const formData = new FormData(exportForm);
+                const params = new URLSearchParams();
+                
+                for (let [key, value] of formData.entries()) {
+                    if (value) {
+                        params.append(key, value);
+                    }
+                }
+
+                // Backend'e istek gönder ve dosyayı indir
+                const exportUrl = `/export_payments?${params.toString()}`;
+                
+                // Yeni sekmede aç (PDF için) veya doğrudan indir (Excel için)
+                const format = formData.get('format');
+                if (format === 'pdf') {
+                    window.open(exportUrl, '_blank');
+                } else {
+                    // Excel için doğrudan indir
+                    const link = document.createElement('a');
+                    link.href = exportUrl;
+                    link.download = `odeme_kayitlari_${new Date().toISOString().split('T')[0]}.xlsx`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+
+                // Modalı kapat
+                exportModal.style.display = 'none';
+                
+                // Başarı mesajı
+                alert('Ödeme kayıtları tablosu oluşturuluyor...');
+            });
+        }
+
+        // ========== EXPORT MODAL FONKSİYONLARI SONU ==========
+
+        // ========== ENTITY FILTER CHECKBOXES EVENT LISTENERS ==========
+
+        // Filtrelenmiş client verilerini döndüren yardımcı fonksiyon
+        function getFilteredClients(tabNameOrPersonChecked, companyChecked) {
+            // Eğer string ise, tab adı olarak kullan
+            if (typeof tabNameOrPersonChecked === 'string') {
+                const tabName = tabNameOrPersonChecked;
+                let personFilterId, companyFilterId;
+                
+                switch(tabName) {
+                    case 'monthly':
+                        personFilterId = 'monthlyPersonFilter';
+                        companyFilterId = 'monthlyCompanyFilter';
+                        break;
+                    case 'yearly':
+                        personFilterId = 'yearlyPersonFilter';
+                        companyFilterId = 'yearlyCompanyFilter';
+                        break;
+                    case 'status':
+                        personFilterId = 'statusPersonFilter';
+                        companyFilterId = 'statusCompanyFilter';
+                        break;
+                    case 'currency':
+                        personFilterId = 'currencyPersonFilter';
+                        companyFilterId = 'currencyCompanyFilter';
+                        break;
+                    case 'predictions':
+                        personFilterId = 'predictionsPersonFilter';
+                        companyFilterId = 'predictionsCompanyFilter';
+                        break;
+                    default:
+                        return globalClientsData;
+                }
+                
+                const personChecked = document.getElementById(personFilterId)?.checked || false;
+                companyChecked = document.getElementById(companyFilterId)?.checked || false;
+                
+                if (!personChecked && !companyChecked) {
+                    return [];
+                }
+                
+                return globalClientsData.filter(client => {
+                    if (personChecked && companyChecked) {
+                        return true;
+                    } else if (personChecked) {
+                        return client.entityType === 'person';
+                    } else if (companyChecked) {
+                        return client.entityType === 'company';
+                    }
+                    return false;
+                });
+            }
+            
+            // Boolean parametreler ise direkt kullan
+            const personChecked = tabNameOrPersonChecked;
+            
+            if (!personChecked && !companyChecked) {
+                return [];
+            }
+            
+            return globalClientsData.filter(client => {
+                if (personChecked && companyChecked) {
+                    return true;
+                } else if (personChecked) {
+                    return client.entityType === 'person';
+                } else if (companyChecked) {
+                    return client.entityType === 'company';
+                }
+                return false;
+            });
+        }
+
+        // Monthly filter checkbox listeners
+        const monthlyPersonFilter = document.getElementById('monthlyPersonFilter');
+        const monthlyCompanyFilter = document.getElementById('monthlyCompanyFilter');
+        
+        if (monthlyPersonFilter && monthlyCompanyFilter) {
+            monthlyPersonFilter.addEventListener('change', function() {
+                updateMonthlyChart();
+            });
+            monthlyCompanyFilter.addEventListener('change', function() {
+                updateMonthlyChart();
+            });
+        }
+
+        // Yearly filter checkbox listeners
+        const yearlyPersonFilter = document.getElementById('yearlyPersonFilter');
+        const yearlyCompanyFilter = document.getElementById('yearlyCompanyFilter');
+        
+        if (yearlyPersonFilter && yearlyCompanyFilter) {
+            yearlyPersonFilter.addEventListener('change', function() {
+                updateYearlyChart();
+            });
+            yearlyCompanyFilter.addEventListener('change', function() {
+                updateYearlyChart();
+            });
+        }
+
+        // Status filter checkbox listeners
+        const statusPersonFilter = document.getElementById('statusPersonFilter');
+        const statusCompanyFilter = document.getElementById('statusCompanyFilter');
+        
+        if (statusPersonFilter && statusCompanyFilter) {
+            statusPersonFilter.addEventListener('change', function() {
+                updateStatusChart();
+            });
+            statusCompanyFilter.addEventListener('change', function() {
+                updateStatusChart();
+            });
+        }
+
+        // Currency filter checkbox listeners
+        const currencyPersonFilter = document.getElementById('currencyPersonFilter');
+        const currencyCompanyFilter = document.getElementById('currencyCompanyFilter');
+        
+        if (currencyPersonFilter && currencyCompanyFilter) {
+            currencyPersonFilter.addEventListener('change', function() {
+                updateCurrencyCharts();
+            });
+            currencyCompanyFilter.addEventListener('change', function() {
+                updateCurrencyCharts();
+            });
+        }
+
+        // Predictions filter checkbox listeners
+        const predictionsPersonFilter = document.getElementById('predictionsPersonFilter');
+        const predictionsCompanyFilter = document.getElementById('predictionsCompanyFilter');
+        
+        if (predictionsPersonFilter && predictionsCompanyFilter) {
+            predictionsPersonFilter.addEventListener('change', function() {
+                updatePredictionsData();
+            });
+            predictionsCompanyFilter.addEventListener('change', function() {
+                updatePredictionsData();
+            });
+        }
+
+        // Update fonksiyonları (bu fonksiyonlar mevcut grafik oluşturma kodlarını tekrar çağıracak)
+        function updateMonthlyChart() {
+            const personChecked = document.getElementById('monthlyPersonFilter').checked;
+            const companyChecked = document.getElementById('monthlyCompanyFilter').checked;
+            const filteredClients = getFilteredClients(personChecked, companyChecked);
+            
+            // Mevcut filter değerlerini koru
+            const yearFilter = document.getElementById('monthlyYearFilter').value;
+            const currencyFilter = document.getElementById('monthlyCurrencyFilter').value;
+            
+            // Grafikleri yeniden oluştur
+            createMonthlyChart(filteredClients, yearFilter, currencyFilter);
+        }
+
+        function updateYearlyChart() {
+            const personChecked = document.getElementById('yearlyPersonFilter').checked;
+            const companyChecked = document.getElementById('yearlyCompanyFilter').checked;
+            const filteredClients = getFilteredClients(personChecked, companyChecked);
+            
+            const currencyFilter = document.getElementById('yearlyCurrencyFilter').value;
+            const chartType = document.getElementById('yearlyChartType').value;
+            
+            createYearlyChart(filteredClients, currencyFilter, chartType);
+        }
+
+        function updateStatusChart() {
+            const personChecked = document.getElementById('statusPersonFilter').checked;
+            const companyChecked = document.getElementById('statusCompanyFilter').checked;
+            const filteredClients = getFilteredClients(personChecked, companyChecked);
+            
+            createStatusChart(filteredClients);
+        }
+
+        function updateCurrencyCharts() {
+            const personChecked = document.getElementById('currencyPersonFilter').checked;
+            const companyChecked = document.getElementById('currencyCompanyFilter').checked;
+            const filteredClients = getFilteredClients(personChecked, companyChecked);
+            
+            createCurrencyDistributionChart(filteredClients);
+            createCurrencyStatusChart(filteredClients);
+        }
+
+        // Tahminleri hesapla
+        function calculatePredictions(clients) {
+            const now = new Date();
+            const predictions = {
+                days30: 0,
+                days90: 0,
+                days180: 0,
+                days365: 0
+            };
+            
+            clients.forEach(client => {
+                if (client.status === 'Ödenmedi' && client.due_date) {
+                    const dueDate = new Date(client.due_date);
+                    const daysUntilDue = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
+                    const amount = parseFloat(client.amount) || 0;
+                    
+                    if (daysUntilDue >= 0 && daysUntilDue <= 30) {
+                        predictions.days30 += amount;
+                    }
+                    if (daysUntilDue >= 0 && daysUntilDue <= 90) {
+                        predictions.days90 += amount;
+                    }
+                    if (daysUntilDue >= 0 && daysUntilDue <= 180) {
+                        predictions.days180 += amount;
+                    }
+                    if (daysUntilDue >= 0 && daysUntilDue <= 365) {
+                        predictions.days365 += amount;
+                    }
+                }
+            });
+            
+            // Değerleri güncelle
+            document.getElementById('prediction30Days').textContent = predictions.days30.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            });
+            document.getElementById('prediction90Days').textContent = predictions.days90.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            });
+            document.getElementById('prediction180Days').textContent = predictions.days180.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            });
+            document.getElementById('prediction365Days').textContent = predictions.days365.toLocaleString('tr-TR', {
+                style: 'currency',
+                currency: 'TRY'
+            });
+        }
+
+        function updatePredictionsData() {
+            const personChecked = document.getElementById('predictionsPersonFilter').checked;
+            const companyChecked = document.getElementById('predictionsCompanyFilter').checked;
+            const filteredClients = getFilteredClients(personChecked, companyChecked);
+            
+            calculatePredictions(filteredClients);
+        }
+
+        // ========== ENTITY FILTER CHECKBOXES EVENT LISTENERS SONU ==========
 
     </script>
 

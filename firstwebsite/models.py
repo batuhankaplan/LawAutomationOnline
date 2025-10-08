@@ -310,10 +310,12 @@ class Client(db.Model):
     installments = db.Column(db.Integer, nullable=False)
     registration_date = db.Column(db.Date, nullable=True)  # Borç kayıt tarihi
     due_date = db.Column(db.Date, nullable=True)  # Son ödeme tarihi
+    payment_date = db.Column(db.Date, nullable=True)  # Ödeme tarihi (ödeme durumu ödendi ise)
     payments = db.relationship('Payment', backref='client', lazy=True)
     status = db.Column(db.String(10), nullable=False, default='Ödenmedi')
     description = db.Column(db.Text, nullable=True)
     payment_type = db.Column(db.String(50), nullable=True)  # Ödeme türü
+    entity_type = db.Column(db.String(20), default='person')  # person/company
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)

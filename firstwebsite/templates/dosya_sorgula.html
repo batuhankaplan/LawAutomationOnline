@@ -1336,6 +1336,44 @@
     box-shadow: 0 4px 10px rgba(212, 165, 116, 0.2);
 }
 
+/* Taraf kartı içindeki vekil bilgi kutusu */
+.lawyer-info-box {
+    margin-top: 15px;
+    padding: 12px;
+    background: linear-gradient(135deg, #fff9e6 0%, #ffecb3 100%);
+    border-left: 4px solid #ffc107;
+    border-radius: 6px;
+}
+
+.lawyer-info-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #856404;
+    margin-bottom: 8px;
+}
+
+.lawyer-info-header .material-icons {
+    font-size: 20px;
+    color: #ffc107;
+}
+
+.lawyer-info-details {
+    padding-left: 28px;
+    font-size: 13px;
+    color: #666;
+}
+
+.lawyer-info-details div {
+    margin: 4px 0;
+}
+
+.lawyer-info-details strong {
+    color: #856404;
+    font-weight: 600;
+}
+
 /* Düzenlenebilir person card butonları */
 .card-actions {
     display: flex;
@@ -3599,6 +3637,34 @@ function showDetails(caseId) {
             document.getElementById('detailPhoneNumber').textContent = data.phone_number || '-';
             document.getElementById('detailClientAddress').textContent = data.client_address || '-';
 
+            // YENİ: Ana müvekkil vekilleri ekle
+            const mainClientCard = document.querySelector('.client-info-compact .collapsible-person-card');
+            const mainClientContent = mainClientCard.querySelector('.collapsible-content');
+
+            // Eski vekil boxlarını temizle
+            const oldLawyerBoxes = mainClientContent.querySelectorAll('.lawyer-info-box');
+            oldLawyerBoxes.forEach(box => box.remove());
+
+            // Müvekkil vekilleri varsa ekle
+            if (data.client_main_lawyers && data.client_main_lawyers.length > 0) {
+                data.client_main_lawyers.forEach(lawyer => {
+                    const lawyerBox = document.createElement('div');
+                    lawyerBox.className = 'lawyer-info-box';
+                    lawyerBox.innerHTML = `
+                        <div class="lawyer-info-header">
+                            <i class="material-icons">account_balance</i>
+                            <span>Vekil: ${lawyer.name}</span>
+                        </div>
+                        <div class="lawyer-info-details">
+                            ${lawyer.bar ? `<div><strong>Baro:</strong> ${lawyer.bar}</div>` : ''}
+                            ${lawyer.bar_number ? `<div><strong>Sicil No:</strong> ${lawyer.bar_number}</div>` : ''}
+                            ${lawyer.phone ? `<div><strong>Telefon:</strong> ${lawyer.phone}</div>` : ''}
+                        </div>
+                    `;
+                    mainClientContent.appendChild(lawyerBox);
+                });
+            }
+
             // Müvekkil kimlik etiketini güncelle
             const clientIdentityLabel = document.getElementById('detailClientIdentityLabel');
             if (clientIdentityLabel) {
@@ -3617,6 +3683,47 @@ function showDetails(caseId) {
             const opponentIdentityLabel = document.getElementById('detailOpponentIdentityLabel');
             if (opponentIdentityLabel) {
                 opponentIdentityLabel.textContent = data.opponent_entity_type === 'company' ? 'VERGİ/MERSİS/TİCARET SİCİL NO' : 'T.C. KİMLİK NO';
+            }
+
+            // YENİ: Ana karşı taraf vekilleri ekle
+            const allDetailSections = document.querySelectorAll('.detail-section');
+            let opponentSection = null;
+            allDetailSections.forEach(section => {
+                const h3 = section.querySelector('h3');
+                if (h3 && h3.textContent.includes('Karşı Taraf Bilgileri')) {
+                    opponentSection = section;
+                }
+            });
+
+            if (opponentSection) {
+                const mainOpponentCard = opponentSection.querySelector('.collapsible-person-card');
+                if (mainOpponentCard) {
+                    const mainOpponentContent = mainOpponentCard.querySelector('.collapsible-content');
+
+                    // Eski vekil boxlarını temizle
+                    const oldOpponentLawyerBoxes = mainOpponentContent.querySelectorAll('.lawyer-info-box');
+                    oldOpponentLawyerBoxes.forEach(box => box.remove());
+
+                    // Karşı taraf vekilleri varsa ekle
+                    if (data.opponent_main_lawyers && data.opponent_main_lawyers.length > 0) {
+                        data.opponent_main_lawyers.forEach(lawyer => {
+                            const lawyerBox = document.createElement('div');
+                            lawyerBox.className = 'lawyer-info-box';
+                            lawyerBox.innerHTML = `
+                                <div class="lawyer-info-header">
+                                    <i class="material-icons">account_balance</i>
+                                    <span>Vekil: ${lawyer.name}</span>
+                                </div>
+                                <div class="lawyer-info-details">
+                                    ${lawyer.bar ? `<div><strong>Baro:</strong> ${lawyer.bar}</div>` : ''}
+                                    ${lawyer.bar_number ? `<div><strong>Sicil No:</strong> ${lawyer.bar_number}</div>` : ''}
+                                    ${lawyer.phone ? `<div><strong>Telefon:</strong> ${lawyer.phone}</div>` : ''}
+                                </div>
+                            `;
+                            mainOpponentContent.appendChild(lawyerBox);
+                        });
+                    }
+                }
             }
             
             // Ana müvekkil başlık ve subtitle'ını güncelle
@@ -3653,73 +3760,12 @@ function showDetails(caseId) {
                 }
             }
             
-            // Vekil bilgilerini göster - Tüm vekilleri ana vekil olarak göster
+            // ESKİ VEKİL GÖSTERMEME ALANI - Artık vekiller tarafların içinde gösteriliyor
             const lawyersDisplay = document.getElementById('lawyersDisplay');
-            lawyersDisplay.innerHTML = '';
-            
-            // Ana vekili listeye ekle
-            const allLawyers = [];
-            if (data.opponent_lawyer || data.opponent_lawyer_phone || data.opponent_lawyer_address) {
-                allLawyers.push({
-                    name: data.opponent_lawyer || 'Ad belirtilmemiş',
-                    bar: data.opponent_lawyer_bar || '',
-                    bar_number: data.opponent_lawyer_bar_number || '',
-                    phone: data.opponent_lawyer_phone || '',
-                    address: data.opponent_lawyer_address || ''
-                });
+            if (lawyersDisplay) {
+                lawyersDisplay.innerHTML = '';
+                lawyersDisplay.style.display = 'none'; // Eski vekil alanını gizle
             }
-            
-            // Ek vekilleri listeye ekle
-            if (data.additional_lawyers && Array.isArray(data.additional_lawyers)) {
-                data.additional_lawyers.forEach(lawyer => {
-                    allLawyers.push({
-                        name: lawyer.name || 'Ad belirtilmemiş',
-                        bar: lawyer.bar || '',
-                        bar_number: lawyer.bar_number || '',
-                        phone: lawyer.phone || '',
-                        address: lawyer.address || ''
-                    });
-                });
-            }
-            
-            // Tüm vekilleri aynı formatta göster
-            allLawyers.forEach((lawyer, index) => {
-                const lawyerDiv = document.createElement('div');
-                lawyerDiv.className = 'collapsible-person-card lawyer-card';
-                lawyerDiv.innerHTML = `
-                    <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
-                        <div class="collapsible-title">
-                            <i class="material-icons person-icon lawyer-icon">account_balance</i>
-                            <div class="person-info">
-                                <div class="person-title">Vekil - ${lawyer.name}</div>
-                                <div class="person-subtitle">${lawyer.bar ? lawyer.bar + ' • ' : ''}Sicil: ${lawyer.bar_number || 'Belirtilmemiş'}</div>
-                            </div>
-                        </div>
-                        <i class="material-icons collapse-arrow">expand_more</i>
-                    </div>
-                    <div class="collapsible-content">
-                        <div class="detail-info-grid">
-                            ${lawyer.bar ? `<div class="detail-info-item">
-                                <span class="detail-info-label">BARO</span>
-                                <span class="detail-info-value">${lawyer.bar}</span>
-                            </div>` : ''}
-                            <div class="detail-info-item">
-                                <span class="detail-info-label">BARO NUMARASI</span>
-                                <span class="detail-info-value">${lawyer.bar_number || '-'}</span>
-                            </div>
-                            <div class="detail-info-item">
-                                <span class="detail-info-label">TELEFON</span>
-                                <span class="detail-info-value">${lawyer.phone || '-'}</span>
-                            </div>
-                            <div class="detail-info-item full-width">
-                                <span class="detail-info-label">ADRES</span>
-                                <span class="detail-info-value">${lawyer.address || '-'}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                lawyersDisplay.appendChild(lawyerDiv);
-            });
             
             // Ek Müvekkilleri göster - YENİ katlanabilir tasarım
             const additionalClientsDisplay = document.getElementById('additionalClientsDisplay');
@@ -3764,7 +3810,28 @@ function showDetails(caseId) {
                             </div>
                         </div>
                     `;
-                    additionalClientsDisplay.appendChild(clientDiv);
+                    const addedClientDiv = additionalClientsDisplay.appendChild(clientDiv);
+
+                    // YENİ: Bu ek müvekkilin vekilleri varsa ekle
+                    const clientContent = addedClientDiv.querySelector('.collapsible-content');
+                    if (data.client_additional_lawyers && data.client_additional_lawyers[index + 1]) {
+                        data.client_additional_lawyers[index + 1].forEach(lawyer => {
+                            const lawyerBox = document.createElement('div');
+                            lawyerBox.className = 'lawyer-info-box';
+                            lawyerBox.innerHTML = `
+                                <div class="lawyer-info-header">
+                                    <i class="material-icons">account_balance</i>
+                                    <span>Vekil: ${lawyer.name}</span>
+                                </div>
+                                <div class="lawyer-info-details">
+                                    ${lawyer.bar ? `<div><strong>Baro:</strong> ${lawyer.bar}</div>` : ''}
+                                    ${lawyer.bar_number ? `<div><strong>Sicil No:</strong> ${lawyer.bar_number}</div>` : ''}
+                                    ${lawyer.phone ? `<div><strong>Telefon:</strong> ${lawyer.phone}</div>` : ''}
+                                </div>
+                            `;
+                            clientContent.appendChild(lawyerBox);
+                        });
+                    }
                 });
             }
             
@@ -3775,17 +3842,6 @@ function showDetails(caseId) {
                 data.additional_opponents.forEach((opponent, index) => {
                     const opponentDiv = document.createElement('div');
                     opponentDiv.className = 'collapsible-person-card';
-                    
-                    // Vekil bilgisi varsa ekle
-                    let lawyerInfo = '';
-                    if (opponent.lawyer && opponent.lawyer.trim() !== '' && opponent.lawyer !== '-') {
-                        lawyerInfo = `
-                            <div class="detail-info-item full-width" style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px;">
-                                <span class="detail-info-label">VEKİLİ</span>
-                                <span class="detail-info-value" style="font-weight: 600; color: #2c3e50;">${opponent.lawyer}</span>
-                            </div>
-                        `;
-                    }
                     
                     opponentDiv.innerHTML = `
                         <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
@@ -3820,11 +3876,31 @@ function showDetails(caseId) {
                                     <span class="detail-info-label">ADRES</span>
                                     <span class="detail-info-value">${opponent.address || '-'}</span>
                                 </div>
-                                ${lawyerInfo}
                             </div>
                         </div>
                     `;
-                    additionalOpponentsDisplay.appendChild(opponentDiv);
+                    const addedOpponentDiv = additionalOpponentsDisplay.appendChild(opponentDiv);
+
+                    // YENİ: Bu ek karşı tarafın vekilleri varsa ekle
+                    const opponentContent = addedOpponentDiv.querySelector('.collapsible-content');
+                    if (data.opponent_additional_lawyers && data.opponent_additional_lawyers[index + 1]) {
+                        data.opponent_additional_lawyers[index + 1].forEach(lawyer => {
+                            const lawyerBox = document.createElement('div');
+                            lawyerBox.className = 'lawyer-info-box';
+                            lawyerBox.innerHTML = `
+                                <div class="lawyer-info-header">
+                                    <i class="material-icons">account_balance</i>
+                                    <span>Vekil: ${lawyer.name}</span>
+                                </div>
+                                <div class="lawyer-info-details">
+                                    ${lawyer.bar ? `<div><strong>Baro:</strong> ${lawyer.bar}</div>` : ''}
+                                    ${lawyer.bar_number ? `<div><strong>Sicil No:</strong> ${lawyer.bar_number}</div>` : ''}
+                                    ${lawyer.phone ? `<div><strong>Telefon:</strong> ${lawyer.phone}</div>` : ''}
+                                </div>
+                            `;
+                            opponentContent.appendChild(lawyerBox);
+                        });
+                    }
                 });
             }
             

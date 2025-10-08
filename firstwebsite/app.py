@@ -1173,10 +1173,11 @@ def odemeler():
                 return redirect(url_for('odemeler'))
             
         name = request.form['name']
-        surname = request.form['surname']
-        tc = request.form['tc']
+        surname = request.form.get('surname', '')  # Kurum için boş olabilir
+        tc = request.form.get('tc', '')
         currency = request.form['currency']
         installments = request.form['installments']
+        entity_type = request.form.get('entity_type', 'person')  # Yeni alan
 
         try:
             # Frontend'den gelen tutarı direkt olarak çevir, hiçbir temizleme işlemi yapmadan
@@ -1198,12 +1199,16 @@ def odemeler():
         # Tarih alanlarını datetime.date nesnelerine dönüştür
         registration_date = None
         due_date = None
+        payment_date = None
         
         if request.form.get('registration_date'):
             registration_date = datetime.strptime(request.form.get('registration_date'), '%Y-%m-%d').date()
         
         if request.form.get('due_date'):
             due_date = datetime.strptime(request.form.get('due_date'), '%Y-%m-%d').date()
+        
+        if request.form.get('payment_date'):
+            payment_date = datetime.strptime(request.form.get('payment_date'), '%Y-%m-%d').date()
         
         # Ödeme türünü, durumunu ve açıklamayı al
         payment_type = request.form.get('payment_type')
@@ -1223,7 +1228,9 @@ def odemeler():
             installments=installments,
             registration_date=registration_date,
             due_date=due_date,
+            payment_date=payment_date,  # Yeni alan
             payment_type=payment_type,
+            entity_type=entity_type,  # Yeni alan
             description=description,
             status=status_tr
         )
@@ -1266,8 +1273,9 @@ def update_client(client_id):
         if client:
             old_status = client.status
             client.name = data['name']
-            client.surname = data['surname']
-            client.tc = data['tc']
+            client.surname = data.get('surname', '')
+            client.tc = data.get('tc', '')
+            client.entity_type = data.get('entity_type', 'person')
             
             # Frontend'den gelen tutarı doğrudan dönüştür, hiçbir temizleme yapmadan
             try:
@@ -1291,6 +1299,7 @@ def update_client(client_id):
             
             client.currency = data['currency']
             client.installments = data['installments']
+            client.payment_type = data.get('payment_type')
             
             # Tarih alanlarını datetime.date nesnesine dönüştür
             if data.get('registration_date'):
@@ -1308,6 +1317,14 @@ def update_client(client_id):
                     return jsonify({'success': False, 'error': 'Geçersiz son ödeme tarihi formatı'})
             else:
                 client.due_date = None
+            
+            if data.get('payment_date'):
+                try:
+                    client.payment_date = datetime.strptime(data['payment_date'], '%Y-%m-%d').date()
+                except ValueError:
+                    return jsonify({'success': False, 'error': 'Geçersiz ödeme tarihi formatı'})
+            else:
+                client.payment_date = None
             
             # Status alanını güvenli bir şekilde al ve güncelle
             new_status = data.get('status')
@@ -1341,6 +1358,318 @@ def update_client(client_id):
         # Hata ayrıntılarını kaydet
         app.logger.error(f"update_client hatası: {str(e)}")
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/export_payments')
+@login_required
+def export_payments():
+    """Ödeme kayıtlarını Excel veya PDF formatında dışa aktarır"""
+    if not current_user.has_permission('odeme_goruntule'):
+        flash('Ödeme görüntüleme yetkiniz bulunmamaktadır.', 'error')
+        return redirect(url_for('odemeler'))
+    
+    try:
+        # Query parametrelerini al
+        format_type = request.args.get('format', 'excel')
+        entity_filter = request.args.get('entity_filter', 'all')
+        filter_type = request.args.get('filter_type', 'all_records')
+        start_date_str = request.args.get('start_date')
+        end_date_str = request.args.get('end_date')
+        client_id = request.args.get('client_id')
+        include_installments = request.args.get('include_installments') == 'on'
+        include_payment_dates = request.args.get('include_payment_dates') == 'on'
+        
+        # Base query
+        query = Client.query
+        
+        # Entity filtresi uygula
+        if entity_filter == 'person':
+            query = query.filter(Client.entity_type == 'person')
+        elif entity_filter == 'company':
+            query = query.filter(Client.entity_type == 'company')
+        
+        # Filtreleme tipine göre query'i ayarla
+        if filter_type == 'date_range' and start_date_str and end_date_str:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            query = query.filter(Client.registration_date.between(start_date, end_date))
+        elif filter_type == 'specific_client' and client_id:
+            query = query.filter(Client.id == int(client_id))
+        
+        # Verileri çek
+        clients = query.all()
+        
+        if format_type == 'excel':
+            return generate_excel_export(clients, include_installments, include_payment_dates)
+        else:  # pdf
+            return generate_pdf_export(clients, include_installments, include_payment_dates)
+            
+    except Exception as e:
+        app.logger.error(f"Export error: {str(e)}")
+        flash(f'Dışa aktarma sırasında bir hata oluştu: {str(e)}', 'error')
+        return redirect(url_for('odemeler'))
+
+def generate_excel_export(clients, include_installments=True, include_payment_dates=True):
+    """Excel dosyası oluşturur"""
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from io import BytesIO
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Ödeme Kayıtları"
+        
+        # Başlık satırı
+        headers = ['Ödeme Türü', 'Ad', 'Soyad/Kurum', 'TC/Vergi No', 'Tutar', 'Para Birimi']
+        
+        if include_installments:
+            headers.append('Taksit Sayısı')
+        
+        headers.extend(['Borç Kayıt Tarihi', 'Son Ödeme Tarihi'])
+        
+        if include_payment_dates:
+            headers.append('Ödeme Tarihi')
+        
+        headers.extend(['Durum', 'Açıklama'])
+        
+        # Başlık stilini ayarla
+        header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
+        header_font = Font(bold=True, color='FFFFFF', size=11)
+        header_alignment = Alignment(horizontal='center', vertical='center')
+        border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
+        )
+        
+        # Başlıkları yaz
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.value = header
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_alignment
+            cell.border = border
+        
+        # Veri satırları
+        for row_num, client in enumerate(clients, 2):
+            col_num = 1
+            
+            # Ödeme Türü
+            ws.cell(row=row_num, column=col_num).value = client.payment_type or '-'
+            ws.cell(row=row_num, column=col_num).border = border
+            col_num += 1
+            
+            # Ad
+            ws.cell(row=row_num, column=col_num).value = client.name
+            ws.cell(row=row_num, column=col_num).border = border
+            col_num += 1
+            
+            # Soyad/Kurum
+            surname_value = client.surname if client.surname and client.surname != '-' else '-'
+            if client.entity_type == 'company':
+                surname_value = f"{surname_value} (Kurum)"
+            ws.cell(row=row_num, column=col_num).value = surname_value
+            ws.cell(row=row_num, column=col_num).border = border
+            col_num += 1
+            
+            # TC/Vergi No
+            ws.cell(row=row_num, column=col_num).value = client.tc or '-'
+            ws.cell(row=row_num, column=col_num).border = border
+            col_num += 1
+            
+            # Tutar
+            ws.cell(row=row_num, column=col_num).value = float(client.amount)
+            ws.cell(row=row_num, column=col_num).number_format = '#,##0.00'
+            ws.cell(row=row_num, column=col_num).border = border
+            col_num += 1
+            
+            # Para Birimi
+            ws.cell(row=row_num, column=col_num).value = client.currency
+            ws.cell(row=row_num, column=col_num).border = border
+            col_num += 1
+            
+            # Taksit Sayısı (opsiyonel)
+            if include_installments:
+                installment_value = client.installments if client.installments and client.installments > 0 else '-'
+                ws.cell(row=row_num, column=col_num).value = installment_value
+                ws.cell(row=row_num, column=col_num).border = border
+                col_num += 1
+            
+            # Borç Kayıt Tarihi
+            reg_date_value = client.registration_date.strftime('%d.%m.%Y') if client.registration_date else '-'
+            ws.cell(row=row_num, column=col_num).value = reg_date_value
+            ws.cell(row=row_num, column=col_num).border = border
+            col_num += 1
+            
+            # Son Ödeme Tarihi
+            due_date_value = client.due_date.strftime('%d.%m.%Y') if client.due_date else '-'
+            ws.cell(row=row_num, column=col_num).value = due_date_value
+            ws.cell(row=row_num, column=col_num).border = border
+            col_num += 1
+            
+            # Ödeme Tarihi (opsiyonel)
+            if include_payment_dates:
+                payment_date_value = client.payment_date.strftime('%d.%m.%Y') if client.payment_date else '-'
+                ws.cell(row=row_num, column=col_num).value = payment_date_value
+                ws.cell(row=row_num, column=col_num).border = border
+                col_num += 1
+            
+            # Durum
+            ws.cell(row=row_num, column=col_num).value = client.status
+            ws.cell(row=row_num, column=col_num).border = border
+            col_num += 1
+            
+            # Açıklama
+            ws.cell(row=row_num, column=col_num).value = client.description or '-'
+            ws.cell(row=row_num, column=col_num).border = border
+        
+        # Sütun genişliklerini ayarla
+        for column in ws.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # Dosyayı BytesIO'ya kaydet
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        # Response oluştur
+        filename = f'odeme_kayitlari_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except ImportError:
+        flash('Excel export için openpyxl kütüphanesi yüklü değil.', 'error')
+        return redirect(url_for('odemeler'))
+    except Exception as e:
+        app.logger.error(f"Excel generation error: {str(e)}")
+        flash(f'Excel oluşturma hatası: {str(e)}', 'error')
+        return redirect(url_for('odemeler'))
+
+def generate_pdf_export(clients, include_installments=True, include_payment_dates=True):
+    """PDF dosyası oluşturur"""
+    try:
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib import colors
+        from reportlab.lib.units import cm
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        from io import BytesIO
+        
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=1*cm, leftMargin=1*cm, topMargin=1*cm, bottomMargin=1*cm)
+        
+        elements = []
+        styles = getSampleStyleSheet()
+        
+        # Başlık
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=16,
+            textColor=colors.HexColor('#1f4788'),
+            spaceAfter=20,
+            alignment=1  # Center
+        )
+        title = Paragraph(f"Ödeme Kayıtları - {datetime.now().strftime('%d.%m.%Y')}", title_style)
+        elements.append(title)
+        elements.append(Spacer(1, 0.5*cm))
+        
+        # Tablo verilerini hazırla
+        data = []
+        
+        # Başlık satırı
+        headers = ['Ödeme Türü', 'Ad', 'Soyad/Kurum', 'TC/Vergi No', 'Tutar']
+        
+        if include_installments:
+            headers.append('Taksit')
+        
+        headers.extend(['Kayıt Tarihi', 'Son Ödeme'])
+        
+        if include_payment_dates:
+            headers.append('Ödeme Tarihi')
+        
+        headers.append('Durum')
+        
+        data.append(headers)
+        
+        # Veri satırları
+        for client in clients:
+            row = [
+                client.payment_type or '-',
+                client.name,
+                f"{client.surname or '-'} {'(K)' if client.entity_type == 'company' else ''}",
+                client.tc or '-',
+                f"{client.amount:.2f} {client.currency}"
+            ]
+            
+            if include_installments:
+                row.append(str(client.installments) if client.installments and client.installments > 0 else '-')
+            
+            row.extend([
+                client.registration_date.strftime('%d.%m.%Y') if client.registration_date else '-',
+                client.due_date.strftime('%d.%m.%Y') if client.due_date else '-'
+            ])
+            
+            if include_payment_dates:
+                row.append(client.payment_date.strftime('%d.%m.%Y') if client.payment_date else '-')
+            
+            row.append(client.status)
+            
+            data.append(row)
+        
+        # Tablo oluştur
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey])
+        ]))
+        
+        elements.append(table)
+        
+        # PDF oluştur
+        doc.build(elements)
+        buffer.seek(0)
+        
+        filename = f'odeme_kayitlari_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+        return send_file(
+            buffer,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except ImportError:
+        flash('PDF export için reportlab kütüphanesi yüklü değil.', 'error')
+        return redirect(url_for('odemeler'))
+    except Exception as e:
+        app.logger.error(f"PDF generation error: {str(e)}")
+        flash(f'PDF oluşturma hatası: {str(e)}', 'error')
+        return redirect(url_for('odemeler'))
 
 @app.route('/musteri_yonetimi')
 def musteri_yonetimi():
@@ -1579,31 +1908,51 @@ def case_details(case_id):
                         city = city_name
                         break
         
-        # Ek müvekkil, karşı taraf ve vekil bilgilerini JSON'dan parse et
+        # Ek müvekkil, karşı taraf bilgilerini JSON'dan parse et
         additional_clients = []
         additional_opponents = []
-        additional_lawyers = []
-        
+
         if case_file.additional_clients_json:
             try:
                 import json
                 additional_clients = json.loads(case_file.additional_clients_json)
             except:
                 additional_clients = []
-                
+
         if case_file.additional_opponents_json:
             try:
                 import json
                 additional_opponents = json.loads(case_file.additional_opponents_json)
             except:
                 additional_opponents = []
-                
-        if case_file.additional_lawyers_json:
-            try:
-                import json
-                additional_lawyers = json.loads(case_file.additional_lawyers_json)
-            except:
-                additional_lawyers = []
+
+        # YENİ: Vekilleri taraf bazlı grupla
+        lawyers_grouped = case_file.get_all_lawyers_grouped()
+
+        # Frontend için vekilleri dönüştür
+        def format_lawyers(lawyer_list):
+            return [{
+                'id': lawyer.id,
+                'name': lawyer.name,
+                'bar': lawyer.bar or '',
+                'bar_number': lawyer.bar_number or '',
+                'phone': lawyer.phone or '',
+                'address': lawyer.address or ''
+            } for lawyer in lawyer_list]
+
+        # Müvekkil vekilleri
+        client_main_lawyers = format_lawyers(lawyers_grouped['client']['main'])
+        client_additional_lawyers = {
+            idx: format_lawyers(lawyers)
+            for idx, lawyers in lawyers_grouped['client']['additional'].items()
+        }
+
+        # Karşı taraf vekilleri
+        opponent_main_lawyers = format_lawyers(lawyers_grouped['opponent']['main'])
+        opponent_additional_lawyers = {
+            idx: format_lawyers(lawyers)
+            for idx, lawyers in lawyers_grouped['opponent']['additional'].items()
+        }
         
         return jsonify({
             'success': True,
@@ -1637,17 +1986,22 @@ def case_details(case_id):
             'opponent_phone': case_file.opponent_phone,
             'opponent_address': case_file.opponent_address,
             
-            # Vekil bilgileri
+            # ESKİ Vekil bilgileri (geriye dönük uyumluluk için)
             'opponent_lawyer': case_file.opponent_lawyer,
             'opponent_lawyer_bar': case_file.opponent_lawyer_bar,
             'opponent_lawyer_bar_number': case_file.opponent_lawyer_bar_number,
             'opponent_lawyer_phone': case_file.opponent_lawyer_phone,
             'opponent_lawyer_address': case_file.opponent_lawyer_address,
-            
-            # Ek müvekkiller, karşı taraflar ve vekiller
+
+            # Ek müvekkiller ve karşı taraflar
             'additional_clients': additional_clients,
             'additional_opponents': additional_opponents,
-            'additional_lawyers': additional_lawyers,
+
+            # YENİ: Taraf bazlı vekiller
+            'client_main_lawyers': client_main_lawyers,
+            'client_additional_lawyers': client_additional_lawyers,
+            'opponent_main_lawyers': opponent_main_lawyers,
+            'opponent_additional_lawyers': opponent_additional_lawyers,
             
             'expenses': [{
                 'id': expense.id,
