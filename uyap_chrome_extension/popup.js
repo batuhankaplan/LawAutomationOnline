@@ -3,6 +3,13 @@
 let currentCases = [];
 let selectedCases = new Set();
 let settings = {};
+let activeFilters = {
+    fileType: '',
+    courtType: '',
+    status: '',
+    dateFrom: '',
+    dateTo: ''
+};
 
 console.log('Popup.js yükleniyor...');
 
@@ -172,7 +179,44 @@ function initializeEventListeners() {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-            filterCases(e.target.value);
+            applyAllFilters();
+        });
+    }
+
+    // Detaylı Filtreler toggle
+    const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+    const filtersPanel = document.getElementById('filtersPanel');
+    if (toggleFiltersBtn && filtersPanel) {
+        toggleFiltersBtn.addEventListener('click', () => {
+            if (filtersPanel.style.display === 'none') {
+                filtersPanel.style.display = 'block';
+            } else {
+                filtersPanel.style.display = 'none';
+            }
+        });
+    }
+
+    // Dosya türü değişimi - mahkeme türlerini güncelle
+    const filterFileType = document.getElementById('filterFileType');
+    if (filterFileType) {
+        filterFileType.addEventListener('change', (e) => {
+            updateCourtTypes(e.target.value);
+        });
+    }
+
+    // Filtreleri uygula
+    const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+    if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', () => {
+            applyAllFilters();
+        });
+    }
+
+    // Filtreleri temizle
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+            clearAllFilters();
         });
     }
 
@@ -562,14 +606,134 @@ function showResults(summary) {
     showElement('actionButtons');
 }
 
-// Arama/Filtreleme
-function filterCases(query) {
+// Mahkeme türlerini güncelle (dosya türüne göre cascading)
+function updateCourtTypes(fileType) {
+    const courtTypeGroup = document.getElementById('courtTypeGroup');
+    const courtTypeSelect = document.getElementById('filterCourtType');
+
+    if (!fileType) {
+        courtTypeGroup.style.display = 'none';
+        return;
+    }
+
+    courtTypeGroup.style.display = 'block';
+    courtTypeSelect.innerHTML = '<option value="">Tümü</option>';
+
+    const courtTypes = {
+        'hukuk': [
+            'İş Mahkemesi',
+            'Asliye Hukuk Mahkemesi',
+            'Sulh Hukuk Mahkemesi',
+            'Aile Mahkemesi',
+            'Tüketici Mahkemesi',
+            'Fikri ve Sınai Haklar Mahkemesi'
+        ],
+        'ceza': [
+            'Ağır Ceza Mahkemesi',
+            'Asliye Ceza Mahkemesi',
+            'Sulh Ceza Mahkemesi',
+            'Çocuk Mahkemesi'
+        ],
+        'icra': [
+            'İcra Müdürlüğü',
+            'İcra Hukuk Mahkemesi'
+        ],
+        'idare': [
+            'İdare Mahkemesi',
+            'Vergi Mahkemesi'
+        ]
+    };
+
+    const types = courtTypes[fileType] || [];
+    types.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type;
+        courtTypeSelect.appendChild(option);
+    });
+}
+
+// Tüm filtreleri uygula
+function applyAllFilters() {
+    const searchQuery = document.getElementById('searchInput')?.value || '';
+    const fileType = document.getElementById('filterFileType')?.value || '';
+    const courtType = document.getElementById('filterCourtType')?.value || '';
+    const status = document.getElementById('filterStatus')?.value || '';
+    const dateFrom = document.getElementById('filterDateFrom')?.value || '';
+    const dateTo = document.getElementById('filterDateTo')?.value || '';
+
+    activeFilters = { fileType, courtType, status, dateFrom, dateTo };
+
     const filtered = currentCases.filter(caseData => {
-        const searchText = `${caseData.dosyaNo} ${caseData.birim} ${caseData.dosyaTuru}`.toLowerCase();
-        return searchText.includes(query.toLowerCase());
+        // Arama filtresi
+        if (searchQuery) {
+            const searchText = `${caseData.dosyaNo} ${caseData.birim} ${caseData.dosyaTuru}`.toLowerCase();
+            if (!searchText.includes(searchQuery.toLowerCase())) {
+                return false;
+            }
+        }
+
+        // Dosya türü filtresi
+        if (fileType && caseData.dosyaTuru) {
+            if (!caseData.dosyaTuru.toLowerCase().includes(fileType)) {
+                return false;
+            }
+        }
+
+        // Mahkeme türü filtresi
+        if (courtType && caseData.birim) {
+            if (!caseData.birim.includes(courtType)) {
+                return false;
+            }
+        }
+
+        // Durum filtresi
+        if (status && caseData.dosyaDurumu) {
+            if (caseData.dosyaDurumu !== status) {
+                return false;
+            }
+        }
+
+        // Tarih aralığı filtresi
+        if (dateFrom || dateTo) {
+            if (caseData.acilisTarihi) {
+                const caseDate = parseTurkishDate(caseData.acilisTarihi);
+                if (dateFrom && caseDate < new Date(dateFrom)) {
+                    return false;
+                }
+                if (dateTo && caseDate > new Date(dateTo)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     });
 
     renderCaseList(filtered);
+}
+
+// Filtreleri temizle
+function clearAllFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('filterFileType').value = '';
+    document.getElementById('filterCourtType').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+
+    document.getElementById('courtTypeGroup').style.display = 'none';
+    activeFilters = { fileType: '', courtType: '', status: '', dateFrom: '', dateTo: '' };
+
+    renderCaseList(currentCases);
+}
+
+// Türkçe tarihi parse et (DD.MM.YYYY formatı)
+function parseTurkishDate(dateStr) {
+    if (!dateStr) return new Date(0);
+    const parts = dateStr.split('.');
+    if (parts.length !== 3) return new Date(dateStr);
+    return new Date(parts[2], parts[1] - 1, parts[0]);
 }
 
 // Ayarları kaydet

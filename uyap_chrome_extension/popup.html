@@ -66,6 +66,58 @@
                     <input type="text" id="searchInput" placeholder="Dosya numarası veya müvekkil adı ile ara...">
                 </div>
 
+                <!-- Advanced Filters -->
+                <div class="filters-section">
+                    <button class="btn btn-small btn-outline" id="toggleFiltersBtn">
+                        <span class="icon">🔍</span> Detaylı Filtreler
+                    </button>
+
+                    <div class="filters-panel" id="filtersPanel" style="display: none;">
+                        <div class="filter-group">
+                            <label for="filterFileType">Dosya Türü:</label>
+                            <select id="filterFileType">
+                                <option value="">Tümü</option>
+                                <option value="hukuk">Hukuk</option>
+                                <option value="ceza">Ceza</option>
+                                <option value="icra">İcra</option>
+                                <option value="idare">İdare</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group" id="courtTypeGroup" style="display: none;">
+                            <label for="filterCourtType">Mahkeme Türü:</label>
+                            <select id="filterCourtType">
+                                <option value="">Tümü</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="filterStatus">Dosya Durumu:</label>
+                            <select id="filterStatus">
+                                <option value="">Tümü</option>
+                                <option value="Açık">Açık</option>
+                                <option value="Kapalı">Kapalı</option>
+                                <option value="Beklemede">Beklemede</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="filterDateFrom">Açılış Tarihi (Başlangıç):</label>
+                            <input type="date" id="filterDateFrom">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="filterDateTo">Açılış Tarihi (Bitiş):</label>
+                            <input type="date" id="filterDateTo">
+                        </div>
+
+                        <div class="filter-actions">
+                            <button class="btn btn-small btn-primary" id="applyFiltersBtn">Uygula</button>
+                            <button class="btn btn-small btn-outline" id="clearFiltersBtn">Temizle</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="case-count" id="caseCount">
                     <span id="totalCases">0</span> dosya bulundu
                 </div>
