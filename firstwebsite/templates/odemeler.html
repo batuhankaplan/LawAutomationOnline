@@ -6,6 +6,15 @@
     <!-- Chart.js kütüphanesi -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- jQuery (Select2 için gerekli) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <div class="table-container">
         <div class="table-header">
             <h2>Müvekkil Ödeme Kayıtları</h2>
@@ -28,6 +37,57 @@
             {% endif %}
             </div>
         </div>
+
+        <!-- Filtreleme Bölümü -->
+        <div class="filter-section" style="background: white; padding: 16px 20px; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+            <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;">
+                <!-- Kişi/Kurum Filtresi -->
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #555;">
+                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 4px;">business</i>
+                        Kişi/Kurum
+                    </label>
+                    <select id="filterEntityType" class="form-control" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd;">
+                        <option value="all">Tümü</option>
+                        <option value="person">Kişi</option>
+                        <option value="company">Kurum</option>
+                    </select>
+                </div>
+
+                <!-- Ödeme Durumu Filtresi -->
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #555;">
+                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 4px;">payment</i>
+                        Ödeme Durumu
+                    </label>
+                    <select id="filterPaymentStatus" class="form-control" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd;">
+                        <option value="all">Tümü</option>
+                        <option value="paid">Ödendi</option>
+                        <option value="unpaid">Ödenmedi</option>
+                    </select>
+                </div>
+
+                <!-- Kayıtlı Müvekkil Filtresi -->
+                <div style="flex: 2; min-width: 250px;">
+                    <label style="display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #555;">
+                        <i class="material-icons" style="font-size: 16px; vertical-align: middle; margin-right: 4px;">contacts</i>
+                        Kayıtlı Müvekkil
+                    </label>
+                    <select id="filterRegisteredClient" class="form-control" style="width: 100%;">
+                        <option value="">Tüm Müvekkiller</option>
+                    </select>
+                </div>
+
+                <!-- Filtreleri Temizle Butonu -->
+                <div>
+                    <button id="clearFiltersBtn" class="btn" style="padding: 8px 16px; background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%); border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; color: #555; transition: all 0.3s ease;">
+                        <i class="material-icons" style="font-size: 18px;">clear_all</i>
+                        Temizle
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <table class="data-table modern-table">
             <thead class="modern-header">
                 <tr>
@@ -111,7 +171,12 @@
             </thead>
             <tbody>
                 {% for client in clients %}
-                <tr data-client-id="{{ client.id }}" data-description="{{ client.description }}" data-payment-type="{{ client.payment_type if client.payment_type else '' }}">
+                <tr data-client-id="{{ client.id }}"
+                    data-description="{{ client.description }}"
+                    data-payment-type="{{ client.payment_type if client.payment_type else '' }}"
+                    data-entity-type="{{ client.entity_type }}"
+                    data-status="{{ client.status }}"
+                    data-payment-client-id="{{ client.payment_client_id if client.payment_client_id else '' }}">
                     <td contenteditable="false">
                         {% if client.payment_type %}
                             {% set type_class = '' %}
@@ -293,6 +358,16 @@
                         </div>
                     </div>
 
+                    <!-- Kayıtlı Müvekkil Dropdown -->
+                    <div id="registeredClientSection" class="form-row" style="display: none; margin-bottom: 20px;">
+                        <div class="form-group full-width">
+                            <label for="registeredClientSelect">Kayıtlı Müvekkil Seçin</label>
+                            <select id="registeredClientSelect" class="form-control" style="width: 100%;">
+                                <option value="">Müvekkil seçiniz veya arayın...</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group full-width">
                             <label for="paymentType">Ödeme Türü</label>
@@ -309,15 +384,18 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group full-width">
-                            <label for="addEntityType">Kişi/Kurum</label>
-                            <select id="addEntityType" name="entity_type" class="form-control" required>
-                                <option value="person">Kişi</option>
-                                <option value="company">Kurum</option>
-                            </select>
+
+                    <!-- Yeni Müvekkil Formu -->
+                    <div id="newClientSection">
+                        <div class="form-row">
+                            <div class="form-group full-width">
+                                <label for="addEntityType">Kişi/Kurum</label>
+                                <select id="addEntityType" name="entity_type" class="form-control" required>
+                                    <option value="person">Kişi</option>
+                                    <option value="company">Kurum</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
                     <div class="form-row" id="addNameSurnameRow">
                         <div class="form-group" id="addNameGroup">
                             <label for="addName" id="addNameLabel">Ad</label>
@@ -392,6 +470,15 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Kayıtlı Müvekkile Ekle Seçeneği -->
+                    <div class="form-row" style="margin-top: 16px;">
+                        <div class="form-group full-width" style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="saveToRegistered" name="save_to_registered" style="width: auto; margin: 0;">
+                            <label for="saveToRegistered" style="margin: 0; font-weight: 500; cursor: pointer;">Bu müvekkili kayıtlı müvekkillere ekle</label>
+                        </div>
+                    </div>
+                    </div> <!-- newClientSection kapatma -->
                 </div>
                 <div class="modal-footer modern-edit-footer">
                     <button type="submit" class="btn modern-save-btn" id="saveAddPaymentBtn">
@@ -1670,6 +1757,75 @@
             background-color: #1a1d24;
             box-shadow: 0 4px 8px rgba(44, 48, 60, 0.3);
             transform: translateY(-1px);
+        }
+
+        /* Kayıtlı Müvekkil Seçim Butonu Stilleri */
+        .client-type-selector {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .client-type-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 20px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .client-type-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+            color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .client-type-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .client-type-btn .material-icons {
+            font-size: 22px;
+        }
+
+        /* Kayıtlı Müvekkil Dropdown Container */
+        #registeredClientSection {
+            display: none;
+        }
+
+        #registeredClientSection.active {
+            display: block;
+        }
+
+        /* Select2 Özelleştirmesi */
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            height: 42px;
+            padding: 6px 12px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px;
+            color: #333;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px;
         }
 
         .modern-add-btn i {
@@ -3592,7 +3748,128 @@
         if (addPaymentBtn) {
             addPaymentBtn.addEventListener('click', function() {
                 addPaymentModal.style.display = 'flex';
+                // Select2 initialize et
+                if (!$('#registeredClientSelect').hasClass('select2-hidden-accessible')) {
+                    loadRegisteredClients();
+                }
             });
+        }
+
+        // Yeni Müvekkil / Kayıtlı Müvekkil Toggle
+        const newClientBtn = document.getElementById('newClientBtn');
+        const registeredClientBtn = document.getElementById('registeredClientBtn');
+        const newClientSection = document.getElementById('newClientSection');
+        const registeredClientSection = document.getElementById('registeredClientSection');
+
+        if (newClientBtn && registeredClientBtn) {
+            newClientBtn.addEventListener('click', function() {
+                newClientBtn.classList.add('active');
+                registeredClientBtn.classList.remove('active');
+                newClientSection.style.display = 'block';
+                registeredClientSection.style.display = 'none';
+
+                // Form alanlarını temizle
+                document.getElementById('addEntityType').value = 'person';
+                document.getElementById('addName').value = '';
+                document.getElementById('addSurname').value = '';
+                document.getElementById('addTc').value = '';
+
+                // Required attribute'ları geri ekle
+                document.getElementById('addName').required = true;
+                document.getElementById('addSurname').required = true;
+            });
+
+            registeredClientBtn.addEventListener('click', function() {
+                registeredClientBtn.classList.add('active');
+                newClientBtn.classList.remove('active');
+                newClientSection.style.display = 'none';
+                registeredClientSection.style.display = 'block';
+
+                // Required attribute'ları kaldır (kayıtlı müvekkil seçilecek)
+                document.getElementById('addName').required = false;
+                document.getElementById('addSurname').required = false;
+            });
+        }
+
+        // Kayıtlı müvekkilleri yükle ve Select2 initialize et
+        function loadRegisteredClients() {
+            fetch('/api/get_registered_payment_clients')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const select = $('#registeredClientSelect');
+
+                        // Mevcut seçenekleri temizle (placeholder hariç)
+                        select.find('option:not(:first)').remove();
+
+                        // Yeni seçenekleri ekle
+                        data.clients.forEach(client => {
+                            const option = new Option(client.display_text, client.id, false, false);
+                            // Data attribute'lar ekle (auto-fill için)
+                            option.setAttribute('data-entity-type', client.entity_type);
+                            option.setAttribute('data-first-name', client.first_name);
+                            option.setAttribute('data-surname', client.surname);
+                            option.setAttribute('data-identity-number', client.identity_number);
+                            select.append(option);
+                        });
+
+                        // Select2 initialize et
+                        select.select2({
+                            placeholder: 'Müvekkil seçiniz veya arayın...',
+                            allowClear: true,
+                            language: {
+                                noResults: function() {
+                                    return "Sonuç bulunamadı";
+                                },
+                                searching: function() {
+                                    return "Aranıyor...";
+                                }
+                            }
+                        });
+
+                        // Seçim değiştiğinde auto-fill
+                        select.on('change', function() {
+                            const selectedOption = $(this).find(':selected');
+
+                            if (selectedOption.val()) {
+                                // Seçilen müvekkil bilgilerini form alanlarına doldur
+                                const entityType = selectedOption.attr('data-entity-type');
+                                const firstName = selectedOption.attr('data-first-name');
+                                const surname = selectedOption.attr('data-surname');
+                                const identityNumber = selectedOption.attr('data-identity-number');
+
+                                document.getElementById('addEntityType').value = entityType;
+                                document.getElementById('addName').value = firstName;
+                                document.getElementById('addSurname').value = surname || '';
+                                document.getElementById('addTc').value = identityNumber || '';
+
+                                // Entity type değiştiğinde label'ları güncelle
+                                if (entityType === 'company') {
+                                    document.querySelector('label[for="addName"]').textContent = 'Kurum Adı';
+                                    document.querySelector('label[for="addSurname"]').textContent = 'Kurum Ek Bilgi (Opsiyonel)';
+                                    document.querySelector('label[for="addTc"]').textContent = 'Vergi/Mersis/Ticaret Sicil No';
+                                    document.getElementById('addSurname').required = false;
+                                } else {
+                                    document.querySelector('label[for="addName"]').textContent = 'Ad';
+                                    document.querySelector('label[for="addSurname"]').textContent = 'Soyad';
+                                    document.querySelector('label[for="addTc"]').textContent = 'TC Kimlik No';
+                                    document.getElementById('addSurname').required = true;
+                                }
+                            } else {
+                                // Seçim temizlenirse form alanlarını da temizle
+                                document.getElementById('addEntityType').value = 'person';
+                                document.getElementById('addName').value = '';
+                                document.getElementById('addSurname').value = '';
+                                document.getElementById('addTc').value = '';
+                            }
+                        });
+                    } else {
+                        console.error('Kayıtlı müvekkiller yüklenemedi:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('API hatası:', error);
+                });
         }
 
         // Modal kapatma
@@ -3651,6 +3928,25 @@
 
                 // Form verisini oluştur
                 const formData = new FormData();
+
+                // Kayıtlı müvekkil sistemi kontrolü
+                const isRegisteredClient = registeredClientBtn.classList.contains('active');
+                formData.append('client_type', isRegisteredClient ? 'registered' : 'new');
+
+                if (isRegisteredClient) {
+                    // Kayıtlı müvekkil seçildi
+                    const selectedClientId = $('#registeredClientSelect').val();
+                    if (!selectedClientId) {
+                        alert('Lütfen kayıtlı müvekkil seçiniz.');
+                        return;
+                    }
+                    formData.append('registered_client_id', selectedClientId);
+                } else {
+                    // Yeni müvekkil
+                    const saveToRegistered = document.getElementById('saveToRegistered').checked;
+                    formData.append('save_to_registered', saveToRegistered ? 'true' : 'false');
+                }
+
                 formData.append('payment_type', document.getElementById('paymentType').value);
                 formData.append('entity_type', document.getElementById('addEntityType').value);
                 formData.append('name', document.getElementById('addName').value);
@@ -7777,6 +8073,105 @@
         }
 
         // ========== ENTITY FILTER CHECKBOXES EVENT LISTENERS SONU ==========
+
+        // ========== FİLTRELEME SİSTEMİ ==========
+
+        // Filtreleme için kayıtlı müvekkil select2'yi yükle
+        function loadFilterRegisteredClients() {
+            fetch('/api/get_registered_payment_clients')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const select = $('#filterRegisteredClient');
+
+                        // Mevcut seçenekleri temizle (placeholder hariç)
+                        select.find('option:not(:first)').remove();
+
+                        // Yeni seçenekleri ekle
+                        data.clients.forEach(client => {
+                            const option = new Option(client.display_text, client.id, false, false);
+                            select.append(option);
+                        });
+
+                        // Select2 initialize et
+                        select.select2({
+                            placeholder: 'Tüm Müvekkiller',
+                            allowClear: true,
+                            language: {
+                                noResults: function() {
+                                    return "Sonuç bulunamadı";
+                                },
+                                searching: function() {
+                                    return "Aranıyor...";
+                                }
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Filtreleme için kayıtlı müvekkiller yüklenirken hata:', error);
+                });
+        }
+
+        // Sayfa yüklendiğinde filtreleme select2'yi yükle
+        loadFilterRegisteredClients();
+
+        // Filtreleme fonksiyonu
+        function applyFilters() {
+            const entityFilter = document.getElementById('filterEntityType').value;
+            const statusFilter = document.getElementById('filterPaymentStatus').value;
+            const clientFilter = $('#filterRegisteredClient').val();
+
+            const rows = document.querySelectorAll('.data-table tbody tr');
+
+            rows.forEach(row => {
+                let showRow = true;
+
+                // Kişi/Kurum filtresi
+                if (entityFilter !== 'all') {
+                    const entityType = row.getAttribute('data-entity-type');
+                    if (entityType !== entityFilter) {
+                        showRow = false;
+                    }
+                }
+
+                // Ödeme durumu filtresi
+                if (statusFilter !== 'all') {
+                    const status = row.getAttribute('data-status');
+                    const statusMatch = (statusFilter === 'paid' && status === 'Ödendi') ||
+                                      (statusFilter === 'unpaid' && status === 'Ödenmedi');
+                    if (!statusMatch) {
+                        showRow = false;
+                    }
+                }
+
+                // Kayıtlı müvekkil filtresi
+                if (clientFilter) {
+                    const paymentClientId = row.getAttribute('data-payment-client-id');
+                    if (paymentClientId !== clientFilter) {
+                        showRow = false;
+                    }
+                }
+
+                // Satırı göster/gizle
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+
+        // Filtre değişikliklerini dinle
+        document.getElementById('filterEntityType').addEventListener('change', applyFilters);
+        document.getElementById('filterPaymentStatus').addEventListener('change', applyFilters);
+        $('#filterRegisteredClient').on('change', applyFilters);
+
+        // Filtreleri temizle butonu
+        document.getElementById('clearFiltersBtn').addEventListener('click', function() {
+            document.getElementById('filterEntityType').value = 'all';
+            document.getElementById('filterPaymentStatus').value = 'all';
+            $('#filterRegisteredClient').val('').trigger('change');
+            applyFilters();
+        });
+
+        // ========== FİLTRELEME SİSTEMİ SONU ==========
 
     </script>
 

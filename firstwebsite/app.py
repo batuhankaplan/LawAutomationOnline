@@ -1218,6 +1218,31 @@ def odemeler():
         # Status değerini Türkçe karşılığına çevir
         status_tr = 'Ödendi' if status == 'paid' else 'Ödenmedi'
 
+        # Kayıtlı müvekkil sistemi kontrolü
+        payment_client_id = None
+        client_type = request.form.get('client_type', 'new')  # 'new' veya 'registered'
+        registered_client_id = request.form.get('registered_client_id')
+
+        # Eğer "Yeni Müvekkil" seçildiyse ve "save_to_registered" işaretliyse, PaymentClient'e kaydet
+        if client_type == 'new':
+            save_to_registered = request.form.get('save_to_registered') == 'true'
+            if save_to_registered:
+                # PaymentClient kaydı oluştur
+                new_payment_client = PaymentClient(
+                    entity_type=entity_type,
+                    name=name,
+                    surname=surname if entity_type == 'person' else None,
+                    identity_number=tc,
+                    user_id=current_user.id
+                )
+                db.session.add(new_payment_client)
+                db.session.flush()  # ID'yi al
+                payment_client_id = new_payment_client.id
+
+        # Eğer "Kayıtlı Müvekkil" seçildiyse, mevcut PaymentClient'i bağla
+        elif client_type == 'registered' and registered_client_id:
+            payment_client_id = int(registered_client_id)
+
         # Yeni client oluştur
         new_client = Client(
             name=name,
@@ -1232,9 +1257,10 @@ def odemeler():
             payment_type=payment_type,
             entity_type=entity_type,  # Yeni alan
             description=description,
-            status=status_tr
+            status=status_tr,
+            payment_client_id=payment_client_id  # Kayıtlı müvekkil bağlantısı
         )
-        
+
         # Kaydet
         db.session.add(new_client)
         
@@ -1407,6 +1433,35 @@ def export_payments():
         app.logger.error(f"Export error: {str(e)}")
         flash(f'Dışa aktarma sırasında bir hata oluştu: {str(e)}', 'error')
         return redirect(url_for('odemeler'))
+
+@app.route('/api/get_registered_payment_clients')
+@login_required
+def get_registered_payment_clients():
+    """Kayıtlı müvekkilleri döndürür (Ödemeler sayfası için)"""
+    if not current_user.has_permission('odeme_goruntule'):
+        return jsonify({'success': False, 'error': 'Yetkiniz bulunmamaktadır.'}), 403
+
+    try:
+        # Kullanıcının kayıtlı müvekkillerini getir
+        payment_clients = PaymentClient.query.filter_by(user_id=current_user.id).order_by(PaymentClient.name.asc()).all()
+
+        # JSON formatına çevir
+        clients_data = []
+        for client in payment_clients:
+            clients_data.append({
+                'id': client.id,
+                'name': client.get_full_name(),
+                'entity_type': client.entity_type,
+                'first_name': client.name,
+                'surname': client.surname if client.surname else '',
+                'identity_number': client.identity_number if client.identity_number else '',
+                'display_text': f"{client.get_full_name()} ({('Kişi' if client.entity_type == 'person' else 'Kurum')})"
+            })
+
+        return jsonify({'success': True, 'clients': clients_data})
+    except Exception as e:
+        app.logger.error(f"Get registered payment clients error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 def generate_excel_export(clients, include_installments=True, include_payment_dates=True):
     """Excel dosyası oluşturur"""
