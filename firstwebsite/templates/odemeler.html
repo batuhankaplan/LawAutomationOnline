@@ -173,16 +173,16 @@
 
     <!-- Ödeme Kayıtları Dışa Aktarma Modalı -->
     <div id="exportModal" class="modal">
-        <div class="modal-content modern-edit-modal" style="max-width: 600px;">
-            <div class="modal-header modern-edit-header">
+        <div class="modal-content modern-edit-modal" style="max-width: 650px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header modern-edit-header" style="position: sticky; top: 0; z-index: 10; background: white;">
                 <div class="modal-title-container">
                     <h2>Ödeme Kayıtları Tablosu Oluştur</h2>
                 </div>
                 <span class="close" id="closeExportModal">&times;</span>
             </div>
-            <form id="exportForm">
-                <div class="form-row">
-                    <div class="form-group">
+            <form id="exportForm" style="padding: 20px;">
+                <div class="form-row" style="margin-bottom: 16px;">
+                    <div class="form-group" style="width: 100%;">
                         <label for="exportFormat">Dosya Formatı</label>
                         <select id="exportFormat" name="format" class="form-control" required>
                             <option value="excel">Excel (.xlsx)</option>
@@ -191,8 +191,8 @@
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
+                <div class="form-row" style="margin-bottom: 16px;">
+                    <div class="form-group" style="width: 100%;">
                         <label for="exportEntityFilter">Kişi/Kurum Filtresi</label>
                         <select id="exportEntityFilter" name="entity_filter" class="form-control" required>
                             <option value="all">Tümü (Kişi + Kurum)</option>
@@ -202,8 +202,8 @@
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
+                <div class="form-row" style="margin-bottom: 16px;">
+                    <div class="form-group" style="width: 100%;">
                         <label for="exportFilterType">Filtreleme Tipi</label>
                         <select id="exportFilterType" name="filter_type" class="form-control" required>
                             <option value="date_range">Tarih Aralığı</option>
@@ -213,19 +213,19 @@
                     </div>
                 </div>
 
-                <div id="exportDateRangeGroup" class="form-row">
-                    <div class="form-group half-width">
+                <div id="exportDateRangeGroup" class="form-row" style="margin-bottom: 16px; display: flex; gap: 12px;">
+                    <div class="form-group" style="flex: 1;">
                         <label for="exportStartDate">Başlangıç Tarihi</label>
                         <input type="date" id="exportStartDate" name="start_date" class="form-control">
                     </div>
-                    <div class="form-group half-width">
+                    <div class="form-group" style="flex: 1;">
                         <label for="exportEndDate">Bitiş Tarihi</label>
                         <input type="date" id="exportEndDate" name="end_date" class="form-control">
                     </div>
                 </div>
 
-                <div id="exportClientGroup" class="form-row" style="display: none;">
-                    <div class="form-group">
+                <div id="exportClientGroup" class="form-row" style="display: none; margin-bottom: 16px;">
+                    <div class="form-group" style="width: 100%;">
                         <label for="exportClientSelect">Müvekkil/Kurum Seçin</label>
                         <select id="exportClientSelect" name="client_id" class="form-control">
                             <option value="">Seçiniz...</option>
@@ -239,8 +239,8 @@
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
+                <div class="form-row" style="margin-bottom: 12px;">
+                    <div class="form-group" style="width: 100%;">
                         <label>
                             <input type="checkbox" id="exportIncludeInstallments" name="include_installments" checked>
                             Taksit Detaylarını Dahil Et
@@ -248,8 +248,8 @@
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
+                <div class="form-row" style="margin-bottom: 20px;">
+                    <div class="form-group" style="width: 100%;">
                         <label>
                             <input type="checkbox" id="exportIncludePaymentDates" name="include_payment_dates" checked>
                             Ödeme Tarihlerini Dahil Et
@@ -257,11 +257,11 @@
                     </div>
                 </div>
 
-                <div class="form-actions">
+                <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid #e0e0e0;">
+                    <button type="button" class="btn btn-secondary" id="cancelExportBtn">İptal</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="material-icons">download</i> Oluştur ve İndir
                     </button>
-                    <button type="button" class="btn btn-secondary" id="cancelExportBtn">İptal</button>
                 </div>
             </form>
         </div>
@@ -279,6 +279,20 @@
             <form id="addPaymentForm">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body modern-edit-body">
+                    <!-- Müvekkil Seçim Tipi -->
+                    <div class="form-row" style="margin-bottom: 24px;">
+                        <div class="client-type-selector">
+                            <button type="button" class="client-type-btn active" data-type="new" id="newClientBtn">
+                                <i class="material-icons">person_add</i>
+                                <span>Yeni Müvekkil</span>
+                            </button>
+                            <button type="button" class="client-type-btn" data-type="registered" id="registeredClientBtn">
+                                <i class="material-icons">contacts</i>
+                                <span>Kayıtlı Müvekkil</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group full-width">
                             <label for="paymentType">Ödeme Türü</label>
@@ -3286,8 +3300,9 @@
                     });
                 }
             }
-            
-            // İstatistik butonuna tıklandığında modalı aç (statsBtn yukarıda zaten tanımlı)
+
+            // İstatistik butonuna tıklandığında modalı aç
+            const statsBtn = document.getElementById('statsButton');
             if (statsBtn) {
                 statsBtn.addEventListener('click', function() {
                     const statsModal = document.getElementById('statsModal');

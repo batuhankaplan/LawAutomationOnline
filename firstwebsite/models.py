@@ -316,6 +316,28 @@ class Client(db.Model):
     description = db.Column(db.Text, nullable=True)
     payment_type = db.Column(db.String(50), nullable=True)  # Ödeme türü
     entity_type = db.Column(db.String(20), default='person')  # person/company
+    payment_client_id = db.Column(db.Integer, db.ForeignKey('payment_client.id'), nullable=True)  # Kayıtlı müvekkil referansı
+
+class PaymentClient(db.Model):
+    """Kayıtlı Müvekkil - Ödemeler sayfasına özel"""
+    __tablename__ = 'payment_client'
+
+    id = db.Column(db.Integer, primary_key=True)
+    entity_type = db.Column(db.String(20), nullable=False, default='person')  # person/company
+    name = db.Column(db.String(200), nullable=False)  # Ad Soyad veya Kurum Adı
+    surname = db.Column(db.String(100), nullable=True)  # Sadece kişiler için
+    identity_number = db.Column(db.String(50), nullable=True)  # TC veya Vergi/Mersis/Ticaret Sicil
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def get_full_name(self):
+        """Tam adı döndür"""
+        if self.entity_type == 'person' and self.surname:
+            return f"{self.name} {self.surname}"
+        return self.name
+
+    def __repr__(self):
+        return f'<PaymentClient {self.get_full_name()}>'
 
 class Payment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
