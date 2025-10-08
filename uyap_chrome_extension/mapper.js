@@ -14,6 +14,19 @@ function mapUyapToSystem(uyapData) {
     // Tarafları analiz et ve müvekkil/karşı taraf ata
     const parties = identifyClientAndOpponent(uyapData.parties || {}, ourLawyers);
 
+    // Eğer caseInfo'da sonraki duruşma varsa hearings array'e ekle
+    const hearings = uyapData.hearings || [];
+    const caseInfo = uyapData.caseInfo || {};
+
+    if (caseInfo.nextHearing) {
+        hearings.push({
+            date: caseInfo.nextHearing,
+            time: caseInfo.hearingTime || '09:00',
+            type: 'durusma',
+            status: ''
+        });
+    }
+
     const mapped = {
         // Dosya bilgileri
         fileInfo: mapFileInfo(uyapData.caseInfo || {}),
@@ -33,7 +46,7 @@ function mapUyapToSystem(uyapData) {
         documents: mapDocuments(uyapData.documents || []),
 
         // Duruşmalar
-        hearings: mapHearings(uyapData.hearings || [])
+        hearings: mapHearings(hearings)
     };
 
     console.log('Dönüştürülen veri:', mapped);
@@ -57,7 +70,10 @@ function extractCourtName(fullCourtName) {
         'Çankaya', 'Keçiören', 'Mamak', 'Yenimahalle', 'Sincan', 'Etimesgut',
         'Altındağ', 'Pursaklar', 'Gölbaşı',
         // İzmir ilçeleri
-        'Konak', 'Bornova', 'Karşıyaka', 'Buca', 'Bayraklı', 'Gaziemir'
+        'Konak', 'Bornova', 'Karşıyaka', 'Buca', 'Bayraklı', 'Gaziemir',
+        // Diğer şehirler (ilçe değil doğrudan şehir adı)
+        'Tekirdağ', 'Edirne', 'Kırklareli', 'Çanakkale', 'Balıkesir',
+        'Bursa', 'Kocaeli', 'Sakarya', 'Antalya', 'Adana', 'Mersin'
     ];
 
     // İlçe adını kaldır
@@ -87,9 +103,6 @@ function mapFileInfo(caseInfo) {
         'year': caseInfo.year || new Date().getFullYear(),
         'case-number': caseInfo.caseNumber || '',
         'open-date': caseInfo.openDate || formatDateToISO(new Date()),
-        'next-hearing': caseInfo.nextHearing || '',
-        'hearing-time': caseInfo.hearingTime || '09:00',
-        'hearing-type': 'durusma',
         'status': mapStatus(caseInfo.status || 'Açık')
     };
 }
