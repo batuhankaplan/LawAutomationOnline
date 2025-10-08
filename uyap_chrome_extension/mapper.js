@@ -330,7 +330,8 @@ function prepareJSON(mappedData) {
         ...mappedData.fileInfo,
         ...mappedData.client,
         ...mappedData.opponent,
-        ...mappedData.lawyer,
+        // lawyer objesini kaldırdık çünkü opponent-lawyer zaten mappedData.opponent'ta var
+        // ve lawyer objesi opponent'taki değeri eziyordu
         additional_clients_json: mappedData.additionalClients.length > 0 ?
             JSON.stringify(mappedData.additionalClients) : '',
         additional_opponents_json: mappedData.additionalOpponents.length > 0 ?

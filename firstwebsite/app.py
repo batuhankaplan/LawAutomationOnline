@@ -10209,18 +10209,48 @@ def import_from_uyap():
             case_id=new_case_file.id
         )
 
-        # Duruşma bilgisi varsa ekle
+        # Duruşma bilgisi varsa ekle ve takvime event oluştur
         hearings = data.get('hearings', [])
         if hearings and len(hearings) > 0:
             first_hearing = hearings[0]
             if first_hearing.get('date'):
                 try:
                     hearing_date = datetime.strptime(first_hearing['date'], '%Y-%m-%d').date()
+                    hearing_time_str = first_hearing.get('time', '09:00')
+                    hearing_time = datetime.strptime(hearing_time_str, '%H:%M').time()
+                    hearing_type = first_hearing.get('type', 'durusma')
+
                     new_case_file.next_hearing = hearing_date
-                    new_case_file.hearing_time = first_hearing.get('time', '')
-                    new_case_file.hearing_type = first_hearing.get('type', 'durusma')
+                    new_case_file.hearing_time = hearing_time_str
+                    new_case_file.hearing_type = hearing_type
                     db.session.commit()
-                except:
+
+                    # Takvime duruşma eventi ekle
+                    event_title = f"{client_name} ({data.get('year')}/{data.get('case-number')})"
+                    calendar_event = CalendarEvent(
+                        title=event_title,
+                        date=hearing_date,
+                        time=hearing_time,
+                        event_type=hearing_type,
+                        description='',
+                        user_id=current_user.id if current_user.is_authenticated else 1,
+                        case_id=new_case_file.id,
+                        courthouse=courthouse,
+                        department=department,
+                        file_type=file_type
+                    )
+                    db.session.add(calendar_event)
+                    db.session.commit()
+
+                    log_activity(
+                        activity_type='durusma_ekleme_takvime',
+                        description=f"UYAP'tan aktarılan dosya için takvime duruşma eklendi: {client_name} - {hearing_date.strftime('%d.%m.%Y')} {hearing_time_str}",
+                        user_id=current_user.id if current_user.is_authenticated else 1,
+                        case_id=new_case_file.id,
+                        related_event_id=calendar_event.id
+                    )
+                except Exception as e:
+                    print(f"Duruşma takvime eklenirken hata: {str(e)}")
                     pass
 
         return jsonify({
