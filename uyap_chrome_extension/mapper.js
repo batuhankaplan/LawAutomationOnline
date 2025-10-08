@@ -376,11 +376,22 @@ function identifyClientAndOpponent(parties, ourLawyers) {
         }
     }
 
-    // Eğer hiçbir tarafta bizim vekilimiz yoksa, davacı=müvekkil olarak varsayalım
+    // Eğer hiçbir tarafta bizim vekilimiz yoksa, rol bazlı atama yap
     if (clientSide.length === 0 && opponentSide.length > 0) {
-        console.warn('⚠️ Bizim vekil bulunamadı, Davacı tarafı müvekkil olarak atanıyor');
-        clientSide = allParties.filter(p => p.originalRole === 'Davacı');
-        opponentSide = allParties.filter(p => p.originalRole === 'Davalı');
+        console.warn('⚠️ Bizim vekil bulunamadı, rol bazlı atama yapılıyor');
+
+        // Hukuk dosyası: Davacı = Müvekkil
+        // Ceza dosyası: Sanık = Müvekkil
+        clientSide = allParties.filter(p =>
+            p.capacity?.toLowerCase().includes('davacı') ||
+            p.capacity?.toLowerCase().includes('sanık')
+        );
+
+        opponentSide = allParties.filter(p =>
+            p.capacity?.toLowerCase().includes('davalı') ||
+            p.capacity?.toLowerCase().includes('müşteki') ||
+            p.capacity?.toLowerCase().includes('katılan')
+        );
     }
 
     // Vekilleri ayır

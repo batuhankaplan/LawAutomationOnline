@@ -21,6 +21,17 @@ function extractCaseListFromTable() {
     const tables = document.querySelectorAll('table');
 
     tables.forEach(table => {
+        // Önce header'ı bul ve sütun indexlerini tespit et
+        const headers = Array.from(table.querySelectorAll('thead th, thead td')).map(h => h.textContent.trim());
+        const dosyaNoIndex = headers.findIndex(h => h.includes('Dosya No'));
+        const birimIndex = headers.findIndex(h => h.includes('Birim'));
+        const dosyaTuruIndex = headers.findIndex(h => h.includes('Dosya Türü'));
+        const dosyaDurumuIndex = headers.findIndex(h => h.includes('Dosya Durumu'));
+        const acilisTarihiIndex = headers.findIndex(h => h.includes('Açılış Tarihi') || h.includes('Dosya Açılış Tarihi'));
+
+        console.log('📊 Tablo başlıkları:', headers);
+        console.log(`📍 Index: Dosya No=${dosyaNoIndex}, Birim=${birimIndex}, Tür=${dosyaTuruIndex}, Durum=${dosyaDurumuIndex}, Açılış=${acilisTarihiIndex}`);
+
         const rows = table.querySelectorAll('tbody tr');
 
         rows.forEach(row => {
@@ -33,7 +44,7 @@ function extractCaseListFromTable() {
             // Checkbox veya seçim butonu bul
             const checkbox = row.querySelector('input[type="checkbox"]');
 
-            // Detay linkini bul - önce href içinde "detay" olanı, sonra satırdaki herhangi bir linki, en son onclick olan elementi ara
+            // Detay linkini bul
             let detailUrl = null;
             const detailLink = row.querySelector('a[href*="detay"]');
             const anyLink = row.querySelector('a[href]');
@@ -44,27 +55,35 @@ function extractCaseListFromTable() {
             } else if (anyLink) {
                 detailUrl = anyLink.href;
             } else if (clickableElement) {
-                // onclick'ten URL çıkarmaya çalış
                 const onclick = clickableElement.getAttribute('onclick');
                 const urlMatch = onclick.match(/['"]([^'"]*)['"]/);
                 if (urlMatch) detailUrl = urlMatch[1];
             }
 
+            // Index'lere göre verileri al (fallback: eski sıralama)
             const caseData = {
                 rowId: row.dataset.id || Math.random().toString(36),
-                birim: cellTexts[0] || '',
-                dosyaNo: cellTexts[1] || '',
-                dosyaTuru: cellTexts[2] || '',
-                dosyaDurumu: cellTexts[3] || 'Açık',
-                acilisTarihi: cellTexts[4] || '',
+                birim: cellTexts[birimIndex >= 0 ? birimIndex : 0] || '',
+                dosyaNo: cellTexts[dosyaNoIndex >= 0 ? dosyaNoIndex : 1] || '',
+                dosyaTuru: cellTexts[dosyaTuruIndex >= 0 ? dosyaTuruIndex : 2] || '',
+                dosyaDurumu: cellTexts[dosyaDurumuIndex >= 0 ? dosyaDurumuIndex : 3] || '',
+                acilisTarihi: cellTexts[acilisTarihiIndex >= 0 ? acilisTarihiIndex : 4] || '',
                 goruntule: cellTexts[5] || '',
                 selected: checkbox ? checkbox.checked : false,
                 detailUrl: detailUrl,
                 rawCells: cellTexts
             };
 
-            // Boş satırları filtrele (dosyaNo boş olanlar)
-            if (caseData.dosyaNo && caseData.dosyaNo.trim() !== '') {
+            // Sıkı filtreleme: Dosya No mutlaka yıl/sayı formatında olmalı ve "Dosya No" header'ı olmamalı
+            const validDosyaNo = caseData.dosyaNo &&
+                                 caseData.dosyaNo.match(/^\d{4}\/\d+$/) &&
+                                 caseData.dosyaNo !== 'Dosya No';
+
+            const validBirim = caseData.birim &&
+                              caseData.birim !== 'Birim' &&
+                              caseData.birim.length > 2;
+
+            if (validDosyaNo && validBirim) {
                 cases.push(caseData);
             }
         });
@@ -192,40 +211,29 @@ function extractBasicCaseInfo() {
     const durum = findLabelValue('Durum', 'Dosya Durumu', 'DURUM');
     if (durum) info.status = durum;
 
-    // Sonraki Duruşma (tarih + saat) - daha geniş arama
-    let durusmaTarihi = findLabelValue(
-        'Sonraki Duruşma',
-        'Duruşma Tarihi',
-        'SONRAKI DURUŞMA',
-        'DURUşMA TARİHİ',
-        'Duruşma',
-        'İlk Duruşma',
-        'Celse Tarihi',
-        'Celse'
-    );
+    // Sonraki Duruşma - SADECE hukuk dosyaları için
+    const fileType = info.fileType?.toLowerCase();
 
-    // Eğer bulunamadıysa sayfa içinde tarih formatı ara (DD/MM/YYYY HH:MM)
-    if (!durusmaTarihi) {
-        const pageText = document.body.textContent;
-        const dateRegex = /(\d{2}[\/\.]\d{2}[\/\.]\d{4}\s+\d{2}:\d{2})/g;
-        const matches = pageText.match(dateRegex);
-        if (matches && matches.length > 0) {
-            // İlk bulunan tarih-saat çiftini al
-            durusmaTarihi = matches[0];
-            console.log('🔍 Sayfa taramasıyla duruşma tarihi bulundu:', durusmaTarihi);
-        }
-    }
+    // Sadece hukuk dosyaları için duruşma tarihi çek
+    if (fileType === 'hukuk') {
+        const durusmaTarihi = findLabelValue(
+            'Sonraki Duruşma',
+            'Duruşma Tarihi',
+            'SONRAKI DURUŞMA',
+            'İlk Duruşma'
+        );
 
-    console.log('🗓️ Duruşma tarihi arama sonucu:', durusmaTarihi);
-    if (durusmaTarihi) {
-        const parsed = parseUyapDate(durusmaTarihi);
-        if (parsed) {
-            info.nextHearing = parsed.date;
-            info.hearingTime = parsed.time || '09:00'; // Varsayılan saat
-            console.log('✅ Duruşma tarihi parse edildi:', parsed);
+        console.log('🗓️ Duruşma tarihi arama sonucu:', durusmaTarihi);
+        if (durusmaTarihi) {
+            const parsed = parseUyapDate(durusmaTarihi);
+            if (parsed) {
+                info.nextHearing = parsed.date;
+                info.hearingTime = parsed.time || '09:00';
+                console.log('✅ Duruşma tarihi parse edildi:', parsed);
+            }
         }
     } else {
-        console.warn('⚠️ Duruşma tarihi bulunamadı');
+        console.log(`ℹ️ ${fileType || 'Bilinmeyen'} dosyası - duruşma tarihi atlandı`);
     }
 
     console.log('📋 extractBasicCaseInfo sonuç:', info);
