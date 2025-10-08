@@ -272,7 +272,7 @@ async function extractParties() {
             name: adi,
             entityType: tipi.toLowerCase().includes('kurum') ? 'company' : 'person',
             capacity: rol,
-            lawyer: vekil.replace(/[\[\]]/g, ''), // Köşeli parantezleri kaldır
+            lawyer: vekil.replace(/[\[\]]/g, '').trim() === '-' ? '' : vekil.replace(/[\[\]]/g, '').trim(),
             identityNumber: '',
             phone: '',
             address: ''
