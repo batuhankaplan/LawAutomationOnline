@@ -450,6 +450,49 @@ class CaseFile(db.Model):
         else:
             self.additional_lawyers_json = json.dumps(value)
 
+    def get_lawyers_by_party(self, party_type, party_index=0):
+        """Belirli bir tarafın vekillerini getir
+        Args:
+            party_type: 'client' veya 'opponent'
+            party_index: 0=ana taraf, 1+=ek taraflar
+        Returns:
+            List of Lawyer objects
+        """
+        return [
+            assoc.lawyer for assoc in
+            db.session.query(PartyLawyer).filter_by(
+                party_type=party_type,
+                party_index=party_index
+            ).join(Lawyer).filter_by(case_id=self.id).all()
+        ]
+
+    def get_all_lawyers_grouped(self):
+        """Tüm vekilleri taraflara göre gruplandırılmış şekilde getir
+        Returns:
+            {
+                'client': {'main': [lawyers], 'additional': {0: [lawyers], 1: [lawyers]}},
+                'opponent': {'main': [lawyers], 'additional': {0: [lawyers], 1: [lawyers]}}
+            }
+        """
+        result = {
+            'client': {'main': [], 'additional': {}},
+            'opponent': {'main': [], 'additional': {}}
+        }
+
+        for lawyer in self.lawyers.all():
+            for assoc in lawyer.party_associations:
+                party_type = assoc.party_type
+                party_index = assoc.party_index
+
+                if party_index == 0:
+                    result[party_type]['main'].append(lawyer)
+                else:
+                    if party_index not in result[party_type]['additional']:
+                        result[party_type]['additional'][party_index] = []
+                    result[party_type]['additional'][party_index].append(lawyer)
+
+        return result
+
 class Announcement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -763,3 +806,35 @@ class ContractTemplate(db.Model):
 
     def __repr__(self):
         return f'<ContractTemplate {self.template_name}>'
+
+class Lawyer(db.Model):
+    """Vekil/Avukat bilgileri modeli"""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    bar = db.Column(db.String(100))  # Baro
+    bar_number = db.Column(db.String(20))  # Baro sicil numarası
+    phone = db.Column(db.String(20))
+    address = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
+    case_id = db.Column(db.Integer, db.ForeignKey('case_file.id'), nullable=False)
+
+    # İlişki
+    case = db.relationship('CaseFile', backref=db.backref('lawyers', lazy='dynamic', cascade='all, delete-orphan'))
+    party_associations = db.relationship('PartyLawyer', back_populates='lawyer', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<Lawyer {self.name}>'
+
+class PartyLawyer(db.Model):
+    """Taraf-Vekil ilişki tablosu (Many-to-Many)"""
+    id = db.Column(db.Integer, primary_key=True)
+    lawyer_id = db.Column(db.Integer, db.ForeignKey('lawyer.id'), nullable=False)
+    party_type = db.Column(db.String(20), nullable=False)  # 'client' veya 'opponent'
+    party_index = db.Column(db.Integer, nullable=False, default=0)  # 0=ana taraf, 1+=ek taraflar
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
+
+    # İlişkiler
+    lawyer = db.relationship('Lawyer', back_populates='party_associations')
+
+    def __repr__(self):
+        return f'<PartyLawyer lawyer_id={self.lawyer_id} party={self.party_type}:{self.party_index}>'

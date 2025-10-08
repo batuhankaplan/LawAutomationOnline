@@ -33,7 +33,7 @@ import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect, CSRFError # CSRF Koruması için eklendi
 from flask_wtf import csrf
-from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi, DilekceKategori, OrnekDilekce, OrnekSozlesme, ContractTemplate
+from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi, DilekceKategori, OrnekDilekce, OrnekSozlesme, ContractTemplate, Lawyer, PartyLawyer
 import uuid
 from PIL import Image
 from functools import wraps
@@ -10222,6 +10222,36 @@ def import_from_uyap():
 
         # Veritabanına kaydet
         db.session.add(new_case_file)
+        db.session.commit()
+
+        # Vekilleri kaydet (Yeni Lawyer ve PartyLawyer tabloları)
+        lawyers_data = data.get('lawyers', [])
+        if lawyers_data and isinstance(lawyers_data, list):
+            for lawyer_info in lawyers_data:
+                try:
+                    # Lawyer kaydı oluştur
+                    lawyer = Lawyer(
+                        name=lawyer_info.get('name', ''),
+                        bar=lawyer_info.get('bar', ''),
+                        bar_number=lawyer_info.get('bar_number', ''),
+                        phone=lawyer_info.get('phone', ''),
+                        address=lawyer_info.get('address', ''),
+                        case_id=new_case_file.id
+                    )
+                    db.session.add(lawyer)
+                    db.session.flush()  # ID'yi al
+
+                    # Taraf ilişkisi oluştur
+                    party_assoc = PartyLawyer(
+                        lawyer_id=lawyer.id,
+                        party_type=lawyer_info.get('party_type', 'opponent'),
+                        party_index=lawyer_info.get('party_index', 0)
+                    )
+                    db.session.add(party_assoc)
+                except Exception as e:
+                    print(f"Vekil eklenirken hata: {str(e)}")
+                    continue
+
         db.session.commit()
 
         # Activity log

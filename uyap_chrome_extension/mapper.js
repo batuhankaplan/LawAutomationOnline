@@ -39,8 +39,12 @@ function mapUyapToSystem(uyapData) {
         opponent: mapOpponent(parties.opponent || {}, parties.opponentLawyers || []),
         additionalOpponents: mapAdditionalOpponents(parties.additionalOpponents || []),
 
-        // Vekil bilgileri (müvekkilimizin vekilleri)
-        lawyer: mapLawyer(parties.clientLawyers || []),
+        // Vekil bilgileri (YENİ FORMAT: taraf bazlı)
+        lawyers: mapLawyers(
+            parties.clientLawyers || [],
+            parties.opponentLawyers || [],
+            uyapData.parties?.opponents || []  // Ham opponent data'dan vekil bilgisi
+        ),
 
         // Belgeler
         documents: mapDocuments(uyapData.documents || []),
@@ -130,7 +134,7 @@ function mapClient(client) {
 
     return {
         'client-entity-type': client.entityType || 'person',
-        'client-name': client.name || '',
+        'client-name': capitalizeName(client.name) || '',
         'client-capacity': client.capacity || '',
         'client-id': client.identityNumber || '',
         'client-phone': cleanPhoneNumber(client.phone || ''),
@@ -147,7 +151,7 @@ function mapAdditionalClients(clients) {
     return clients.map(client => ({
         id: Date.now() + Math.random(),
         entity_type: client.entityType || 'person',
-        name: client.name || '',
+        name: capitalizeName(client.name) || '',
         capacity: client.capacity || '',
         identity_number: client.identityNumber || '',
         phone: cleanPhoneNumber(client.phone || ''),
@@ -161,17 +165,14 @@ function mapAdditionalClients(clients) {
 function mapOpponent(opponent, opponentLawyers) {
     if (!opponent || !opponent.name) return {};
 
-    // Karşı tarafın vekil bilgilerini ekle
-    const opponentLawyerName = opponentLawyers && opponentLawyers.length > 0 ? opponentLawyers[0] : '';
-
     return {
         'opponent-entity-type': opponent.entityType || 'person',
-        'opponent-name': opponent.name || '',
+        'opponent-name': capitalizeName(opponent.name) || '',
         'opponent-capacity': opponent.capacity || '',
         'opponent-id': opponent.identityNumber || '',
         'opponent-phone': cleanPhoneNumber(opponent.phone || ''),
-        'opponent-address': opponent.address || '',
-        'opponent-lawyer': opponentLawyerName  // Backend 'opponent-lawyer' bekliyor
+        'opponent-address': opponent.address || ''
+        // opponent-lawyer alanını kaldırdık, artık lawyers array'inde gönderilecek
     };
 }
 
@@ -184,39 +185,80 @@ function mapAdditionalOpponents(opponents) {
     return opponents.map(opponent => ({
         id: Date.now() + Math.random(),
         entity_type: opponent.entityType || 'person',
-        name: opponent.name || '',
+        name: capitalizeName(opponent.name) || '',
         capacity: opponent.capacity || '',
         identity_number: opponent.identityNumber || '',
         phone: cleanPhoneNumber(opponent.phone || ''),
-        address: opponent.address || '',
-        lawyer: opponent.lawyer && opponent.lawyer !== '-' ? opponent.lawyer : ''
+        address: opponent.address || ''
+        // lawyer alanını kaldırdık, artık lawyers array'inde gönderilecek
     }));
 }
 
 /**
- * Vekil bilgilerini dönüştür (sadece karşı taraf vekili)
+ * Vekil bilgilerini yeni formata dönüştür
+ * Her vekil hangi tarafa ait olduğu bilgisi ile birlikte
  */
-function mapLawyer(lawyers) {
-    if (!lawyers || lawyers.length === 0) return {};
+function mapLawyers(clientLawyers, opponentLawyers, additionalOpponents) {
+    const lawyers = [];
 
-    // İlk vekili al (müvekkilimizin vekili)
-    const firstLawyer = Array.isArray(lawyers) ? lawyers[0] : lawyers;
-
-    // String array ise (isim listesi), ilk ismi al
-    if (typeof firstLawyer === 'string') {
-        return {
-            'lawyer-name': lawyers.join(', ')  // Tüm vekilleri virgülle birleştir
-        };
+    // Müvekkil vekilleri (client, index=0)
+    if (clientLawyers && clientLawyers.length > 0) {
+        clientLawyers.forEach(lawyerName => {
+            if (lawyerName && lawyerName.trim() && lawyerName !== '-') {
+                lawyers.push({
+                    name: capitalizeName(lawyerName.trim()),
+                    bar: '',
+                    bar_number: '',
+                    phone: '',
+                    address: '',
+                    party_type: 'client',
+                    party_index: 0
+                });
+            }
+        });
     }
 
-    // Obje ise detaylı bilgileri al
-    return {
-        'lawyer-name': firstLawyer.name || lawyers.join(', '),
-        'lawyer-bar': firstLawyer.bar || '',
-        'lawyer-bar-number': firstLawyer.barNumber || '',
-        'lawyer-phone': cleanPhoneNumber(firstLawyer.phone || ''),
-        'lawyer-address': firstLawyer.address || ''
-    };
+    // Ana karşı taraf vekilleri (opponent, index=0)
+    if (opponentLawyers && opponentLawyers.length > 0) {
+        opponentLawyers.forEach(lawyerName => {
+            if (lawyerName && lawyerName.trim() && lawyerName !== '-') {
+                lawyers.push({
+                    name: capitalizeName(lawyerName.trim()),
+                    bar: '',
+                    bar_number: '',
+                    phone: '',
+                    address: '',
+                    party_type: 'opponent',
+                    party_index: 0
+                });
+            }
+        });
+    }
+
+    // Ek karşı tarafların vekilleri (opponent, index=1, 2, 3, ...)
+    if (additionalOpponents && additionalOpponents.length > 0) {
+        additionalOpponents.forEach((opponent, idx) => {
+            if (opponent.lawyer && opponent.lawyer.trim() && opponent.lawyer !== '-') {
+                // Virgülle ayrılmış birden fazla vekil olabilir
+                const lawyerNames = opponent.lawyer.split(',').map(n => n.trim());
+                lawyerNames.forEach(lawyerName => {
+                    if (lawyerName && lawyerName !== '-') {
+                        lawyers.push({
+                            name: capitalizeName(lawyerName),
+                            bar: '',
+                            bar_number: '',
+                            phone: '',
+                            address: '',
+                            party_type: 'opponent',
+                            party_index: idx + 1  // +1 çünkü 0 ana karşı taraf
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    return lawyers;
 }
 
 /**
@@ -261,6 +303,40 @@ function mapStatus(uyapStatus) {
     };
 
     return statusMap[uyapStatus] || 'Aktif';
+}
+
+/**
+ * İsimleri proper case'e çevir: YENER SEVEN -> Yener Seven
+ */
+function capitalizeName(name) {
+    if (!name) return name;
+
+    // Türkçe karakterler için özel işlem
+    const turkishUpper = {'İ': 'i', 'I': 'ı', 'Ş': 'ş', 'Ğ': 'ğ', 'Ü': 'ü', 'Ö': 'ö', 'Ç': 'ç'};
+    const turkishLower = {'i': 'İ', 'ı': 'I', 'ş': 'Ş', 'ğ': 'Ğ', 'ü': 'Ü', 'ö': 'Ö', 'ç': 'Ç'};
+
+    const words = name.split(/\s+/);
+    const capitalizedWords = [];
+
+    for (const word of words) {
+        if (!word) continue;
+
+        // İlk harfi büyük yap
+        let firstChar = word[0];
+        if (turkishUpper[firstChar]) {
+            firstChar = turkishUpper[firstChar].toUpperCase();
+        } else if (turkishLower[firstChar.toLowerCase()]) {
+            firstChar = turkishLower[firstChar.toLowerCase()];
+        } else {
+            firstChar = firstChar.toUpperCase();
+        }
+
+        // Geri kalanı küçük yap
+        const rest = word.slice(1).toLowerCase();
+        capitalizedWords.push(firstChar + rest);
+    }
+
+    return capitalizedWords.join(' ');
 }
 
 /**
@@ -352,12 +428,12 @@ function prepareJSON(mappedData) {
         ...mappedData.fileInfo,
         ...mappedData.client,
         ...mappedData.opponent,
-        // lawyer objesini kaldırdık çünkü opponent-lawyer zaten mappedData.opponent'ta var
-        // ve lawyer objesi opponent'taki değeri eziyordu
         additional_clients_json: mappedData.additionalClients.length > 0 ?
             JSON.stringify(mappedData.additionalClients) : '',
         additional_opponents_json: mappedData.additionalOpponents.length > 0 ?
             JSON.stringify(mappedData.additionalOpponents) : '',
+        // YENİ: Vekiller artık ayrı bir array olarak gönderiliyor
+        lawyers: mappedData.lawyers,
         documents: mappedData.documents,
         hearings: mappedData.hearings
     };

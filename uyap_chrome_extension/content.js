@@ -630,46 +630,43 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             console.log(`Satır ${i}: dosyaNo="${currentDosyaNo}", aranan="${dosyaNo}"`);
 
             if (currentDosyaNo === dosyaNo) {
-                // Bu satırdaki TÜM butonları bul ve erişilebilirlik butonunu filtrele
-                const allButtons = row.querySelectorAll('button, a');
-                let detailBtn = null;
-                
-                for (const btn of allButtons) {
-                    const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
-                    const title = btn.getAttribute('title')?.toLowerCase() || '';
-                    const text = btn.textContent?.toLowerCase() || '';
-                    const classes = btn.className?.toLowerCase() || '';
-                    
-                    // Erişilebilirlik butonunu atla
-                    if (ariaLabel.includes('erişilebilirlik') || 
-                        title.includes('erişilebilirlik') || 
-                        text.includes('erişilebilirlik') ||
-                        ariaLabel.includes('accessibility') ||
-                        title.includes('accessibility')) {
-                        console.log('⏭️ Erişilebilirlik butonu atlandı');
-                        continue;
-                    }
-                    
-                    // Görüntüle/Detay butonunu bul
-                    if (title.includes('görüntüle') || 
-                        title.includes('detay') ||
-                        ariaLabel.includes('görüntüle') ||
-                        btn.id?.includes('goruntule') ||
-                        (btn.tagName === 'A' && btn.href?.includes('detay'))) {
-                        detailBtn = btn;
-                        break;
-                    }
-                }
-                
+                // Yöntem 1: id="dosya-goruntule" ile doğrudan bul
+                let detailBtn = row.querySelector('#dosya-goruntule, [id*="dosya-goruntule"]');
+
                 if (detailBtn) {
-                    console.log(`✅ ${dosyaNo} için buton bulundu (satır ${i}), tıklanıyor...`);
+                    console.log(`✅ ${dosyaNo} için dosya-goruntule butonu bulundu (satır ${i}), tıklanıyor...`);
                     detailBtn.click();
                     found = true;
                     sendResponse({ success: true, message: 'Buton tıklandı' });
                     return;
-                } else {
-                    console.warn(`⚠️ Satır ${i}: dosya eşleşti ama buton bulunamadı`);
                 }
+
+                // Yöntem 2: role="button" ve title="Dosya Görüntüle" ile bul
+                detailBtn = row.querySelector('[role="button"][title*="Dosya Görüntüle"]');
+
+                if (detailBtn) {
+                    console.log(`✅ ${dosyaNo} için Dosya Görüntüle butonu bulundu (title), tıklanıyor...`);
+                    detailBtn.click();
+                    found = true;
+                    sendResponse({ success: true, message: 'Buton tıklandı' });
+                    return;
+                }
+
+                // Yöntem 3: icon-eye ikonunun parent .dx-button div'ini bul
+                const eyeIcon = row.querySelector('i.icon-eye');
+                if (eyeIcon) {
+                    detailBtn = eyeIcon.closest('.dx-button');
+
+                    if (detailBtn) {
+                        console.log(`✅ ${dosyaNo} için icon-eye butonu bulundu (closest .dx-button), tıklanıyor...`);
+                        detailBtn.click();
+                        found = true;
+                        sendResponse({ success: true, message: 'Buton tıklandı' });
+                        return;
+                    }
+                }
+
+                console.error(`❌ Satır ${i}: Hiçbir yöntemle buton bulunamadı`);
             }
         }
 
