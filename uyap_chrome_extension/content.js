@@ -670,94 +670,149 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log('📝 UYAP form dolduruluyor:', request.filters);
 
         try {
-            // DevExtreme selectbox'ları bul - tüm select, input ve dx elementleri
-            const allInputs = document.querySelectorAll('input, select, .dx-textbox, .dx-selectbox');
-            console.log(`📋 ${allInputs.length} input/select bulundu`);
-
-            // Dosya türü (Hukuk, Ceza, İcra)
+            // "Yargı Türü" label'ını bul ve ilgili select'i al
             if (fileType) {
-                const fileTypeInputs = Array.from(allInputs).filter(el =>
-                    el.id?.toLowerCase().includes('dosyaturu') ||
-                    el.name?.toLowerCase().includes('dosyaturu') ||
-                    el.placeholder?.toLowerCase().includes('dosya tür') ||
-                    el.ariaLabel?.toLowerCase().includes('dosya tür')
-                );
-                console.log('🔍 Dosya türü inputları:', fileTypeInputs.length);
-                if (fileTypeInputs[0]) {
-                    fileTypeInputs[0].value = fileType;
-                    fileTypeInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
-                    fileTypeInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                const labels = Array.from(document.querySelectorAll('label'));
+                const yargiTuruLabel = labels.find(l => l.textContent.trim() === 'Yargı Türü');
+
+                if (yargiTuruLabel) {
+                    // Label'ın ilişkili olduğu select'i bul
+                    const selectId = yargiTuruLabel.getAttribute('for');
+                    let select = selectId ? document.getElementById(selectId) : null;
+
+                    // Eğer for attribute yoksa, parent'taki select'i ara
+                    if (!select) {
+                        const parent = yargiTuruLabel.closest('.form-group, .dx-field, div');
+                        if (parent) {
+                            select = parent.querySelector('select');
+                        }
+                    }
+
+                    console.log('🔍 Yargı Türü select bulundu:', !!select);
+                    if (select) {
+                        // Türkçe değerleri normalize et
+                        const typeMap = {
+                            'hukuk': 'Hukuk',
+                            'ceza': 'Ceza',
+                            'icra': 'İcra',
+                            'idare': 'İdare'
+                        };
+
+                        select.value = typeMap[fileType] || fileType;
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                        select.dispatchEvent(new Event('input', { bubbles: true }));
+                        console.log(`✅ Yargı Türü set edildi: ${typeMap[fileType]}`);
+                    }
                 }
             }
 
-            // Mahkeme/Birim
+            // "Yargı Birimi" veya "Mahkeme" için benzer yaklaşım
             if (courtType) {
                 setTimeout(() => {
-                    const courtInputs = Array.from(document.querySelectorAll('input, select')).filter(el =>
-                        el.id?.toLowerCase().includes('birim') ||
-                        el.id?.toLowerCase().includes('mahkeme') ||
-                        el.placeholder?.toLowerCase().includes('birim') ||
-                        el.placeholder?.toLowerCase().includes('mahkeme')
+                    const labels = Array.from(document.querySelectorAll('label'));
+                    const birimLabel = labels.find(l =>
+                        l.textContent.trim() === 'Yargı Birimi' ||
+                        l.textContent.trim() === 'Mahkeme'
                     );
-                    console.log('🏛️ Mahkeme inputları:', courtInputs.length);
-                    if (courtInputs[0]) {
-                        courtInputs[0].value = courtType;
-                        courtInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
-                        courtInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+
+                    if (birimLabel) {
+                        const selectId = birimLabel.getAttribute('for');
+                        let select = selectId ? document.getElementById(selectId) : null;
+
+                        if (!select) {
+                            const parent = birimLabel.closest('.form-group, .dx-field, div');
+                            if (parent) {
+                                select = parent.querySelector('select, input');
+                            }
+                        }
+
+                        console.log('🏛️ Mahkeme input bulundu:', !!select);
+                        if (select) {
+                            select.value = courtType;
+                            select.dispatchEvent(new Event('input', { bubbles: true }));
+                            select.dispatchEvent(new Event('change', { bubbles: true }));
+                            console.log(`✅ Mahkeme set edildi: ${courtType}`);
+                        }
                     }
-                }, 500);
+                }, 800);
             }
 
             // Dosya durumu
             if (status) {
-                const statusInputs = Array.from(allInputs).filter(el =>
-                    el.id?.toLowerCase().includes('durum') ||
-                    el.placeholder?.toLowerCase().includes('durum')
-                );
-                console.log('📊 Durum inputları:', statusInputs.length);
-                if (statusInputs[0]) {
-                    statusInputs[0].value = status;
-                    statusInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
-                }
+                setTimeout(() => {
+                    const labels = Array.from(document.querySelectorAll('label'));
+                    const durumLabel = labels.find(l =>
+                        l.textContent.trim() === 'Dosya Durumu' ||
+                        l.textContent.trim().includes('Durum')
+                    );
+
+                    if (durumLabel) {
+                        const selectId = durumLabel.getAttribute('for');
+                        let select = selectId ? document.getElementById(selectId) : null;
+
+                        if (!select) {
+                            const parent = durumLabel.closest('.form-group, .dx-field, div');
+                            if (parent) {
+                                select = parent.querySelector('select');
+                            }
+                        }
+
+                        console.log('📊 Durum select bulundu:', !!select);
+                        if (select) {
+                            // Durum değerini option'lardan bul
+                            const options = Array.from(select.options);
+                            const matchingOption = options.find(opt =>
+                                opt.text.toLowerCase() === status.toLowerCase() ||
+                                opt.value.toLowerCase() === status.toLowerCase()
+                            );
+
+                            if (matchingOption) {
+                                select.value = matchingOption.value;
+                                select.dispatchEvent(new Event('change', { bubbles: true }));
+                                console.log(`✅ Durum set edildi: ${status}`);
+                            }
+                        }
+                    }
+                }, 1200);
             }
 
-            // Tarih aralığı
-            if (dateFrom || dateTo) {
-                const dateInputs = Array.from(document.querySelectorAll('input[type="date"], input[type="text"]')).filter(el =>
-                    el.placeholder?.toLowerCase().includes('tarih') ||
-                    el.id?.toLowerCase().includes('tarih')
-                );
-                console.log('📅 Tarih inputları:', dateInputs.length);
-
-                if (dateFrom && dateInputs[0]) {
-                    dateInputs[0].value = dateFrom;
-                    dateInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
-                }
-                if (dateTo && dateInputs[1]) {
-                    dateInputs[1].value = dateTo;
-                    dateInputs[1].dispatchEvent(new Event('input', { bubbles: true }));
-                }
-            }
-
-            // Arama/Sorgula butonu - 1.5 saniye bekle
+            // Arama butonu - sadece "Sorgula" butonunu bul (erişilebilirlik menüsünü değil!)
             setTimeout(() => {
-                const searchButtons = Array.from(document.querySelectorAll('button, input[type="submit"], .dx-button')).filter(btn =>
-                    btn.textContent?.toLowerCase().includes('ara') ||
-                    btn.textContent?.toLowerCase().includes('sorgula') ||
-                    btn.value?.toLowerCase().includes('ara') ||
-                    btn.title?.toLowerCase().includes('ara')
-                );
-                console.log('🔍 Arama butonları:', searchButtons.length);
+                // Önce form içindeki butonları ara
+                const formButtons = Array.from(document.querySelectorAll('.dx-button, button[type="submit"], button[type="button"]'));
 
-                if (searchButtons[0]) {
-                    console.log('✅ Arama butonuna tıklanıyor...');
+                console.log(`🔍 Toplam ${formButtons.length} buton bulundu, filtreleniyor...`);
+
+                // Sadece "Sorgula" veya "Ara" yazılı olanları al
+                const searchButtons = formButtons.filter(btn => {
+                    const text = btn.textContent?.trim().toLowerCase() || '';
+                    const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
+
+                    // Erişilebilirlik menüsü DEĞİL
+                    if (text.includes('erişilebilirlik') || ariaLabel.includes('erişilebilirlik')) {
+                        return false;
+                    }
+
+                    // Temizle butonu DEĞİL
+                    if (text.includes('temizle') || text.includes('reset')) {
+                        return false;
+                    }
+
+                    // Sadece sorgula/ara
+                    return text === 'sorgula' || text === 'ara';
+                });
+
+                console.log(`✅ ${searchButtons.length} arama butonu filtrelendi`);
+
+                if (searchButtons.length > 0) {
+                    console.log('✅ Sorgula butonuna tıklanıyor...');
                     searchButtons[0].click();
                     sendResponse({ success: true, message: 'Form dolduruldu ve submit edildi' });
                 } else {
-                    console.warn('⚠️ Arama butonu bulunamadı');
-                    sendResponse({ success: true, message: 'Form dolduruldu ama submit butonu bulunamadı' });
+                    console.warn('⚠️ Sorgula butonu bulunamadı');
+                    sendResponse({ success: false, message: 'Sorgula butonu bulunamadı' });
                 }
-            }, 1500);
+            }, 2000);
 
         } catch (error) {
             console.error('❌ Form doldurma hatası:', error);
