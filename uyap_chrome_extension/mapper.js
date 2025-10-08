@@ -173,7 +173,8 @@ function mapAdditionalOpponents(opponents) {
         capacity: opponent.capacity || '',
         identity_number: opponent.identityNumber || '',
         phone: cleanPhoneNumber(opponent.phone || ''),
-        address: opponent.address || ''
+        address: opponent.address || '',
+        lawyer: opponent.lawyer && opponent.lawyer !== '-' ? opponent.lawyer : ''
     }));
 }
 
@@ -383,11 +384,11 @@ function identifyClientAndOpponent(parties, ourLawyers) {
     }
 
     // Vekilleri ayır
-    const clientLawyers = clientSide.length > 0 && clientSide[0].lawyer ?
-        clientSide[0].lawyer.split(',').map(l => l.trim().replace(/[\[\]]/g, '')) : [];
+    const clientLawyers = clientSide.length > 0 && clientSide[0].lawyer && clientSide[0].lawyer !== '-' ?
+        clientSide[0].lawyer.split(',').map(l => l.trim().replace(/[\[\]]/g, '')).filter(l => l && l !== '-') : [];
 
-    const opponentLawyers = opponentSide.length > 0 && opponentSide[0].lawyer ?
-        opponentSide[0].lawyer.split(',').map(l => l.trim().replace(/[\[\]]/g, '')) : [];
+    const opponentLawyers = opponentSide.length > 0 && opponentSide[0].lawyer && opponentSide[0].lawyer !== '-' ?
+        opponentSide[0].lawyer.split(',').map(l => l.trim().replace(/[\[\]]/g, '')).filter(l => l && l !== '-') : [];
 
     return {
         client: clientSide[0] || null,
