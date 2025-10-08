@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "UYAP Avukat Dosya Aktarıcı",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "UYAP Avukat Bilgi Sistemi'nden dosyaları otomatik olarak kendi sisteminize aktarır",
   "permissions": [
     "activeTab",

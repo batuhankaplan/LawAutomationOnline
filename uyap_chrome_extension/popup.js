@@ -221,6 +221,10 @@ function initializeEventListeners() {
             await sleep(4000); // UYAP formunun submit olması ve sonuçların yüklenmesi için bekle
             console.log('✅ Bekleme tamamlandı');
             applyAllFilters(); // Extension listesini de filtrele
+
+            // YENİ: Otomatik sayfa tarama
+            console.log('📄 Sayfa otomatik taranıyor...');
+            await scanCurrentPage(); // Sayfayı otomatik tara
         });
     }
 
