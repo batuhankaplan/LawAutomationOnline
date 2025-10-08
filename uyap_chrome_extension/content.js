@@ -21,13 +21,22 @@ function extractCaseListFromTable() {
     const tables = document.querySelectorAll('table');
 
     tables.forEach(table => {
-        // Önce header'ı bul ve sütun indexlerini tespit et
-        const headers = Array.from(table.querySelectorAll('thead th, thead td')).map(h => h.textContent.trim());
+        // DevExtreme tabloları için header'ı bul
+        let headerCells = table.querySelectorAll('thead th, thead td, .dx-header-row td, .dx-header-row th');
+        if (headerCells.length === 0) {
+            // İlk satır header olabilir
+            const firstRow = table.querySelector('tbody tr:first-child, .dx-data-row:first-child');
+            if (firstRow) {
+                headerCells = firstRow.querySelectorAll('td');
+            }
+        }
+
+        const headers = Array.from(headerCells).map(h => h.textContent.trim());
         const dosyaNoIndex = headers.findIndex(h => h.includes('Dosya No'));
         const birimIndex = headers.findIndex(h => h.includes('Birim'));
-        const dosyaTuruIndex = headers.findIndex(h => h.includes('Dosya Türü'));
-        const dosyaDurumuIndex = headers.findIndex(h => h.includes('Dosya Durumu'));
-        const acilisTarihiIndex = headers.findIndex(h => h.includes('Açılış Tarihi') || h.includes('Dosya Açılış Tarihi'));
+        const dosyaTuruIndex = headers.findIndex(h => h.includes('Dosya Türü') || h.includes('Tür'));
+        const dosyaDurumuIndex = headers.findIndex(h => h.includes('Dosya Durumu') || h.includes('Durum'));
+        const acilisTarihiIndex = headers.findIndex(h => h.includes('Açılış Tarihi') || h.includes('Dosya Açılış'));
 
         console.log('📊 Tablo başlıkları:', headers);
         console.log(`📍 Index: Dosya No=${dosyaNoIndex}, Birim=${birimIndex}, Tür=${dosyaTuruIndex}, Durum=${dosyaDurumuIndex}, Açılış=${acilisTarihiIndex}`);
@@ -655,73 +664,103 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true, message: 'Modal kapatıldı' });
     }
     else if (request.action === 'fillUyapSearchForm') {
-        // UYAP arama formunu doldur
+        // UYAP DevExtreme formunu doldur
         const { fileType, courtType, status, dateFrom, dateTo } = request.filters;
 
+        console.log('📝 UYAP form dolduruluyor:', request.filters);
+
         try {
-            // Dosya türü seç
+            // DevExtreme selectbox'ları bul - tüm select, input ve dx elementleri
+            const allInputs = document.querySelectorAll('input, select, .dx-textbox, .dx-selectbox');
+            console.log(`📋 ${allInputs.length} input/select bulundu`);
+
+            // Dosya türü (Hukuk, Ceza, İcra)
             if (fileType) {
-                const fileTypeSelect = document.querySelector('select#dosyaTuru, select[name*="dosyaTuru"], #file-type-select');
-                if (fileTypeSelect) {
-                    fileTypeSelect.value = fileType;
-                    fileTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                const fileTypeInputs = Array.from(allInputs).filter(el =>
+                    el.id?.toLowerCase().includes('dosyaturu') ||
+                    el.name?.toLowerCase().includes('dosyaturu') ||
+                    el.placeholder?.toLowerCase().includes('dosya tür') ||
+                    el.ariaLabel?.toLowerCase().includes('dosya tür')
+                );
+                console.log('🔍 Dosya türü inputları:', fileTypeInputs.length);
+                if (fileTypeInputs[0]) {
+                    fileTypeInputs[0].value = fileType;
+                    fileTypeInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+                    fileTypeInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
                 }
             }
 
-            // Mahkeme türü seç (dosya türüne göre)
+            // Mahkeme/Birim
             if (courtType) {
                 setTimeout(() => {
-                    const courtSelect = document.querySelector('select#mahkeme, select[name*="mahkeme"], select[name*="birim"]');
-                    if (courtSelect) {
-                        const option = Array.from(courtSelect.options).find(opt =>
-                            opt.text.includes(courtType) || opt.value.includes(courtType)
-                        );
-                        if (option) {
-                            courtSelect.value = option.value;
-                            courtSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                        }
+                    const courtInputs = Array.from(document.querySelectorAll('input, select')).filter(el =>
+                        el.id?.toLowerCase().includes('birim') ||
+                        el.id?.toLowerCase().includes('mahkeme') ||
+                        el.placeholder?.toLowerCase().includes('birim') ||
+                        el.placeholder?.toLowerCase().includes('mahkeme')
+                    );
+                    console.log('🏛️ Mahkeme inputları:', courtInputs.length);
+                    if (courtInputs[0]) {
+                        courtInputs[0].value = courtType;
+                        courtInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                        courtInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
                     }
                 }, 500);
             }
 
-            // Dosya durumu seç
+            // Dosya durumu
             if (status) {
-                const statusSelect = document.querySelector('select#durum, select[name*="durum"]');
-                if (statusSelect) {
-                    statusSelect.value = status;
-                    statusSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                const statusInputs = Array.from(allInputs).filter(el =>
+                    el.id?.toLowerCase().includes('durum') ||
+                    el.placeholder?.toLowerCase().includes('durum')
+                );
+                console.log('📊 Durum inputları:', statusInputs.length);
+                if (statusInputs[0]) {
+                    statusInputs[0].value = status;
+                    statusInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
                 }
             }
 
             // Tarih aralığı
-            if (dateFrom) {
-                const dateFromInput = document.querySelector('input#baslangicTarihi, input[name*="baslangic"]');
-                if (dateFromInput) {
-                    dateFromInput.value = dateFrom;
-                    dateFromInput.dispatchEvent(new Event('input', { bubbles: true }));
+            if (dateFrom || dateTo) {
+                const dateInputs = Array.from(document.querySelectorAll('input[type="date"], input[type="text"]')).filter(el =>
+                    el.placeholder?.toLowerCase().includes('tarih') ||
+                    el.id?.toLowerCase().includes('tarih')
+                );
+                console.log('📅 Tarih inputları:', dateInputs.length);
+
+                if (dateFrom && dateInputs[0]) {
+                    dateInputs[0].value = dateFrom;
+                    dateInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                if (dateTo && dateInputs[1]) {
+                    dateInputs[1].value = dateTo;
+                    dateInputs[1].dispatchEvent(new Event('input', { bubbles: true }));
                 }
             }
 
-            if (dateTo) {
-                const dateToInput = document.querySelector('input#bitisTarihi, input[name*="bitis"]');
-                if (dateToInput) {
-                    dateToInput.value = dateTo;
-                    dateToInput.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-            }
-
-            // Form submit
+            // Arama/Sorgula butonu - 1.5 saniye bekle
             setTimeout(() => {
-                const submitBtn = document.querySelector('button[type="submit"], button#ara, button.search-btn');
-                if (submitBtn) {
-                    submitBtn.click();
+                const searchButtons = Array.from(document.querySelectorAll('button, input[type="submit"], .dx-button')).filter(btn =>
+                    btn.textContent?.toLowerCase().includes('ara') ||
+                    btn.textContent?.toLowerCase().includes('sorgula') ||
+                    btn.value?.toLowerCase().includes('ara') ||
+                    btn.title?.toLowerCase().includes('ara')
+                );
+                console.log('🔍 Arama butonları:', searchButtons.length);
+
+                if (searchButtons[0]) {
+                    console.log('✅ Arama butonuna tıklanıyor...');
+                    searchButtons[0].click();
                     sendResponse({ success: true, message: 'Form dolduruldu ve submit edildi' });
                 } else {
+                    console.warn('⚠️ Arama butonu bulunamadı');
                     sendResponse({ success: true, message: 'Form dolduruldu ama submit butonu bulunamadı' });
                 }
-            }, 1000);
+            }, 1500);
 
         } catch (error) {
+            console.error('❌ Form doldurma hatası:', error);
             sendResponse({ success: false, error: error.message });
         }
 

@@ -184,17 +184,23 @@ function mapAdditionalOpponents(opponents) {
 function mapLawyer(lawyers) {
     if (!lawyers || lawyers.length === 0) return {};
 
-    // Karşı taraf vekilini bul
-    const opponentLawyer = lawyers.find(l => l.isOpponent) || lawyers[0];
+    // İlk vekili al (müvekkilimizin vekili)
+    const firstLawyer = Array.isArray(lawyers) ? lawyers[0] : lawyers;
 
-    if (!opponentLawyer) return {};
+    // String array ise (isim listesi), ilk ismi al
+    if (typeof firstLawyer === 'string') {
+        return {
+            'lawyer-name': lawyers.join(', ')  // Tüm vekilleri virgülle birleştir
+        };
+    }
 
+    // Obje ise detaylı bilgileri al
     return {
-        'opponent-lawyer': opponentLawyer.name || '',
-        'opponent-lawyer-bar': opponentLawyer.bar || '',
-        'opponent-lawyer-bar-number': opponentLawyer.barNumber || '',
-        'opponent-lawyer-phone': cleanPhoneNumber(opponentLawyer.phone || ''),
-        'opponent-lawyer-address': opponentLawyer.address || ''
+        'lawyer-name': firstLawyer.name || lawyers.join(', '),
+        'lawyer-bar': firstLawyer.bar || '',
+        'lawyer-bar-number': firstLawyer.barNumber || '',
+        'lawyer-phone': cleanPhoneNumber(firstLawyer.phone || ''),
+        'lawyer-address': firstLawyer.address || ''
     };
 }
 
