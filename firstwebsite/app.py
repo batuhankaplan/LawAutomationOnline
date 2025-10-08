@@ -236,6 +236,13 @@ migrate = Migrate(app, db)
 mail = Mail(app)
 csrf = CSRFProtect(app) # CSRF korumasını başlat
 
+# Session cookie ayarları (Chrome Extension için)
+# Development'ta HTTP üzerinden çalıştığı için SECURE=False
+# Production'da HTTPS kullanılıyorsa SECURE=True olmalı
+app.config['SESSION_COOKIE_SAMESITE'] = None  # Cross-site isteklere izin ver (None değeri kullan)
+app.config['SESSION_COOKIE_SECURE'] = False  # Development için False, production HTTPS kullanıyorsa True
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # XSS koruması
+
 # Login manager setup
 login_manager = LoginManager()
 login_manager.init_app(app)
