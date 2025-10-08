@@ -182,6 +182,94 @@
 
         <!-- Settings Tab -->
         <div class="tab-content" id="settingsTab">
+            <!-- Statistics Section -->
+            <div class="section">
+                <h3>📊 İstatistikler</h3>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📥</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="statTotalImports">0</div>
+                            <div class="stat-label">Toplam İçe Aktarma</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="statSuccessImports">0</div>
+                            <div class="stat-label">Başarılı</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">❌</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="statFailedImports">0</div>
+                            <div class="stat-label">Başarısız</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="statSuccessRate">0%</div>
+                            <div class="stat-label">Başarı Oranı</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-card-wide">
+                        <div class="stat-icon">🕐</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="statLastImport">-</div>
+                            <div class="stat-label">Son İçe Aktarma</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-small btn-outline btn-full" id="resetStatsBtn">
+                    🔄 İstatistikleri Sıfırla
+                </button>
+            </div>
+
+            <hr>
+
+            <!-- Import Options Section -->
+            <div class="section">
+                <h3>⚙️ İçe Aktarma Seçenekleri</h3>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="optionImportHearingDate" checked>
+                        <span>Duruşma Tarihini Çek</span>
+                    </label>
+                    <small>UYAP'taki duruşma tarihi bilgisini sisteme aktar</small>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="optionAddToCalendar" checked>
+                        <span>Duruşmayı Takvime Ekle</span>
+                    </label>
+                    <small>Duruşma tarihini otomatik olarak takvime event olarak ekle</small>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="optionImportDocuments" checked>
+                        <span>Belgeleri İndir</span>
+                    </label>
+                    <small>Dosyaya ait belgeleri otomatik olarak indir (yakında)</small>
+                </div>
+
+                <button class="btn btn-primary btn-full" id="saveImportOptionsBtn">
+                    💾 Seçenekleri Kaydet
+                </button>
+            </div>
+
+            <hr>
+
             <div class="section">
                 <h3>Backend API Ayarları</h3>
 
@@ -218,7 +306,7 @@
                 <div class="about">
                     <h4>Hakkında</h4>
                     <p><strong>UYAP Dosya Aktarıcı</strong></p>
-                    <p>Versiyon: 1.0.0</p>
+                    <p>Versiyon: 1.7.0</p>
                     <p>UYAP Avukat Bilgi Sistemi'nden dosyalarınızı otomatik olarak sisteminize aktarır.</p>
                 </div>
             </div>

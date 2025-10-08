@@ -990,4 +990,109 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// ==========================================
+// İSTATİSTİK YÖNETİMİ
+// ==========================================
+
+async function loadStatistics() {
+    const stats = await chrome.storage.local.get(['importStats']);
+    const importStats = stats.importStats || {
+        totalImports: 0,
+        successImports: 0,
+        failedImports: 0,
+        lastImportDate: null
+    };
+
+    document.getElementById('statTotalImports').textContent = importStats.totalImports;
+    document.getElementById('statSuccessImports').textContent = importStats.successImports;
+    document.getElementById('statFailedImports').textContent = importStats.failedImports;
+
+    const successRate = importStats.totalImports > 0
+        ? Math.round((importStats.successImports / importStats.totalImports) * 100)
+        : 0;
+    document.getElementById('statSuccessRate').textContent = successRate + '%';
+
+    if (importStats.lastImportDate) {
+        const lastDate = new Date(importStats.lastImportDate);
+        document.getElementById('statLastImport').textContent = lastDate.toLocaleString('tr-TR');
+    } else {
+        document.getElementById('statLastImport').textContent = '-';
+    }
+}
+
+async function updateStatistics(success) {
+    const stats = await chrome.storage.local.get(['importStats']);
+    const importStats = stats.importStats || {
+        totalImports: 0,
+        successImports: 0,
+        failedImports: 0,
+        lastImportDate: null
+    };
+
+    importStats.totalImports++;
+    if (success) {
+        importStats.successImports++;
+    } else {
+        importStats.failedImports++;
+    }
+    importStats.lastImportDate = new Date().toISOString();
+
+    await chrome.storage.local.set({ importStats });
+    await loadStatistics();
+}
+
+// Reset statistics
+const resetStatsBtn = document.getElementById('resetStatsBtn');
+if (resetStatsBtn) {
+    resetStatsBtn.addEventListener('click', async () => {
+        if (confirm('Tüm istatistikler sıfırlanacak. Emin misiniz?')) {
+            await chrome.storage.local.set({
+                importStats: {
+                    totalImports: 0,
+                    successImports: 0,
+                    failedImports: 0,
+                    lastImportDate: null
+                }
+            });
+            await loadStatistics();
+            alert('İstatistikler sıfırlandı.');
+        }
+    });
+}
+
+// ==========================================
+// İÇE AKTARMA SEÇENEKLERİ
+// ==========================================
+
+async function loadImportOptions() {
+    const options = await chrome.storage.local.get(['importOptions']);
+    const importOptions = options.importOptions || {
+        importHearingDate: true,
+        addToCalendar: true,
+        importDocuments: true
+    };
+
+    document.getElementById('optionImportHearingDate').checked = importOptions.importHearingDate;
+    document.getElementById('optionAddToCalendar').checked = importOptions.addToCalendar;
+    document.getElementById('optionImportDocuments').checked = importOptions.importDocuments;
+}
+
+const saveImportOptionsBtn = document.getElementById('saveImportOptionsBtn');
+if (saveImportOptionsBtn) {
+    saveImportOptionsBtn.addEventListener('click', async () => {
+        const importOptions = {
+            importHearingDate: document.getElementById('optionImportHearingDate').checked,
+            addToCalendar: document.getElementById('optionAddToCalendar').checked,
+            importDocuments: document.getElementById('optionImportDocuments').checked
+        };
+
+        await chrome.storage.local.set({ importOptions });
+        alert('İçe aktarma seçenekleri kaydedildi.');
+    });
+}
+
+// Sayfa yüklendiğinde istatistik ve seçenekleri yükle
+loadStatistics();
+loadImportOptions();
+
 console.log('Popup.js yüklendi');
