@@ -11,6 +11,13 @@ let activeFilters = {
     dateTo: ''
 };
 
+// Import control state
+let importState = {
+    isPaused: false,
+    isStopped: false,
+    currentIndex: 0
+};
+
 console.log('Popup.js yükleniyor...');
 
 // DOM Yüklendikten sonra
@@ -207,8 +214,10 @@ function initializeEventListeners() {
     // Filtreleri uygula
     const applyFiltersBtn = document.getElementById('applyFiltersBtn');
     if (applyFiltersBtn) {
-        applyFiltersBtn.addEventListener('click', () => {
-            applyAllFilters();
+        applyFiltersBtn.addEventListener('click', async () => {
+            await applyFiltersToUyap();
+            await sleep(2000); // UYAP formunun submit olması için bekle
+            applyAllFilters(); // Extension listesini de filtrele
         });
     }
 
@@ -244,6 +253,34 @@ function initializeEventListeners() {
         testConnectionBtn.addEventListener('click', () => {
             console.log('Bağlantı test butonuna tıklandı');
             testConnection();
+        });
+    }
+
+    // Import control butonları
+    const pauseImportBtn = document.getElementById('pauseImportBtn');
+    if (pauseImportBtn) {
+        pauseImportBtn.addEventListener('click', () => {
+            importState.isPaused = true;
+            showElement('resumeImportBtn');
+            hideElement('pauseImportBtn');
+            updateProgress(null, 'Duraklatıldı...', null);
+        });
+    }
+
+    const resumeImportBtn = document.getElementById('resumeImportBtn');
+    if (resumeImportBtn) {
+        resumeImportBtn.addEventListener('click', () => {
+            importState.isPaused = false;
+            hideElement('resumeImportBtn');
+            showElement('pauseImportBtn');
+        });
+    }
+
+    const stopImportBtn = document.getElementById('stopImportBtn');
+    if (stopImportBtn) {
+        stopImportBtn.addEventListener('click', () => {
+            importState.isStopped = true;
+            updateProgress(100, 'Durduruldu', null);
         });
     }
 
@@ -458,8 +495,25 @@ async function importSelectedCases() {
     // Aktif sekmeyi al
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
+    // Reset import state
+    importState = { isPaused: false, isStopped: false, currentIndex: 0 };
+    showElement('pauseImportBtn');
+    hideElement('resumeImportBtn');
+
     for (let i = 0; i < selectedCaseData.length; i++) {
+        // Durduruldu mu?
+        if (importState.isStopped) {
+            console.log('❌ İmport durduruldu');
+            break;
+        }
+
+        // Duraklatıldı mı? Bekle
+        while (importState.isPaused) {
+            await sleep(500);
+        }
+
         const caseData = selectedCaseData[i];
+        importState.currentIndex = i;
 
         try {
             updateProgress(
@@ -734,6 +788,27 @@ function parseTurkishDate(dateStr) {
     const parts = dateStr.split('.');
     if (parts.length !== 3) return new Date(dateStr);
     return new Date(parts[2], parts[1] - 1, parts[0]);
+}
+
+// UYAP formunu otomatik doldur
+async function applyFiltersToUyap() {
+    const fileType = document.getElementById('filterFileType')?.value || '';
+    const courtType = document.getElementById('filterCourtType')?.value || '';
+    const status = document.getElementById('filterStatus')?.value || '';
+    const dateFrom = document.getElementById('filterDateFrom')?.value || '';
+    const dateTo = document.getElementById('filterDateTo')?.value || '';
+
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    try {
+        await chrome.tabs.sendMessage(tab.id, {
+            action: 'fillUyapSearchForm',
+            filters: { fileType, courtType, status, dateFrom, dateTo }
+        });
+        console.log('✅ UYAP formu dolduruldu');
+    } catch (error) {
+        console.error('❌ UYAP form doldurma hatası:', error);
+    }
 }
 
 // Ayarları kaydet

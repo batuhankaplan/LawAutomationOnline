@@ -237,11 +237,12 @@ mail = Mail(app)
 csrf = CSRFProtect(app) # CSRF korumasını başlat
 
 # Session cookie ayarları (Chrome Extension için)
-# Development'ta HTTP üzerinden çalıştığı için SECURE=False
-# Production'da HTTPS kullanılıyorsa SECURE=True olmalı
-app.config['SESSION_COOKIE_SAMESITE'] = None  # Cross-site isteklere izin ver (None değeri kullan)
-app.config['SESSION_COOKIE_SECURE'] = False  # Development için False, production HTTPS kullanıyorsa True
-app.config['SESSION_COOKIE_HTTPONLY'] = True  # XSS koruması
+# Chrome extension'lar için SameSite=None yerine Lax kullan (HTTP'de None çalışmıyor)
+# Extension'dan gelen GET istekleri Lax ile çalışır
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Lax = same-site GET isteklerine izin ver
+app.config['SESSION_COOKIE_SECURE'] = False  # Development için False
+app.config['SESSION_COOKIE_HTTPONLY'] = False  # Extension'ın cookie'ye erişebilmesi için False
+app.config['SESSION_COOKIE_DOMAIN'] = None  # Subdomain'lere izin verme
 
 # Login manager setup
 login_manager = LoginManager()

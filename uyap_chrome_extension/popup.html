@@ -28,13 +28,6 @@
 
         <!-- Import Tab -->
         <div class="tab-content active" id="importTab">
-            <!-- Auth Warning -->
-            <div class="alert alert-warning" id="authWarning" style="display: none;">
-                <span>⚠️</span>
-                <p>Sisteme giriş yapmanız gerekiyor!</p>
-                <button class="btn btn-small" id="openSystemBtn">Sistemi Aç</button>
-            </div>
-
             <!-- UYAP Page Check -->
             <div class="alert alert-info" id="uyapWarning" style="display: none;">
                 <span>ℹ️</span>
@@ -161,6 +154,17 @@
                 <div class="progress-info">
                     <p id="progressText">Hazırlanıyor...</p>
                     <p id="progressDetail"></p>
+                </div>
+                <div class="progress-controls">
+                    <button class="btn btn-small btn-warning" id="pauseImportBtn">
+                        <span class="icon">⏸️</span> Duraklat
+                    </button>
+                    <button class="btn btn-small btn-primary" id="resumeImportBtn" style="display: none;">
+                        <span class="icon">▶️</span> Devam Et
+                    </button>
+                    <button class="btn btn-small btn-danger" id="stopImportBtn">
+                        <span class="icon">⏹️</span> Durdur
+                    </button>
                 </div>
             </div>
 

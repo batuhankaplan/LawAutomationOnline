@@ -654,6 +654,79 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         sendResponse({ success: true, message: 'Modal kapatıldı' });
     }
+    else if (request.action === 'fillUyapSearchForm') {
+        // UYAP arama formunu doldur
+        const { fileType, courtType, status, dateFrom, dateTo } = request.filters;
+
+        try {
+            // Dosya türü seç
+            if (fileType) {
+                const fileTypeSelect = document.querySelector('select#dosyaTuru, select[name*="dosyaTuru"], #file-type-select');
+                if (fileTypeSelect) {
+                    fileTypeSelect.value = fileType;
+                    fileTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+
+            // Mahkeme türü seç (dosya türüne göre)
+            if (courtType) {
+                setTimeout(() => {
+                    const courtSelect = document.querySelector('select#mahkeme, select[name*="mahkeme"], select[name*="birim"]');
+                    if (courtSelect) {
+                        const option = Array.from(courtSelect.options).find(opt =>
+                            opt.text.includes(courtType) || opt.value.includes(courtType)
+                        );
+                        if (option) {
+                            courtSelect.value = option.value;
+                            courtSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+                }, 500);
+            }
+
+            // Dosya durumu seç
+            if (status) {
+                const statusSelect = document.querySelector('select#durum, select[name*="durum"]');
+                if (statusSelect) {
+                    statusSelect.value = status;
+                    statusSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+
+            // Tarih aralığı
+            if (dateFrom) {
+                const dateFromInput = document.querySelector('input#baslangicTarihi, input[name*="baslangic"]');
+                if (dateFromInput) {
+                    dateFromInput.value = dateFrom;
+                    dateFromInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+
+            if (dateTo) {
+                const dateToInput = document.querySelector('input#bitisTarihi, input[name*="bitis"]');
+                if (dateToInput) {
+                    dateToInput.value = dateTo;
+                    dateToInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+
+            // Form submit
+            setTimeout(() => {
+                const submitBtn = document.querySelector('button[type="submit"], button#ara, button.search-btn');
+                if (submitBtn) {
+                    submitBtn.click();
+                    sendResponse({ success: true, message: 'Form dolduruldu ve submit edildi' });
+                } else {
+                    sendResponse({ success: true, message: 'Form dolduruldu ama submit butonu bulunamadı' });
+                }
+            }, 1000);
+
+        } catch (error) {
+            sendResponse({ success: false, error: error.message });
+        }
+
+        return true; // Async
+    }
     else if (request.action === 'ping') {
         sendResponse({ success: true, message: 'Content script aktif' });
     }
