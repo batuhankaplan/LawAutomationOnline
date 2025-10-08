@@ -4298,8 +4298,8 @@
                 const clientName = name + ' ' + surname;
                 const tcNo = client.querySelector('td:nth-child(4)').textContent.trim();
 
-                // Entity type belirleme: surname boş veya '-' ise company, değilse person
-                const entityType = (surname === '' || surname === '-') ? 'company' : 'person';
+                // Entity type belirleme: data attribute'dan al
+                const entityType = client.getAttribute('data-entity-type') || 'person';
 
                 // Para bilgilerini al ve parse et
                 const amountText = client.querySelector('td:nth-child(5)').textContent.trim();
@@ -4384,7 +4384,7 @@
                 if (!isNaN(amountInTL)) {
                     entityStats[entityType].total += amountInTL;
                     entityStats[entityType].count++;
-                    
+
                     if (isPaid) {
                         entityStats[entityType].paid += amountInTL;
                         entityStats[entityType].paidCount++;
