@@ -192,8 +192,30 @@ function extractBasicCaseInfo() {
     const durum = findLabelValue('Durum', 'Dosya Durumu', 'DURUM');
     if (durum) info.status = durum;
 
-    // Sonraki Duruşma (tarih + saat)
-    const durusmaTarihi = findLabelValue('Sonraki Duruşma', 'Duruşma Tarihi', 'SONRAKI DURUŞMA', 'DURUşMA TARİHİ');
+    // Sonraki Duruşma (tarih + saat) - daha geniş arama
+    let durusmaTarihi = findLabelValue(
+        'Sonraki Duruşma',
+        'Duruşma Tarihi',
+        'SONRAKI DURUŞMA',
+        'DURUşMA TARİHİ',
+        'Duruşma',
+        'İlk Duruşma',
+        'Celse Tarihi',
+        'Celse'
+    );
+
+    // Eğer bulunamadıysa sayfa içinde tarih formatı ara (DD/MM/YYYY HH:MM)
+    if (!durusmaTarihi) {
+        const pageText = document.body.textContent;
+        const dateRegex = /(\d{2}[\/\.]\d{2}[\/\.]\d{4}\s+\d{2}:\d{2})/g;
+        const matches = pageText.match(dateRegex);
+        if (matches && matches.length > 0) {
+            // İlk bulunan tarih-saat çiftini al
+            durusmaTarihi = matches[0];
+            console.log('🔍 Sayfa taramasıyla duruşma tarihi bulundu:', durusmaTarihi);
+        }
+    }
+
     console.log('🗓️ Duruşma tarihi arama sonucu:', durusmaTarihi);
     if (durusmaTarihi) {
         const parsed = parseUyapDate(durusmaTarihi);

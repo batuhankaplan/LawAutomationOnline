@@ -254,6 +254,21 @@ login_manager.login_message_category = 'info'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# CORS ayarları Chrome Extension için
+@app.after_request
+def after_request(response):
+    # Extension'dan gelen istekler için CORS header'ları ekle
+    origin = request.headers.get('Origin')
+
+    # Chrome extension origin'leri (chrome-extension://) veya localhost'a izin ver
+    if origin and (origin.startswith('chrome-extension://') or 'localhost' in origin or '127.0.0.1' in origin):
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+
+    return response
+
 # --- Flask-Admin Setup ---
 
 # Secure Admin Index View
