@@ -20,7 +20,9 @@ function extractCaseListFromTable() {
     const cases = [];
     const tables = document.querySelectorAll('table');
 
-    tables.forEach(table => {
+    console.log(`🔍 Toplam ${tables.length} tablo bulundu`);
+
+    tables.forEach((table, tableIndex) => {
         // DevExtreme tabloları için header'ı bul
         let headerCells = table.querySelectorAll('thead th, thead td, .dx-header-row td, .dx-header-row th');
         if (headerCells.length === 0) {
@@ -32,20 +34,31 @@ function extractCaseListFromTable() {
         }
 
         const headers = Array.from(headerCells).map(h => h.textContent.trim());
+        
+        // Eğer tablo başlık içermiyorsa atla
+        if (headers.length === 0) {
+            console.log(`⏭️ Tablo ${tableIndex}: Başlık yok, atlanıyor`);
+            return;
+        }
+        
         const dosyaNoIndex = headers.findIndex(h => h.includes('Dosya No'));
         const birimIndex = headers.findIndex(h => h.includes('Birim'));
         const dosyaTuruIndex = headers.findIndex(h => h.includes('Dosya Türü') || h.includes('Tür'));
         const dosyaDurumuIndex = headers.findIndex(h => h.includes('Dosya Durumu') || h.includes('Durum'));
         const acilisTarihiIndex = headers.findIndex(h => h.includes('Açılış Tarihi') || h.includes('Dosya Açılış'));
 
-        console.log('📊 Tablo başlıkları:', headers);
-        console.log(`📍 Index: Dosya No=${dosyaNoIndex}, Birim=${birimIndex}, Tür=${dosyaTuruIndex}, Durum=${dosyaDurumuIndex}, Açılış=${acilisTarihiIndex}`);
+        console.log(`📊 Tablo ${tableIndex} başlıkları:`, headers);
+        console.log(`📍 Tablo ${tableIndex} Index: Dosya No=${dosyaNoIndex}, Birim=${birimIndex}, Tür=${dosyaTuruIndex}, Durum=${dosyaDurumuIndex}, Açılış=${acilisTarihiIndex}`);
 
-        const rows = table.querySelectorAll('tbody tr');
+        const rows = table.querySelectorAll('tbody tr, .dx-data-row');
+        console.log(`📋 Tablo ${tableIndex}: ${rows.length} satır bulundu`);
 
-        rows.forEach(row => {
+        rows.forEach((row, rowIndex) => {
             const cells = row.querySelectorAll('td');
-            if (cells.length < 3) return;
+            if (cells.length < 3) {
+                console.log(`⏭️ Tablo ${tableIndex}, Satır ${rowIndex}: Çok az hücre (${cells.length}), atlanıyor`);
+                return;
+            }
 
             // Hücre içeriklerini topla
             const cellTexts = Array.from(cells).map(cell => cell.textContent.trim());
@@ -71,7 +84,7 @@ function extractCaseListFromTable() {
 
             // Index'lere göre verileri al (fallback: eski sıralama)
             const caseData = {
-                rowId: row.dataset.id || Math.random().toString(36),
+                rowId: row.dataset.id || row.getAttribute('data-key') || Math.random().toString(36),
                 birim: cellTexts[birimIndex >= 0 ? birimIndex : 0] || '',
                 dosyaNo: cellTexts[dosyaNoIndex >= 0 ? dosyaNoIndex : 1] || '',
                 dosyaTuru: cellTexts[dosyaTuruIndex >= 0 ? dosyaTuruIndex : 2] || '',
@@ -93,11 +106,15 @@ function extractCaseListFromTable() {
                               caseData.birim.length > 2;
 
             if (validDosyaNo && validBirim) {
+                console.log(`✅ Tablo ${tableIndex}, Satır ${rowIndex}: Geçerli dosya bulundu: ${caseData.dosyaNo}`);
                 cases.push(caseData);
+            } else {
+                console.log(`⏭️ Tablo ${tableIndex}, Satır ${rowIndex}: Geçersiz (dosyaNo: ${caseData.dosyaNo}, birim: ${caseData.birim})`);
             }
         });
     });
-
+    
+    console.log(`📊 Toplam ${cases.length} geçerli dosya bulundu`);
     return cases;
 }
 
@@ -209,11 +226,14 @@ function extractBasicCaseInfo() {
         if (yargiTuru) info.fileType = yargiTuru;
     }
 
-    // Açılış Tarihi
-    const acilisTarihi = findLabelValue('Açılış Tarihi', 'Dava Açılış Tarihi', 'AÇILIŞ TARİHİ');
+    // Açılış Tarihi - önce modal başlığından al, yoksa label'dan
+    const acilisTarihi = findLabelValue('Açılış Tarihi', 'Dava Açılış Tarihi', 'AÇILIŞ TARİHİ', 'Dosya Açılış Tarihi');
     if (acilisTarihi) {
         const parsed = parseUyapDate(acilisTarihi);
         info.openDate = parsed ? parsed.date : acilisTarihi;
+        console.log('📅 Açılış tarihi bulundu:', info.openDate);
+    } else {
+        console.warn('⚠️ Açılış tarihi bulunamadı');
     }
 
     // Dosya Durumu
@@ -610,8 +630,37 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             console.log(`Satır ${i}: dosyaNo="${currentDosyaNo}", aranan="${dosyaNo}"`);
 
             if (currentDosyaNo === dosyaNo) {
-                // Bu satırdaki butonu bul (son sütunda veya içinde) - ERİŞİLEBİLİRLİK BUTONUNU ATLA
-                const detailBtn = row.querySelector('button[id*="goruntule"], button[title*="Görüntüle"], button[title*="Detay"], a[href*="detay"], #dosya-goruntule, button.dx-button:not([aria-label*="Erişilebilirlik"]):not([title*="Erişilebilirlik"])');
+                // Bu satırdaki TÜM butonları bul ve erişilebilirlik butonunu filtrele
+                const allButtons = row.querySelectorAll('button, a');
+                let detailBtn = null;
+                
+                for (const btn of allButtons) {
+                    const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
+                    const title = btn.getAttribute('title')?.toLowerCase() || '';
+                    const text = btn.textContent?.toLowerCase() || '';
+                    const classes = btn.className?.toLowerCase() || '';
+                    
+                    // Erişilebilirlik butonunu atla
+                    if (ariaLabel.includes('erişilebilirlik') || 
+                        title.includes('erişilebilirlik') || 
+                        text.includes('erişilebilirlik') ||
+                        ariaLabel.includes('accessibility') ||
+                        title.includes('accessibility')) {
+                        console.log('⏭️ Erişilebilirlik butonu atlandı');
+                        continue;
+                    }
+                    
+                    // Görüntüle/Detay butonunu bul
+                    if (title.includes('görüntüle') || 
+                        title.includes('detay') ||
+                        ariaLabel.includes('görüntüle') ||
+                        btn.id?.includes('goruntule') ||
+                        (btn.tagName === 'A' && btn.href?.includes('detay'))) {
+                        detailBtn = btn;
+                        break;
+                    }
+                }
+                
                 if (detailBtn) {
                     console.log(`✅ ${dosyaNo} için buton bulundu (satır ${i}), tıklanıyor...`);
                     detailBtn.click();
@@ -689,53 +738,152 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     }
 
                     console.log('🔍 Yargı Türü select bulundu:', !!select);
-                    if (select) {
-                        // Türkçe değerleri normalize et
-                        const typeMap = {
-                            'hukuk': 'Hukuk',
-                            'ceza': 'Ceza',
-                            'icra': 'İcra',
-                            'idare': 'İdare'
-                        };
+                    
+                    // Extension'daki değerleri UYAP'taki değerlere map et
+                    const typeMap = {
+                        'hukuk': 'Hukuk',
+                        'ceza': 'Ceza',
+                        'icra': 'İcra',
+                        'idare': 'İdare',
+                        'idari-yargi': 'İdari Yargı',
+                        'arabuluculuk': 'Arabuluculuk'
+                    };
 
-                        select.value = typeMap[fileType] || fileType;
-                        select.dispatchEvent(new Event('change', { bubbles: true }));
-                        select.dispatchEvent(new Event('input', { bubbles: true }));
-                        console.log(`✅ Yargı Türü set edildi: ${typeMap[fileType]}`);
+                    const uyapValue = typeMap[fileType] || fileType;
+                    
+                    if (select && select.options) {
+                        // Normal SELECT için
+                        const options = Array.from(select.options);
+                        const matchingOption = options.find(opt => 
+                            opt.text.toLowerCase() === uyapValue.toLowerCase() ||
+                            opt.value.toLowerCase() === uyapValue.toLowerCase()
+                        );
+                        
+                        if (matchingOption) {
+                            select.value = matchingOption.value;
+                            select.dispatchEvent(new Event('change', { bubbles: true }));
+                            select.dispatchEvent(new Event('input', { bubbles: true }));
+                            console.log(`✅ Yargı Türü set edildi: ${matchingOption.text}`);
+                        } else {
+                            console.warn(`⚠️ Yargı türü bulunamadı: ${uyapValue}`);
+                        }
+                    } else {
+                        // DevExtreme SelectBox için
+                        console.log('🎯 DevExtreme Yargı Türü selectbox deneniyor...');
+                        const parent = yargiTuruLabel.closest('.form-group, .dx-field, div');
+                        if (parent) {
+                            // Dropdown butonu veya input alanını bul
+                            const dropdownBtn = parent.querySelector('.dx-dropdowneditor-button, .dx-dropdowneditor-icon');
+                            
+                            if (dropdownBtn) {
+                                // Dropdown'ı aç
+                                dropdownBtn.click();
+                                
+                                // Dropdown açılması için bekle
+                                setTimeout(() => {
+                                    // Liste item'larını bul
+                                    const listItems = document.querySelectorAll('.dx-list-item, .dx-item-content');
+                                    
+                                    for (const item of listItems) {
+                                        const itemText = item.textContent.trim();
+                                        if (itemText === uyapValue) {
+                                            console.log(`✅ Yargı Türü bulundu ve seçiliyor: ${uyapValue}`);
+                                            item.click();
+                                            return;
+                                        }
+                                    }
+                                    console.warn(`⚠️ Liste itemları arasında "${uyapValue}" bulunamadı`);
+                                }, 400);
+                            } else {
+                                console.warn('⚠️ DevExtreme dropdown butonu bulunamadı');
+                            }
+                        }
                     }
                 }
             }
 
-            // "Yargı Birimi" veya "Mahkeme" için benzer yaklaşım
-            if (courtType) {
-                setTimeout(() => {
+            // "Yargı Birimi" - Extension'dan seçilen değeri UYAP'ta seç
+            if (courtType && courtType !== 'Tümü') {
+                setTimeout(async () => {
                     const labels = Array.from(document.querySelectorAll('label'));
-                    const birimLabel = labels.find(l =>
-                        l.textContent.trim() === 'Yargı Birimi' ||
-                        l.textContent.trim() === 'Mahkeme'
-                    );
+                    const birimLabel = labels.find(l => l.textContent.trim() === 'Yargı Birimi');
 
                     if (birimLabel) {
-                        const selectId = birimLabel.getAttribute('for');
-                        let select = selectId ? document.getElementById(selectId) : null;
-
-                        if (!select) {
-                            const parent = birimLabel.closest('.form-group, .dx-field, div');
-                            if (parent) {
-                                select = parent.querySelector('select, input');
+                        console.log('🏛️ Yargı Birimi seçiliyor:', courtType);
+                        
+                        // Extension'daki yargı birimi adlarını UYAP'taki karşılıklarına map et
+                        const courtNameMap = {
+                            'Ağır Ceza Mahkemesi': 'AĞIR CEZA MAHKEMESİ',
+                            'Asliye Ceza Mahkemesi': 'ASLİYE CEZA MAHKEMESİ',
+                            'Sulh Ceza Mahkemesi': 'SULH CEZA HAKİMLİĞİ',
+                            'Çocuk Mahkemesi': 'ÇOCUK MAHKEMESİ',
+                            'Çocuk Ağır Ceza Mahkemesi': 'ÇOCUK AĞIR CEZA MAHKEMESİ',
+                            'Trafik Mahkemesi': 'TRAFİK MAHKEMESİ',
+                            'Fikri ve Sınai Haklar Ceza Mahkemesi': 'FİKRİ VE SİNAİ HAKLAR CEZA MAHKEMESİ',
+                            'İcra Ceza Hakimliği': 'İCRA CEZA HAKİMLİĞİ',
+                            'İnfaz Hakimliği': 'İNFAZ HAKİMLİĞİ',
+                            'Bölge Adliye Mah. Ceza Dairesi': 'Bölge Adliye Mah. Ceza Dairesi',
+                            'İstinaf Cezai Dairesi (İlk Derece)': 'İSTİNAF CEZAİ DAİRESİ (İLK DERECE)',
+                            'Yargıtay Ceza Dairesi (İlk Derece)': 'YARGITAY CEZA DAİRESİ (İLK DERECE)',
+                            'İş Mahkemesi': 'İŞ MAHKEMESİ',
+                            'Asliye Hukuk Mahkemesi': 'ASLİYE HUKUK MAHKEMESİ',
+                            'Sulh Hukuk Mahkemesi': 'SULH HUKUK MAHKEMESİ',
+                            'Aile Mahkemesi': 'AİLE MAHKEMESİ',
+                            'Tüketici Mahkemesi': 'TÜKETİCİ MAHKEMESİ',
+                            'Fikri ve Sınai Haklar Hukuk Mahkemesi': 'FİKRİ VE SİNAİ HAKLAR HUKUK MAHKEMESİ',
+                            'Asliye Ticaret Mahkemesi': 'ASLİYE TİCARET MAHKEMESİ',
+                            'İcra Hukuk Mahkemesi': 'İCRA HUKUK MAHKEMESİ',
+                            'Kadastro Mahkemesi': 'KADASTRO MAHKEMESİ',
+                            'Kadastro Mahkemesi(Müş)': 'KADASTRO MAHKEMESİ(MÜŞ)',
+                            'Bölge Adliye Mah. Hukuk Dairesi': 'Bölge Adliye Mah. Hukuk Dairesi',
+                            'BAM Hukuk Dairesi(İlk Derece)': 'BAM Hukuk Dairesi(İlk Derece)',
+                            'İcra Müdürlüğü': 'İCRA DAİRESİ',
+                            'İdare Mahkemesi': 'İDARE MAHKEMESİ',
+                            'Vergi Mahkemesi': 'VERGİ MAHKEMESİ',
+                            'Bölge İdare Mahkemesi': 'BÖLGE İDARE MAHKEMESİ',
+                            'Arabuluculuk Daire Başkanlığı': 'Arabuluculuk Daire Başkanlığı',
+                            'Arabuluculuk Merkezi': 'ARABULUCULUK MERKEZİ'
+                        };
+                        
+                        const uyapCourtName = courtNameMap[courtType] || courtType;
+                        
+                        // DevExtreme selectbox için parent'ı bul
+                        const parent = birimLabel.closest('.form-group, .dx-field, div');
+                        if (parent) {
+                            // DevExtreme selectbox dropdown butonunu bul
+                            const dropdownBtn = parent.querySelector('.dx-dropdowneditor-button, .dx-dropdowneditor-icon, .dx-texteditor-buttons-container');
+                            
+                            if (dropdownBtn) {
+                                console.log('🎯 Yargı Birimi dropdown butonu bulundu');
+                                
+                                // Dropdown'ı aç
+                                dropdownBtn.click();
+                                
+                                // Dropdown'ın açılması için bekle
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                                
+                                // Liste item'larını bul
+                                const listItems = document.querySelectorAll('.dx-list-item, .dx-item-content');
+                                
+                                for (const item of listItems) {
+                                    const itemText = item.textContent.trim();
+                                    if (itemText === uyapCourtName || itemText.includes(uyapCourtName)) {
+                                        console.log(`✅ Yargı Birimi bulundu ve seçiliyor: ${uyapCourtName}`);
+                                        item.click();
+                                        return;
+                                    }
+                                }
+                                console.warn(`⚠️ Liste itemları arasında "${uyapCourtName}" bulunamadı`);
+                            } else {
+                                console.warn('⚠️ Yargı Birimi dropdown butonu bulunamadı');
                             }
-                        }
-
-                        console.log('🏛️ Mahkeme input bulundu:', !!select);
-                        if (select) {
-                            select.value = courtType;
-                            select.dispatchEvent(new Event('input', { bubbles: true }));
-                            select.dispatchEvent(new Event('change', { bubbles: true }));
-                            console.log(`✅ Mahkeme set edildi: ${courtType}`);
                         }
                     }
                 }, 800);
+            } else {
+                console.log('ℹ️ Yargı Birimi seçimi yok (Tümü seçili)');
             }
+
 
             // Dosya durumu
             if (status) {
@@ -807,12 +955,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 if (searchButtons.length > 0) {
                     console.log('✅ Sorgula butonuna tıklanıyor...');
                     searchButtons[0].click();
+                    console.log('⏳ Sonuçlar yüklenene kadar bekleyin...');
                     sendResponse({ success: true, message: 'Form dolduruldu ve submit edildi' });
                 } else {
                     console.warn('⚠️ Sorgula butonu bulunamadı');
                     sendResponse({ success: false, message: 'Sorgula butonu bulunamadı' });
                 }
-            }, 2000);
+            }, 2500); // Mahkeme seçiminden sonra biraz daha bekle
 
         } catch (error) {
             console.error('❌ Form doldurma hatası:', error);

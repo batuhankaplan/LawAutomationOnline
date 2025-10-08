@@ -215,8 +215,11 @@ function initializeEventListeners() {
     const applyFiltersBtn = document.getElementById('applyFiltersBtn');
     if (applyFiltersBtn) {
         applyFiltersBtn.addEventListener('click', async () => {
+            console.log('🔍 Filtreler uygulanıyor...');
             await applyFiltersToUyap();
-            await sleep(2000); // UYAP formunun submit olması için bekle
+            console.log('⏳ Sonuçların yüklenmesi bekleniyor (4 saniye)...');
+            await sleep(4000); // UYAP formunun submit olması ve sonuçların yüklenmesi için bekle
+            console.log('✅ Bekleme tamamlandı');
             applyAllFilters(); // Extension listesini de filtrele
         });
     }
@@ -554,8 +557,14 @@ async function importSelectedCases() {
 
                 if (detailResponse && detailResponse.success) {
                     fullDetails = detailResponse.data;
-                    // Liste sayfasından gelen bilgileri birleştir
-                    fullDetails.caseInfo = { ...caseData, ...fullDetails.caseInfo };
+                    // Liste sayfasından gelen bilgileri birleştir (açılış tarihi de dahil)
+                    fullDetails.caseInfo = { 
+                        ...fullDetails.caseInfo,
+                        ...caseData,
+                        // Eğer detay sayfasında açılış tarihi yoksa liste sayfasındakini kullan
+                        openDate: fullDetails.caseInfo.openDate || caseData.acilisTarihi
+                    };
+                    console.log('📅 Birleştirilmiş caseInfo:', fullDetails.caseInfo);
                 }
 
                 // Geri dön (liste sayfasına)
@@ -660,7 +669,7 @@ function showResults(summary) {
     showElement('actionButtons');
 }
 
-// Mahkeme türlerini güncelle (dosya türüne göre cascading)
+// Yargı birimlerini güncelle (dosya türüne göre cascading) - UYAP ile eşitlenmiş
 function updateCourtTypes(fileType) {
     const courtTypeGroup = document.getElementById('courtTypeGroup');
     const courtTypeSelect = document.getElementById('filterCourtType');
@@ -673,26 +682,56 @@ function updateCourtTypes(fileType) {
     courtTypeGroup.style.display = 'block';
     courtTypeSelect.innerHTML = '<option value="">Tümü</option>';
 
+    // UYAP'taki seçeneklerle birebir eşleştirilmiş
     const courtTypes = {
         'hukuk': [
+            'Tümü',
             'İş Mahkemesi',
             'Asliye Hukuk Mahkemesi',
             'Sulh Hukuk Mahkemesi',
             'Aile Mahkemesi',
             'Tüketici Mahkemesi',
-            'Fikri ve Sınai Haklar Mahkemesi'
+            'Fikri ve Sınai Haklar Hukuk Mahkemesi',
+            'Asliye Ticaret Mahkemesi',
+            'İcra Hukuk Mahkemesi',
+            'Kadastro Mahkemesi',
+            'Kadastro Mahkemesi(Müş)',
+            'Bölge Adliye Mah. Hukuk Dairesi',
+            'BAM Hukuk Dairesi(İlk Derece)'
         ],
         'ceza': [
+            'Tümü',
             'Ağır Ceza Mahkemesi',
             'Asliye Ceza Mahkemesi',
             'Sulh Ceza Mahkemesi',
-            'Çocuk Mahkemesi'
+            'Çocuk Mahkemesi',
+            'Çocuk Ağır Ceza Mahkemesi',
+            'Trafik Mahkemesi',
+            'Fikri ve Sınai Haklar Ceza Mahkemesi',
+            'İcra Ceza Hakimliği',
+            'İnfaz Hakimliği',
+            'Bölge Adliye Mah. Ceza Dairesi',
+            'İstinaf Cezai Dairesi (İlk Derece)',
+            'Yargıtay Ceza Dairesi (İlk Derece)'
         ],
         'icra': [
+            'Tümü',
             'İcra Müdürlüğü',
             'İcra Hukuk Mahkemesi'
         ],
         'idare': [
+            'Tümü',
+            'İdare Mahkemesi',
+            'Vergi Mahkemesi',
+            'Bölge İdare Mahkemesi'
+        ],
+        'arabuluculuk': [
+            'Arabuluculuk Daire Başkanlığı',
+            'Arabuluculuk Merkezi'
+        ],
+        'idari-yargi': [
+            'Tümü',
+            'Bölge İdare Mahkemesi',
             'İdare Mahkemesi',
             'Vergi Mahkemesi'
         ]

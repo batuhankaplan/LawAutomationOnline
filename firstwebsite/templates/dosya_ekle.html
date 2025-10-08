@@ -279,6 +279,13 @@
         <div class="modal-body-advanced">
             <form id="lawyerForm">
                 <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="lawyer-for-person">Vekil Kiminin? *</label>
+                        <select id="lawyer-for-person" required>
+                            <option value="">Seçiniz</option>
+                        </select>
+                        <small style="color: #666;">Vekili hangi tarafa eklemek istediğinizi seçin</small>
+                    </div>
                     <div class="form-group">
                         <label for="lawyer-name">Vekil Adı Soyadı *</label>
                         <input type="text" id="lawyer-name" required>
@@ -2343,8 +2350,61 @@ function setupLawyerModal() {
 function showLawyerModal() {
     const modal = document.getElementById('lawyerModal');
     if (modal) {
+        // Taraf listesini doldur
+        populateLawyerForPerson();
         modal.style.display = 'block';
     }
+}
+
+// Vekil eklenecek kişi/taraf listesini doldur
+function populateLawyerForPerson() {
+    const select = document.getElementById('lawyer-for-person');
+    if (!select) return;
+    
+    // Önce temizle
+    select.innerHTML = '<option value="">Seçiniz</option>';
+    
+    // Ana müvekkil
+    const clientName = document.getElementById('client-name')?.value.trim();
+    if (clientName) {
+        const option = document.createElement('option');
+        option.value = JSON.stringify({ type: 'client', index: -1 });
+        option.textContent = `Müvekkil: ${clientName}`;
+        select.appendChild(option);
+    }
+    
+    // Ek müvekkiller
+    const additionalClients = document.querySelectorAll('#additionalClients .person-card-new');
+    additionalClients.forEach((card, index) => {
+        const nameEl = card.querySelector('.person-summary strong');
+        if (nameEl) {
+            const option = document.createElement('option');
+            option.value = JSON.stringify({ type: 'additional-client', index: index });
+            option.textContent = `Müvekkil: ${nameEl.textContent}`;
+            select.appendChild(option);
+        }
+    });
+    
+    // Ana karşı taraf
+    const opponentName = document.getElementById('opponent-name')?.value.trim();
+    if (opponentName) {
+        const option = document.createElement('option');
+        option.value = JSON.stringify({ type: 'opponent', index: -1 });
+        option.textContent = `Karşı Taraf: ${opponentName}`;
+        select.appendChild(option);
+    }
+    
+    // Ek karşı taraflar
+    const additionalOpponents = document.querySelectorAll('#additionalOpponents .person-card-new');
+    additionalOpponents.forEach((card, index) => {
+        const nameEl = card.querySelector('.person-summary strong');
+        if (nameEl) {
+            const option = document.createElement('option');
+            option.value = JSON.stringify({ type: 'additional-opponent', index: index });
+            option.textContent = `Karşı Taraf: ${nameEl.textContent}`;
+            select.appendChild(option);
+        }
+    });
 }
 
 function closeLawyerModal() {
@@ -2357,6 +2417,7 @@ function closeLawyerModal() {
 }
 
 function addLawyer() {
+    const forPersonValue = document.getElementById('lawyer-for-person').value;
     const name = document.getElementById('lawyer-name').value.trim();
     const bar = document.getElementById('lawyer-bar').value.trim();
     const barNumber = document.getElementById('lawyer-bar-number').value.trim();
@@ -2364,6 +2425,11 @@ function addLawyer() {
     const address = document.getElementById('lawyer-address').value.trim();
 
     // Validasyon
+    if (!forPersonValue) {
+        alert('Lütfen vekili kiminin için eklediğinizi seçin!');
+        return;
+    }
+    
     if (!name) {
         alert('Vekil adı soyadı zorunludur!');
         return;
@@ -2374,35 +2440,70 @@ function addLawyer() {
         return;
     }
 
-    // Vekil bilgilerini ana forma ekle (baro bilgisi de dahil)
-    document.getElementById('opponent-lawyer').value = name;
-    document.getElementById('opponent-lawyer-bar-number').value = barNumber;
-    document.getElementById('opponent-lawyer-phone').value = phone;
-    document.getElementById('opponent-lawyer-address').value = address;
-
-    // Baro bilgisini de bir hidden input olarak ekle
-    addHiddenInput('opponent-lawyer-bar', bar);
-    
-    // Vekil kartını oluştur ve göster
-    const lawyerContainer = document.getElementById('lawyer-display');
-    if (lawyerContainer) {
-        const lawyerCard = createLawyerCard(name, bar, barNumber, phone, address);
-        lawyerContainer.innerHTML = '';
-        lawyerContainer.appendChild(lawyerCard);
-        lawyerContainer.style.display = 'block';
+    try {
+        const forPerson = JSON.parse(forPersonValue);
+        const lawyerInfo = bar ? `${name} (${bar} - ${barNumber})` : `${name} (${barNumber})`;
         
-        // Vekil ekleme butonunu gizle
-        const addBtn = document.querySelector('[onclick="showLawyerModal()"]');
-        if (addBtn) {
-            addBtn.style.display = 'none';
+        // Seçilen tarafa göre vekil ekle
+        if (forPerson.type === 'opponent') {
+            // Ana karşı taraf vekili
+            document.getElementById('opponent-lawyer').value = name;
+            document.getElementById('opponent-lawyer-bar-number').value = barNumber;
+            document.getElementById('opponent-lawyer-phone').value = phone;
+            document.getElementById('opponent-lawyer-address').value = address;
+            addHiddenInput('opponent-lawyer-bar', bar);
+            
+            // Vekil kartını oluştur ve göster
+            const lawyerContainer = document.getElementById('lawyer-display');
+            if (lawyerContainer) {
+                const lawyerCard = createLawyerCard(name, bar, barNumber, phone, address);
+                lawyerContainer.innerHTML = '';
+                lawyerContainer.appendChild(lawyerCard);
+                lawyerContainer.style.display = 'block';
+                
+                // Vekil ekleme butonunu gizle
+                const addBtn = document.querySelector('[onclick="showLawyerModal()"]');
+                if (addBtn) {
+                    addBtn.style.display = 'none';
+                }
+            }
+        } else if (forPerson.type === 'additional-opponent') {
+            // Ek karşı taraf vekili - kartı güncelle
+            const opponentCards = document.querySelectorAll('#additionalOpponents .person-card-new');
+            if (opponentCards[forPerson.index]) {
+                const card = opponentCards[forPerson.index];
+                
+                // Kartın data-lawyer attribute'unu güncelle
+                const existingData = card.dataset.opponentData ? JSON.parse(card.dataset.opponentData) : {};
+                existingData.lawyer = lawyerInfo;
+                card.dataset.opponentData = JSON.stringify(existingData);
+                
+                // Kart içeriğine vekil bilgisini ekle
+                let lawyerDiv = card.querySelector('.lawyer-info-in-card');
+                if (!lawyerDiv) {
+                    lawyerDiv = document.createElement('div');
+                    lawyerDiv.className = 'lawyer-info-in-card';
+                    lawyerDiv.style.cssText = 'margin-top: 8px; padding: 8px; background: #f0f7ff; border-left: 3px solid #2196F3; border-radius: 4px;';
+                    card.querySelector('.person-details')?.appendChild(lawyerDiv);
+                }
+                lawyerDiv.innerHTML = `<strong>Vekili:</strong> ${lawyerInfo}`;
+            }
+        } else if (forPerson.type === 'client' || forPerson.type === 'additional-client') {
+            // Müvekkillerin vekili (şimdilik desteklenmiyor, gelecekte eklenebilir)
+            alert('Müvekkillere vekil ekleme özelliği şu anda desteklenmiyor.');
+            return;
         }
+        
+        // Modalı kapat
+        closeLawyerModal();
+        
+        // Başarı mesajı
+        showSuccessMessage('Vekil bilgileri başarıyla eklendi!');
+        
+    } catch (e) {
+        console.error('Vekil ekleme hatası:', e);
+        alert('Vekil eklenirken bir hata oluştu.');
     }
-    
-    // Modalı kapat
-    closeLawyerModal();
-    
-    // Başarı mesajı
-    showSuccessMessage('Vekil bilgileri başarıyla eklendi!');
 }
 
 function createLawyerCard(name, bar, barNumber, phone, address) {

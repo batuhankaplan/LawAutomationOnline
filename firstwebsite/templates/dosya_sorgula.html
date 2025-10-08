@@ -3775,6 +3775,18 @@ function showDetails(caseId) {
                 data.additional_opponents.forEach((opponent, index) => {
                     const opponentDiv = document.createElement('div');
                     opponentDiv.className = 'collapsible-person-card';
+                    
+                    // Vekil bilgisi varsa ekle
+                    let lawyerInfo = '';
+                    if (opponent.lawyer && opponent.lawyer.trim() !== '' && opponent.lawyer !== '-') {
+                        lawyerInfo = `
+                            <div class="detail-info-item full-width" style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                                <span class="detail-info-label">VEKİLİ</span>
+                                <span class="detail-info-value" style="font-weight: 600; color: #2c3e50;">${opponent.lawyer}</span>
+                            </div>
+                        `;
+                    }
+                    
                     opponentDiv.innerHTML = `
                         <div class="collapsible-header" onclick="toggleCollapsibleCard(this)">
                             <div class="collapsible-title">
@@ -3808,6 +3820,7 @@ function showDetails(caseId) {
                                     <span class="detail-info-label">ADRES</span>
                                     <span class="detail-info-value">${opponent.address || '-'}</span>
                                 </div>
+                                ${lawyerInfo}
                             </div>
                         </div>
                     `;

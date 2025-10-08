@@ -95,6 +95,21 @@ function mapFileInfo(caseInfo) {
     // Dosya türünü eşleştir
     const fileType = CONFIG.COURT_TYPE_MAPPING[caseInfo.fileType] || 'hukuk';
 
+    // Açılış tarihini al ve formatla
+    let openDate = caseInfo.openDate || caseInfo.acilisTarihi;
+    if (openDate) {
+        // Eğer DD.MM.YYYY HH:MM formatındaysa tarihi ayır
+        const dateMatch = openDate.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+        if (dateMatch) {
+            openDate = formatDateToISO(`${dateMatch[1]}.${dateMatch[2]}.${dateMatch[3]}`);
+        } else {
+            openDate = formatDateToISO(openDate);
+        }
+    } else {
+        console.warn('⚠️ Açılış tarihi bulunamadı, güncel tarih kullanılıyor');
+        openDate = formatDateToISO(new Date());
+    }
+
     return {
         'file-type': fileType,
         'city': caseInfo.city || '',
@@ -102,7 +117,7 @@ function mapFileInfo(caseInfo) {
         'department': extractCourtName(caseInfo.courthouse) || '',  // Sadece mahkeme kısmı
         'year': caseInfo.year || new Date().getFullYear(),
         'case-number': caseInfo.caseNumber || '',
-        'open-date': caseInfo.openDate || formatDateToISO(new Date()),
+        'open-date': openDate,
         'status': mapStatus(caseInfo.status || 'Açık')
     };
 }
