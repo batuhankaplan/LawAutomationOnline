@@ -482,6 +482,33 @@
                             <label for="saveToRegistered" style="margin: 0; font-weight: 500; cursor: pointer;">Bu müvekkili kayıtlı müvekkillere ekle</label>
                         </div>
                     </div>
+
+                    <!-- Belge Yükleme Bölümü -->
+                    <div class="form-section" style="margin-top: 24px;">
+                        <div class="section-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #e0e0e0;">
+                            <i class="material-icons" style="color: #667eea;">attach_file</i>
+                            <h4 style="margin: 0; font-size: 16px; font-weight: 600; color: #2d313c;">Belgeler (Opsiyonel)</h4>
+                        </div>
+
+                        <!-- Belge Yükleme Alanı -->
+                        <div class="upload-area" id="addDocumentUploadArea" style="border: 2px dashed #cbd5e0; border-radius: 12px; padding: 24px; text-align: center; background: #f7fafc; cursor: pointer; transition: all 0.3s;">
+                            <input type="file" id="addDocumentFileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" style="display: none;">
+                            <i class="material-icons" style="font-size: 48px; color: #a0aec0; margin-bottom: 8px;">cloud_upload</i>
+                            <p style="margin: 0 0 4px 0; font-weight: 500; color: #2d3748;">Belge yüklemek için tıklayın veya sürükleyin</p>
+                            <p style="margin: 0; font-size: 13px; color: #718096;">PDF, JPG, PNG, DOC, DOCX, XLS, XLSX (Maks. 10MB)</p>
+                        </div>
+
+                        <!-- Yüklenen Belgeler Listesi -->
+                        <div id="addDocumentsList" style="margin-top: 16px; display: none;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                <span style="font-weight: 600; font-size: 14px; color: #2d3748;">Yüklenecek Belgeler</span>
+                                <span id="addDocumentsCount" style="background: #667eea; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">0</span>
+                            </div>
+                            <div id="addDocumentsContainer" style="max-height: 300px; overflow-y: auto;">
+                                <!-- Belgeler buraya eklenecek -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer modern-edit-footer">
                     <button type="submit" class="btn modern-save-btn" id="saveAddPaymentBtn">
@@ -3320,6 +3347,107 @@
             filter: invert(1) grayscale(100%) brightness(200%);
         }
 
+        /* Belge Yükleme Stilleri */
+        .upload-area:hover {
+            border-color: #667eea !important;
+            background: #edf2f7 !important;
+        }
+
+        .document-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            transition: all 0.2s;
+        }
+
+        .document-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .document-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .document-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .document-type-select {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .document-name-input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .document-desc-input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 12px;
+            resize: vertical;
+            min-height: 40px;
+        }
+
+        .document-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .document-action-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f7fafc;
+        }
+
+        .document-action-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .document-action-btn.delete:hover {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .document-meta {
+            font-size: 11px;
+            color: #718096;
+            margin-top: 4px;
+        }
 
     </style>
 
@@ -4036,8 +4164,156 @@
             cancelAddPaymentBtn.addEventListener('click', function() {
                 addPaymentModal.style.display = 'none';
                 addPaymentForm.reset();
+                clearAddDocuments(); // Belgeleri temizle
             });
         }
+
+        // ======================
+        // BELGE YÜKLEME İŞLEMLERİ
+        // ======================
+        let addDocumentsToUpload = [];
+
+        const addDocumentUploadArea = document.getElementById('addDocumentUploadArea');
+        const addDocumentFileInput = document.getElementById('addDocumentFileInput');
+        const addDocumentsList = document.getElementById('addDocumentsList');
+        const addDocumentsContainer = document.getElementById('addDocumentsContainer');
+        const addDocumentsCount = document.getElementById('addDocumentsCount');
+
+        // Upload area'ya tıklama
+        addDocumentUploadArea.addEventListener('click', () => addDocumentFileInput.click());
+
+        // Dosya seçimi
+        addDocumentFileInput.addEventListener('change', function(e) {
+            handleAddDocumentFiles(e.target.files);
+        });
+
+        // Drag & Drop
+        addDocumentUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            addDocumentUploadArea.style.borderColor = '#667eea';
+            addDocumentUploadArea.style.background = '#edf2f7';
+        });
+
+        addDocumentUploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            addDocumentUploadArea.style.borderColor = '#cbd5e0';
+            addDocumentUploadArea.style.background = '#f7fafc';
+        });
+
+        addDocumentUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            addDocumentUploadArea.style.borderColor = '#cbd5e0';
+            addDocumentUploadArea.style.background = '#f7fafc';
+            handleAddDocumentFiles(e.dataTransfer.files);
+        });
+
+        function handleAddDocumentFiles(files) {
+            for (let file of files) {
+                // Dosya boyutu kontrolü (10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`${file.name} çok büyük (maks. 10MB)`);
+                    continue;
+                }
+
+                // Dosya türü kontrolü
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (!['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'xls', 'xlsx'].includes(ext)) {
+                    alert(`${file.name} desteklenmeyen dosya türü`);
+                    continue;
+                }
+
+                const docId = 'doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                addDocumentsToUpload.push({
+                    id: docId,
+                    file: file,
+                    type: 'Dekont',
+                    name: file.name,
+                    description: ''
+                });
+            }
+
+            renderAddDocuments();
+        }
+
+        function renderAddDocuments() {
+            if (addDocumentsToUpload.length === 0) {
+                addDocumentsList.style.display = 'none';
+                return;
+            }
+
+            addDocumentsList.style.display = 'block';
+            addDocumentsCount.textContent = addDocumentsToUpload.length;
+            addDocumentsContainer.innerHTML = '';
+
+            addDocumentsToUpload.forEach(doc => {
+                const card = document.createElement('div');
+                card.className = 'document-card';
+                card.innerHTML = `
+                    <div class="document-icon" style="background: #e6f3ff; color: #0066cc;">
+                        <i class="material-icons">description</i>
+                    </div>
+                    <div class="document-info">
+                        <select class="document-type-select" data-doc-id="${doc.id}">
+                            <option value="Dekont" ${doc.type === 'Dekont' ? 'selected' : ''}>Dekont</option>
+                            <option value="Fiş" ${doc.type === 'Fiş' ? 'selected' : ''}>Fiş</option>
+                            <option value="Fatura" ${doc.type === 'Fatura' ? 'selected' : ''}>Fatura</option>
+                            <option value="Makbuz" ${doc.type === 'Makbuz' ? 'selected' : ''}>Makbuz</option>
+                            <option value="Sözleşme" ${doc.type === 'Sözleşme' ? 'selected' : ''}>Sözleşme</option>
+                            <option value="Diğer" ${doc.type === 'Diğer' ? 'selected' : ''}>Diğer</option>
+                        </select>
+                        <input type="text" class="document-name-input" placeholder="Belge adı" value="${doc.name}" data-doc-id="${doc.id}">
+                        <textarea class="document-desc-input" placeholder="Açıklama (opsiyonel)" data-doc-id="${doc.id}">${doc.description}</textarea>
+                        <div class="document-meta">${(doc.file.size / 1024).toFixed(1)} KB</div>
+                    </div>
+                    <div class="document-actions">
+                        <button type="button" class="document-action-btn delete" onclick="removeAddDocument('${doc.id}')">
+                            <i class="material-icons">delete</i>
+                        </button>
+                    </div>
+                `;
+                addDocumentsContainer.appendChild(card);
+            });
+
+            // Event listener'ları ekle
+            document.querySelectorAll('.document-type-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    const docId = this.getAttribute('data-doc-id');
+                    const doc = addDocumentsToUpload.find(d => d.id === docId);
+                    if (doc) doc.type = this.value;
+                });
+            });
+
+            document.querySelectorAll('.document-name-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const docId = this.getAttribute('data-doc-id');
+                    const doc = addDocumentsToUpload.find(d => d.id === docId);
+                    if (doc) doc.name = this.value;
+                });
+            });
+
+            document.querySelectorAll('.document-desc-input').forEach(textarea => {
+                textarea.addEventListener('input', function() {
+                    const docId = this.getAttribute('data-doc-id');
+                    const doc = addDocumentsToUpload.find(d => d.id === docId);
+                    if (doc) doc.description = this.value;
+                });
+            });
+        }
+
+        function removeAddDocument(docId) {
+            addDocumentsToUpload = addDocumentsToUpload.filter(d => d.id !== docId);
+            renderAddDocuments();
+        }
+
+        function clearAddDocuments() {
+            addDocumentsToUpload = [];
+            renderAddDocuments();
+            addDocumentFileInput.value = '';
+        }
+
+        // ======================
+        // END BELGE YÜKLEME
+        // ======================
 
         // Modal dışına tıklama - devre dışı bırakıldı (kullanıcı isteği üzerine)
         // window.addEventListener('click', function(event) {
@@ -4149,7 +4425,12 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.location.reload();
+                        // Ödeme kaydedildi, şimdi belgeleri yükle
+                        if (addDocumentsToUpload.length > 0) {
+                            uploadPaymentDocuments(data.client_id || data.id);
+                        } else {
+                            window.location.reload();
+                        }
                     } else {
                         alert('Ödeme kaydedilemedi: ' + (data.error || 'Bilinmeyen bir hata oluştu'));
                     }
@@ -4158,6 +4439,47 @@
                     console.error('Error:', error);
                     alert('Ödeme kaydedilemedi: ' + error.message);
                 });
+
+                // Belgeleri yükleme fonksiyonu
+                async function uploadPaymentDocuments(clientId) {
+                    let uploadedCount = 0;
+                    let failedCount = 0;
+
+                    for (const doc of addDocumentsToUpload) {
+                        const docFormData = new FormData();
+                        docFormData.append('file', doc.file);
+                        docFormData.append('document_type', doc.type);
+                        docFormData.append('document_name', doc.name);
+                        docFormData.append('description', doc.description);
+
+                        try {
+                            const response = await fetch(`/api/upload_payment_document/${clientId}`, {
+                                method: 'POST',
+                                headers: {
+                                    'X-CSRFToken': csrfTokenValue
+                                },
+                                body: docFormData
+                            });
+
+                            const result = await response.json();
+                            if (result.success) {
+                                uploadedCount++;
+                            } else {
+                                failedCount++;
+                                console.error('Belge yüklenemedi:', doc.name, result.message);
+                            }
+                        } catch (error) {
+                            failedCount++;
+                            console.error('Belge yükleme hatası:', doc.name, error);
+                        }
+                    }
+
+                    if (failedCount > 0) {
+                        alert(`Ödeme kaydedildi. ${uploadedCount} belge yüklendi, ${failedCount} belge yüklenemedi.`);
+                    }
+
+                    window.location.reload();
+                }
             });
         }
 
