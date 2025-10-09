@@ -1097,19 +1097,19 @@
                             </div>
                             <div class="data-cards-container">
                                 <div class="data-card">
-                                    <div class="data-card-title">En Yüksek Ayı</div>
+                                    <div class="data-card-title">En Yüksek Ay (Ödenen)</div>
                                     <div class="data-card-value" id="highestMonth">-</div>
                                 </div>
                                 <div class="data-card">
-                                    <div class="data-card-title">En Düşük Ay</div>
+                                    <div class="data-card-title">En Düşük Ay (Ödenen)</div>
                                     <div class="data-card-value" id="lowestMonth">-</div>
                                 </div>
                                 <div class="data-card">
-                                    <div class="data-card-title">Aylık Ortalama</div>
+                                    <div class="data-card-title">Aylık Ortalama (Toplam)</div>
                                     <div class="data-card-value" id="monthlyAverage">0 TL</div>
                                 </div>
                                 <div class="data-card">
-                                    <div class="data-card-title">Toplam Tahsilat</div>
+                                    <div class="data-card-title">Toplam Tahsilat (Ödenen)</div>
                                     <div class="data-card-value" id="monthlyTotalCollection">0 TL</div>
                                 </div>
                             </div>
@@ -1156,15 +1156,15 @@
                             </div>
                             <div class="data-cards-container">
                                 <div class="data-card">
-                                    <div class="data-card-title">En Yüksek Yıl</div>
+                                    <div class="data-card-title">En Yüksek Yıl (Ödenen)</div>
                                     <div class="data-card-value" id="highestYear">-</div>
                                 </div>
                                 <div class="data-card">
-                                    <div class="data-card-title">Yıllık Ortalama</div>
+                                    <div class="data-card-title">Yıllık Ortalama (Toplam)</div>
                                     <div class="data-card-value" id="yearlyAverage">0 TL</div>
                                 </div>
                                 <div class="data-card">
-                                    <div class="data-card-title">Son Yıl Artış</div>
+                                    <div class="data-card-title">Son Yıl Artış (Ödenen)</div>
                                     <div class="data-card-value" id="yearlyGrowth">0%</div>
                                     <div class="trend-indicator">
                                         <i class="material-icons trend-positive">trending_up</i>
@@ -1172,7 +1172,7 @@
                                     </div>
                                 </div>
                                 <div class="data-card">
-                                    <div class="data-card-title">Gelecek Yıl Tahmin</div>
+                                    <div class="data-card-title">Gelecek Yıl Tahmin (Beklenen)</div>
                                     <div class="data-card-value" id="nextYearForecast">0 TL</div>
                                 </div>
                             </div>
@@ -5930,12 +5930,12 @@
                 totalAmountAllMonthsForAverage += currentMonthTotalAmount;
                 totalPaidAllMonths += currentMonthPaidAmount;
 
-                // En yüksek ve en düşük ay (toplam tutara göre)
-                if (currentMonthTotalAmount > highestMonthStats.amount) {
-                    highestMonthStats = { month: m, amount: currentMonthTotalAmount };
+                // En yüksek ve en düşük ay (ÖDENEN tutara göre - kullanıcı talebi)
+                if (currentMonthPaidAmount > highestMonthStats.amount) {
+                    highestMonthStats = { month: m, amount: currentMonthPaidAmount };
                 }
-                if (currentMonthTotalAmount < lowestMonthStats.amount) {
-                    lowestMonthStats = { month: m, amount: currentMonthTotalAmount };
+                if (currentMonthPaidAmount < lowestMonthStats.amount && currentMonthPaidAmount > 0) {
+                    lowestMonthStats = { month: m, amount: currentMonthPaidAmount };
                 }
             }
 
@@ -6469,8 +6469,9 @@
 
                     totalAmountForAllYearsForAverage += currentYearTotalAmount;
 
-                    if (currentYearTotalAmount > highestYearAmount) {
-                        highestYearAmount = currentYearTotalAmount;
+                    // En yüksek yıl (ÖDENEN tutara göre - kullanıcı talebi)
+                    if (currentYearPaidAmount > highestYearAmount) {
+                        highestYearAmount = currentYearPaidAmount;
                         highestYearVal = year.toString();
                     }
 
