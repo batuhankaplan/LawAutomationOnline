@@ -420,7 +420,7 @@
                         <div class="form-group amount-group">
                             <label for="addAmount">Tutar</label>
                             <div class="amount-input">
-                                <input type="text" id="addAmount" name="amount" class="form-control amount-input-field" required placeholder="0,00">
+                                <input type="number" id="addAmount" name="amount" class="form-control amount-input-field" required placeholder="0" step="0.01" min="0">
                                 <select id="addCurrency" name="currency" class="form-control currency-select" required>
                                     <option value="TL">TL</option>
                                     <option value="USD">USD</option>
@@ -555,7 +555,7 @@
                         <div class="form-group amount-group">
                             <label for="editAmount">Tutar</label>
                             <div class="amount-input">
-                                <input type="text" id="editAmount" name="amount" class="form-control amount-input-field" required placeholder="0,00">
+                                <input type="number" id="editAmount" name="amount" class="form-control amount-input-field" required placeholder="0" step="0.01" min="0">
                                 <select id="editCurrency" name="currency" class="form-control currency-select" required>
                                     <option value="TL">TL</option>
                                     <option value="USD">USD</option>
@@ -7296,12 +7296,25 @@
 
                         row.querySelector('td:nth-child(6)').textContent = data.installments;
 
-                        // Tarih güncellemeleri
+                        // Tarih güncellemeleri - YYYY-MM-DD formatını DD.MM.YYYY'ye çevir
+                        const formatDateForDisplay = (dateStr) => {
+                            if (!dateStr || dateStr === '-') return '-';
+                            // YYYY-MM-DD formatını kontrol et
+                            if (dateStr.includes('-')) {
+                                const parts = dateStr.split('-');
+                                if (parts.length === 3) {
+                                    return `${parts[2]}.${parts[1]}.${parts[0]}`;
+                                }
+                            }
+                            // Zaten DD.MM.YYYY formatında
+                            return dateStr;
+                        };
+
                         if (data.registration_date) {
-                            row.querySelector('td:nth-child(7)').textContent = data.registration_date;
+                            row.querySelector('td:nth-child(7)').textContent = formatDateForDisplay(data.registration_date);
                         }
                         if (data.due_date) {
-                            row.querySelector('td:nth-child(8)').textContent = data.due_date;
+                            row.querySelector('td:nth-child(8)').textContent = formatDateForDisplay(data.due_date);
                         }
 
                         // Durum güncelleme (10. sütun)
