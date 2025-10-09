@@ -176,7 +176,9 @@
                     data-payment-type="{{ client.payment_type if client.payment_type else '' }}"
                     data-entity-type="{{ client.entity_type }}"
                     data-status="{{ client.status }}"
-                    data-payment-client-id="{{ client.payment_client_id if client.payment_client_id else '' }}">
+                    data-payment-client-id="{{ client.payment_client_id if client.payment_client_id else '' }}"
+                    data-amount="{{ client.amount }}"
+                    data-currency="{{ client.currency }}">
                     <td contenteditable="false">
                         {% if client.payment_type %}
                             {% set type_class = '' %}
@@ -4210,31 +4212,25 @@
 
             const row = button.closest('tr');
             const clientId = row.getAttribute('data-client-id');
-            
+
             // Form alanlarını doldur
             document.getElementById('editClientId').value = clientId;
-            document.getElementById('editName').value = row.querySelector('td:nth-child(1)').innerText;
-            document.getElementById('editSurname').value = row.querySelector('td:nth-child(2)').innerText;
-            document.getElementById('editTc').value = row.querySelector('td:nth-child(3)').innerText;
-            
-            // Para miktarı ve para birimini ayır
-            const amountCellText = row.querySelector('td:nth-child(4)').innerText;
-            const parts = amountCellText.split(' ');
-            
-            // Sadece ilk kısmı tutar olarak al (boşluğa kadar olan kısım)
-            const amount = parts[0];
+            document.getElementById('editName').value = row.querySelector('td:nth-child(2)').innerText;
+            document.getElementById('editSurname').value = row.querySelector('td:nth-child(3)').innerText;
+            document.getElementById('editTc').value = row.querySelector('td:nth-child(4)').innerText;
+
+            // Para miktarı ve para birimini data attribute'lardan al (HAM DEĞERLER)
+            const amount = row.getAttribute('data-amount');
+            const currency = row.getAttribute('data-currency');
+
             document.getElementById('editAmount').value = amount;
-            
-            // Son kısmı para birimi olarak al (TRY, USD, EUR gibi)
-            if (parts.length > 1) {
-                document.getElementById('editCurrency').value = parts[parts.length - 1];
-            }
-            
-            document.getElementById('editInstallments').value = row.querySelector('td:nth-child(5)').innerText;
-            
+            document.getElementById('editCurrency').value = currency;
+
+            document.getElementById('editInstallments').value = row.querySelector('td:nth-child(6)').innerText;
+
             // Tarihleri oku ve YYYY-MM-DD formatına çevir
-            const registrationDate = row.querySelector('td:nth-child(6)').innerText;
-            const dueDate = row.querySelector('td:nth-child(7)').innerText;
+            const registrationDate = row.querySelector('td:nth-child(7)').innerText;
+            const dueDate = row.querySelector('td:nth-child(8)').innerText;
             
             // Tarihleri formatla (DD.MM.YYYY -> YYYY-MM-DD)
             if (registrationDate && registrationDate !== '-') {
@@ -4246,8 +4242,8 @@
                 const [day, month, year] = dueDate.split('.');
                 document.getElementById('editDueDate').value = `${year}-${month}-${day}`;
             }
-            
-            const isPaid = row.querySelector('td:nth-child(8)').textContent.trim() === 'Ödendi';
+
+            const isPaid = row.querySelector('td:nth-child(10)').textContent.trim() === 'Ödendi';
             document.getElementById('editStatus').checked = isPaid;
             document.querySelector('.status-text').textContent = isPaid ? 'Ödendi' : 'Ödenmedi';
 
@@ -7301,18 +7297,23 @@
                             paymentTypeCell.innerHTML = `<span class="payment-type-badge ${typeClass}">${data.payment_type}</span>`;
                         }
 
-                        // Diğer alanları güncelle (sütun sıralaması: 0=payment_type, 1=name, 2=surname, 3=tc, 4=amount, 5=installments, 6=reg_date, 7=due_date, 8=status)
+                        // Diğer alanları güncelle (sütun sıralaması: 1=payment_type, 2=name, 3=surname, 4=tc, 5=amount, 6=installments, 7=reg_date, 8=due_date, 9=payment_date, 10=status)
                         row.querySelector('td:nth-child(2)').textContent = data.name;
                         row.querySelector('td:nth-child(3)').textContent = data.surname;
                         row.querySelector('td:nth-child(4)').textContent = data.tc;
 
-                        // Para birimini belirle
-                        let currencySymbol = '';
-                        if (data.currency === 'TL') currencySymbol = 'TL';
-                        else if (data.currency === 'USD') currencySymbol = 'USD';
-                        else if (data.currency === 'EUR') currencySymbol = 'EUR';
+                        // Tutar güncelleme - Türkçe format ile
+                        const amount = parseFloat(data.amount);
+                        const formattedAmount = amount.toLocaleString('tr-TR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                        row.querySelector('td:nth-child(5)').textContent = `${formattedAmount} ${data.currency}`;
 
-                        row.querySelector('td:nth-child(5)').textContent = `${parseFloat(data.amount).toFixed(1)} ${currencySymbol}`;
+                        // Data attribute'ları güncelle
+                        row.setAttribute('data-amount', data.amount);
+                        row.setAttribute('data-currency', data.currency);
+
                         row.querySelector('td:nth-child(6)').textContent = data.installments;
 
                         // Tarih güncellemeleri
@@ -7323,8 +7324,8 @@
                             row.querySelector('td:nth-child(8)').textContent = data.due_date;
                         }
 
-                        // Durum güncelleme (9. sütun)
-                        const statusCell = row.querySelector('td:nth-child(9)');
+                        // Durum güncelleme (10. sütun)
+                        const statusCell = row.querySelector('td:nth-child(10)');
                         if (statusCell) {
                             const statusBadge = statusCell.querySelector('.status-badge');
                             if (statusBadge) {
