@@ -7438,6 +7438,7 @@ def get_odeme_detay(client_id):
         'installments': client.installments,
         'registration_date': client.registration_date.strftime('%Y-%m-%d') if client.registration_date else None,
         'due_date': client.due_date.strftime('%Y-%m-%d') if client.due_date else None,
+        'payment_date': client.payment_date.strftime('%d.%m.%Y') if client.payment_date else None,
         'status': client.status,
         'description': client.description,
         'payment_type': client.payment_type,
