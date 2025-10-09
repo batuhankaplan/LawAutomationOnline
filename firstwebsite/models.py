@@ -347,15 +347,16 @@ class Payment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 class PaymentDocument(db.Model):
-    """Ödeme belgesi modeli - Dekont, Makbuz, Fiş, Fatura vb."""
+    """Ödeme belgesi modeli - Dekont, Makbuz, Fiş, Sözleşme, Fatura vb."""
     __tablename__ = 'payment_document'
 
     id = db.Column(db.Integer, primary_key=True)
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
-    document_type = db.Column(db.String(50), nullable=False)  # Dekont, Makbuz, Fiş, Fatura, Diğer
+    document_type = db.Column(db.String(50), nullable=False)  # Dekont, Makbuz, Fiş, Sözleşme, Fatura, Diğer
     document_name = db.Column(db.String(255), nullable=False)  # Kullanıcının verdiği isim
     filename = db.Column(db.String(255), nullable=False)  # Gerçek dosya adı
     filepath = db.Column(db.String(500), nullable=False)  # Dosya yolu
+    description = db.Column(db.Text, nullable=True)  # Opsiyonel açıklama
     upload_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 

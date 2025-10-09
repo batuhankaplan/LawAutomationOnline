@@ -247,6 +247,10 @@ app.config['SESSION_COOKIE_DOMAIN'] = None  # Subdomain'lere izin verme
 # Login manager setup
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+# Payment Document API route'larını kaydet
+from payment_document_api import register_payment_document_routes
+register_payment_document_routes(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Lütfen giriş yapın.'
 login_manager.login_message_category = 'info'
