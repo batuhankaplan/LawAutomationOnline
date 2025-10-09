@@ -1825,10 +1825,10 @@
         }
 
         .client-type-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: #667eea;
+            background: #2d313c;
+            border-color: #2d313c;
             color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 15px rgba(45, 49, 60, 0.4);
         }
 
         .client-type-btn .material-icons {
@@ -3885,6 +3885,14 @@
                 // Required attribute'ları geri ekle
                 document.getElementById('addName').required = true;
                 document.getElementById('addSurname').required = true;
+
+                // Soyad alanını göster (kişi seçili)
+                document.getElementById('addSurnameGroup').style.display = 'block';
+
+                // Label'ları kişi için ayarla
+                document.querySelector('label[for="addName"]').textContent = 'Ad';
+                document.querySelector('label[for="addSurname"]').textContent = 'Soyad';
+                document.querySelector('label[for="addTc"]').textContent = 'TC Kimlik No';
             });
 
             registeredClientBtn.addEventListener('click', function() {
@@ -3964,14 +3972,17 @@
                                 // Entity type değiştiğinde label'ları güncelle
                                 if (entityType === 'company') {
                                     document.querySelector('label[for="addName"]').textContent = 'Kurum Adı';
-                                    document.querySelector('label[for="addSurname"]').textContent = 'Kurum Ek Bilgi (Opsiyonel)';
                                     document.querySelector('label[for="addTc"]').textContent = 'Vergi/Mersis/Ticaret Sicil No';
                                     document.getElementById('addSurname').required = false;
+                                    // Kurum için Soyad/Ek Bilgi alanını gizle
+                                    document.getElementById('addSurnameGroup').style.display = 'none';
                                 } else {
                                     document.querySelector('label[for="addName"]').textContent = 'Ad';
                                     document.querySelector('label[for="addSurname"]').textContent = 'Soyad';
                                     document.querySelector('label[for="addTc"]').textContent = 'TC Kimlik No';
                                     document.getElementById('addSurname').required = true;
+                                    // Kişi için Soyad alanını göster
+                                    document.getElementById('addSurnameGroup').style.display = 'block';
                                 }
                             } else {
                                 // Seçim temizlenirse form alanlarını da temizle
@@ -3988,6 +3999,29 @@
                 .catch(error => {
                     console.error('API hatası:', error);
                 });
+        }
+
+        // Entity Type değiştiğinde Soyad alanını gizle/göster
+        const addEntityTypeSelect = document.getElementById('addEntityType');
+        if (addEntityTypeSelect) {
+            addEntityTypeSelect.addEventListener('change', function() {
+                const entityType = this.value;
+                const surnameGroup = document.getElementById('addSurnameGroup');
+                const surnameInput = document.getElementById('addSurname');
+
+                if (entityType === 'company') {
+                    document.querySelector('label[for="addName"]').textContent = 'Kurum Adı';
+                    document.querySelector('label[for="addTc"]').textContent = 'Vergi/Mersis/Ticaret Sicil No';
+                    surnameInput.required = false;
+                    surnameGroup.style.display = 'none';
+                } else {
+                    document.querySelector('label[for="addName"]').textContent = 'Ad';
+                    document.querySelector('label[for="addSurname"]').textContent = 'Soyad';
+                    document.querySelector('label[for="addTc"]').textContent = 'TC Kimlik No';
+                    surnameInput.required = true;
+                    surnameGroup.style.display = 'block';
+                }
+            });
         }
 
         // Modal kapatma
@@ -5221,33 +5255,32 @@
             updateCurrencyStats(filteredClients);
         }
 
-        // Para birimi istatistiklerini güncelle
+        // Para birimi istatistiklerini güncelle (filtrelenmiş client'lardan)
         function updateCurrencyStats(clients) {
-            // window.statsData'dan al, yoksa filtrelenmiş client'lardan hesapla
-            if (window.statsData && window.statsData.currencyTotals) {
-                const currencyTotals = window.statsData.currencyTotals;
-                document.getElementById('tryTransactionCount').textContent = currencyTotals.TL.transactions || 0;
-                document.getElementById('usdTransactionCount').textContent = currencyTotals.USD.transactions || 0;
-                document.getElementById('eurTransactionCount').textContent = currencyTotals.EUR.transactions || 0;
-                document.getElementById('mostUsedCurrency').textContent = window.statsData.mostUsedCurrency || '-';
-            } else {
-                // Fallback: client'lardan hesapla
-                const currencyData = { TL: 0, USD: 0, EUR: 0 };
-                clients.forEach(client => {
-                    if (client.currency && currencyData.hasOwnProperty(client.currency)) {
-                        currencyData[client.currency] += 1;
-                    }
-                });
+            const currencyData = { TL: 0, USD: 0, EUR: 0 };
 
-                const mostUsed = Object.keys(currencyData).reduce((a, b) =>
-                    currencyData[a] > currencyData[b] ? a : b
-                );
-
-                document.getElementById('tryTransactionCount').textContent = currencyData.TL;
-                document.getElementById('usdTransactionCount').textContent = currencyData.USD;
-                document.getElementById('eurTransactionCount').textContent = currencyData.EUR;
-                document.getElementById('mostUsedCurrency').textContent = mostUsed;
+            if (!clients || clients.length === 0) {
+                document.getElementById('tryTransactionCount').textContent = 0;
+                document.getElementById('usdTransactionCount').textContent = 0;
+                document.getElementById('eurTransactionCount').textContent = 0;
+                document.getElementById('mostUsedCurrency').textContent = '-';
+                return;
             }
+
+            clients.forEach(client => {
+                if (client.currency && currencyData.hasOwnProperty(client.currency)) {
+                    currencyData[client.currency] += 1;
+                }
+            });
+
+            const mostUsed = Object.keys(currencyData).reduce((a, b) =>
+                currencyData[a] > currencyData[b] ? a : b
+            );
+
+            document.getElementById('tryTransactionCount').textContent = currencyData.TL;
+            document.getElementById('usdTransactionCount').textContent = currencyData.USD;
+            document.getElementById('eurTransactionCount').textContent = currencyData.EUR;
+            document.getElementById('mostUsedCurrency').textContent = mostUsed;
         }
         
         // Aktif sekmeye göre ilgili içeriği güncelle
@@ -7459,52 +7492,6 @@
             }
         }
 
-        // Para Birimi Detay Tablosunu Doldur
-        function populateCurrencyTable() {
-            const tableContainer = document.getElementById('currencyTableContainer');
-            if (!tableContainer) {
-                console.error("[populateCurrencyTable] Tablo konteyneri 'currencyTableContainer' bulunamadı.");
-                return;
-            }
-            tableContainer.innerHTML = '';
-
-            if (!window.statsData || !window.statsData.currencyTotals) {
-                console.warn("[populateCurrencyTable] Para birimi istatistik verileri bulunamadı.");
-                tableContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Para birimi detay verisi bulunmamaktadır.</p>';
-                return;
-            }
-
-            const { currencyTotals } = window.statsData;
-            const currencies = Object.keys(currencyTotals).filter(c => currencyTotals[c] && (currencyTotals[c].total > 0 || currencyTotals[c].transactions > 0));
-
-            if (currencies.length === 0) {
-                tableContainer.innerHTML = '<p style="text-align:center; padding: 20px;">Gösterilecek para birimi detayı bulunmamaktadır.</p>';
-                return;
-            }
-
-            const table = document.createElement('table');
-            table.className = 'detail-table';
-            const thead = table.createTHead();
-            const tbody = table.createTBody();
-            const headerRow = thead.insertRow();
-            ['Para Birimi', 'Toplam Alacak', 'Ödenen Tutar', 'Beklenen Tutar', 'İşlem Sayısı'].forEach(text => {
-                const th = document.createElement('th');
-                th.textContent = text;
-                headerRow.appendChild(th);
-            });
-
-            currencies.forEach(currency => {
-                const data = currencyTotals[currency];
-                const row = tbody.insertRow();
-                row.insertCell().textContent = currency;
-                row.insertCell().textContent = formatCurrency(data.total || 0);
-                row.insertCell().textContent = formatCurrency(data.paid || 0);
-                row.insertCell().textContent = formatCurrency(data.unpaid || 0);
-                row.insertCell().textContent = data.transactions || 0;
-            });
-            tableContainer.appendChild(table);
-        }
-
         // Tahsilat Trendi Grafiğini Oluştur
         function createCollectionTrendChart() {
             const ctx = document.getElementById('collectionTrendChart')?.getContext('2d');
@@ -8705,9 +8692,10 @@
             const personChecked = document.getElementById('currencyPersonFilter').checked;
             const companyChecked = document.getElementById('currencyCompanyFilter').checked;
             const filteredClients = getFilteredClients(personChecked, companyChecked);
-            
+
             createCurrencyDistributionChart(filteredClients);
             createCurrencyStatusChart(filteredClients);
+            updateCurrencyStats(filteredClients); // Kartları da güncelle
         }
 
         // Tahminleri hesapla
