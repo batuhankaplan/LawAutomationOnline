@@ -5,7 +5,7 @@ Payment Document API Endpoints
 
 from flask import request, jsonify
 from flask_login import login_required, current_user
-from firstwebsite.models import db, Client, PaymentDocument, ActivityLog
+from models import db, Client, PaymentDocument, ActivityLog
 import os
 import uuid
 
