@@ -7557,13 +7557,13 @@
             document.getElementById('editClientId').value = paymentId;
             // Sütun sıralaması: 0=payment_type, 1=name, 2=surname, 3=tc, 4=amount, 5=installments, 6=reg_date, 7=due_date, 8=payment_date, 9=status
 
-            // Ödeme türünü doldur
-            const paymentTypeText = targetRow.cells[0].textContent.trim();
+            // Ödeme türünü data attribute'dan al
+            const paymentTypeText = targetRow.getAttribute('data-payment-type') || '';
             document.getElementById('editPaymentType').value = paymentTypeText;
 
             const nameText = targetRow.cells[1].textContent.trim();
             const surnameText = targetRow.cells[2].textContent.trim();
-            
+
             document.getElementById('editName').value = nameText;
             document.getElementById('editSurname').value = surnameText;
             document.getElementById('editTc').value = targetRow.cells[3].textContent.trim();
@@ -7596,20 +7596,12 @@
                 editTcLabel.textContent = 'TC Kimlik No (İsteğe Bağlı)';
             }
 
-            const amountText = targetRow.cells[4].textContent.trim();
-            const amountParts = amountText.split(' ');
-            // Tutarı formatlanmış olarak göster: 1234.56 -> 1.234,56
-            let rawAmount = amountParts[0] || '0';
-            let amountValue = parseFloat(rawAmount) || 0;
-            // Formatlanmış tutar: tam kısım ve ondalık kısım
-            let integerPart = Math.floor(amountValue).toString();
-            let decimalPart = Math.round((amountValue - Math.floor(amountValue)) * 100).toString().padStart(2, '0');
-            integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-            document.getElementById('editAmount').value = integerPart + ',' + decimalPart;
-            
-            if (amountParts.length > 1) {
-                document.getElementById('editCurrency').value = amountParts[amountParts.length - 1];
-            }
+            // Para miktarı ve para birimini data attribute'lardan al (HAM DEĞERLER)
+            const amount = targetRow.getAttribute('data-amount');
+            const currency = targetRow.getAttribute('data-currency');
+
+            document.getElementById('editAmount').value = amount;
+            document.getElementById('editCurrency').value = currency;
 
             const installmentsText = targetRow.cells[5].textContent.trim();
             document.getElementById('editInstallments').value = installmentsText === '-' ? '0' : installmentsText;
@@ -7618,7 +7610,7 @@
             if (regDateText && regDateText !== '-') {
                 const dateParts = regDateText.split('.');
                 if (dateParts.length === 3) {
-                    document.getElementById('editRegistrationDate').value = 
+                    document.getElementById('editRegistrationDate').value =
                         `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
                 }
             }
@@ -7627,20 +7619,20 @@
             if (dueDateText && dueDateText !== '-') {
                 const dateParts = dueDateText.split('.');
                 if (dateParts.length === 3) {
-                    document.getElementById('editDueDate').value = 
+                    document.getElementById('editDueDate').value =
                         `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
                 }
             } else {
                 document.getElementById('editDueDate').value = '';
             }
 
-            // Payment date
+            // Payment date (sütun 8)
             const paymentDateText = targetRow.cells[8].textContent.trim();
             const editPaymentDateRow = document.getElementById('editPaymentDateRow');
             if (paymentDateText && paymentDateText !== '-') {
                 const dateParts = paymentDateText.split('.');
                 if (dateParts.length === 3) {
-                    document.getElementById('editPaymentDate').value = 
+                    document.getElementById('editPaymentDate').value =
                         `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
                     editPaymentDateRow.style.display = 'flex';
                 }
