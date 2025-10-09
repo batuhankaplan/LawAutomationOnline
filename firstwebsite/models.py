@@ -346,6 +346,26 @@ class Payment(db.Model):
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
+class PaymentDocument(db.Model):
+    """Ödeme belgesi modeli - Dekont, Makbuz, Fiş, Fatura vb."""
+    __tablename__ = 'payment_document'
+
+    id = db.Column(db.Integer, primary_key=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=False)
+    document_type = db.Column(db.String(50), nullable=False)  # Dekont, Makbuz, Fiş, Fatura, Diğer
+    document_name = db.Column(db.String(255), nullable=False)  # Kullanıcının verdiği isim
+    filename = db.Column(db.String(255), nullable=False)  # Gerçek dosya adı
+    filepath = db.Column(db.String(500), nullable=False)  # Dosya yolu
+    upload_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone(timedelta(hours=3))))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    # İlişkiler
+    client = db.relationship('Client', backref=db.backref('documents', lazy='dynamic', cascade='all, delete-orphan'))
+    user = db.relationship('User', backref=db.backref('payment_documents', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<PaymentDocument {self.document_name}>'
+
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     case_id = db.Column(db.Integer, db.ForeignKey('case_file.id'), nullable=False)

@@ -33,7 +33,7 @@ import requests
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_wtf.csrf import CSRFProtect, CSRFError # CSRF Koruması için eklendi
 from flask_wtf import csrf
-from models import db, User, ActivityLog, Client, Payment, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi, DilekceKategori, OrnekDilekce, OrnekSozlesme, ContractTemplate, Lawyer, PartyLawyer, PaymentClient
+from models import db, User, ActivityLog, Client, Payment, PaymentDocument, Document, Notification, Expense, CaseFile, Announcement, CalendarEvent, WorkerInterview, IsciGorusmeTutanagi, DilekceKategori, OrnekDilekce, OrnekSozlesme, ContractTemplate, Lawyer, PartyLawyer, PaymentClient
 import uuid
 from PIL import Image
 from functools import wraps
@@ -7428,6 +7428,18 @@ def get_odeme_detay(client_id):
             'aciklama': "Ödeme Kaydı" # Payment modelinde özel bir açıklama alanı olmadığı için genel bir ifade
         })
 
+    # Ödeme belgelerini getir
+    belgeler = PaymentDocument.query.filter_by(client_id=client.id).order_by(PaymentDocument.upload_date.desc()).all()
+    belgeler_data = []
+    for belge in belgeler:
+        belgeler_data.append({
+            'id': belge.id,
+            'document_type': belge.document_type,
+            'document_name': belge.document_name,
+            'filename': belge.filename,
+            'upload_date': belge.upload_date.strftime('%Y-%m-%d %H:%M') if belge.upload_date else None
+        })
+
     data = {
         'id': client.id,
         'name': client.name,
@@ -7438,10 +7450,12 @@ def get_odeme_detay(client_id):
         'installments': client.installments,
         'registration_date': client.registration_date.strftime('%Y-%m-%d') if client.registration_date else None,
         'due_date': client.due_date.strftime('%Y-%m-%d') if client.due_date else None,
+        'payment_date': client.payment_date.strftime('%Y-%m-%d') if client.payment_date else None,
         'status': client.status,
         'description': client.description,
         'payment_type': client.payment_type,
-        'odeme_gecmisi': odeme_gecmisi_data
+        'odeme_gecmisi': odeme_gecmisi_data,
+        'belgeler': belgeler_data
     }
     return jsonify(data)
 
@@ -7458,6 +7472,159 @@ def delete_isci_gorusme_form(form_id):
         user_id=current_user.id
     )
     return jsonify(success=True)
+
+@app.route('/api/odeme_belge_yukle', methods=['POST'])
+@login_required
+@permission_required('odeme_ekle')
+def odeme_belge_yukle():
+    """Ödeme belgesi yükle"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'message': 'Dosya bulunamadı'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'message': 'Dosya seçilmedi'}), 400
+
+        client_id = request.form.get('client_id')
+        document_type = request.form.get('document_type')
+        document_name = request.form.get('document_name')
+
+        if not client_id or not document_type or not document_name:
+            return jsonify({'success': False, 'message': 'Eksik bilgi'}), 400
+
+        # Client kontrolü
+        client = Client.query.get(client_id)
+        if not client:
+            return jsonify({'success': False, 'message': 'Ödeme kaydı bulunamadı'}), 404
+
+        # Dosya uzantısı kontrolü
+        allowed_extensions = {'pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'}
+        if '.' not in file.filename:
+            return jsonify({'success': False, 'message': 'Geçersiz dosya formatı'}), 400
+
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        if ext not in allowed_extensions:
+            return jsonify({'success': False, 'message': f'İzin verilen formatlar: {", ".join(allowed_extensions)}'}), 400
+
+        # Dosya adını güvenli hale getir
+        original_filename = secure_filename(file.filename)
+        unique_filename = f"{client_id}_{int(pytime.time())}_{original_filename}"
+
+        # Klasör oluştur
+        payment_documents_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'payment_documents')
+        os.makedirs(payment_documents_dir, exist_ok=True)
+
+        # Dosyayı kaydet
+        filepath = os.path.join(payment_documents_dir, unique_filename)
+        file.save(filepath)
+
+        # Veritabanına kaydet
+        new_document = PaymentDocument(
+            client_id=client_id,
+            document_type=document_type,
+            document_name=document_name,
+            filename=unique_filename,
+            filepath=f"payment_documents/{unique_filename}",
+            user_id=current_user.id
+        )
+        db.session.add(new_document)
+        db.session.commit()
+
+        # Aktivite kaydı
+        log_activity(
+            activity_type='Ödeme Belgesi Eklendi',
+            description=f'{client.name} {client.surname} - {document_type}: {document_name}',
+            user_id=current_user.id,
+            related_payment_id=client_id
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Belge başarıyla yüklendi',
+            'document': {
+                'id': new_document.id,
+                'document_type': new_document.document_type,
+                'document_name': new_document.document_name,
+                'filename': new_document.filename,
+                'upload_date': new_document.upload_date.strftime('%Y-%m-%d %H:%M')
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/odeme_belge_sil/<int:document_id>', methods=['DELETE'])
+@login_required
+@permission_required('odeme_duzenle')
+def odeme_belge_sil(document_id):
+    """Ödeme belgesini sil"""
+    try:
+        document = PaymentDocument.query.get(document_id)
+        if not document:
+            return jsonify({'success': False, 'message': 'Belge bulunamadı'}), 404
+
+        # Dosyayı sil
+        try:
+            full_filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+            if os.path.exists(full_filepath):
+                os.remove(full_filepath)
+        except Exception as e:
+            print(f"Dosya silinirken hata: {e}")
+
+        # Aktivite kaydı
+        client = Client.query.get(document.client_id)
+        log_activity(
+            activity_type='Ödeme Belgesi Silindi',
+            description=f'{client.name if client else "Bilinmeyen"} - {document.document_type}: {document.document_name}',
+            user_id=current_user.id,
+            related_payment_id=document.client_id
+        )
+
+        # Veritabanından sil
+        db.session.delete(document)
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Belge başarıyla silindi'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/odeme_belge_onizle/<int:document_id>')
+@login_required
+@permission_required('odeme_goruntule')
+def odeme_belge_onizle(document_id):
+    """Ödeme belgesini önizle/indir"""
+    try:
+        document = PaymentDocument.query.get(document_id)
+        if not document:
+            return jsonify({'error': 'Belge bulunamadı'}), 404
+
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'Dosya bulunamadı'}), 404
+
+        return send_file(filepath, as_attachment=False, download_name=document.filename)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/odeme_belge_indir/<int:document_id>')
+@login_required
+@permission_required('odeme_goruntule')
+def odeme_belge_indir(document_id):
+    """Ödeme belgesini indir"""
+    try:
+        document = PaymentDocument.query.get(document_id)
+        if not document:
+            return jsonify({'error': 'Belge bulunamadı'}), 404
+
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'Dosya bulunamadı'}), 404
+
+        return send_file(filepath, as_attachment=True, download_name=document.filename)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/ornek_dilekceler')
 @login_required
