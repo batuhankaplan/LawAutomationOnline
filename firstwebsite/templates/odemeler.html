@@ -636,6 +636,31 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Belge Yönetimi Bölümü -->
+                    <div class="form-section" style="margin-top: 24px;">
+                        <div class="section-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #e0e0e0;">
+                            <i class="material-icons" style="color: #667eea;">folder</i>
+                            <h4 style="margin: 0; font-size: 16px; font-weight: 600; color: #2d313c;">Mevcut Belgeler</h4>
+                        </div>
+                        <div id="editExistingDocuments" style="margin-bottom: 16px;">
+                            <!-- Mevcut belgeler buraya yüklenecek -->
+                        </div>
+
+                        <div class="upload-area" id="editDocumentUploadArea" style="border: 2px dashed #cbd5e0; border-radius: 12px; padding: 20px; text-align: center; background: #f7fafc; cursor: pointer;">
+                            <input type="file" id="editDocumentFileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" style="display: none;">
+                            <i class="material-icons" style="font-size: 36px; color: #a0aec0;">cloud_upload</i>
+                            <p style="margin: 4px 0; font-weight: 500; color: #2d3748; font-size: 14px;">Yeni belge ekle</p>
+                        </div>
+
+                        <div id="editDocumentsList" style="margin-top: 16px; display: none;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                <span style="font-weight: 600; font-size: 14px;">Eklenecek Belgeler</span>
+                                <span id="editDocumentsCount" style="background: #667eea; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">0</span>
+                            </div>
+                            <div id="editDocumentsContainer"></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer modern-edit-footer">
                     <button type="submit" class="btn modern-save-btn" id="saveEditBtn">
@@ -8287,6 +8312,34 @@
                                             <div class="info-value description-text">${data.description || 'Bu ödeme için herhangi bir açıklama eklenmemiş.'}</div>
                                         </div>
                                     </div>
+                                    ${data.belgeler && data.belgeler.length > 0 ? `
+                                    <div class="info-item full-width" style="margin-top: 16px;">
+                                        <div class="info-icon">
+                                            <i class="material-icons">attach_file</i>
+                                        </div>
+                                        <div class="info-content">
+                                            <div class="info-label">Belgeler (${data.belgeler.length})</div>
+                                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                                                ${data.belgeler.map(belge => `
+                                                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                                        <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                                                            <div style="width: 32px; height: 32px; background: #e6f3ff; border-radius: 6px; display: flex; align-items: center; justify-content: center;">
+                                                                <i class="material-icons" style="font-size: 20px; color: #0066cc;">description</i>
+                                                            </div>
+                                                            <div style="flex: 1;">
+                                                                <div style="font-weight: 600; font-size: 13px; color: #2d3748;">${belge.document_name}</div>
+                                                                <div style="font-size: 11px; color: #718096;">${belge.document_type}${belge.description ? ' • ' + belge.description : ''}</div>
+                                                            </div>
+                                                        </div>
+                                                        <a href="/api/download_payment_document/${belge.id}" class="btn btn-sm btn-outline-primary" style="padding: 4px 12px; font-size: 12px;">
+                                                            <i class="material-icons" style="font-size: 16px;">download</i>
+                                                        </a>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    ` : ''}
                                 </div>
                             </div>
                         </div>
