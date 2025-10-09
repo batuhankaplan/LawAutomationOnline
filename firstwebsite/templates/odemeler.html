@@ -810,14 +810,49 @@
                             <div class="chart-container medium-chart">
                                 <canvas id="summaryChart"></canvas>
                             </div>
+                            <!-- Ödeme Durumu Detay Tablosu -->
+                            <h4 class="table-title" style="margin-top: 20px;"><i class="material-icons">table_chart</i> Durum Detay Tablosu</h4>
+                            <div class="detail-table-container">
+                                <table class="modern-table" style="width: 100%; margin-top: 10px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Para Birimi</th>
+                                            <th>Ödenen Tutar</th>
+                                            <th>Ödenmemiş Tutar</th>
+                                            <th>Vadesi Geçmiş</th>
+                                            <th>Toplam</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="paymentStatusTableBody">
+                                        <!-- JavaScript ile doldurulacak -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                         <!-- Yıllara Göre Beklenen Ödemeler Tablosu -->
                         <div class="summary-extra-info">
                             <h4>Yıllara Göre Beklenen Ödemeler (Ödenmemiş)</h4>
                             <div id="expectedPaymentsByYearTableContainer">
-                                <!-- Tablo JavaScript ile eklenecek -->
                                 <canvas id="expectedPaymentsByYearChart" class="chart-canvas"></canvas>
+                            </div>
+                            <!-- Beklenen Ödemeler Detay Tablosu -->
+                            <h4 class="table-title" style="margin-top: 20px;"><i class="material-icons">table_chart</i> Yıllık Beklenen Ödemeler Detay</h4>
+                            <div class="detail-table-container">
+                                <table class="modern-table" style="width: 100%; margin-top: 10px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Yıl</th>
+                                            <th>TL</th>
+                                            <th>USD</th>
+                                            <th>EUR</th>
+                                            <th>Toplam (TL Karşılığı)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expectedPaymentsByYearTableBody">
+                                        <!-- JavaScript ile doldurulacak -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -6671,6 +6706,61 @@
 
                 const overdueTransPercentageElement = document.getElementById('overdueTransPercentage');
                 if (overdueTransPercentageElement) overdueTransPercentageElement.textContent = `${Math.round(overduePercentage || 0)}%`;
+            }
+
+            // Ödeme Durum Dağılımı Tablosunu Doldur
+            const paymentStatusTableBody = document.getElementById('paymentStatusTableBody');
+            if (paymentStatusTableBody && currencyTotals) {
+                let tableHTML = '';
+                ['TL', 'USD', 'EUR'].forEach(currency => {
+                    if (currencyTotals[currency] && currencyTotals[currency].total > 0) {
+                        const paidAmount = currencyTotals[currency].paid || 0;
+                        const unpaidAmount = currencyTotals[currency].unpaid || 0;
+                        const overdueAmount = currency === 'TL' ? (data.totalOverdueAmountTL || 0) : 0;
+                        const totalAmount = currencyTotals[currency].total || 0;
+
+                        tableHTML += `
+                            <tr>
+                                <td><strong>${currency}</strong></td>
+                                <td style="color: #4CAF50;">${formatCurrency(paidAmount)} ${currency}</td>
+                                <td style="color: #FFC107;">${formatCurrency(unpaidAmount)} ${currency}</td>
+                                <td style="color: #F44336;">${formatCurrency(overdueAmount)} ${currency}</td>
+                                <td><strong>${formatCurrency(totalAmount)} ${currency}</strong></td>
+                            </tr>
+                        `;
+                    }
+                });
+                paymentStatusTableBody.innerHTML = tableHTML || '<tr><td colspan="5" style="text-align: center;">Veri bulunamadı</td></tr>';
+            }
+
+            // Yıllara Göre Beklenen Ödemeler Tablosunu Doldur
+            const expectedPaymentsTableBody = document.getElementById('expectedPaymentsByYearTableBody');
+            if (expectedPaymentsTableBody && expectedPaymentsByYear) {
+                let tableHTML = '';
+                const years = Object.keys(expectedPaymentsByYear).map(Number).sort((a, b) => a - b);
+
+                years.forEach(year => {
+                    const yearData = expectedPaymentsByYear[year];
+                    const tlAmount = yearData['TL'] || 0;
+                    const usdAmount = yearData['USD'] || 0;
+                    const eurAmount = yearData['EUR'] || 0;
+
+                    // TL karşılığı hesapla
+                    const usdRate = parseFloat(exchangeRates.USD) || 0;
+                    const eurRate = parseFloat(exchangeRates.EUR) || 0;
+                    const totalInTL = tlAmount + (usdAmount * usdRate) + (eurAmount * eurRate);
+
+                    tableHTML += `
+                        <tr>
+                            <td><strong>${year}</strong></td>
+                            <td>${formatCurrency(tlAmount)} TL</td>
+                            <td>${formatCurrency(usdAmount)} USD</td>
+                            <td>${formatCurrency(eurAmount)} EUR</td>
+                            <td><strong>${formatCurrency(totalInTL)} TL</strong></td>
+                        </tr>
+                    `;
+                });
+                expectedPaymentsTableBody.innerHTML = tableHTML || '<tr><td colspan="5" style="text-align: center;">Beklenen ödeme bulunmuyor</td></tr>';
             }
         }
 
