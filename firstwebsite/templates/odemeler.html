@@ -2177,25 +2177,60 @@
         }
 
         .stats-tab-btn {
-            padding: 10px 15px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            background: none;
-            border: none;
-            border-radius: 6px;
+            padding: 12px 18px;
+            font-size: 0.92rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid transparent;
+            border-radius: 8px;
             cursor: pointer;
             color: #495057;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-tab-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .stats-tab-btn:hover::before {
+            left: 100%;
         }
 
         .stats-tab-btn:hover {
-            background-color: #e9ecef;
+            background: linear-gradient(135deg, #e3e8ef 0%, #d4dae3 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: #4361ee20;
         }
 
         .stats-tab-btn.active {
-            background-color: #4361ee;
+            background: linear-gradient(135deg, #4361ee 0%, #3651d4 100%);
             color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(67, 97, 238, 0.3);
+            border-color: #3651d4;
+        }
+
+        .stats-tab-btn.active::before {
+            display: none;
+        }
+
+        .stats-tab-btn .material-icons {
+            font-size: 1.1rem;
         }
 
         /* Dashboard Style Container */
@@ -2560,38 +2595,86 @@
 
         .entity-filter-checkboxes {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
-            padding: 8px 15px;
-            background-color: #f8f9fa;
-            border-radius: 6px;
-            border: 1px solid #dee2e6;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            border: 2px solid #dee2e6;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
 
         .filter-checkbox {
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             cursor: pointer;
             user-select: none;
             font-size: 0.9rem;
             color: #495057;
-            font-weight: 500;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            border: 2px solid transparent;
+        }
+
+        .filter-checkbox:hover {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-color: #2196F3;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
         }
 
         .filter-checkbox input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            position: relative;
+            width: 20px;
+            height: 20px;
             cursor: pointer;
-            accent-color: #4472C4;
+            appearance: none;
+            -webkit-appearance: none;
+            background: white;
+            border: 2.5px solid #adb5bd;
+            border-radius: 5px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+        }
+
+        .filter-checkbox input[type="checkbox"]:hover {
+            border-color: #4361ee;
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+
+        .filter-checkbox input[type="checkbox"]:checked {
+            background: linear-gradient(135deg, #4361ee 0%, #3651d4 100%);
+            border-color: #3651d4;
+            box-shadow: 0 2px 8px rgba(67, 97, 238, 0.3);
+        }
+
+        .filter-checkbox input[type="checkbox"]:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
         }
 
         .filter-checkbox span {
             line-height: 1;
+            transition: color 0.3s;
         }
 
         .filter-checkbox:hover span {
             color: #2196F3;
+        }
+
+        .filter-checkbox input[type="checkbox"]:checked + span {
+            color: #4361ee;
+            font-weight: 700;
         }
 
         /* Tab içerik stilleri */
@@ -4304,7 +4387,9 @@
                 // Para bilgilerini al ve parse et
                 const amountText = client.querySelector('td:nth-child(5)').textContent.trim();
                 const parts = amountText.split(' ');
-                const amount = parseFloat(parts[0]);
+                // Türkçe sayı formatını parse et: "1.234,56" -> 1234.56
+                const amountStr = parts[0].replace(/\./g, '').replace(',', '.');
+                const amount = parseFloat(amountStr);
                 const currency = parts[1] || 'TL';
                 
                 // Taksit sayısını al
@@ -4769,7 +4854,9 @@
                 unpaidPercentage,
                 overduePercentage,
                 clients: clients.length,
-                paymentTypeStats
+                paymentTypeStats,
+                entityStats,
+                paymentDateStats
             };
             
             // Aktif sekmeye göre ilgili grafik ve tabloyu oluştur
@@ -5078,6 +5165,7 @@
             createCurrencyDistributionChart(filteredClients);
             createCurrencyStatusChart(filteredClients);
             updateCurrencyStats(filteredClients);
+            populateCurrencyTable();
         }
 
         // Para birimi istatistiklerini güncelle
@@ -5210,6 +5298,7 @@
                 case 'predictions':
                     if (globalClientsData && globalClientsData.length > 0) {
                         updatePredictionsData();
+                        createCollectionTrendChart();
                     }
                     break;
                 case 'entity-type':
@@ -5329,8 +5418,14 @@
         }
 
         // Aylık grafik oluştur
-        function createMonthlyChart() { 
-            const monthlyDataLocal = window.statsData && window.statsData.monthlyData;
+        function createMonthlyChart(filteredClients) {
+            // Eğer filteredClients parametresi verilmemişse, kişi/kurum filtrelerini kontrol et
+            if (!filteredClients) {
+                const personChecked = document.getElementById('monthlyPersonFilter')?.checked ?? true;
+                const companyChecked = document.getElementById('monthlyCompanyFilter')?.checked ?? true;
+                filteredClients = getFilteredClients(personChecked, companyChecked);
+            }
+
             const selectedYear = document.getElementById('monthlyYearFilter').value;
             const selectedCurrency = document.getElementById('monthlyCurrencyFilter').value;
             const ctx = document.getElementById('monthlyChart').getContext('2d');
@@ -5340,15 +5435,51 @@
                 window.monthlyChart = null;
             }
 
-            if (typeof selectedYear === 'undefined' || selectedYear === '' || typeof selectedCurrency === 'undefined' || !monthlyDataLocal) {
-                console.warn("[createMonthlyChart] Yıl, para birimi veya aylık veri tanımsız/eksik. Grafik oluşturulmayacak.");
+            if (typeof selectedYear === 'undefined' || selectedYear === '' || typeof selectedCurrency === 'undefined') {
+                console.warn("[createMonthlyChart] Yıl veya para birimi tanımsız/eksik. Grafik oluşturulmayacak.");
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                 ctx.textAlign = 'center';
-                ctx.fillText('Grafik için lütfen yıl ve para birimi seçin veya veri mevcut değil.', ctx.canvas.width / 2, ctx.canvas.height / 2);
-                updateMonthlyCards(); 
+                ctx.fillText('Grafik için lütfen yıl ve para birimi seçin.', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                updateMonthlyCards();
                 populateMonthlyTable(); // Tabloyu da boşalt/güncelle
                 return;
             }
+
+            // Filtrelenmiş client'lardan aylık veriyi yeniden hesapla
+            const monthlyDataFiltered = {};
+
+            filteredClients.forEach(client => {
+                if (!client.registrationDate) return;
+
+                const regDate = client.registrationDate;
+                const year = regDate.getFullYear();
+                const month = regDate.getMonth() + 1; // 1-12 arası
+                const yearMonth = `${year}-${month.toString().padStart(2, '0')}`;
+
+                if (!monthlyDataFiltered[yearMonth]) {
+                    monthlyDataFiltered[yearMonth] = {
+                        currencies: {}
+                    };
+                }
+
+                const currency = client.currency;
+                if (!monthlyDataFiltered[yearMonth].currencies[currency]) {
+                    monthlyDataFiltered[yearMonth].currencies[currency] = {
+                        total: 0,
+                        paid: 0,
+                        unpaid: 0
+                    };
+                }
+
+                monthlyDataFiltered[yearMonth].currencies[currency].total += client.amount;
+                if (client.isPaid) {
+                    monthlyDataFiltered[yearMonth].currencies[currency].paid += client.amount;
+                } else {
+                    monthlyDataFiltered[yearMonth].currencies[currency].unpaid += client.amount;
+                }
+            });
+
+            const monthlyDataLocal = monthlyDataFiltered;
             
             console.log("[createMonthlyChart] Seçilen Yıl:", selectedYear, "Seçilen Para Birimi:", selectedCurrency); 
             
@@ -5715,39 +5846,79 @@
         }
 
         // Yıllık grafik oluştur
-        function createYearlyChart() {
+        function createYearlyChart(filteredClients) {
+            // Eğer filteredClients parametresi verilmemişse, kişi/kurum filtrelerini kontrol et
+            if (!filteredClients) {
+                const personChecked = document.getElementById('yearlyPersonFilter')?.checked ?? true;
+                const companyChecked = document.getElementById('yearlyCompanyFilter')?.checked ?? true;
+                filteredClients = getFilteredClients(personChecked, companyChecked);
+            }
+
             const ctx = document.getElementById('yearlyChart').getContext('2d');
             const currencyFilterElement = document.getElementById('yearlyCurrencyFilter');
             const chartTypeElement = document.getElementById('yearlyChartType');
-            
+
             if (window.yearlyChart && typeof window.yearlyChart.destroy === 'function') {
                 window.yearlyChart.destroy();
                 window.yearlyChart = null;
             }
 
-            if (!window.statsData || !window.statsData.yearlyData || !window.statsData.years || window.statsData.years.length === 0) {
-                console.warn("Yıllık grafik için yıllık istatistik verileri veya yıl listesi bulunamadı/boş.");
+            const selectedCurrency = currencyFilterElement ? currencyFilterElement.value : 'TL'; // Varsayılan TL
+            const chartType = chartTypeElement ? chartTypeElement.value : 'bar'; // Varsayılan bar
+
+            // Filtrelenmiş client'lardan yıllık veriyi yeniden hesapla
+            const yearlyDataFiltered = {};
+            const yearsSet = new Set();
+
+            filteredClients.forEach(client => {
+                if (!client.registrationDate) return;
+
+                const year = client.registrationDate.getFullYear();
+                yearsSet.add(year);
+
+                if (!yearlyDataFiltered[year]) {
+                    yearlyDataFiltered[year] = {
+                        currencies: {}
+                    };
+                }
+
+                const currency = client.currency;
+                if (!yearlyDataFiltered[year].currencies[currency]) {
+                    yearlyDataFiltered[year].currencies[currency] = {
+                        total: 0,
+                        paid: 0,
+                        unpaid: 0
+                    };
+                }
+
+                yearlyDataFiltered[year].currencies[currency].total += client.amount;
+                if (client.isPaid) {
+                    yearlyDataFiltered[year].currencies[currency].paid += client.amount;
+                } else {
+                    yearlyDataFiltered[year].currencies[currency].unpaid += client.amount;
+                }
+            });
+
+            // Yılları küçükten büyüğe sırala
+            const years = Array.from(yearsSet).sort((a,b) => a-b);
+
+            if (years.length === 0) {
+                console.warn("Yıllık grafik için filtrelenmiş veri bulunamadı.");
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                 ctx.textAlign = 'center';
-                ctx.fillText('Yıllık grafik için veri bulunamadı.', ctx.canvas.width / 2, ctx.canvas.height / 2);
-                updateYearlyCards(); 
-                populateYearlyTable(); 
+                ctx.fillText('Filtrelenmiş veri bulunamadı.', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                updateYearlyCards();
+                populateYearlyTable();
                 return;
             }
 
-            const selectedCurrency = currencyFilterElement ? currencyFilterElement.value : 'TL'; // Varsayılan TL
-            const chartType = chartTypeElement ? chartTypeElement.value : 'bar'; // Varsayılan bar
-            
-            // Yılları küçükten büyüğe sırala, böylece grafik soldan sağa doğru zamanla ilerler
-            const years = [...window.statsData.years].sort((a,b) => a-b); 
-            
             const yearlyTotalData = []; // Toplam tutar (ödenen + ödenmemiş)
             const yearlyPaidData = [];  // Ödenen tutar
             const yearlyUnpaidData = []; // Ödenmemiş (beklenen) tutar
-            
+
             years.forEach(year => {
-                const yearEntry = window.statsData.yearlyData[year.toString()]; // Yıl string olmalı
-                
+                const yearEntry = yearlyDataFiltered[year]; // Filtrelenmiş veriden al
+
                 let currentYearTotal = 0;
                 let currentYearPaid = 0;
                 let currentYearUnpaid = 0;
@@ -5757,9 +5928,9 @@
                         Object.keys(yearEntry.currencies).forEach(currency => {
                             const currencyData = yearEntry.currencies[currency];
                             let multiplier = 1;
-                            if (currency === 'USD') multiplier = 30; 
-                            if (currency === 'EUR') multiplier = 32; 
-                            
+                            if (currency === 'USD') multiplier = parseFloat(exchangeRates.USD) || 30;
+                            if (currency === 'EUR') multiplier = parseFloat(exchangeRates.EUR) || 32;
+
                             currentYearTotal += (currencyData.total || 0) * multiplier;
                             currentYearPaid += (currencyData.paid || 0) * multiplier;
                             currentYearUnpaid += (currencyData.unpaid || 0) * multiplier;
@@ -6113,38 +6284,71 @@
 
         // Durum analizi grafiği oluştur
         function createStatusChart(clients) {
+            // Eğer clients parametresi verilmediyse, kişi/kurum filtrelerini kontrol et
+            if (!clients) {
+                const personChecked = document.getElementById('statusPersonFilter')?.checked ?? true;
+                const companyChecked = document.getElementById('statusCompanyFilter')?.checked ?? true;
+                clients = getFilteredClients(personChecked, companyChecked);
+            }
+
             const ctx = document.getElementById('statusChart').getContext('2d');
-            
+
             if (window.statusChart && typeof window.statusChart.destroy === 'function') {
                 window.statusChart.destroy();
                 window.statusChart = null;
             }
-            
-            // Eğer clients parametresi verilmediyse globalClientsData kullan
-            if (!clients || !Array.isArray(clients)) {
-                clients = globalClientsData || [];
-            }
-            
-            if (clients.length === 0) {
+
+            if (!clients || clients.length === 0) {
                 console.warn("Durum analizi için veri bulunamadı");
                 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                 ctx.textAlign = 'center';
                 ctx.fillText('Durum analizi için veri bulunamadı.', ctx.canvas.width / 2, ctx.canvas.height / 2);
                 return;
             }
-            
+
             // Filtrelenmiş client'lardan ödeme durumu sayılarını hesapla
             let paidCount = 0;
             let unpaidCount = 0;
-            
+            let overdueCount = 0;
+            const currentDate = new Date();
+
             clients.forEach(client => {
-                if (client.status === 'Ödendi') {
+                if (client.isPaid) {
                     paidCount++;
                 } else {
                     unpaidCount++;
+                    // Vadesi geçmiş mi kontrol et
+                    if (client.dueDate && client.dueDate < currentDate) {
+                        overdueCount++;
+                    }
                 }
             });
-            
+
+            // Yüzde hesapla
+            const totalCount = paidCount + unpaidCount;
+            const paidPercentage = totalCount > 0 ? ((paidCount / totalCount) * 100).toFixed(1) : 0;
+            const unpaidPercentage = totalCount > 0 ? ((unpaidCount / totalCount) * 100).toFixed(1) : 0;
+            const overduePercentage = unpaidCount > 0 ? ((overdueCount / unpaidCount) * 100).toFixed(1) : 0;
+
+            // Kartları güncelle
+            const paidTransCountElement = document.getElementById('paidTransCount');
+            if (paidTransCountElement) paidTransCountElement.textContent = paidCount;
+
+            const unpaidTransCountElement = document.getElementById('unpaidTransCount');
+            if (unpaidTransCountElement) unpaidTransCountElement.textContent = unpaidCount;
+
+            const overdueTransCountElement = document.getElementById('overdueTransCount');
+            if (overdueTransCountElement) overdueTransCountElement.textContent = overdueCount;
+
+            const paidTransPercentageElement = document.getElementById('paidTransPercentage');
+            if (paidTransPercentageElement) paidTransPercentageElement.textContent = `${Math.round(paidPercentage)}%`;
+
+            const unpaidTransPercentageElement = document.getElementById('unpaidTransPercentage');
+            if (unpaidTransPercentageElement) unpaidTransPercentageElement.textContent = `${Math.round(unpaidPercentage)}%`;
+
+            const overdueTransPercentageElement = document.getElementById('overdueTransPercentage');
+            if (overdueTransPercentageElement) overdueTransPercentageElement.textContent = `${Math.round(overduePercentage)}%`;
+
             if (paidCount === 0 && unpaidCount === 0) {
                  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                  ctx.textAlign = 'center';
@@ -6219,6 +6423,27 @@
 
             document.getElementById('paidPercentageText').textContent = `%${paidPercentage} tahsil edildi`;
             document.getElementById('unpaidPercentageText').textContent = `%${unpaidPercentage} beklemede`;
+
+            // Ödeme Durum Dağılımı Kartları
+            const overduePercentage = unpaidCount > 0 ? ((overdueCount / unpaidCount) * 100).toFixed(1) : 0;
+
+            const paidPercentageElement = document.getElementById('paidPercentage');
+            if (paidPercentageElement) paidPercentageElement.textContent = `${Math.round(paidPercentage || 0)}%`;
+
+            const unpaidPercentageElement = document.getElementById('unpaidPercentage');
+            if (unpaidPercentageElement) unpaidPercentageElement.textContent = `${Math.round(unpaidPercentage || 0)}%`;
+
+            const overduePercentageElement = document.getElementById('overduePercentage');
+            if (overduePercentageElement) overduePercentageElement.textContent = `${Math.round(overduePercentage || 0)}%`;
+
+            const paidClientsElement = document.getElementById('paidClients');
+            if (paidClientsElement) paidClientsElement.textContent = `${paidCount || 0} Müvekkil`;
+
+            const unpaidClientsElement = document.getElementById('unpaidClients');
+            if (unpaidClientsElement) unpaidClientsElement.textContent = `${unpaidCount || 0} Müvekkil`;
+
+            const overdueAmountElement = document.getElementById('overdueAmount');
+            if (overdueAmountElement) overdueAmountElement.textContent = `${formatCurrency(data.totalOverdueAmountTL || 0)} TL`;
 
             // Detay kartları
             document.getElementById('expectedNextYear').textContent = `${formatCurrency(currencyTotals.TL.expectedNextYear)} TL`;
@@ -6333,29 +6558,8 @@
                 : '0 gün';
             document.getElementById('fastestPaymentClient').textContent = paymentDateStats.fastestClient;
 
-            // Yıllara Göre Beklenen Ödemeler Tablosu
-            const tableContainer = document.getElementById('expectedPaymentsByYearTableContainer');
-            tableContainer.innerHTML = ''; // Önceki tabloyu temizle
-            const table = document.createElement('table');
-            table.className = 'detail-table';
-            const thead = table.createTHead();
-            const tbody = table.createTBody();
-            const headerRow = thead.insertRow();
-            ['Yıl', 'TL', 'USD', 'EUR'].forEach(text => { // TRY -> TL olarak güncellendi
-                const th = document.createElement('th');
-                th.textContent = text;
-                headerRow.appendChild(th);
-            });
-
-            const sortedYears = Object.keys(expectedPaymentsByYear).sort((a, b) => b - a); // Yılları büyükten küçüğe sırala
-            sortedYears.forEach(year => {
-                const row = tbody.insertRow();
-                row.insertCell().textContent = year;
-                row.insertCell().textContent = formatCurrency(expectedPaymentsByYear[year].TL || 0) + ' TL'; // TRY -> TL olarak güncellendi
-                row.insertCell().textContent = formatCurrency(expectedPaymentsByYear[year].USD || 0) + ' USD';
-                row.insertCell().textContent = formatCurrency(expectedPaymentsByYear[year].EUR || 0) + ' EUR';
-            });
-            tableContainer.appendChild(table);
+            // Yıllara Göre Beklenen Ödemeler Grafiği - canvas elemanını koruyoruz
+            // Graf createExpectedPaymentsByYearChart() fonksiyonu tarafından oluşturulacak
 
             // Detay kartlarını güncelle (window.statsData'dan al)
             if (window.statsData) {
@@ -8048,45 +8252,80 @@
                 days180: 0,
                 days365: 0
             };
-            
+
+            // Müvekkil bazında istatistikler
+            const clientStats = {};
+
             clients.forEach(client => {
-                if (client.status === 'Ödenmedi' && client.due_date) {
-                    const dueDate = new Date(client.due_date);
-                    const daysUntilDue = Math.ceil((dueDate - now) / (1000 * 60 * 60 * 24));
-                    const amount = parseFloat(client.amount) || 0;
-                    
+                // Sadece ödenmemiş işlemler için tahmin yap
+                if (!client.isPaid && client.dueDate) {
+                    const daysUntilDue = Math.ceil((client.dueDate - now) / (1000 * 60 * 60 * 24));
+                    const amountInTL = client.amountInTL || 0;
+
+                    // Gelecek vadeler için tahmin
                     if (daysUntilDue >= 0 && daysUntilDue <= 30) {
-                        predictions.days30 += amount;
+                        predictions.days30 += amountInTL;
                     }
                     if (daysUntilDue >= 0 && daysUntilDue <= 90) {
-                        predictions.days90 += amount;
+                        predictions.days90 += amountInTL;
                     }
                     if (daysUntilDue >= 0 && daysUntilDue <= 180) {
-                        predictions.days180 += amount;
+                        predictions.days180 += amountInTL;
                     }
                     if (daysUntilDue >= 0 && daysUntilDue <= 365) {
-                        predictions.days365 += amount;
+                        predictions.days365 += amountInTL;
                     }
                 }
+
+                // Müvekkil başına toplam hesapla
+                const clientId = client.id;
+                if (!clientStats[clientId]) {
+                    clientStats[clientId] = {
+                        name: client.clientName,
+                        total: 0
+                    };
+                }
+                clientStats[clientId].total += client.amountInTL || 0;
             });
-            
-            // Değerleri güncelle
-            document.getElementById('prediction30Days').textContent = predictions.days30.toLocaleString('tr-TR', {
-                style: 'currency',
-                currency: 'TRY'
+
+            // Müvekkil istatistiklerini hesapla
+            const clientTotals = Object.values(clientStats).map(c => c.total);
+            const avgPerClient = clientTotals.length > 0 ? clientTotals.reduce((a, b) => a + b, 0) / clientTotals.length : 0;
+
+            let highestClient = { name: '-', total: 0 };
+            let lowestClient = { name: '-', total: Infinity };
+
+            Object.values(clientStats).forEach(client => {
+                if (client.total > highestClient.total) {
+                    highestClient = client;
+                }
+                if (client.total < lowestClient.total && client.total > 0) {
+                    lowestClient = client;
+                }
             });
-            document.getElementById('prediction90Days').textContent = predictions.days90.toLocaleString('tr-TR', {
-                style: 'currency',
-                currency: 'TRY'
-            });
-            document.getElementById('prediction180Days').textContent = predictions.days180.toLocaleString('tr-TR', {
-                style: 'currency',
-                currency: 'TRY'
-            });
-            document.getElementById('prediction365Days').textContent = predictions.days365.toLocaleString('tr-TR', {
-                style: 'currency',
-                currency: 'TRY'
-            });
+
+            if (lowestClient.total === Infinity) {
+                lowestClient = { name: '-', total: 0 };
+            }
+
+            // Varyasyon hesapla (standart sapma / ortalama)
+            const variance = clientTotals.length > 0 ? clientTotals.reduce((sum, val) => sum + Math.pow(val - avgPerClient, 2), 0) / clientTotals.length : 0;
+            const stdDev = Math.sqrt(variance);
+            const clientVariation = avgPerClient > 0 ? ((stdDev / avgPerClient) * 100).toFixed(1) : 0;
+
+            // Prediction kartlarını güncelle
+            document.getElementById('prediction30Days').textContent = formatCurrency(predictions.days30) + ' TL';
+            document.getElementById('prediction90Days').textContent = formatCurrency(predictions.days90) + ' TL';
+            document.getElementById('prediction180Days').textContent = formatCurrency(predictions.days180) + ' TL';
+            document.getElementById('prediction365Days').textContent = formatCurrency(predictions.days365) + ' TL';
+
+            // Müvekkil başına ödeme kartlarını güncelle
+            document.getElementById('avgPerClient').textContent = formatCurrency(avgPerClient) + ' TL';
+            document.getElementById('highestClientValue').textContent = formatCurrency(highestClient.total) + ' TL';
+            document.getElementById('highestClientName').textContent = highestClient.name;
+            document.getElementById('lowestClientValue').textContent = formatCurrency(lowestClient.total) + ' TL';
+            document.getElementById('lowestClientName').textContent = lowestClient.name;
+            document.getElementById('clientVariation').textContent = clientVariation + '%';
         }
 
         function updatePredictionsData() {
