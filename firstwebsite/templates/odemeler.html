@@ -3479,23 +3479,13 @@
                     }
                 });
 
-                // Düzenleme Modalı - Tutar formatlama
+                // Düzenleme Modalı - Tutar alanı (formatlama KALDIRILDI - ham değer kullanılıyor)
                 const editAmountInput = document.getElementById('editAmount');
                 if (editAmountInput) {
-                    // Sadece blur'da formatla - yazarken formatlamayın!
-                    editAmountInput.addEventListener('blur', function(e) {
-                        formatAmountInput(this);
-                    });
-                    
-                    editAmountInput.addEventListener('focus', function() {
-                        if (this.value === '' || this.value === '0,00') {
-                            this.value = '';
-                        }
-                    });
-                    
+                    // Sadece boş değer kontrolü
                     editAmountInput.addEventListener('blur', function() {
                         if (this.value === '') {
-                            this.value = '0,00';
+                            this.value = '0';
                         }
                     });
                 }
@@ -3766,23 +3756,13 @@
             input.value = integerPart + ',' + decimalPart;
         }
 
-        // Tutar input alanına event listener ekle
+        // Tutar input alanı (formatlama KALDIRILDI - ham değer kullanılıyor)
         const addAmountInput = document.getElementById('addAmount');
         if (addAmountInput) {
-            // Sadece blur'da (odak kaybolunca) formatla - yazarken formatlamayın!
-            addAmountInput.addEventListener('blur', function(e) {
-                formatAmountInput(this);
-            });
-            
-            addAmountInput.addEventListener('focus', function() {
-                if (this.value === '' || this.value === '0,00') {
-                    this.value = '';
-                }
-            });
-            
+            // Sadece boş değer kontrolü
             addAmountInput.addEventListener('blur', function() {
                 if (this.value === '') {
-                    this.value = '0,00';
+                    this.value = '0';
                 }
             });
         }
@@ -7418,6 +7398,24 @@
             if (displayCurrency.toUpperCase() === 'TL') {
                 displayCurrency = 'TRY';
             }
+
+            // Tarihleri DD.MM.YYYY formatına çevir
+            const formatDate = (dateStr) => {
+                if (!dateStr || dateStr === '-') return 'Belirtilmemiş';
+                // YYYY-MM-DD veya DD.MM.YYYY formatını kontrol et
+                if (dateStr.includes('-')) {
+                    // YYYY-MM-DD formatı
+                    const parts = dateStr.split('-');
+                    if (parts.length === 3) {
+                        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+                    }
+                }
+                // Zaten DD.MM.YYYY formatında
+                return dateStr;
+            };
+
+            data.registration_date = formatDate(data.registration_date);
+            data.due_date = formatDate(data.due_date);
 
             const modalHtml = `
             <div class="modal fade" id="paymentDetailModal" tabindex="-1">
