@@ -7193,11 +7193,10 @@
                 if (key === 'amount') {
                     // Tutar alanında sadece sayısal değeri al - formatlanmış değeri parse et
                     console.log('updateClient DEBUG - Orijinal amount value:', value);
-                    // 1.234,56 -> 1234.56 formatına çevir
-                    let cleanValue = value.replace(/\./g, '').replace(',', '.');
-                    console.log('updateClient DEBUG - cleanValue after replace:', cleanValue);
-                    // parseFloat ile sayıya çevir, sonra string'e geri çevir ki doğru format olsun
-                    const finalAmount = parseFloat(cleanValue).toString() || '0';
+                    
+                    // Number input'dan gelen değer zaten doğru formatta (örn: 25000.0)
+                    // Sadece parseFloat ile sayıya çevir, hiçbir string manipülasyonu yapma
+                    const finalAmount = parseFloat(value).toString() || '0';
                     console.log('updateClient DEBUG - Final amount:', finalAmount);
                     data[key] = finalAmount;
                 } else {
@@ -7472,7 +7471,7 @@
                                                 currency: displayCurrency
                                             })}
                                         </div>
-                                        <div class="installment-info">${data.installments || '1'} taksit</div>
+                                        <div class="installment-info">${data.installments === 'Taksit Yok' || data.installments === '' || !data.installments ? 'Taksit Yok' : data.installments + ' taksit'}</div>
                                     </div>
                                 </div>
                             </div>
