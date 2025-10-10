@@ -3858,6 +3858,14 @@
                 });
             });
 
+            // Sayfa yüklendiğinde varsayılan sıralama: Borç Tarihi (en yeni-en eski)
+            const registrationDateHeader = document.getElementById('sort-registration-date');
+            if (registrationDateHeader) {
+                // İlk tıklama: artan (asc), ikinci tıklama: azalan (desc - en yeni en üstte)
+                registrationDateHeader.click(); // Artan
+                registrationDateHeader.click(); // Azalan (en yeni en üstte)
+            }
+
             // Ödeme Detay Modal'ı açıldığında içeriği yükle
             // const odemeDetayModalElement = document.getElementById('odemeDetayModal'); // ESKİ EVENT LISTENER SİLİNDİ
             // if (odemeDetayModalElement) {
@@ -4452,7 +4460,14 @@
                     if (data.success) {
                         // Ödeme kaydedildi, şimdi belgeleri yükle
                         if (addDocumentsToUpload.length > 0) {
-                            uploadPaymentDocuments(data.client_id || data.id);
+                            const clientId = data.client_id || data.id;
+                            if (!clientId) {
+                                console.error('Client ID bulunamadı:', data);
+                                alert('Ödeme kaydedildi ancak belge yükleme için gerekli ID bulunamadı. Sayfayı yenileyip belgeleri manuel olarak yükleyebilirsiniz.');
+                                window.location.reload();
+                                return;
+                            }
+                            uploadPaymentDocuments(clientId);
                         } else {
                             window.location.reload();
                         }
@@ -4467,6 +4482,7 @@
 
                 // Belgeleri yükleme fonksiyonu
                 async function uploadPaymentDocuments(clientId) {
+                    console.log('Belgeler yükleniyor, Client ID:', clientId);
                     let uploadedCount = 0;
                     let failedCount = 0;
 
@@ -4486,9 +4502,14 @@
                                 body: docFormData
                             });
 
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            }
+
                             const result = await response.json();
                             if (result.success) {
                                 uploadedCount++;
+                                console.log('Belge yüklendi:', doc.name);
                             } else {
                                 failedCount++;
                                 console.error('Belge yüklenemedi:', doc.name, result.message);
@@ -4501,6 +4522,8 @@
 
                     if (failedCount > 0) {
                         alert(`Ödeme kaydedildi. ${uploadedCount} belge yüklendi, ${failedCount} belge yüklenemedi.`);
+                    } else if (uploadedCount > 0) {
+                        alert(`Ödeme ve ${uploadedCount} belge başarıyla kaydedildi.`);
                     }
 
                     window.location.reload();
@@ -8242,7 +8265,7 @@
                                     </div>
                                     <div class="client-details">
                                         <h6 class="client-name">${data.name || 'N/A'} ${data.surname || ''}</h6>
-                                        <p class="client-tc">TC: ${data.tc || '-'}</p>
+                                        <p class="client-tc">${data.entity_type === 'company' ? 'Vergi/Mersis/Ticaret Sicil No' : 'TC'}: ${data.tc || '-'}</p>
                                     </div>
                                     <div class="payment-status-badge ${data.status === 'Ödendi' ? 'paid' : 'unpaid'}">
                                         <i class="material-icons">${data.status === 'Ödendi' ? 'verified' : 'schedule'}</i>
@@ -8312,13 +8335,19 @@
                                             <div class="info-value description-text">${data.description || 'Bu ödeme için herhangi bir açıklama eklenmemiş.'}</div>
                                         </div>
                                     </div>
-                                    ${data.belgeler && data.belgeler.length > 0 ? `
                                     <div class="info-item full-width" style="margin-top: 16px;">
                                         <div class="info-icon">
                                             <i class="material-icons">attach_file</i>
                                         </div>
                                         <div class="info-content">
-                                            <div class="info-label">Belgeler (${data.belgeler.length})</div>
+                                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                                <div class="info-label">Belgeler (${data.belgeler ? data.belgeler.length : 0})</div>
+                                                <button type="button" class="btn btn-sm btn-primary" onclick="openDetailDocumentUploadModal('${paymentId}')" style="padding: 6px 12px; font-size: 12px; display: flex; align-items: center; gap: 4px;">
+                                                    <i class="material-icons" style="font-size: 16px;">add</i>
+                                                    <span>Belge Yükle</span>
+                                                </button>
+                                            </div>
+                                            ${data.belgeler && data.belgeler.length > 0 ? `
                                             <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
                                                 ${data.belgeler.map(belge => `
                                                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
@@ -8328,18 +8357,29 @@
                                                             </div>
                                                             <div style="flex: 1;">
                                                                 <div style="font-weight: 600; font-size: 13px; color: #2d3748;">${belge.document_name}</div>
-                                                                <div style="font-size: 11px; color: #718096;">${belge.document_type}${belge.description ? ' • ' + belge.description : ''}</div>
+                                                                <div style="font-size: 11px; color: #718096;">
+                                                                    ${belge.document_type}${belge.description ? ' • ' + belge.description : ''}
+                                                                    ${belge.upload_date ? ' • ' + belge.upload_date : ''}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <a href="/api/download_payment_document/${belge.id}" class="btn btn-sm btn-outline-primary" style="padding: 4px 12px; font-size: 12px;">
-                                                            <i class="material-icons" style="font-size: 16px;">download</i>
-                                                        </a>
+                                                        <div style="display: flex; gap: 6px;">
+                                                            <button onclick="previewPaymentDocument(${belge.id}, '${belge.filename}')" class="btn btn-sm btn-outline-info" style="padding: 4px 8px; font-size: 12px;" title="Önizle">
+                                                                <i class="material-icons" style="font-size: 16px;">visibility</i>
+                                                            </button>
+                                                            <a href="/api/download_payment_document/${belge.id}" class="btn btn-sm btn-outline-primary" style="padding: 4px 8px; font-size: 12px;" title="İndir">
+                                                                <i class="material-icons" style="font-size: 16px;">download</i>
+                                                            </a>
+                                                            <button onclick="deletePaymentDocument(${belge.id}, '${paymentId}')" class="btn btn-sm btn-outline-danger" style="padding: 4px 8px; font-size: 12px;" title="Sil">
+                                                                <i class="material-icons" style="font-size: 16px;">delete</i>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 `).join('')}
                                             </div>
+                                            ` : '<p style="text-align: center; color: #718096; padding: 20px; font-size: 13px;">Henüz belge eklenmemiş</p>'}
                                         </div>
                                     </div>
-                                    ` : ''}
                                 </div>
                             </div>
                         </div>
@@ -8364,6 +8404,309 @@
             document.getElementById('paymentDetailModal').addEventListener('hidden.bs.modal', function() {
                 this.remove();
             });
+        }
+
+        // Belge önizleme fonksiyonu
+        function previewPaymentDocument(documentId, filename) {
+            const extension = filename.split('.').pop().toLowerCase();
+            const previewUrl = `/api/preview_payment_document/${documentId}`;
+            
+            if (['pdf'].includes(extension)) {
+                // PDF için yeni sekmede aç
+                window.open(previewUrl, '_blank');
+            } else if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
+                // Resim için modal ile göster
+                const modalHtml = `
+                    <div class="modal fade" id="imagePreviewModal" tabindex="-1" style="z-index: 1060;">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">${filename}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <img src="${previewUrl}" class="img-fluid" alt="${filename}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+                modal.show();
+                document.getElementById('imagePreviewModal').addEventListener('hidden.bs.modal', function() {
+                    this.remove();
+                });
+            } else {
+                // Diğer dosyalar için indir
+                window.location.href = `/api/download_payment_document/${documentId}`;
+            }
+        }
+
+        // Belge silme fonksiyonu
+        async function deletePaymentDocument(documentId, paymentId) {
+            if (!confirm('Bu belgeyi silmek istediğinizden emin misiniz?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/payment_document/${documentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': typeof CSRF_TOKEN !== 'undefined' ? CSRF_TOKEN : ''
+                    }
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showGlobalNotification('Belge başarıyla silindi', 'success');
+                    // Modal'ı kapat ve yeniden aç
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('paymentDetailModal'));
+                    if (modal) modal.hide();
+                    setTimeout(() => showPaymentDetails(paymentId), 300);
+                } else {
+                    showGlobalNotification('Belge silinemedi: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Belge silme hatası:', error);
+                showGlobalNotification('Belge silinirken bir hata oluştu', 'error');
+            }
+        }
+
+        // Ödeme detayları modalından belge yükleme modalını aç
+        let detailDocumentsToUpload = [];
+        let currentDetailPaymentId = null;
+
+        function openDetailDocumentUploadModal(paymentId) {
+            currentDetailPaymentId = paymentId;
+            detailDocumentsToUpload = [];
+            
+            const modalHtml = `
+                <div class="modal fade" id="detailDocumentUploadModal" tabindex="-1" style="z-index: 1060;">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="material-icons" style="vertical-align: middle;">cloud_upload</i>
+                                    Belge Yükle
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="upload-area" id="detailDocumentUploadArea" style="border: 2px dashed #cbd5e0; border-radius: 12px; padding: 30px; text-align: center; background: #f7fafc; cursor: pointer; transition: all 0.3s;">
+                                    <input type="file" id="detailDocumentFileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" style="display: none;">
+                                    <i class="material-icons" style="font-size: 48px; color: #a0aec0;">cloud_upload</i>
+                                    <p style="margin: 8px 0; font-weight: 500; color: #2d3748; font-size: 14px;">Belge eklemek için tıklayın veya sürükleyin</p>
+                                    <p style="margin: 0; font-size: 12px; color: #718096;">PDF, JPG, PNG, DOC, DOCX, XLS, XLSX</p>
+                                </div>
+                                <div id="detailDocumentsList" style="margin-top: 20px; display: none;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                                        <span style="font-weight: 600; font-size: 14px;">Eklenecek Belgeler</span>
+                                        <span id="detailDocumentsCount" style="background: #667eea; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">0</span>
+                                    </div>
+                                    <div id="detailDocumentsContainer"></div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                                <button type="button" class="btn btn-primary" onclick="uploadDetailDocuments()">
+                                    <i class="material-icons" style="font-size: 18px; vertical-align: middle;">upload</i>
+                                    Yükle
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('detailDocumentUploadModal'));
+            
+            // Modal açıldığında backdrop z-index'ini ayarla
+            document.getElementById('detailDocumentUploadModal').addEventListener('shown.bs.modal', function() {
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                if (backdrops.length > 0) {
+                    const lastBackdrop = backdrops[backdrops.length - 1];
+                    lastBackdrop.style.zIndex = '1055';
+                }
+            });
+
+            modal.show();
+
+            // Event listeners
+            const uploadArea = document.getElementById('detailDocumentUploadArea');
+            const fileInput = document.getElementById('detailDocumentFileInput');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleDetailDocumentSelection);
+
+            document.getElementById('detailDocumentUploadModal').addEventListener('hidden.bs.modal', function() {
+                this.remove();
+            });
+        }
+
+        function handleDetailDocumentSelection(event) {
+            const files = Array.from(event.target.files);
+            
+            files.forEach(file => {
+                const docId = Date.now() + Math.random();
+                const modalHtml = `
+                    <div class="modal fade" id="detailDocModal${docId}" tabindex="-1" style="z-index: 1070;">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Belge Bilgileri</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Belge Türü</label>
+                                        <select class="form-control" id="detailDocType${docId}">
+                                            <option value="Dekont">Dekont</option>
+                                            <option value="Makbuz">Makbuz</option>
+                                            <option value="Fiş">Fiş</option>
+                                            <option value="Sözleşme">Sözleşme</option>
+                                            <option value="Fatura">Fatura</option>
+                                            <option value="Diğer">Diğer</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Belge Adı</label>
+                                        <input type="text" class="form-control" id="detailDocName${docId}" value="${file.name}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Açıklama (İsteğe Bağlı)</label>
+                                        <textarea class="form-control" id="detailDocDesc${docId}" rows="2"></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                                    <button type="button" class="btn btn-primary" onclick="saveDetailDocumentInfo(${docId})">Kaydet</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                const docModal = new bootstrap.Modal(document.getElementById(`detailDocModal${docId}`));
+                
+                // Modal açıldığında backdrop z-index'ini ayarla
+                document.getElementById(`detailDocModal${docId}`).addEventListener('shown.bs.modal', function() {
+                    const backdrops = document.querySelectorAll('.modal-backdrop');
+                    if (backdrops.length > 0) {
+                        const lastBackdrop = backdrops[backdrops.length - 1];
+                        lastBackdrop.style.zIndex = '1065';
+                    }
+                });
+                
+                docModal.show();
+
+                window[`detailDocFile${docId}`] = file;
+                window[`detailDocModalInstance${docId}`] = docModal;
+            });
+        }
+
+        function saveDetailDocumentInfo(docId) {
+            const type = document.getElementById(`detailDocType${docId}`).value;
+            const name = document.getElementById(`detailDocName${docId}`).value;
+            const description = document.getElementById(`detailDocDesc${docId}`).value;
+            const file = window[`detailDocFile${docId}`];
+
+            detailDocumentsToUpload.push({ id: docId, file, type, name, description });
+
+            const docModal = window[`detailDocModalInstance${docId}`];
+            if (docModal) docModal.hide();
+            document.getElementById(`detailDocModal${docId}`).remove();
+
+            updateDetailDocumentsList();
+        }
+
+        function updateDetailDocumentsList() {
+            const container = document.getElementById('detailDocumentsContainer');
+            const countEl = document.getElementById('detailDocumentsCount');
+            const listEl = document.getElementById('detailDocumentsList');
+
+            if (detailDocumentsToUpload.length === 0) {
+                listEl.style.display = 'none';
+                return;
+            }
+
+            listEl.style.display = 'block';
+            countEl.textContent = detailDocumentsToUpload.length;
+
+            container.innerHTML = detailDocumentsToUpload.map(doc => `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 8px;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size: 13px;">${doc.name}</div>
+                        <div style="font-size: 11px; color: #718096;">${doc.type}${doc.description ? ' • ' + doc.description : ''}</div>
+                    </div>
+                    <button onclick="removeDetailDocument(${doc.id})" class="btn btn-sm btn-outline-danger" style="padding: 4px 8px;">
+                        <i class="material-icons" style="font-size: 16px;">delete</i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeDetailDocument(docId) {
+            detailDocumentsToUpload = detailDocumentsToUpload.filter(d => d.id !== docId);
+            updateDetailDocumentsList();
+        }
+
+        async function uploadDetailDocuments() {
+            if (detailDocumentsToUpload.length === 0) {
+                showGlobalNotification('Lütfen en az bir belge ekleyin', 'warning');
+                return;
+            }
+
+            let uploadedCount = 0;
+            let failedCount = 0;
+
+            const csrfToken = typeof CSRF_TOKEN !== 'undefined' ? CSRF_TOKEN : '';
+
+            for (const doc of detailDocumentsToUpload) {
+                const formData = new FormData();
+                formData.append('file', doc.file);
+                formData.append('document_type', doc.type);
+                formData.append('document_name', doc.name);
+                formData.append('description', doc.description);
+
+                try {
+                    const response = await fetch(`/api/upload_payment_document/${currentDetailPaymentId}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    if (result.success) {
+                        uploadedCount++;
+                    } else {
+                        failedCount++;
+                    }
+                } catch (error) {
+                    failedCount++;
+                    console.error('Belge yükleme hatası:', doc.name, error);
+                }
+            }
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('detailDocumentUploadModal'));
+            if (modal) modal.hide();
+
+            if (failedCount > 0) {
+                showGlobalNotification(`${uploadedCount} belge yüklendi, ${failedCount} belge yüklenemedi`, 'warning');
+            } else {
+                showGlobalNotification(`${uploadedCount} belge başarıyla yüklendi`, 'success');
+            }
+
+            // Ödeme detaylarını yenile
+            const detailModal = bootstrap.Modal.getInstance(document.getElementById('paymentDetailModal'));
+            if (detailModal) detailModal.hide();
+            setTimeout(() => showPaymentDetails(currentDetailPaymentId), 300);
         }
 
         function editPayment(paymentId) {
@@ -9439,6 +9782,8 @@
         .modern-payment-body {
             padding: 28px;
             background: #f8f9fa;
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
         }
 
         .payment-card {
@@ -9672,6 +10017,23 @@
                 padding: 20px;
                 flex-direction: column;
             }
+        }
+
+        /* Modal z-index düzenlemeleri - belge yükleme modalının önde açılması için */
+        #detailDocumentUploadModal {
+            z-index: 1060 !important;
+        }
+
+        #detailDocumentUploadModal ~ .modal-backdrop {
+            z-index: 1055 !important;
+        }
+
+        .modal[style*="z-index: 1060"] ~ .modal-backdrop {
+            z-index: 1055 !important;
+        }
+
+        .modal[style*="z-index: 1070"] ~ .modal-backdrop {
+            z-index: 1065 !important;
         }
     </style>
 {% endblock %}

@@ -1286,7 +1286,11 @@ def odemeler():
         db.session.add(log)
         db.session.commit()
         
-        return jsonify({'success': True})
+        return jsonify({
+            'success': True,
+            'client_id': new_client.id,
+            'id': new_client.id
+        })
     
     clients = Client.query.all()
     return render_template('odemeler.html', clients=clients, today_date=today_date_str) # today_date'i template'e gönder
@@ -7441,6 +7445,7 @@ def get_odeme_detay(client_id):
             'document_type': belge.document_type,
             'document_name': belge.document_name,
             'filename': belge.filename,
+            'description': belge.description if hasattr(belge, 'description') else None,
             'upload_date': belge.upload_date.strftime('%Y-%m-%d %H:%M') if belge.upload_date else None
         })
 
@@ -7458,6 +7463,7 @@ def get_odeme_detay(client_id):
         'status': client.status,
         'description': client.description,
         'payment_type': client.payment_type,
+        'entity_type': client.entity_type if hasattr(client, 'entity_type') else 'person',
         'odeme_gecmisi': odeme_gecmisi_data,
         'belgeler': belgeler_data
     }

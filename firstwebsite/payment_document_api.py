@@ -192,3 +192,22 @@ def register_payment_document_routes(app):
 
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
+
+
+    @app.route('/api/preview_payment_document/<int:document_id>')
+    @login_required
+    def preview_payment_document(document_id):
+        """Ödeme belgesini önizle (tarayıcıda aç)"""
+        from flask import send_file
+        try:
+            document = PaymentDocument.query.get_or_404(document_id)
+            full_path = os.path.join(app.config['UPLOAD_FOLDER'], document.filepath)
+
+            if not os.path.exists(full_path):
+                return jsonify({'success': False, 'message': 'Dosya bulunamadı'}), 404
+
+            # as_attachment=False ile tarayıcıda açılır (önizleme)
+            return send_file(full_path, as_attachment=False)
+
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
