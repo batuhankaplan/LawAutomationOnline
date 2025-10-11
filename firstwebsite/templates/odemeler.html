@@ -9404,18 +9404,18 @@
             exportForm.addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                // Form verilerini topla
+                // Form verilerini topla (checkbox'lar hariç)
                 const formData = new FormData(exportForm);
                 const params = new URLSearchParams();
                 
-                // Tüm form verilerini ekle
+                // Sadece checkbox olmayan form verilerini ekle
                 for (let [key, value] of formData.entries()) {
-                    if (value) {
+                    if (value && !key.startsWith('show_')) {
                         params.append(key, value);
                     }
                 }
                 
-                // Chip seçimlerini manuel olarak ekle (checkbox'lar hidden olduğu için FormData'ya otomatik eklenmiyorlar)
+                // Chip seçimlerini manuel olarak ekle (sadece active olanlar)
                 document.querySelectorAll('.export-option-chip').forEach(chip => {
                     const checkbox = chip.querySelector('input[type="checkbox"]');
                     if (checkbox && chip.classList.contains('active')) {
