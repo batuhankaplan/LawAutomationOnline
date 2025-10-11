@@ -2041,33 +2041,20 @@ def case_details(case_id):
             except:
                 additional_opponents = []
 
-        # YENİ: Vekilleri taraf bazlı grupla
-        lawyers_grouped = case_file.get_all_lawyers_grouped()
+        # Vekil bilgilerini JSON'dan parse et
+        additional_lawyers = []
+        if case_file.additional_lawyers_json:
+            try:
+                import json
+                additional_lawyers = json.loads(case_file.additional_lawyers_json)
+            except:
+                additional_lawyers = []
 
-        # Frontend için vekilleri dönüştür
-        def format_lawyers(lawyer_list):
-            return [{
-                'id': lawyer.id,
-                'name': lawyer.name,
-                'bar': lawyer.bar or '',
-                'bar_number': lawyer.bar_number or '',
-                'phone': lawyer.phone or '',
-                'address': lawyer.address or ''
-            } for lawyer in lawyer_list]
-
-        # Müvekkil vekilleri
-        client_main_lawyers = format_lawyers(lawyers_grouped['client']['main'])
-        client_additional_lawyers = {
-            idx: format_lawyers(lawyers)
-            for idx, lawyers in lawyers_grouped['client']['additional'].items()
-        }
-
-        # Karşı taraf vekilleri
-        opponent_main_lawyers = format_lawyers(lawyers_grouped['opponent']['main'])
-        opponent_additional_lawyers = {
-            idx: format_lawyers(lawyers)
-            for idx, lawyers in lawyers_grouped['opponent']['additional'].items()
-        }
+        # Frontend için vekilleri formatla
+        client_main_lawyers = additional_lawyers  # Tüm vekiller müvekkil vekili olarak gösterilsin
+        client_additional_lawyers = {}
+        opponent_main_lawyers = []
+        opponent_additional_lawyers = {}
         
         return jsonify({
             'success': True,
