@@ -240,28 +240,51 @@
 
     <!-- Ödeme Kayıtları Dışa Aktarma Modalı -->
     <div id="exportModal" class="modal">
-        <div class="modal-content modern-edit-modal" style="max-width: 650px; max-height: 90vh; overflow-y: auto;">
-            <div class="modal-header modern-edit-header" style="position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px 12px 0 0; padding: 20px 24px;">
+        <div class="modal-content modern-edit-modal" style="max-width: 700px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header modern-edit-header" style="flex-shrink: 0; border-radius: 12px 12px 0 0; padding: 20px 24px;">
                 <div class="modal-title-container">
                     <h2 style="color: white; margin: 0; font-size: 20px; font-weight: 600;">Ödeme Kayıtları Tablosu Oluştur</h2>
                 </div>
-                <span class="close" id="closeExportModal" style="color: white; font-size: 28px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">&times;</span>
+                <span class="close modern-edit-close" id="closeExportModal">&times;</span>
             </div>
-            <form id="exportForm" style="padding: 20px;">
-                <div class="form-row" style="margin-bottom: 16px;">
+            <form id="exportForm" style="padding: 24px; background: #f8f9fa; overflow-y: auto; flex: 1;">
+                <!-- Dosya Formatı -->
+                <div class="form-row" style="margin-bottom: 20px;">
                     <div class="form-group" style="width: 100%;">
-                        <label for="exportFormat">Dosya Formatı</label>
-                        <select id="exportFormat" name="format" class="form-control" required>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748; font-size: 14px;">
+                            <i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 6px; color: #667eea;">description</i>
+                            Dosya Formatı
+                        </label>
+                        <select id="exportFormat" name="format" class="form-control" required style="padding: 10px 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 14px;">
                             <option value="excel">Excel (.xlsx)</option>
                             <option value="pdf">PDF</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="form-row" style="margin-bottom: 16px;">
+                <!-- Kayıt Durumu Filtresi -->
+                <div class="form-row" style="margin-bottom: 20px;">
                     <div class="form-group" style="width: 100%;">
-                        <label for="exportEntityFilter">Kişi/Kurum Filtresi</label>
-                        <select id="exportEntityFilter" name="entity_filter" class="form-control" required>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748; font-size: 14px;">
+                            <i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 6px; color: #667eea;">how_to_reg</i>
+                            Kayıt Durumu
+                        </label>
+                        <select id="exportRegistrationStatus" name="registration_status" class="form-control" required style="padding: 10px 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 14px;">
+                            <option value="all">Tümü</option>
+                            <option value="registered">Sisteme Kayıtlı Olanlar</option>
+                            <option value="non_registered">Sisteme Kayıtlı Olmayanlar</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Kişi/Kurum Filtresi -->
+                <div class="form-row" style="margin-bottom: 20px;">
+                    <div class="form-group" style="width: 100%;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748; font-size: 14px;">
+                            <i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 6px; color: #667eea;">business</i>
+                            Kişi/Kurum Tipi
+                        </label>
+                        <select id="exportEntityFilter" name="entity_filter" class="form-control" required style="padding: 10px 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 14px;">
                             <option value="all">Tümü (Kişi + Kurum)</option>
                             <option value="person">Sadece Kişi</option>
                             <option value="company">Sadece Kurum</option>
@@ -269,65 +292,122 @@
                     </div>
                 </div>
 
-                <div class="form-row" style="margin-bottom: 16px;">
-                    <div class="form-group" style="width: 100%;">
-                        <label for="exportFilterType">Filtreleme Tipi</label>
-                        <select id="exportFilterType" name="filter_type" class="form-control" required>
-                            <option value="date_range">Tarih Aralığı</option>
-                            <option value="specific_client">Belirli Müvekkil/Kurum</option>
-                            <option value="all_records">Tüm Kayıtlar</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="exportDateRangeGroup" class="form-row" style="margin-bottom: 16px; display: flex; gap: 12px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label for="exportStartDate">Başlangıç Tarihi</label>
-                        <input type="date" id="exportStartDate" name="start_date" class="form-control">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="exportEndDate">Bitiş Tarihi</label>
-                        <input type="date" id="exportEndDate" name="end_date" class="form-control">
-                    </div>
-                </div>
-
-                <div id="exportClientGroup" class="form-row" style="display: none; margin-bottom: 16px;">
-                    <div class="form-group" style="width: 100%;">
-                        <label for="exportClientSelect">Müvekkil/Kurum Seçin</label>
-                        <select id="exportClientSelect" name="client_id" class="form-control">
-                            <option value="">Seçiniz...</option>
-                            {% for client in clients %}
-                            <option value="{{ client.id }}">
-                                {{ client.name }} {% if client.surname and client.surname != '-' %}{{ client.surname }}{% endif %}
-                                {% if client.entity_type == 'company' %}(Kurum){% endif %}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row" style="margin-bottom: 12px;">
-                    <div class="form-group" style="width: 100%;">
-                        <label>
-                            <input type="checkbox" id="exportIncludeInstallments" name="include_installments" checked>
-                            Taksit Detaylarını Dahil Et
-                        </label>
-                    </div>
-                </div>
-
+                <!-- Müvekkil Seçimi -->
                 <div class="form-row" style="margin-bottom: 20px;">
                     <div class="form-group" style="width: 100%;">
-                        <label>
-                            <input type="checkbox" id="exportIncludePaymentDates" name="include_payment_dates" checked>
-                            Ödeme Tarihlerini Dahil Et
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748; font-size: 14px;">
+                            <i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 6px; color: #667eea;">person_search</i>
+                            Müvekkil Seçimi
                         </label>
+                        <select id="exportClientFilterType" name="client_filter_type" class="form-control" required style="padding: 10px 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 14px;">
+                            <option value="all_clients">Tüm Kayıtlar</option>
+                            <option value="specific_client">Belirli Kişi/Kurum</option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid #e0e0e0;">
-                    <button type="button" class="btn btn-secondary" id="cancelExportBtn">İptal</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="material-icons">download</i> Oluştur ve İndir
+                <!-- Belirli Müvekkil Seçimi (Dinamik) -->
+                <div id="exportSpecificClientGroup" class="form-row" style="display: none; margin-bottom: 20px;">
+                    <div class="form-group" style="width: 100%;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748; font-size: 14px;">
+                            <i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 6px; color: #667eea;">contacts</i>
+                            Kişi/Kurum Seçin
+                        </label>
+                        <select id="exportClientSelect" name="client_id" class="form-control" style="padding: 10px 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 14px; width: 100%;">
+                            <option value="">Seçiniz...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Tarih Aralığı (Her zaman görünür, opsiyonel) -->
+                <div class="form-row" style="margin-bottom: 24px;">
+                    <div class="form-group" style="width: 100%;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748; font-size: 14px;">
+                            <i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 6px; color: #667eea;">date_range</i>
+                            Tarih Aralığı (Opsiyonel)
+                        </label>
+                        <div style="display: flex; gap: 12px;">
+                            <div style="flex: 1;">
+                                <input type="date" id="exportStartDate" name="start_date" class="form-control" placeholder="Başlangıç" style="padding: 10px 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 14px;">
+                            </div>
+                            <div style="flex: 1;">
+                                <input type="date" id="exportEndDate" name="end_date" class="form-control" placeholder="Bitiş" style="padding: 10px 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 14px;">
+                            </div>
+                        </div>
+                        <small style="display: block; margin-top: 6px; color: #718096; font-size: 12px;">Boş bırakırsanız tüm tarihler dahil edilir</small>
+                    </div>
+                </div>
+
+                <!-- Tablo Görünüm Seçenekleri -->
+                <div class="form-row" style="margin-bottom: 20px;">
+                    <div class="form-group" style="width: 100%;">
+                        <label style="display: block; margin-bottom: 12px; font-weight: 600; color: #2d3748; font-size: 14px;">
+                            <i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 6px; color: #667eea;">visibility</i>
+                            Tabloda Gösterilecek Bilgiler
+                        </label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <div class="export-option-chip active" data-field="payment_type">
+                                <input type="checkbox" name="show_payment_type" checked style="display: none;">
+                                <i class="material-icons" style="font-size: 16px;">category</i>
+                                <span>Ödeme Türü</span>
+                            </div>
+                            <div class="export-option-chip active" data-field="name">
+                                <input type="checkbox" name="show_name" checked style="display: none;">
+                                <i class="material-icons" style="font-size: 16px;">person</i>
+                                <span>Ad/Soyad</span>
+                            </div>
+                            <div class="export-option-chip active" data-field="tc">
+                                <input type="checkbox" name="show_tc" checked style="display: none;">
+                                <i class="material-icons" style="font-size: 16px;">badge</i>
+                                <span>TC/Vergi No</span>
+                            </div>
+                            <div class="export-option-chip active" data-field="amount">
+                                <input type="checkbox" name="show_amount" checked style="display: none;">
+                                <i class="material-icons" style="font-size: 16px;">payments</i>
+                                <span>Tutar</span>
+                            </div>
+                            <div class="export-option-chip active" data-field="installments">
+                                <input type="checkbox" name="show_installments" checked style="display: none;">
+                                <i class="material-icons" style="font-size: 16px;">schedule</i>
+                                <span>Taksit Detayları</span>
+                            </div>
+                            <div class="export-option-chip active" data-field="registration_date">
+                                <input type="checkbox" name="show_registration_date" checked style="display: none;">
+                                <i class="material-icons" style="font-size: 16px;">event</i>
+                                <span>Borç Tarihi</span>
+                            </div>
+                            <div class="export-option-chip active" data-field="due_date">
+                                <input type="checkbox" name="show_due_date" checked style="display: none;">
+                                <i class="material-icons" style="font-size: 16px;">event_note</i>
+                                <span>Son Ödeme Tarihi</span>
+                            </div>
+                            <div class="export-option-chip active" data-field="payment_date">
+                                <input type="checkbox" name="show_payment_date" checked style="display: none;">
+                                <i class="material-icons" style="font-size: 16px;">event_available</i>
+                                <span>Ödeme Tarihi</span>
+                            </div>
+                            <div class="export-option-chip active" data-field="status">
+                                <input type="checkbox" name="show_status" checked style="display: none;">
+                                <i class="material-icons" style="font-size: 16px;">info</i>
+                                <span>Durum</span>
+                            </div>
+                            <div class="export-option-chip active" data-field="description">
+                                <input type="checkbox" name="show_description" checked style="display: none;">
+                                <i class="material-icons" style="font-size: 16px;">description</i>
+                                <span>Açıklama</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end; padding-top: 20px; border-top: 2px solid #e2e8f0; margin-top: 24px;">
+                    <button type="button" class="btn btn-secondary" id="cancelExportBtn" style="padding: 10px 20px; border-radius: 8px; font-weight: 500;">
+                        <i class="material-icons" style="font-size: 18px; vertical-align: middle;">close</i>
+                        İptal
+                    </button>
+                    <button type="submit" class="btn btn-primary" style="padding: 10px 24px; border-radius: 8px; font-weight: 500; background: linear-gradient(135deg, #2d313c 0%, #3c404d 100%); border: none; color: white;">
+                        <i class="material-icons" style="font-size: 18px; vertical-align: middle;">download</i>
+                        Oluştur ve İndir
                     </button>
                 </div>
             </form>
@@ -1741,6 +1821,50 @@
         .status-text {
             font-weight: 500;
             color: #666;
+        }
+        
+        /* Export Option Chip Stilleri */
+        .export-option-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            font-weight: 500;
+            color: #4a5568;
+            user-select: none;
+        }
+        
+        .export-option-chip:hover {
+            border-color: #cbd5e0;
+            background: #f7fafc;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .export-option-chip.active {
+            background: linear-gradient(135deg, #2d313c 0%, #3c404d 100%);
+            border-color: #2d313c;
+            color: white;
+            box-shadow: 0 2px 8px rgba(45, 49, 60, 0.3);
+        }
+        
+        .export-option-chip.active:hover {
+            box-shadow: 0 4px 12px rgba(45, 49, 60, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .export-option-chip i {
+            transition: transform 0.3s ease;
+        }
+        
+        .export-option-chip.active i {
+            transform: scale(1.1);
         }
         
         /* Buton Stilleri */
@@ -9136,23 +9260,35 @@
         const closeExportModal = document.getElementById('closeExportModal');
         const cancelExportBtn = document.getElementById('cancelExportBtn');
         const exportForm = document.getElementById('exportForm');
-        const exportFilterType = document.getElementById('exportFilterType');
-        const exportDateRangeGroup = document.getElementById('exportDateRangeGroup');
-        const exportClientGroup = document.getElementById('exportClientGroup');
+        const exportRegistrationStatus = document.getElementById('exportRegistrationStatus');
+        const exportEntityFilter = document.getElementById('exportEntityFilter');
+        const exportClientFilterType = document.getElementById('exportClientFilterType');
+        const exportSpecificClientGroup = document.getElementById('exportSpecificClientGroup');
+        const exportClientSelect = document.getElementById('exportClientSelect');
         const exportStartDate = document.getElementById('exportStartDate');
         const exportEndDate = document.getElementById('exportEndDate');
+
+        // Export option chips - tıklanabilir chip'ler
+        const exportOptionChips = document.querySelectorAll('.export-option-chip');
+        exportOptionChips.forEach(chip => {
+            chip.addEventListener('click', function() {
+                this.classList.toggle('active');
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.checked = this.classList.contains('active');
+                }
+            });
+        });
 
         // Export modal aç
         if (exportButton) {
             exportButton.onclick = function() {
                 exportModal.style.display = 'flex';
-                // Bugünün tarihini varsayılan olarak ayarla
-                const today = new Date().toISOString().split('T')[0];
-                exportEndDate.value = today;
-                // Başlangıç tarihini 1 yıl öncesi yap
-                const lastYear = new Date();
-                lastYear.setFullYear(lastYear.getFullYear() - 1);
-                exportStartDate.value = lastYear.toISOString().split('T')[0];
+                // Tarihleri temizle (opsiyonel olduğu için)
+                exportStartDate.value = '';
+                exportEndDate.value = '';
+                // Kayıtlı müvekkilleri yükle
+                loadRegisteredClientsForExport();
             };
         }
 
@@ -9169,28 +9305,97 @@
             };
         }
 
-        // Filtreleme tipine göre alanları göster/gizle
-        if (exportFilterType) {
-            exportFilterType.addEventListener('change', function() {
-                if (this.value === 'date_range') {
-                    exportDateRangeGroup.style.display = 'flex';
-                    exportClientGroup.style.display = 'none';
-                    exportStartDate.required = true;
-                    exportEndDate.required = true;
-                    document.getElementById('exportClientSelect').required = false;
-                } else if (this.value === 'specific_client') {
-                    exportDateRangeGroup.style.display = 'none';
-                    exportClientGroup.style.display = 'block';
-                    exportStartDate.required = false;
-                    exportEndDate.required = false;
-                    document.getElementById('exportClientSelect').required = true;
-                } else { // all_records
-                    exportDateRangeGroup.style.display = 'none';
-                    exportClientGroup.style.display = 'none';
-                    exportStartDate.required = false;
-                    exportEndDate.required = false;
-                    document.getElementById('exportClientSelect').required = false;
+        // Kayıt durumu ve entity filter değiştiğinde client listesini güncelle
+        if (exportRegistrationStatus) {
+            exportRegistrationStatus.addEventListener('change', updateExportClientList);
+        }
+        
+        if (exportEntityFilter) {
+            exportEntityFilter.addEventListener('change', updateExportClientList);
+        }
+
+        // Müvekkil seçim tipine göre dropdown'u göster/gizle
+        if (exportClientFilterType) {
+            exportClientFilterType.addEventListener('change', function() {
+                if (this.value === 'specific_client') {
+                    exportSpecificClientGroup.style.display = 'block';
+                    exportClientSelect.required = true;
+                } else {
+                    exportSpecificClientGroup.style.display = 'none';
+                    exportClientSelect.required = false;
                 }
+            });
+        }
+
+        // Kayıtlı müvekkilleri export için yükle
+        function loadRegisteredClientsForExport() {
+            fetch('/api/get_registered_payment_clients')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.exportRegisteredClients = data.clients;
+                        updateExportClientList();
+                    }
+                })
+                .catch(error => {
+                    console.error('Kayıtlı müvekkiller yüklenirken hata:', error);
+                });
+        }
+
+        // Export client listesini güncelle
+        function updateExportClientList() {
+            const registrationStatus = exportRegistrationStatus.value;
+            const entityFilter = exportEntityFilter.value;
+            
+            // Tüm client'ları al (sayfadaki mevcut kayıtlar)
+            const allClients = Array.from(document.querySelectorAll('tbody tr[data-client-id]')).map(row => ({
+                id: row.getAttribute('data-client-id'),
+                name: row.cells[1].textContent.trim(),
+                surname: row.cells[2].textContent.trim(),
+                entity_type: row.getAttribute('data-entity-type'),
+                payment_client_id: row.getAttribute('data-payment-client-id')
+            }));
+
+            // Filtreleme uygula
+            let filteredClients = allClients.filter(client => {
+                // Kayıt durumu filtresi
+                if (registrationStatus === 'registered' && !client.payment_client_id) return false;
+                if (registrationStatus === 'non_registered' && client.payment_client_id) return false;
+                
+                // Entity tipi filtresi
+                if (entityFilter === 'person' && client.entity_type !== 'person') return false;
+                if (entityFilter === 'company' && client.entity_type !== 'company') return false;
+                
+                return true;
+            });
+
+            // Benzersiz client'ları bul (aynı isimli kayıtları birleştir)
+            const uniqueClientsMap = new Map();
+            filteredClients.forEach(client => {
+                const fullName = client.surname && client.surname !== '-' 
+                    ? `${client.name} ${client.surname}` 
+                    : client.name;
+                const key = `${fullName}_${client.entity_type}`;
+                
+                // Eğer bu isim daha önce eklenmemişse ekle
+                if (!uniqueClientsMap.has(key)) {
+                    uniqueClientsMap.set(key, client);
+                }
+            });
+
+            // Dropdown'u güncelle
+            exportClientSelect.innerHTML = '<option value="">Seçiniz...</option>';
+            uniqueClientsMap.forEach(client => {
+                const option = document.createElement('option');
+                // Kayıtlı müvekkiller için payment_client_id kullan, diğerleri için client.id
+                option.value = client.payment_client_id || client.id;
+                option.setAttribute('data-is-registered', client.payment_client_id ? 'true' : 'false');
+                const fullName = client.surname && client.surname !== '-' 
+                    ? `${client.name} ${client.surname}` 
+                    : client.name;
+                const typeLabel = client.entity_type === 'company' ? '(Kurum)' : '';
+                option.textContent = `${fullName} ${typeLabel}`;
+                exportClientSelect.appendChild(option);
             });
         }
 
@@ -9203,6 +9408,7 @@
                 const formData = new FormData(exportForm);
                 const params = new URLSearchParams();
                 
+                // Tüm form verilerini ekle
                 for (let [key, value] of formData.entries()) {
                     if (value) {
                         params.append(key, value);

@@ -1404,16 +1404,35 @@ def export_payments():
     try:
         # Query parametrelerini al
         format_type = request.args.get('format', 'excel')
+        registration_status = request.args.get('registration_status', 'all')
         entity_filter = request.args.get('entity_filter', 'all')
-        filter_type = request.args.get('filter_type', 'all_records')
+        client_filter_type = request.args.get('client_filter_type', 'all_clients')
+        selected_client_id = request.args.get('client_id')  # Bu payment_client_id veya client.id olabilir
         start_date_str = request.args.get('start_date')
         end_date_str = request.args.get('end_date')
-        client_id = request.args.get('client_id')
-        include_installments = request.args.get('include_installments') == 'on'
-        include_payment_dates = request.args.get('include_payment_dates') == 'on'
+        
+        # Tablo görünüm seçenekleri
+        show_fields = {
+            'payment_type': request.args.get('show_payment_type') == 'on',
+            'name': request.args.get('show_name') == 'on',
+            'tc': request.args.get('show_tc') == 'on',
+            'amount': request.args.get('show_amount') == 'on',
+            'installments': request.args.get('show_installments') == 'on',
+            'registration_date': request.args.get('show_registration_date') == 'on',
+            'due_date': request.args.get('show_due_date') == 'on',
+            'payment_date': request.args.get('show_payment_date') == 'on',
+            'status': request.args.get('show_status') == 'on',
+            'description': request.args.get('show_description') == 'on'
+        }
         
         # Base query
         query = Client.query
+        
+        # Kayıt durumu filtresi
+        if registration_status == 'registered':
+            query = query.filter(Client.payment_client_id.isnot(None))
+        elif registration_status == 'non_registered':
+            query = query.filter(Client.payment_client_id.is_(None))
         
         # Entity filtresi uygula
         if entity_filter == 'person':
@@ -1421,21 +1440,29 @@ def export_payments():
         elif entity_filter == 'company':
             query = query.filter(Client.entity_type == 'company')
         
-        # Filtreleme tipine göre query'i ayarla
-        if filter_type == 'date_range' and start_date_str and end_date_str:
+        # Belirli müvekkil filtresi
+        if client_filter_type == 'specific_client' and selected_client_id:
+            # Eğer kayıt durumu "registered" ise, payment_client_id'ye göre filtrele
+            # Böylece aynı kuruma ait tüm ödemeler gelir
+            if registration_status == 'registered':
+                query = query.filter(Client.payment_client_id == int(selected_client_id))
+            else:
+                # Kayıtlı olmayan müvekkiller için normal client.id kullan
+                query = query.filter(Client.id == int(selected_client_id))
+        
+        # Tarih aralığı filtresi (opsiyonel)
+        if start_date_str and end_date_str:
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
             end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
             query = query.filter(Client.registration_date.between(start_date, end_date))
-        elif filter_type == 'specific_client' and client_id:
-            query = query.filter(Client.id == int(client_id))
         
         # Verileri çek
         clients = query.all()
         
         if format_type == 'excel':
-            return generate_excel_export(clients, include_installments, include_payment_dates)
+            return generate_excel_export(clients, show_fields)
         else:  # pdf
-            return generate_pdf_export(clients, include_installments, include_payment_dates)
+            return generate_pdf_export(clients, show_fields)
             
     except Exception as e:
         app.logger.error(f"Export error: {str(e)}")
@@ -1471,7 +1498,7 @@ def get_registered_payment_clients():
         app.logger.error(f"Get registered payment clients error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-def generate_excel_export(clients, include_installments=True, include_payment_dates=True):
+def generate_excel_export(clients, show_fields):
     """Excel dosyası oluşturur"""
     try:
         from openpyxl import Workbook
@@ -1482,18 +1509,28 @@ def generate_excel_export(clients, include_installments=True, include_payment_da
         ws = wb.active
         ws.title = "Ödeme Kayıtları"
         
-        # Başlık satırı
-        headers = ['Ödeme Türü', 'Ad', 'Soyad/Kurum', 'TC/Vergi No', 'Tutar', 'Para Birimi']
-        
-        if include_installments:
+        # Başlık satırını show_fields'a göre oluştur
+        headers = []
+        if show_fields.get('payment_type', True):
+            headers.append('Ödeme Türü')
+        if show_fields.get('name', True):
+            headers.extend(['Ad', 'Soyad/Kurum'])
+        if show_fields.get('tc', True):
+            headers.append('TC/Vergi No')
+        if show_fields.get('amount', True):
+            headers.extend(['Tutar', 'Para Birimi'])
+        if show_fields.get('installments', True):
             headers.append('Taksit Sayısı')
-        
-        headers.extend(['Borç Kayıt Tarihi', 'Son Ödeme Tarihi'])
-        
-        if include_payment_dates:
+        if show_fields.get('registration_date', True):
+            headers.append('Borç Kayıt Tarihi')
+        if show_fields.get('due_date', True):
+            headers.append('Son Ödeme Tarihi')
+        if show_fields.get('payment_date', True):
             headers.append('Ödeme Tarihi')
-        
-        headers.extend(['Durum', 'Açıklama'])
+        if show_fields.get('status', True):
+            headers.append('Durum')
+        if show_fields.get('description', True):
+            headers.append('Açıklama')
         
         # Başlık stilini ayarla
         header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
@@ -1520,73 +1557,79 @@ def generate_excel_export(clients, include_installments=True, include_payment_da
             col_num = 1
             
             # Ödeme Türü
-            ws.cell(row=row_num, column=col_num).value = client.payment_type or '-'
-            ws.cell(row=row_num, column=col_num).border = border
-            col_num += 1
+            if show_fields.get('payment_type', True):
+                ws.cell(row=row_num, column=col_num).value = client.payment_type or '-'
+                ws.cell(row=row_num, column=col_num).border = border
+                col_num += 1
             
-            # Ad
-            ws.cell(row=row_num, column=col_num).value = client.name
-            ws.cell(row=row_num, column=col_num).border = border
-            col_num += 1
-            
-            # Soyad/Kurum
-            surname_value = client.surname if client.surname and client.surname != '-' else '-'
-            if client.entity_type == 'company':
-                surname_value = f"{surname_value} (Kurum)"
-            ws.cell(row=row_num, column=col_num).value = surname_value
-            ws.cell(row=row_num, column=col_num).border = border
-            col_num += 1
+            # Ad ve Soyad
+            if show_fields.get('name', True):
+                ws.cell(row=row_num, column=col_num).value = client.name
+                ws.cell(row=row_num, column=col_num).border = border
+                col_num += 1
+                
+                surname_value = client.surname if client.surname and client.surname != '-' else '-'
+                if client.entity_type == 'company':
+                    surname_value = f"{surname_value} (Kurum)"
+                ws.cell(row=row_num, column=col_num).value = surname_value
+                ws.cell(row=row_num, column=col_num).border = border
+                col_num += 1
             
             # TC/Vergi No
-            ws.cell(row=row_num, column=col_num).value = client.tc or '-'
-            ws.cell(row=row_num, column=col_num).border = border
-            col_num += 1
+            if show_fields.get('tc', True):
+                ws.cell(row=row_num, column=col_num).value = client.tc or '-'
+                ws.cell(row=row_num, column=col_num).border = border
+                col_num += 1
             
-            # Tutar
-            ws.cell(row=row_num, column=col_num).value = float(client.amount)
-            ws.cell(row=row_num, column=col_num).number_format = '#,##0.00'
-            ws.cell(row=row_num, column=col_num).border = border
-            col_num += 1
+            # Tutar ve Para Birimi
+            if show_fields.get('amount', True):
+                ws.cell(row=row_num, column=col_num).value = float(client.amount)
+                ws.cell(row=row_num, column=col_num).number_format = '#,##0.00'
+                ws.cell(row=row_num, column=col_num).border = border
+                col_num += 1
+                
+                ws.cell(row=row_num, column=col_num).value = client.currency
+                ws.cell(row=row_num, column=col_num).border = border
+                col_num += 1
             
-            # Para Birimi
-            ws.cell(row=row_num, column=col_num).value = client.currency
-            ws.cell(row=row_num, column=col_num).border = border
-            col_num += 1
-            
-            # Taksit Sayısı (opsiyonel)
-            if include_installments:
+            # Taksit Sayısı
+            if show_fields.get('installments', True):
                 installment_value = client.installments if client.installments and client.installments > 0 else '-'
                 ws.cell(row=row_num, column=col_num).value = installment_value
                 ws.cell(row=row_num, column=col_num).border = border
                 col_num += 1
             
             # Borç Kayıt Tarihi
-            reg_date_value = client.registration_date.strftime('%d.%m.%Y') if client.registration_date else '-'
-            ws.cell(row=row_num, column=col_num).value = reg_date_value
-            ws.cell(row=row_num, column=col_num).border = border
-            col_num += 1
+            if show_fields.get('registration_date', True):
+                reg_date_value = client.registration_date.strftime('%d.%m.%Y') if client.registration_date else '-'
+                ws.cell(row=row_num, column=col_num).value = reg_date_value
+                ws.cell(row=row_num, column=col_num).border = border
+                col_num += 1
             
             # Son Ödeme Tarihi
-            due_date_value = client.due_date.strftime('%d.%m.%Y') if client.due_date else '-'
-            ws.cell(row=row_num, column=col_num).value = due_date_value
-            ws.cell(row=row_num, column=col_num).border = border
-            col_num += 1
+            if show_fields.get('due_date', True):
+                due_date_value = client.due_date.strftime('%d.%m.%Y') if client.due_date else '-'
+                ws.cell(row=row_num, column=col_num).value = due_date_value
+                ws.cell(row=row_num, column=col_num).border = border
+                col_num += 1
             
-            # Ödeme Tarihi (opsiyonel)
-            if include_payment_dates:
+            # Ödeme Tarihi
+            if show_fields.get('payment_date', True):
                 payment_date_value = client.payment_date.strftime('%d.%m.%Y') if client.payment_date else '-'
                 ws.cell(row=row_num, column=col_num).value = payment_date_value
                 ws.cell(row=row_num, column=col_num).border = border
                 col_num += 1
             
             # Durum
-            ws.cell(row=row_num, column=col_num).value = client.status
-            ws.cell(row=row_num, column=col_num).border = border
-            col_num += 1
+            if show_fields.get('status', True):
+                ws.cell(row=row_num, column=col_num).value = client.status
+                ws.cell(row=row_num, column=col_num).border = border
+                col_num += 1
             
             # Açıklama
-            ws.cell(row=row_num, column=col_num).value = client.description or '-'
-            ws.cell(row=row_num, column=col_num).border = border
+            if show_fields.get('description', True):
+                ws.cell(row=row_num, column=col_num).value = client.description or '-'
+                ws.cell(row=row_num, column=col_num).border = border
         
         # Sütun genişliklerini ayarla
         for column in ws.columns:
@@ -1623,7 +1666,7 @@ def generate_excel_export(clients, include_installments=True, include_payment_da
         flash(f'Excel oluşturma hatası: {str(e)}', 'error')
         return redirect(url_for('odemeler'))
 
-def generate_pdf_export(clients, include_installments=True, include_payment_dates=True):
+def generate_pdf_export(clients, show_fields):
     """PDF dosyası oluşturur"""
     try:
         from reportlab.lib.pagesizes import A4, landscape
@@ -1657,43 +1700,52 @@ def generate_pdf_export(clients, include_installments=True, include_payment_date
         # Tablo verilerini hazırla
         data = []
         
-        # Başlık satırı
-        headers = ['Ödeme Türü', 'Ad', 'Soyad/Kurum', 'TC/Vergi No', 'Tutar']
-        
-        if include_installments:
+        # Başlık satırını show_fields'a göre oluştur
+        headers = []
+        if show_fields.get('payment_type', True):
+            headers.append('Ödeme Türü')
+        if show_fields.get('name', True):
+            headers.extend(['Ad', 'Soyad'])
+        if show_fields.get('tc', True):
+            headers.append('TC/Vergi')
+        if show_fields.get('amount', True):
+            headers.append('Tutar')
+        if show_fields.get('installments', True):
             headers.append('Taksit')
-        
-        headers.extend(['Kayıt Tarihi', 'Son Ödeme'])
-        
-        if include_payment_dates:
-            headers.append('Ödeme Tarihi')
-        
-        headers.append('Durum')
+        if show_fields.get('registration_date', True):
+            headers.append('Kayıt')
+        if show_fields.get('due_date', True):
+            headers.append('Vade')
+        if show_fields.get('payment_date', True):
+            headers.append('Ödeme')
+        if show_fields.get('status', True):
+            headers.append('Durum')
         
         data.append(headers)
         
         # Veri satırları
         for client in clients:
-            row = [
-                client.payment_type or '-',
-                client.name,
-                f"{client.surname or '-'} {'(K)' if client.entity_type == 'company' else ''}",
-                client.tc or '-',
-                f"{client.amount:.2f} {client.currency}"
-            ]
+            row = []
             
-            if include_installments:
+            if show_fields.get('payment_type', True):
+                row.append(client.payment_type or '-')
+            if show_fields.get('name', True):
+                row.append(client.name)
+                row.append(f"{client.surname or '-'} {'(K)' if client.entity_type == 'company' else ''}")
+            if show_fields.get('tc', True):
+                row.append(client.tc or '-')
+            if show_fields.get('amount', True):
+                row.append(f"{client.amount:.2f} {client.currency}")
+            if show_fields.get('installments', True):
                 row.append(str(client.installments) if client.installments and client.installments > 0 else '-')
-            
-            row.extend([
-                client.registration_date.strftime('%d.%m.%Y') if client.registration_date else '-',
-                client.due_date.strftime('%d.%m.%Y') if client.due_date else '-'
-            ])
-            
-            if include_payment_dates:
+            if show_fields.get('registration_date', True):
+                row.append(client.registration_date.strftime('%d.%m.%Y') if client.registration_date else '-')
+            if show_fields.get('due_date', True):
+                row.append(client.due_date.strftime('%d.%m.%Y') if client.due_date else '-')
+            if show_fields.get('payment_date', True):
                 row.append(client.payment_date.strftime('%d.%m.%Y') if client.payment_date else '-')
-            
-            row.append(client.status)
+            if show_fields.get('status', True):
+                row.append(client.status)
             
             data.append(row)
         
