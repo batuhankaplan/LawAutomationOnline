@@ -2041,7 +2041,7 @@ def case_details(case_id):
             except:
                 additional_opponents = []
 
-        # Vekil bilgilerini JSON'dan parse et
+        # Vekil bilgilerini hazırla
         additional_lawyers = []
         if case_file.additional_lawyers_json:
             try:
@@ -2050,10 +2050,20 @@ def case_details(case_id):
             except:
                 additional_lawyers = []
 
-        # Frontend için vekilleri formatla
-        client_main_lawyers = additional_lawyers  # Tüm vekiller müvekkil vekili olarak gösterilsin
-        client_additional_lawyers = {}
+        # Karşı taraf vekilini ekle (eğer varsa)
         opponent_main_lawyers = []
+        if case_file.opponent_lawyer:
+            opponent_main_lawyers.append({
+                'name': case_file.opponent_lawyer,
+                'bar': case_file.opponent_lawyer_bar or '',
+                'bar_number': case_file.opponent_lawyer_bar_number or '',
+                'phone': case_file.opponent_lawyer_phone or '',
+                'address': case_file.opponent_lawyer_address or ''
+            })
+
+        # Frontend için vekilleri formatla
+        client_main_lawyers = additional_lawyers  # JSON'dan gelen vekiller (şimdilik boş)
+        client_additional_lawyers = {}
         opponent_additional_lawyers = {}
         
         return jsonify({
