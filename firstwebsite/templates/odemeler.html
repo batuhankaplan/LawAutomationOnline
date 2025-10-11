@@ -9414,6 +9414,14 @@
                         params.append(key, value);
                     }
                 }
+                
+                // Chip seçimlerini manuel olarak ekle (checkbox'lar hidden olduğu için FormData'ya otomatik eklenmiyorlar)
+                document.querySelectorAll('.export-option-chip').forEach(chip => {
+                    const checkbox = chip.querySelector('input[type="checkbox"]');
+                    if (checkbox && chip.classList.contains('active')) {
+                        params.append(checkbox.name, 'on');
+                    }
+                });
 
                 // Backend'e istek gönder ve dosyayı indir
                 const exportUrl = `/export_payments?${params.toString()}`;
@@ -9434,9 +9442,6 @@
 
                 // Modalı kapat
                 exportModal.style.display = 'none';
-                
-                // Başarı mesajı
-                alert('Ödeme kayıtları tablosu oluşturuluyor...');
             });
         }
 
